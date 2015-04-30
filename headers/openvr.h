@@ -1035,7 +1035,7 @@ static const char * const IVRControlPanel_Version = "IVRControlPanel_001";
 #endif // _OPENVR_API
 
 
-namespace openvr
+namespace vr
 {
 	// figure out how to import from the VR API dll
 #if defined(_WIN32)
