@@ -1,0 +1,348 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 46;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		CC2013841B1988390060AEC8 /* libSDL2.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CC2013831B1988390060AEC8 /* libSDL2.dylib */; };
+		CC564D401B18FFFF006C3B13 /* OpenGL.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC564D3F1B18FFFF006C3B13 /* OpenGL.framework */; };
+		CC564D421B19052F006C3B13 /* hellovr_opengl_main.mm in Sources */ = {isa = PBXBuildFile; fileRef = CC564D411B19052F006C3B13 /* hellovr_opengl_main.mm */; };
+		CC564D461B190597006C3B13 /* Foundation.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = CC564D451B190597006C3B13 /* Foundation.framework */; };
+		CC564D4A1B19072F006C3B13 /* libGLEW.a in Frameworks */ = {isa = PBXBuildFile; fileRef = CC564D491B19072F006C3B13 /* libGLEW.a */; };
+		CC564D5A1B190942006C3B13 /* lodepng.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CC564D531B190942006C3B13 /* lodepng.cpp */; };
+		CC564D5B1B190942006C3B13 /* Matrices.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CC564D551B190942006C3B13 /* Matrices.cpp */; };
+		CC564D5C1B190942006C3B13 /* pathtools.cpp in Sources */ = {isa = PBXBuildFile; fileRef = CC564D571B190942006C3B13 /* pathtools.cpp */; };
+		CC564D5F1B191403006C3B13 /* osxfilebridge.mm in Sources */ = {isa = PBXBuildFile; fileRef = CC564D5E1B191403006C3B13 /* osxfilebridge.mm */; };
+		CC564D631B191E15006C3B13 /* libopenvr_api.dylib in Frameworks */ = {isa = PBXBuildFile; fileRef = CC564D621B191E15006C3B13 /* libopenvr_api.dylib */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		CC564D301B18FA84006C3B13 /* CopyFiles */ = {
+			isa = PBXCopyFilesBuildPhase;
+			buildActionMask = 2147483647;
+			dstPath = /usr/share/man/man1/;
+			dstSubfolderSpec = 0;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 1;
+		};
+/* End PBXCopyFilesBuildPhase section */
+
+/* Begin PBXFileReference section */
+		CC2013831B1988390060AEC8 /* libSDL2.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libSDL2.dylib; path = "../thirdparty/sdl2-2.0.3/bin/osx32/libSDL2.dylib"; sourceTree = "<group>"; };
+		CC564D321B18FA84006C3B13 /* hellovr_opengl */ = {isa = PBXFileReference; explicitFileType = "compiled.mach-o.executable"; includeInIndex = 0; path = hellovr_opengl; sourceTree = BUILT_PRODUCTS_DIR; };
+		CC564D3F1B18FFFF006C3B13 /* OpenGL.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = OpenGL.framework; path = System/Library/Frameworks/OpenGL.framework; sourceTree = SDKROOT; };
+		CC564D411B19052F006C3B13 /* hellovr_opengl_main.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = hellovr_opengl_main.mm; sourceTree = "<group>"; };
+		CC564D431B190542006C3B13 /* hellovr_opengl_main.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; path = hellovr_opengl_main.cpp; sourceTree = "<group>"; };
+		CC564D451B190597006C3B13 /* Foundation.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = Foundation.framework; path = System/Library/Frameworks/Foundation.framework; sourceTree = SDKROOT; };
+		CC564D491B19072F006C3B13 /* libGLEW.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libGLEW.a; path = "../thirdparty/glew/glew-1.11.0/lib/Release/osx32/libGLEW.a"; sourceTree = "<group>"; };
+		CC564D4B1B19074C006C3B13 /* libSDL2.a */ = {isa = PBXFileReference; lastKnownFileType = archive.ar; name = libSDL2.a; path = "../thirdparty/sdl2-2.0.3/bin/osx32/libSDL2.a"; sourceTree = "<group>"; };
+		CC564D531B190942006C3B13 /* lodepng.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = lodepng.cpp; path = ../shared/lodepng.cpp; sourceTree = "<group>"; };
+		CC564D541B190942006C3B13 /* lodepng.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = lodepng.h; path = ../shared/lodepng.h; sourceTree = "<group>"; };
+		CC564D551B190942006C3B13 /* Matrices.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = Matrices.cpp; path = ../shared/Matrices.cpp; sourceTree = "<group>"; };
+		CC564D561B190942006C3B13 /* Matrices.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Matrices.h; path = ../shared/Matrices.h; sourceTree = "<group>"; };
+		CC564D571B190942006C3B13 /* pathtools.cpp */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.cpp; name = pathtools.cpp; path = ../shared/pathtools.cpp; sourceTree = "<group>"; };
+		CC564D581B190942006C3B13 /* pathtools.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = pathtools.h; path = ../shared/pathtools.h; sourceTree = "<group>"; };
+		CC564D591B190942006C3B13 /* Vectors.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = Vectors.h; path = ../shared/Vectors.h; sourceTree = "<group>"; };
+		CC564D5D1B1913F3006C3B13 /* osxfilebridge.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; name = osxfilebridge.h; path = ../shared/osxfilebridge.h; sourceTree = "<group>"; };
+		CC564D5E1B191403006C3B13 /* osxfilebridge.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; name = osxfilebridge.mm; path = ../shared/osxfilebridge.mm; sourceTree = "<group>"; };
+		CC564D601B191DEE006C3B13 /* libopenvr_api.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopenvr_api.dylib; path = ../../bin/osx32/libopenvr_api.dylib; sourceTree = "<group>"; };
+		CC564D621B191E15006C3B13 /* libopenvr_api.dylib */ = {isa = PBXFileReference; lastKnownFileType = "compiled.mach-o.dylib"; name = libopenvr_api.dylib; path = ../../lib/osx32/libopenvr_api.dylib; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CC564D2F1B18FA84006C3B13 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC2013841B1988390060AEC8 /* libSDL2.dylib in Frameworks */,
+				CC564D631B191E15006C3B13 /* libopenvr_api.dylib in Frameworks */,
+				CC564D461B190597006C3B13 /* Foundation.framework in Frameworks */,
+				CC564D401B18FFFF006C3B13 /* OpenGL.framework in Frameworks */,
+				CC564D4A1B19072F006C3B13 /* libGLEW.a in Frameworks */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		CC564D291B18FA84006C3B13 = {
+			isa = PBXGroup;
+			children = (
+				CC564D3C1B18FF33006C3B13 /* Source */,
+				CC564D471B1905A1006C3B13 /* Frameworks */,
+				CC564D331B18FA84006C3B13 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		CC564D331B18FA84006C3B13 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				CC564D321B18FA84006C3B13 /* hellovr_opengl */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+		CC564D3C1B18FF33006C3B13 /* Source */ = {
+			isa = PBXGroup;
+			children = (
+				CC564D431B190542006C3B13 /* hellovr_opengl_main.cpp */,
+				CC564D411B19052F006C3B13 /* hellovr_opengl_main.mm */,
+				CC564D521B19092F006C3B13 /* Shared */,
+			);
+			name = Source;
+			sourceTree = "<group>";
+		};
+		CC564D471B1905A1006C3B13 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				CC2013831B1988390060AEC8 /* libSDL2.dylib */,
+				CC564D621B191E15006C3B13 /* libopenvr_api.dylib */,
+				CC564D601B191DEE006C3B13 /* libopenvr_api.dylib */,
+				CC564D4B1B19074C006C3B13 /* libSDL2.a */,
+				CC564D491B19072F006C3B13 /* libGLEW.a */,
+				CC564D451B190597006C3B13 /* Foundation.framework */,
+				CC564D3F1B18FFFF006C3B13 /* OpenGL.framework */,
+			);
+			name = Frameworks;
+			sourceTree = "<group>";
+		};
+		CC564D521B19092F006C3B13 /* Shared */ = {
+			isa = PBXGroup;
+			children = (
+				CC564D531B190942006C3B13 /* lodepng.cpp */,
+				CC564D541B190942006C3B13 /* lodepng.h */,
+				CC564D551B190942006C3B13 /* Matrices.cpp */,
+				CC564D561B190942006C3B13 /* Matrices.h */,
+				CC564D5D1B1913F3006C3B13 /* osxfilebridge.h */,
+				CC564D5E1B191403006C3B13 /* osxfilebridge.mm */,
+				CC564D571B190942006C3B13 /* pathtools.cpp */,
+				CC564D581B190942006C3B13 /* pathtools.h */,
+				CC564D591B190942006C3B13 /* Vectors.h */,
+			);
+			name = Shared;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		CC564D311B18FA84006C3B13 /* hellovr_opengl */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = CC564D391B18FA84006C3B13 /* Build configuration list for PBXNativeTarget "hellovr_opengl" */;
+			buildPhases = (
+				CC564D2E1B18FA84006C3B13 /* Sources */,
+				CC564D2F1B18FA84006C3B13 /* Frameworks */,
+				CC564D301B18FA84006C3B13 /* CopyFiles */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = hellovr_opengl;
+			productName = hellovr_opengl;
+			productReference = CC564D321B18FA84006C3B13 /* hellovr_opengl */;
+			productType = "com.apple.product-type.tool";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		CC564D2A1B18FA84006C3B13 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				LastUpgradeCheck = 0630;
+				ORGANIZATIONNAME = valve;
+				TargetAttributes = {
+					CC564D311B18FA84006C3B13 = {
+						CreatedOnToolsVersion = 6.3.2;
+					};
+				};
+			};
+			buildConfigurationList = CC564D2D1B18FA84006C3B13 /* Build configuration list for PBXProject "hellovr_opengl" */;
+			compatibilityVersion = "Xcode 3.2";
+			developmentRegion = English;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+			);
+			mainGroup = CC564D291B18FA84006C3B13;
+			productRefGroup = CC564D331B18FA84006C3B13 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				CC564D311B18FA84006C3B13 /* hellovr_opengl */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXSourcesBuildPhase section */
+		CC564D2E1B18FA84006C3B13 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				CC564D5C1B190942006C3B13 /* pathtools.cpp in Sources */,
+				CC564D5B1B190942006C3B13 /* Matrices.cpp in Sources */,
+				CC564D421B19052F006C3B13 /* hellovr_opengl_main.mm in Sources */,
+				CC564D5A1B190942006C3B13 /* lodepng.cpp in Sources */,
+				CC564D5F1B191403006C3B13 /* osxfilebridge.mm in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		CC564D371B18FA84006C3B13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_SYMBOLS_PRIVATE_EXTERN = NO;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+			};
+			name = Debug;
+		};
+		CC564D381B18FA84006C3B13 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++0x";
+				CLANG_CXX_LIBRARY = "libc++";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu99;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				MACOSX_DEPLOYMENT_TARGET = 10.10;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				SDKROOT = macosx;
+			};
+			name = Release;
+		};
+		CC564D3A1B18FA84006C3B13 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"OSX=1",
+					"DEBUG=1",
+				);
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"../../headers/**",
+					"../**",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../samples/thirdparty/glew/glew-1.11.0/lib/Release/osx32",
+					"$(SRCROOT)/../samples/thirdparty/sdl2-2.0.3/bin/osx32",
+					"$(SRCROOT)/../../lib/osx32",
+					"$(SRCROOT)/../../bin/osx32",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = i386;
+			};
+			name = Debug;
+		};
+		CC564D3B1B18FA84006C3B13 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ARCHS = "$(ARCHS_STANDARD_32_BIT)";
+				CLANG_ENABLE_OBJC_ARC = NO;
+				GCC_PREPROCESSOR_DEFINITIONS = "OSX=1";
+				HEADER_SEARCH_PATHS = (
+					"$(inherited)",
+					/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include,
+					"../../headers/**",
+					"../**",
+				);
+				LIBRARY_SEARCH_PATHS = (
+					"$(inherited)",
+					"$(SRCROOT)/../samples/thirdparty/glew/glew-1.11.0/lib/Release/osx32",
+					"$(SRCROOT)/../samples/thirdparty/sdl2-2.0.3/bin/osx32",
+					"$(SRCROOT)/../../lib/osx32",
+					"$(SRCROOT)/../../bin/osx32",
+				);
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				VALID_ARCHS = i386;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		CC564D2D1B18FA84006C3B13 /* Build configuration list for PBXProject "hellovr_opengl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC564D371B18FA84006C3B13 /* Debug */,
+				CC564D381B18FA84006C3B13 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		CC564D391B18FA84006C3B13 /* Build configuration list for PBXNativeTarget "hellovr_opengl" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				CC564D3A1B18FA84006C3B13 /* Debug */,
+				CC564D3B1B18FA84006C3B13 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = CC564D2A1B18FA84006C3B13 /* Project object */;
+}

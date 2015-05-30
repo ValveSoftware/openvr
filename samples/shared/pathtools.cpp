@@ -14,6 +14,8 @@
 #include "osxfilebridge.h"
 #define _S_IFDIR S_IFDIR     // really from tier0/platform.h which we dont have yet
 #define _MAX_PATH MAX_PATH   // yet another form of _PATH define we use
+#define stricmp strcasecmp
+#include <unistd.h>
 #elif defined(LINUX)
 #include <dlfcn.h>
 #include <stdio.h>
@@ -472,7 +474,7 @@ std::string Path_FindParentSubDirectoryRecursively( const std::string &strStartD
 unsigned char * Path_ReadBinaryFile( const std::string &strFilename, int *pSize )
 {
 	FILE *f;
-#if defined( POSIX )
+#if defined( POSIX ) || defined ( OSX )
 	f = fopen( strFilename.c_str(), "rb" );
 #else
 	errno_t err = fopen_s(&f, strFilename.c_str(), "rb");
@@ -538,7 +540,7 @@ std::string Path_ReadTextFile( const std::string &strFilename )
 bool Path_WriteStringToTextFile( const std::string &strFilename, const char *pchData )
 {
 	FILE *f;
-#if defined( POSIX )
+#if defined( POSIX ) || defined( OSX )
 	f = fopen( strFilename.c_str(), "w" );
 #else
 	errno_t err = fopen_s(&f, strFilename.c_str(), "w");
