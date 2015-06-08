@@ -553,10 +553,11 @@ void CMainApplication::Shutdown()
 	
 	if( m_pContext )
 	{
-#if !defined( OSX )
-		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
-		glDebugMessageCallback(nullptr, nullptr);
-#endif
+		if ( m_bDebugOpenGL )
+		{
+			glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
+			glDebugMessageCallback(nullptr, nullptr);
+        }
 		glDeleteBuffers(1, &m_glSceneVertBuffer);
 		glDeleteBuffers(1, &m_glIDVertBuffer);
 		glDeleteBuffers(1, &m_glIDIndexBuffer);
