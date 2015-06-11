@@ -45,10 +45,6 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRSystem_ResetSeatedZeroPose(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetSeatedZeroPoseToStandingAbsoluteTrackingPose")]
 	internal static extern HmdMatrix34_t VR_IVRSystem_GetSeatedZeroPoseToStandingAbsoluteTrackingPose(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_LoadRenderModel")]
-	internal static extern bool VR_IVRSystem_LoadRenderModel(IntPtr instancePtr, string pchRenderModelName, ref RenderModel_t pRenderModel);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_FreeRenderModel")]
-	internal static extern void VR_IVRSystem_FreeRenderModel(IntPtr instancePtr, ref RenderModel_t pRenderModel);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetTrackedDeviceClass")]
 	internal static extern TrackedDeviceClass VR_IVRSystem_GetTrackedDeviceClass(IntPtr instancePtr, uint unDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_IsTrackedDeviceConnected")]
@@ -85,14 +81,14 @@ class VRNativeEntrypoints
 	internal static extern IntPtr VR_IVRSystem_GetButtonIdNameFromEnum(IntPtr instancePtr, uint eButtonId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetControllerAxisTypeNameFromEnum")]
 	internal static extern IntPtr VR_IVRSystem_GetControllerAxisTypeNameFromEnum(IntPtr instancePtr, uint eAxisType);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_HandleControllerOverlayInteractionAsMouse")]
-	internal static extern bool VR_IVRSystem_HandleControllerOverlayInteractionAsMouse(IntPtr instancePtr, IntPtr overlaySettings, HmdVector2_t vecWindowClientPositionOnScreen, HmdVector2_t vecWindowClientSize, uint unControllerDeviceIndex, uint eOutputType);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_CaptureInputFocus")]
 	internal static extern bool VR_IVRSystem_CaptureInputFocus(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_ReleaseInputFocus")]
 	internal static extern void VR_IVRSystem_ReleaseInputFocus(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_IsInputFocusCapturedByAnotherProcess")]
 	internal static extern bool VR_IVRSystem_IsInputFocusCapturedByAnotherProcess(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_DriverDebugRequest")]
+	internal static extern uint VR_IVRSystem_DriverDebugRequest(IntPtr instancePtr, uint unDeviceIndex, string pchRequest, string pchResponseBuffer, uint unResponseBufferSize);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraCount")]
 	internal static extern uint VR_IVRCameraAccess_GetCameraCount(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraId")]
@@ -131,6 +127,22 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRChaperoneSetup_SetWorkingSeatedZeroPoseToRawTrackingPose(IntPtr instancePtr, IntPtr matSeatedZeroPoseToRawTrackingPose);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_SetWorkingStandingZeroPoseToRawTrackingPose")]
 	internal static extern void VR_IVRChaperoneSetup_SetWorkingStandingZeroPoseToRawTrackingPose(IntPtr instancePtr, IntPtr matStandingZeroPoseToRawTrackingPose);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetWorkingTagPoses")]
+	internal static extern bool VR_IVRChaperoneSetup_GetWorkingTagPoses(IntPtr instancePtr,  [In, Out] HmdMatrix34_t[] pTagPosesBuffer, ref uint punTagPosesCount);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetWorkingTagPoseScales")]
+	internal static extern bool VR_IVRChaperoneSetup_GetWorkingTagPoseScales(IntPtr instancePtr,  [In, Out] float[] pflScaleBuffer, ref uint punTagPosesCount);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetWorkingTagPoseNameByIndex")]
+	internal static extern uint VR_IVRChaperoneSetup_GetWorkingTagPoseNameByIndex(IntPtr instancePtr, uint nIndex, System.Text.StringBuilder pchBuffer, uint unBufferSize);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetWorkingTagPoseByName")]
+	internal static extern bool VR_IVRChaperoneSetup_GetWorkingTagPoseByName(IntPtr instancePtr, string pchTagName, ref HmdMatrix34_t pmatTagPose, ref float pflScale);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_SetWorkingTagPoseByName")]
+	internal static extern void VR_IVRChaperoneSetup_SetWorkingTagPoseByName(IntPtr instancePtr, string pchTagName, IntPtr matSeatedZeroPoseToRawTrackingPose, float flScale);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_RemoveWorkingTagPoseByName")]
+	internal static extern void VR_IVRChaperoneSetup_RemoveWorkingTagPoseByName(IntPtr instancePtr, string pchTagName);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses")]
+	internal static extern void VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_ReloadFromDisk")]
+	internal static extern void VR_IVRChaperoneSetup_ReloadFromDisk(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetLastError")]
 	internal static extern uint VR_IVRCompositor_GetLastError(IntPtr instancePtr, System.Text.StringBuilder pchBuffer, uint unBufferSize);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetVSync")]
@@ -144,21 +156,11 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetGraphicsDevice")]
 	internal static extern void VR_IVRCompositor_SetGraphicsDevice(IntPtr instancePtr, Compositor_DeviceType eType, IntPtr pDevice);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_WaitGetPoses")]
-	internal static extern void VR_IVRCompositor_WaitGetPoses(IntPtr instancePtr,  [In, Out] TrackedDevicePose_t[] pPoseArray, uint unPoseArrayCount);
+	internal static extern VRCompositorError VR_IVRCompositor_WaitGetPoses(IntPtr instancePtr,  [In, Out] TrackedDevicePose_t[] pRenderPoseArray, uint unRenderPoseArrayCount,  [In, Out] TrackedDevicePose_t[] pGamePoseArray, uint unGamePoseArrayCount);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_Submit")]
-	internal static extern void VR_IVRCompositor_Submit(IntPtr instancePtr, Hmd_Eye eEye, IntPtr pTexture, ref Compositor_TextureBounds pBounds);
+	internal static extern VRCompositorError VR_IVRCompositor_Submit(IntPtr instancePtr, Hmd_Eye eEye, IntPtr pTexture, ref VRTextureBounds_t pBounds);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ClearLastSubmittedFrame")]
 	internal static extern void VR_IVRCompositor_ClearLastSubmittedFrame(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetOverlayDefaults")]
-	internal static extern void VR_IVRCompositor_GetOverlayDefaults(IntPtr instancePtr, ref Compositor_OverlaySettings pSettings);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetOverlay")]
-	internal static extern void VR_IVRCompositor_SetOverlay(IntPtr instancePtr, IntPtr pTexture, ref Compositor_OverlaySettings pSettings);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetOverlayRaw")]
-	internal static extern void VR_IVRCompositor_SetOverlayRaw(IntPtr instancePtr, IntPtr buffer, uint width, uint height, uint depth, ref Compositor_OverlaySettings pSettings);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetOverlayFromFile")]
-	internal static extern void VR_IVRCompositor_SetOverlayFromFile(IntPtr instancePtr, string pchFilePath, ref Compositor_OverlaySettings pSettings);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ClearOverlay")]
-	internal static extern void VR_IVRCompositor_ClearOverlay(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetFrameTiming")]
 	internal static extern bool VR_IVRCompositor_GetFrameTiming(IntPtr instancePtr, ref Compositor_FrameTiming pTiming, uint unFramesAgo);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_FadeToColor")]
@@ -173,12 +175,114 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRCompositor_CompositorQuit(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_IsFullscreen")]
 	internal static extern bool VR_IVRCompositor_IsFullscreen(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ComputeOverlayIntersection")]
-	internal static extern bool VR_IVRCompositor_ComputeOverlayIntersection(IntPtr instancePtr, ref Compositor_OverlaySettings pSettings, float fAspectRatio, TrackingUniverseOrigin eOrigin, HmdVector3_t vSource, HmdVector3_t vDirection, ref HmdVector2_t pvecIntersectionUV, ref HmdVector3_t pvecIntersectionTrackingSpace);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetTrackingSpace")]
 	internal static extern void VR_IVRCompositor_SetTrackingSpace(IntPtr instancePtr, TrackingUniverseOrigin eOrigin);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetTrackingSpace")]
 	internal static extern TrackingUniverseOrigin VR_IVRCompositor_GetTrackingSpace(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetCurrentSceneFocusProcess")]
+	internal static extern uint VR_IVRCompositor_GetCurrentSceneFocusProcess(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_CanRenderScene")]
+	internal static extern bool VR_IVRCompositor_CanRenderScene(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_FindOverlay")]
+	internal static extern VROverlayError VR_IVROverlay_FindOverlay(IntPtr instancePtr, string pchOverlayKey, ref ulong pOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_CreateOverlay")]
+	internal static extern VROverlayError VR_IVROverlay_CreateOverlay(IntPtr instancePtr, string pchOverlayKey, string pchOverlayFriendlyName, ref ulong pOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_DestroyOverlay")]
+	internal static extern VROverlayError VR_IVROverlay_DestroyOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetHighQualityOverlay")]
+	internal static extern VROverlayError VR_IVROverlay_SetHighQualityOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetHighQualityOverlay")]
+	internal static extern ulong VR_IVROverlay_GetHighQualityOverlay(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayErrorNameFromEnum")]
+	internal static extern IntPtr VR_IVROverlay_GetOverlayErrorNameFromEnum(IntPtr instancePtr, VROverlayError error);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayFlag")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayFlag(IntPtr instancePtr, ulong ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayFlag")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayFlag(IntPtr instancePtr, ulong ulOverlayHandle, VROverlayFlags eOverlayFlag, ref bool pbEnabled);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayAlpha")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayAlpha(IntPtr instancePtr, ulong ulOverlayHandle, float fAlpha);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayAlpha")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayAlpha(IntPtr instancePtr, ulong ulOverlayHandle, ref float pfAlpha);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayGamma")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayGamma(IntPtr instancePtr, ulong ulOverlayHandle, float fGamma);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayGamma")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayGamma(IntPtr instancePtr, ulong ulOverlayHandle, ref float pfGamma);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayWidthInMeters")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayWidthInMeters(IntPtr instancePtr, ulong ulOverlayHandle, float fWidthInMeters);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayWidthInMeters")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayWidthInMeters(IntPtr instancePtr, ulong ulOverlayHandle, ref float pfWidthInMeters);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayTextureBounds")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayTextureBounds(IntPtr instancePtr, ulong ulOverlayHandle, ref VRTextureBounds_t pOverlayTextureBounds);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayTextureBounds")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayTextureBounds(IntPtr instancePtr, ulong ulOverlayHandle, ref VRTextureBounds_t pOverlayTextureBounds);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayTransformType")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayTransformType(IntPtr instancePtr, ulong ulOverlayHandle, ref VROverlayTransformType peTransformType);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayTransformAbsolute")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayTransformAbsolute(IntPtr instancePtr, ulong ulOverlayHandle, TrackingUniverseOrigin eTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayTransformAbsolute")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayTransformAbsolute(IntPtr instancePtr, ulong ulOverlayHandle, ref TrackingUniverseOrigin peTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayTransformTrackedDeviceRelative")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayTransformTrackedDeviceRelative(IntPtr instancePtr, ulong ulOverlayHandle, uint unTrackedDevice, ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayTransformTrackedDeviceRelative")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayTransformTrackedDeviceRelative(IntPtr instancePtr, ulong ulOverlayHandle, ref uint punTrackedDevice, ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayVisibility")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayVisibility(IntPtr instancePtr, ulong ulOverlayHandle, ref VROverlayVisibility peOverlayVisibility);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayVisibility")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayVisibility(IntPtr instancePtr, ulong ulOverlayHandle, VROverlayVisibility eOverlayVisibility);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_ShowOverlay")]
+	internal static extern VROverlayError VR_IVROverlay_ShowOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_HideOverlay")]
+	internal static extern VROverlayError VR_IVROverlay_HideOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_IsOverlayVisible")]
+	internal static extern bool VR_IVROverlay_IsOverlayVisible(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_PollNextOverlayEvent")]
+	internal static extern bool VR_IVROverlay_PollNextOverlayEvent(IntPtr instancePtr, ulong ulOverlayHandle, ref VREvent_t pEvent);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayInputMethod")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayInputMethod(IntPtr instancePtr, ulong ulOverlayHandle, ref VROverlayInputMethod peInputMethod);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayInputMethod")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayInputMethod(IntPtr instancePtr, ulong ulOverlayHandle, VROverlayInputMethod eInputMethod);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayMouseScale")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayMouseScale(IntPtr instancePtr, ulong ulOverlayHandle, ref HmdVector2_t pvecMouseScale);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayMouseScale")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayMouseScale(IntPtr instancePtr, ulong ulOverlayHandle, ref HmdVector2_t pvecMouseScale);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_ComputeOverlayIntersection")]
+	internal static extern bool VR_IVROverlay_ComputeOverlayIntersection(IntPtr instancePtr, ulong ulOverlayHandle, ref VROverlayIntersectionParams_t pParams, ref VROverlayIntersectionResults_t pResults);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_HandleControllerOverlayInteractionAsMouse")]
+	internal static extern bool VR_IVROverlay_HandleControllerOverlayInteractionAsMouse(IntPtr instancePtr, ulong ulOverlayHandle, uint unControllerDeviceIndex);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayTexture")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayTexture(IntPtr instancePtr, ulong ulOverlayHandle, IntPtr pTexture);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayRaw")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayRaw(IntPtr instancePtr, ulong ulOverlayHandle, IntPtr pvBuffer, uint unWidth, uint unHeight, uint unDepth);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayFromFile")]
+	internal static extern VROverlayError VR_IVROverlay_SetOverlayFromFile(IntPtr instancePtr, ulong ulOverlayHandle, string pchFilePath);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_IsSystemOverlayVisible")]
+	internal static extern bool VR_IVROverlay_IsSystemOverlayVisible(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_IsActiveSystemOverlay")]
+	internal static extern bool VR_IVROverlay_IsActiveSystemOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetSystemOverlaySceneProcess")]
+	internal static extern VROverlayError VR_IVROverlay_SetSystemOverlaySceneProcess(IntPtr instancePtr, ulong ulOverlayHandle, uint unProcessId);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetSystemOverlaySceneProcess")]
+	internal static extern VROverlayError VR_IVROverlay_GetSystemOverlaySceneProcess(IntPtr instancePtr, ulong ulOverlayHandle, ref uint punProcessId);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadRenderModel")]
+	internal static extern bool VR_IVRRenderModels_LoadRenderModel(IntPtr instancePtr, string pchRenderModelName, ref RenderModel_t pRenderModel);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeRenderModel")]
+	internal static extern void VR_IVRRenderModels_FreeRenderModel(IntPtr instancePtr, ref RenderModel_t pRenderModel);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetRenderModelName")]
+	internal static extern uint VR_IVRRenderModels_GetRenderModelName(IntPtr instancePtr, uint unRenderModelIndex, System.Text.StringBuilder pchRenderModelName, uint unRenderModelNameLen);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetRenderModelCount")]
+	internal static extern uint VR_IVRRenderModels_GetRenderModelCount(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_GetLastError")]
+	internal static extern uint VR_IVRNotifications_GetLastError(IntPtr instancePtr, System.Text.StringBuilder pchBuffer, uint unBufferSize);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_NotificationStart")]
+	internal static extern bool VR_IVRNotifications_NotificationStart(IntPtr instancePtr, string type, NotificationBitmap texture, ref uint notificationId);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_UpdateTexture")]
+	internal static extern bool VR_IVRNotifications_UpdateTexture(IntPtr instancePtr, uint notificationId, NotificationBitmap texture);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_UpdateBitmap")]
+	internal static extern bool VR_IVRNotifications_UpdateBitmap(IntPtr instancePtr, uint notificationId, NotificationBitmap texture);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_GetPointerLocation")]
+	internal static extern bool VR_IVRNotifications_GetPointerLocation(IntPtr instancePtr, uint notificationId, ref bool pointerActive, ref int pointerX, ref int pointerY);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_DismissNotification")]
+	internal static extern bool VR_IVRNotifications_DismissNotification(IntPtr instancePtr, uint notificationId);
 
 }
 
@@ -204,8 +308,6 @@ public abstract class IVRSystem
 	public abstract void GetDeviceToAbsoluteTrackingPose(TrackingUniverseOrigin eOrigin,float fPredictedSecondsToPhotonsFromNow,TrackedDevicePose_t [] pTrackedDevicePoseArray);
 	public abstract void ResetSeatedZeroPose();
 	public abstract HmdMatrix34_t GetSeatedZeroPoseToStandingAbsoluteTrackingPose();
-	public abstract bool LoadRenderModel(string pchRenderModelName,ref RenderModel_t pRenderModel);
-	public abstract void FreeRenderModel(ref RenderModel_t pRenderModel);
 	public abstract TrackedDeviceClass GetTrackedDeviceClass(uint unDeviceIndex);
 	public abstract bool IsTrackedDeviceConnected(uint unDeviceIndex);
 	public abstract bool GetBoolTrackedDeviceProperty(uint unDeviceIndex,TrackedDeviceProperty prop,ref TrackedPropertyError pError);
@@ -224,10 +326,10 @@ public abstract class IVRSystem
 	public abstract void TriggerHapticPulse(uint unControllerDeviceIndex,uint unAxisId,char usDurationMicroSec);
 	public abstract string GetButtonIdNameFromEnum(uint eButtonId);
 	public abstract string GetControllerAxisTypeNameFromEnum(uint eAxisType);
-	public abstract bool HandleControllerOverlayInteractionAsMouse(IntPtr overlaySettings,HmdVector2_t vecWindowClientPositionOnScreen,HmdVector2_t vecWindowClientSize,uint unControllerDeviceIndex,uint eOutputType);
 	public abstract bool CaptureInputFocus();
 	public abstract void ReleaseInputFocus();
 	public abstract bool IsInputFocusCapturedByAnotherProcess();
+	public abstract uint DriverDebugRequest(uint unDeviceIndex,string pchRequest,string pchResponseBuffer,uint unResponseBufferSize);
 }
 
 
@@ -265,6 +367,14 @@ public abstract class IVRChaperoneSetup
 	public abstract void SetWorkingHardBoundsInfo(HmdQuad_t [] pQuadsBuffer);
 	public abstract void SetWorkingSeatedZeroPoseToRawTrackingPose(IntPtr matSeatedZeroPoseToRawTrackingPose);
 	public abstract void SetWorkingStandingZeroPoseToRawTrackingPose(IntPtr matStandingZeroPoseToRawTrackingPose);
+	public abstract bool GetWorkingTagPoses(out HmdMatrix34_t [] pTagPosesBuffer);
+	public abstract bool GetWorkingTagPoseScales(out float [] pflScaleBuffer);
+	public abstract uint GetWorkingTagPoseNameByIndex(uint nIndex,System.Text.StringBuilder pchBuffer,uint unBufferSize);
+	public abstract bool GetWorkingTagPoseByName(string pchTagName,ref HmdMatrix34_t pmatTagPose,ref float pflScale);
+	public abstract void SetWorkingTagPoseByName(string pchTagName,IntPtr matSeatedZeroPoseToRawTrackingPose,float flScale);
+	public abstract void RemoveWorkingTagPoseByName(string pchTagName);
+	public abstract void RemoveAllWorkingTagPoses();
+	public abstract void ReloadFromDisk();
 }
 
 
@@ -277,14 +387,9 @@ public abstract class IVRCompositor
 	public abstract void SetGamma(float fGamma);
 	public abstract float GetGamma();
 	public abstract void SetGraphicsDevice(Compositor_DeviceType eType,IntPtr pDevice);
-	public abstract void WaitGetPoses(TrackedDevicePose_t [] pPoseArray);
-	public abstract void Submit(Hmd_Eye eEye,IntPtr pTexture,ref Compositor_TextureBounds pBounds);
+	public abstract VRCompositorError WaitGetPoses(TrackedDevicePose_t [] pRenderPoseArray,TrackedDevicePose_t [] pGamePoseArray);
+	public abstract VRCompositorError Submit(Hmd_Eye eEye,IntPtr pTexture,ref VRTextureBounds_t pBounds);
 	public abstract void ClearLastSubmittedFrame();
-	public abstract void GetOverlayDefaults(ref Compositor_OverlaySettings pSettings);
-	public abstract void SetOverlay(IntPtr pTexture,ref Compositor_OverlaySettings pSettings);
-	public abstract void SetOverlayRaw(IntPtr buffer,uint width,uint height,uint depth,ref Compositor_OverlaySettings pSettings);
-	public abstract void SetOverlayFromFile(string pchFilePath,ref Compositor_OverlaySettings pSettings);
-	public abstract void ClearOverlay();
 	public abstract bool GetFrameTiming(ref Compositor_FrameTiming pTiming,uint unFramesAgo);
 	public abstract void FadeToColor(float fSeconds,float fRed,float fGreen,float fBlue,float fAlpha,bool bBackground);
 	public abstract void FadeGrid(float fSeconds,bool bFadeIn);
@@ -292,9 +397,78 @@ public abstract class IVRCompositor
 	public abstract void CompositorGoToBack();
 	public abstract void CompositorQuit();
 	public abstract bool IsFullscreen();
-	public abstract bool ComputeOverlayIntersection(ref Compositor_OverlaySettings pSettings,float fAspectRatio,TrackingUniverseOrigin eOrigin,HmdVector3_t vSource,HmdVector3_t vDirection,ref HmdVector2_t pvecIntersectionUV,ref HmdVector3_t pvecIntersectionTrackingSpace);
 	public abstract void SetTrackingSpace(TrackingUniverseOrigin eOrigin);
 	public abstract TrackingUniverseOrigin GetTrackingSpace();
+	public abstract uint GetCurrentSceneFocusProcess();
+	public abstract bool CanRenderScene();
+}
+
+
+public abstract class IVROverlay
+{
+	public abstract IntPtr GetIntPtr();
+	public abstract VROverlayError FindOverlay(string pchOverlayKey,ref ulong pOverlayHandle);
+	public abstract VROverlayError CreateOverlay(string pchOverlayKey,string pchOverlayFriendlyName,ref ulong pOverlayHandle);
+	public abstract VROverlayError DestroyOverlay(ulong ulOverlayHandle);
+	public abstract VROverlayError SetHighQualityOverlay(ulong ulOverlayHandle);
+	public abstract ulong GetHighQualityOverlay();
+	public abstract string GetOverlayErrorNameFromEnum(VROverlayError error);
+	public abstract VROverlayError SetOverlayFlag(ulong ulOverlayHandle,VROverlayFlags eOverlayFlag,bool bEnabled);
+	public abstract VROverlayError GetOverlayFlag(ulong ulOverlayHandle,VROverlayFlags eOverlayFlag,ref bool pbEnabled);
+	public abstract VROverlayError SetOverlayAlpha(ulong ulOverlayHandle,float fAlpha);
+	public abstract VROverlayError GetOverlayAlpha(ulong ulOverlayHandle,ref float pfAlpha);
+	public abstract VROverlayError SetOverlayGamma(ulong ulOverlayHandle,float fGamma);
+	public abstract VROverlayError GetOverlayGamma(ulong ulOverlayHandle,ref float pfGamma);
+	public abstract VROverlayError SetOverlayWidthInMeters(ulong ulOverlayHandle,float fWidthInMeters);
+	public abstract VROverlayError GetOverlayWidthInMeters(ulong ulOverlayHandle,ref float pfWidthInMeters);
+	public abstract VROverlayError SetOverlayTextureBounds(ulong ulOverlayHandle,ref VRTextureBounds_t pOverlayTextureBounds);
+	public abstract VROverlayError GetOverlayTextureBounds(ulong ulOverlayHandle,ref VRTextureBounds_t pOverlayTextureBounds);
+	public abstract VROverlayError GetOverlayTransformType(ulong ulOverlayHandle,ref VROverlayTransformType peTransformType);
+	public abstract VROverlayError SetOverlayTransformAbsolute(ulong ulOverlayHandle,TrackingUniverseOrigin eTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform);
+	public abstract VROverlayError GetOverlayTransformAbsolute(ulong ulOverlayHandle,ref TrackingUniverseOrigin peTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform);
+	public abstract VROverlayError SetOverlayTransformTrackedDeviceRelative(ulong ulOverlayHandle,uint unTrackedDevice,ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform);
+	public abstract VROverlayError GetOverlayTransformTrackedDeviceRelative(ulong ulOverlayHandle,ref uint punTrackedDevice,ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform);
+	public abstract VROverlayError GetOverlayVisibility(ulong ulOverlayHandle,ref VROverlayVisibility peOverlayVisibility);
+	public abstract VROverlayError SetOverlayVisibility(ulong ulOverlayHandle,VROverlayVisibility eOverlayVisibility);
+	public abstract VROverlayError ShowOverlay(ulong ulOverlayHandle);
+	public abstract VROverlayError HideOverlay(ulong ulOverlayHandle);
+	public abstract bool IsOverlayVisible(ulong ulOverlayHandle);
+	public abstract bool PollNextOverlayEvent(ulong ulOverlayHandle,ref VREvent_t pEvent);
+	public abstract VROverlayError GetOverlayInputMethod(ulong ulOverlayHandle,ref VROverlayInputMethod peInputMethod);
+	public abstract VROverlayError SetOverlayInputMethod(ulong ulOverlayHandle,VROverlayInputMethod eInputMethod);
+	public abstract VROverlayError GetOverlayMouseScale(ulong ulOverlayHandle,ref HmdVector2_t pvecMouseScale);
+	public abstract VROverlayError SetOverlayMouseScale(ulong ulOverlayHandle,ref HmdVector2_t pvecMouseScale);
+	public abstract bool ComputeOverlayIntersection(ulong ulOverlayHandle,ref VROverlayIntersectionParams_t pParams,ref VROverlayIntersectionResults_t pResults);
+	public abstract bool HandleControllerOverlayInteractionAsMouse(ulong ulOverlayHandle,uint unControllerDeviceIndex);
+	public abstract VROverlayError SetOverlayTexture(ulong ulOverlayHandle,IntPtr pTexture);
+	public abstract VROverlayError SetOverlayRaw(ulong ulOverlayHandle,IntPtr pvBuffer,uint unWidth,uint unHeight,uint unDepth);
+	public abstract VROverlayError SetOverlayFromFile(ulong ulOverlayHandle,string pchFilePath);
+	public abstract bool IsSystemOverlayVisible();
+	public abstract bool IsActiveSystemOverlay(ulong ulOverlayHandle);
+	public abstract VROverlayError SetSystemOverlaySceneProcess(ulong ulOverlayHandle,uint unProcessId);
+	public abstract VROverlayError GetSystemOverlaySceneProcess(ulong ulOverlayHandle,ref uint punProcessId);
+}
+
+
+public abstract class IVRRenderModels
+{
+	public abstract IntPtr GetIntPtr();
+	public abstract bool LoadRenderModel(string pchRenderModelName,ref RenderModel_t pRenderModel);
+	public abstract void FreeRenderModel(ref RenderModel_t pRenderModel);
+	public abstract uint GetRenderModelName(uint unRenderModelIndex,System.Text.StringBuilder pchRenderModelName,uint unRenderModelNameLen);
+	public abstract uint GetRenderModelCount();
+}
+
+
+public abstract class IVRNotifications
+{
+	public abstract IntPtr GetIntPtr();
+	public abstract uint GetLastError(System.Text.StringBuilder pchBuffer,uint unBufferSize);
+	public abstract bool NotificationStart(string type,NotificationBitmap texture,ref uint notificationId);
+	public abstract bool UpdateTexture(uint notificationId,NotificationBitmap texture);
+	public abstract bool UpdateBitmap(uint notificationId,NotificationBitmap texture);
+	public abstract bool GetPointerLocation(uint notificationId,ref bool pointerActive,ref int pointerX,ref int pointerY);
+	public abstract bool DismissNotification(uint notificationId);
 }
 
 
@@ -410,17 +584,6 @@ public class CVRSystem : IVRSystem
 		HmdMatrix34_t result = VRNativeEntrypoints.VR_IVRSystem_GetSeatedZeroPoseToStandingAbsoluteTrackingPose(m_pVRSystem);
 		return result;
 	}
-	public override bool LoadRenderModel(string pchRenderModelName,ref RenderModel_t pRenderModel)
-	{
-		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRSystem_LoadRenderModel(m_pVRSystem,pchRenderModelName,ref pRenderModel);
-		return result;
-	}
-	public override void FreeRenderModel(ref RenderModel_t pRenderModel)
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRSystem_FreeRenderModel(m_pVRSystem,ref pRenderModel);
-	}
 	public override TrackedDeviceClass GetTrackedDeviceClass(uint unDeviceIndex)
 	{
 		CheckIfUsable();
@@ -528,12 +691,6 @@ public class CVRSystem : IVRSystem
 		IntPtr result = VRNativeEntrypoints.VR_IVRSystem_GetControllerAxisTypeNameFromEnum(m_pVRSystem,eAxisType);
 		return (string) Marshal.PtrToStructure(result, typeof(string));
 	}
-	public override bool HandleControllerOverlayInteractionAsMouse(IntPtr overlaySettings,HmdVector2_t vecWindowClientPositionOnScreen,HmdVector2_t vecWindowClientSize,uint unControllerDeviceIndex,uint eOutputType)
-	{
-		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRSystem_HandleControllerOverlayInteractionAsMouse(m_pVRSystem,overlaySettings,vecWindowClientPositionOnScreen,vecWindowClientSize,unControllerDeviceIndex,eOutputType);
-		return result;
-	}
 	public override bool CaptureInputFocus()
 	{
 		CheckIfUsable();
@@ -549,6 +706,12 @@ public class CVRSystem : IVRSystem
 	{
 		CheckIfUsable();
 		bool result = VRNativeEntrypoints.VR_IVRSystem_IsInputFocusCapturedByAnotherProcess(m_pVRSystem);
+		return result;
+	}
+	public override uint DriverDebugRequest(uint unDeviceIndex,string pchRequest,string pchResponseBuffer,uint unResponseBufferSize)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRSystem_DriverDebugRequest(m_pVRSystem,unDeviceIndex,pchRequest,pchResponseBuffer,unResponseBufferSize);
 		return result;
 	}
 }
@@ -726,6 +889,57 @@ public class CVRChaperoneSetup : IVRChaperoneSetup
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRChaperoneSetup_SetWorkingStandingZeroPoseToRawTrackingPose(m_pVRChaperoneSetup,matStandingZeroPoseToRawTrackingPose);
 	}
+	public override bool GetWorkingTagPoses(out HmdMatrix34_t [] pTagPosesBuffer)
+	{
+		CheckIfUsable();
+		uint punTagPosesCount = 0;
+		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetWorkingTagPoses(m_pVRChaperoneSetup,null,ref punTagPosesCount);
+		pTagPosesBuffer= new HmdMatrix34_t[punTagPosesCount];
+		result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetWorkingTagPoses(m_pVRChaperoneSetup,pTagPosesBuffer,ref punTagPosesCount);
+		return result;
+	}
+	public override bool GetWorkingTagPoseScales(out float [] pflScaleBuffer)
+	{
+		CheckIfUsable();
+		uint punTagPosesCount = 0;
+		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetWorkingTagPoseScales(m_pVRChaperoneSetup,null,ref punTagPosesCount);
+		pflScaleBuffer= new float[punTagPosesCount];
+		result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetWorkingTagPoseScales(m_pVRChaperoneSetup,pflScaleBuffer,ref punTagPosesCount);
+		return result;
+	}
+	public override uint GetWorkingTagPoseNameByIndex(uint nIndex,System.Text.StringBuilder pchBuffer,uint unBufferSize)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetWorkingTagPoseNameByIndex(m_pVRChaperoneSetup,nIndex,pchBuffer,unBufferSize);
+		return result;
+	}
+	public override bool GetWorkingTagPoseByName(string pchTagName,ref HmdMatrix34_t pmatTagPose,ref float pflScale)
+	{
+		CheckIfUsable();
+		pflScale = 0;
+		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetWorkingTagPoseByName(m_pVRChaperoneSetup,pchTagName,ref pmatTagPose,ref pflScale);
+		return result;
+	}
+	public override void SetWorkingTagPoseByName(string pchTagName,IntPtr matSeatedZeroPoseToRawTrackingPose,float flScale)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperoneSetup_SetWorkingTagPoseByName(m_pVRChaperoneSetup,pchTagName,matSeatedZeroPoseToRawTrackingPose,flScale);
+	}
+	public override void RemoveWorkingTagPoseByName(string pchTagName)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperoneSetup_RemoveWorkingTagPoseByName(m_pVRChaperoneSetup,pchTagName);
+	}
+	public override void RemoveAllWorkingTagPoses()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(m_pVRChaperoneSetup);
+	}
+	public override void ReloadFromDisk()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperoneSetup_ReloadFromDisk(m_pVRChaperoneSetup);
+	}
 }
 
 
@@ -779,45 +993,22 @@ public class CVRCompositor : IVRCompositor
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRCompositor_SetGraphicsDevice(m_pVRCompositor,eType,pDevice);
 	}
-	public override void WaitGetPoses(TrackedDevicePose_t [] pPoseArray)
+	public override VRCompositorError WaitGetPoses(TrackedDevicePose_t [] pRenderPoseArray,TrackedDevicePose_t [] pGamePoseArray)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_WaitGetPoses(m_pVRCompositor,pPoseArray,(uint) pPoseArray.Length);
+		VRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_WaitGetPoses(m_pVRCompositor,pRenderPoseArray,(uint) pRenderPoseArray.Length,pGamePoseArray,(uint) pGamePoseArray.Length);
+		return result;
 	}
-	public override void Submit(Hmd_Eye eEye,IntPtr pTexture,ref Compositor_TextureBounds pBounds)
+	public override VRCompositorError Submit(Hmd_Eye eEye,IntPtr pTexture,ref VRTextureBounds_t pBounds)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_Submit(m_pVRCompositor,eEye,pTexture,ref pBounds);
+		VRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_Submit(m_pVRCompositor,eEye,pTexture,ref pBounds);
+		return result;
 	}
 	public override void ClearLastSubmittedFrame()
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRCompositor_ClearLastSubmittedFrame(m_pVRCompositor);
-	}
-	public override void GetOverlayDefaults(ref Compositor_OverlaySettings pSettings)
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_GetOverlayDefaults(m_pVRCompositor,ref pSettings);
-	}
-	public override void SetOverlay(IntPtr pTexture,ref Compositor_OverlaySettings pSettings)
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_SetOverlay(m_pVRCompositor,pTexture,ref pSettings);
-	}
-	public override void SetOverlayRaw(IntPtr buffer,uint width,uint height,uint depth,ref Compositor_OverlaySettings pSettings)
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_SetOverlayRaw(m_pVRCompositor,buffer,width,height,depth,ref pSettings);
-	}
-	public override void SetOverlayFromFile(string pchFilePath,ref Compositor_OverlaySettings pSettings)
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_SetOverlayFromFile(m_pVRCompositor,pchFilePath,ref pSettings);
-	}
-	public override void ClearOverlay()
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRCompositor_ClearOverlay(m_pVRCompositor);
 	}
 	public override bool GetFrameTiming(ref Compositor_FrameTiming pTiming,uint unFramesAgo)
 	{
@@ -856,12 +1047,6 @@ public class CVRCompositor : IVRCompositor
 		bool result = VRNativeEntrypoints.VR_IVRCompositor_IsFullscreen(m_pVRCompositor);
 		return result;
 	}
-	public override bool ComputeOverlayIntersection(ref Compositor_OverlaySettings pSettings,float fAspectRatio,TrackingUniverseOrigin eOrigin,HmdVector3_t vSource,HmdVector3_t vDirection,ref HmdVector2_t pvecIntersectionUV,ref HmdVector3_t pvecIntersectionTrackingSpace)
-	{
-		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRCompositor_ComputeOverlayIntersection(m_pVRCompositor,ref pSettings,fAspectRatio,eOrigin,vSource,vDirection,ref pvecIntersectionUV,ref pvecIntersectionTrackingSpace);
-		return result;
-	}
 	public override void SetTrackingSpace(TrackingUniverseOrigin eOrigin)
 	{
 		CheckIfUsable();
@@ -871,6 +1056,389 @@ public class CVRCompositor : IVRCompositor
 	{
 		CheckIfUsable();
 		TrackingUniverseOrigin result = VRNativeEntrypoints.VR_IVRCompositor_GetTrackingSpace(m_pVRCompositor);
+		return result;
+	}
+	public override uint GetCurrentSceneFocusProcess()
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRCompositor_GetCurrentSceneFocusProcess(m_pVRCompositor);
+		return result;
+	}
+	public override bool CanRenderScene()
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRCompositor_CanRenderScene(m_pVRCompositor);
+		return result;
+	}
+}
+
+
+public class CVROverlay : IVROverlay
+{
+	public CVROverlay(IntPtr VROverlay)
+	{
+		m_pVROverlay = VROverlay;
+	}
+	IntPtr m_pVROverlay;
+
+	public override IntPtr GetIntPtr() { return m_pVROverlay; }
+
+	private void CheckIfUsable()
+	{
+		if (m_pVROverlay == IntPtr.Zero)
+		{
+			throw new Exception("Steam Pointer not configured");
+		}
+	}
+	public override VROverlayError FindOverlay(string pchOverlayKey,ref ulong pOverlayHandle)
+	{
+		CheckIfUsable();
+		pOverlayHandle = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_FindOverlay(m_pVROverlay,pchOverlayKey,ref pOverlayHandle);
+		return result;
+	}
+	public override VROverlayError CreateOverlay(string pchOverlayKey,string pchOverlayFriendlyName,ref ulong pOverlayHandle)
+	{
+		CheckIfUsable();
+		pOverlayHandle = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_CreateOverlay(m_pVROverlay,pchOverlayKey,pchOverlayFriendlyName,ref pOverlayHandle);
+		return result;
+	}
+	public override VROverlayError DestroyOverlay(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_DestroyOverlay(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
+	public override VROverlayError SetHighQualityOverlay(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetHighQualityOverlay(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
+	public override ulong GetHighQualityOverlay()
+	{
+		CheckIfUsable();
+		ulong result = VRNativeEntrypoints.VR_IVROverlay_GetHighQualityOverlay(m_pVROverlay);
+		return result;
+	}
+	public override string GetOverlayErrorNameFromEnum(VROverlayError error)
+	{
+		CheckIfUsable();
+		IntPtr result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayErrorNameFromEnum(m_pVROverlay,error);
+		return (string) Marshal.PtrToStructure(result, typeof(string));
+	}
+	public override VROverlayError SetOverlayFlag(ulong ulOverlayHandle,VROverlayFlags eOverlayFlag,bool bEnabled)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayFlag(m_pVROverlay,ulOverlayHandle,eOverlayFlag,bEnabled);
+		return result;
+	}
+	public override VROverlayError GetOverlayFlag(ulong ulOverlayHandle,VROverlayFlags eOverlayFlag,ref bool pbEnabled)
+	{
+		CheckIfUsable();
+		pbEnabled = false;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayFlag(m_pVROverlay,ulOverlayHandle,eOverlayFlag,ref pbEnabled);
+		return result;
+	}
+	public override VROverlayError SetOverlayAlpha(ulong ulOverlayHandle,float fAlpha)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayAlpha(m_pVROverlay,ulOverlayHandle,fAlpha);
+		return result;
+	}
+	public override VROverlayError GetOverlayAlpha(ulong ulOverlayHandle,ref float pfAlpha)
+	{
+		CheckIfUsable();
+		pfAlpha = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayAlpha(m_pVROverlay,ulOverlayHandle,ref pfAlpha);
+		return result;
+	}
+	public override VROverlayError SetOverlayGamma(ulong ulOverlayHandle,float fGamma)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayGamma(m_pVROverlay,ulOverlayHandle,fGamma);
+		return result;
+	}
+	public override VROverlayError GetOverlayGamma(ulong ulOverlayHandle,ref float pfGamma)
+	{
+		CheckIfUsable();
+		pfGamma = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayGamma(m_pVROverlay,ulOverlayHandle,ref pfGamma);
+		return result;
+	}
+	public override VROverlayError SetOverlayWidthInMeters(ulong ulOverlayHandle,float fWidthInMeters)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayWidthInMeters(m_pVROverlay,ulOverlayHandle,fWidthInMeters);
+		return result;
+	}
+	public override VROverlayError GetOverlayWidthInMeters(ulong ulOverlayHandle,ref float pfWidthInMeters)
+	{
+		CheckIfUsable();
+		pfWidthInMeters = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayWidthInMeters(m_pVROverlay,ulOverlayHandle,ref pfWidthInMeters);
+		return result;
+	}
+	public override VROverlayError SetOverlayTextureBounds(ulong ulOverlayHandle,ref VRTextureBounds_t pOverlayTextureBounds)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayTextureBounds(m_pVROverlay,ulOverlayHandle,ref pOverlayTextureBounds);
+		return result;
+	}
+	public override VROverlayError GetOverlayTextureBounds(ulong ulOverlayHandle,ref VRTextureBounds_t pOverlayTextureBounds)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayTextureBounds(m_pVROverlay,ulOverlayHandle,ref pOverlayTextureBounds);
+		return result;
+	}
+	public override VROverlayError GetOverlayTransformType(ulong ulOverlayHandle,ref VROverlayTransformType peTransformType)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayTransformType(m_pVROverlay,ulOverlayHandle,ref peTransformType);
+		return result;
+	}
+	public override VROverlayError SetOverlayTransformAbsolute(ulong ulOverlayHandle,TrackingUniverseOrigin eTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayTransformAbsolute(m_pVROverlay,ulOverlayHandle,eTrackingOrigin,ref pmatTrackingOriginToOverlayTransform);
+		return result;
+	}
+	public override VROverlayError GetOverlayTransformAbsolute(ulong ulOverlayHandle,ref TrackingUniverseOrigin peTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayTransformAbsolute(m_pVROverlay,ulOverlayHandle,ref peTrackingOrigin,ref pmatTrackingOriginToOverlayTransform);
+		return result;
+	}
+	public override VROverlayError SetOverlayTransformTrackedDeviceRelative(ulong ulOverlayHandle,uint unTrackedDevice,ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayTransformTrackedDeviceRelative(m_pVROverlay,ulOverlayHandle,unTrackedDevice,ref pmatTrackedDeviceToOverlayTransform);
+		return result;
+	}
+	public override VROverlayError GetOverlayTransformTrackedDeviceRelative(ulong ulOverlayHandle,ref uint punTrackedDevice,ref HmdMatrix34_t pmatTrackedDeviceToOverlayTransform)
+	{
+		CheckIfUsable();
+		punTrackedDevice = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayTransformTrackedDeviceRelative(m_pVROverlay,ulOverlayHandle,ref punTrackedDevice,ref pmatTrackedDeviceToOverlayTransform);
+		return result;
+	}
+	public override VROverlayError GetOverlayVisibility(ulong ulOverlayHandle,ref VROverlayVisibility peOverlayVisibility)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayVisibility(m_pVROverlay,ulOverlayHandle,ref peOverlayVisibility);
+		return result;
+	}
+	public override VROverlayError SetOverlayVisibility(ulong ulOverlayHandle,VROverlayVisibility eOverlayVisibility)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayVisibility(m_pVROverlay,ulOverlayHandle,eOverlayVisibility);
+		return result;
+	}
+	public override VROverlayError ShowOverlay(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_ShowOverlay(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
+	public override VROverlayError HideOverlay(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_HideOverlay(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
+	public override bool IsOverlayVisible(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_IsOverlayVisible(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
+	public override bool PollNextOverlayEvent(ulong ulOverlayHandle,ref VREvent_t pEvent)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_PollNextOverlayEvent(m_pVROverlay,ulOverlayHandle,ref pEvent);
+		return result;
+	}
+	public override VROverlayError GetOverlayInputMethod(ulong ulOverlayHandle,ref VROverlayInputMethod peInputMethod)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayInputMethod(m_pVROverlay,ulOverlayHandle,ref peInputMethod);
+		return result;
+	}
+	public override VROverlayError SetOverlayInputMethod(ulong ulOverlayHandle,VROverlayInputMethod eInputMethod)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayInputMethod(m_pVROverlay,ulOverlayHandle,eInputMethod);
+		return result;
+	}
+	public override VROverlayError GetOverlayMouseScale(ulong ulOverlayHandle,ref HmdVector2_t pvecMouseScale)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayMouseScale(m_pVROverlay,ulOverlayHandle,ref pvecMouseScale);
+		return result;
+	}
+	public override VROverlayError SetOverlayMouseScale(ulong ulOverlayHandle,ref HmdVector2_t pvecMouseScale)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayMouseScale(m_pVROverlay,ulOverlayHandle,ref pvecMouseScale);
+		return result;
+	}
+	public override bool ComputeOverlayIntersection(ulong ulOverlayHandle,ref VROverlayIntersectionParams_t pParams,ref VROverlayIntersectionResults_t pResults)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_ComputeOverlayIntersection(m_pVROverlay,ulOverlayHandle,ref pParams,ref pResults);
+		return result;
+	}
+	public override bool HandleControllerOverlayInteractionAsMouse(ulong ulOverlayHandle,uint unControllerDeviceIndex)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_HandleControllerOverlayInteractionAsMouse(m_pVROverlay,ulOverlayHandle,unControllerDeviceIndex);
+		return result;
+	}
+	public override VROverlayError SetOverlayTexture(ulong ulOverlayHandle,IntPtr pTexture)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayTexture(m_pVROverlay,ulOverlayHandle,pTexture);
+		return result;
+	}
+	public override VROverlayError SetOverlayRaw(ulong ulOverlayHandle,IntPtr pvBuffer,uint unWidth,uint unHeight,uint unDepth)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayRaw(m_pVROverlay,ulOverlayHandle,pvBuffer,unWidth,unHeight,unDepth);
+		return result;
+	}
+	public override VROverlayError SetOverlayFromFile(ulong ulOverlayHandle,string pchFilePath)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetOverlayFromFile(m_pVROverlay,ulOverlayHandle,pchFilePath);
+		return result;
+	}
+	public override bool IsSystemOverlayVisible()
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_IsSystemOverlayVisible(m_pVROverlay);
+		return result;
+	}
+	public override bool IsActiveSystemOverlay(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_IsActiveSystemOverlay(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
+	public override VROverlayError SetSystemOverlaySceneProcess(ulong ulOverlayHandle,uint unProcessId)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_SetSystemOverlaySceneProcess(m_pVROverlay,ulOverlayHandle,unProcessId);
+		return result;
+	}
+	public override VROverlayError GetSystemOverlaySceneProcess(ulong ulOverlayHandle,ref uint punProcessId)
+	{
+		CheckIfUsable();
+		punProcessId = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetSystemOverlaySceneProcess(m_pVROverlay,ulOverlayHandle,ref punProcessId);
+		return result;
+	}
+}
+
+
+public class CVRRenderModels : IVRRenderModels
+{
+	public CVRRenderModels(IntPtr VRRenderModels)
+	{
+		m_pVRRenderModels = VRRenderModels;
+	}
+	IntPtr m_pVRRenderModels;
+
+	public override IntPtr GetIntPtr() { return m_pVRRenderModels; }
+
+	private void CheckIfUsable()
+	{
+		if (m_pVRRenderModels == IntPtr.Zero)
+		{
+			throw new Exception("Steam Pointer not configured");
+		}
+	}
+	public override bool LoadRenderModel(string pchRenderModelName,ref RenderModel_t pRenderModel)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRRenderModels_LoadRenderModel(m_pVRRenderModels,pchRenderModelName,ref pRenderModel);
+		return result;
+	}
+	public override void FreeRenderModel(ref RenderModel_t pRenderModel)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRRenderModels_FreeRenderModel(m_pVRRenderModels,ref pRenderModel);
+	}
+	public override uint GetRenderModelName(uint unRenderModelIndex,System.Text.StringBuilder pchRenderModelName,uint unRenderModelNameLen)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRRenderModels_GetRenderModelName(m_pVRRenderModels,unRenderModelIndex,pchRenderModelName,unRenderModelNameLen);
+		return result;
+	}
+	public override uint GetRenderModelCount()
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRRenderModels_GetRenderModelCount(m_pVRRenderModels);
+		return result;
+	}
+}
+
+
+public class CVRNotifications : IVRNotifications
+{
+	public CVRNotifications(IntPtr VRNotifications)
+	{
+		m_pVRNotifications = VRNotifications;
+	}
+	IntPtr m_pVRNotifications;
+
+	public override IntPtr GetIntPtr() { return m_pVRNotifications; }
+
+	private void CheckIfUsable()
+	{
+		if (m_pVRNotifications == IntPtr.Zero)
+		{
+			throw new Exception("Steam Pointer not configured");
+		}
+	}
+	public override uint GetLastError(System.Text.StringBuilder pchBuffer,uint unBufferSize)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRNotifications_GetLastError(m_pVRNotifications,pchBuffer,unBufferSize);
+		return result;
+	}
+	public override bool NotificationStart(string type,NotificationBitmap texture,ref uint notificationId)
+	{
+		CheckIfUsable();
+		notificationId = 0;
+		bool result = VRNativeEntrypoints.VR_IVRNotifications_NotificationStart(m_pVRNotifications,type,texture,ref notificationId);
+		return result;
+	}
+	public override bool UpdateTexture(uint notificationId,NotificationBitmap texture)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRNotifications_UpdateTexture(m_pVRNotifications,notificationId,texture);
+		return result;
+	}
+	public override bool UpdateBitmap(uint notificationId,NotificationBitmap texture)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRNotifications_UpdateBitmap(m_pVRNotifications,notificationId,texture);
+		return result;
+	}
+	public override bool GetPointerLocation(uint notificationId,ref bool pointerActive,ref int pointerX,ref int pointerY)
+	{
+		CheckIfUsable();
+		pointerActive = false;
+		pointerX = 0;
+		pointerY = 0;
+		bool result = VRNativeEntrypoints.VR_IVRNotifications_GetPointerLocation(m_pVRNotifications,notificationId,ref pointerActive,ref pointerX,ref pointerY);
+		return result;
+	}
+	public override bool DismissNotification(uint notificationId)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRNotifications_DismissNotification(m_pVRNotifications,notificationId);
 		return result;
 	}
 }
@@ -933,6 +1501,8 @@ public enum TrackedDeviceProperty
 	Prop_ManufacturerName_String = 1005,
 	Prop_TrackingFirmwareVersion_String = 1006,
 	Prop_HardwareRevision_String = 1007,
+	Prop_AllWirelessDongleDescriptions_String = 1008,
+	Prop_ConnectedWirelessDongle_String = 1009,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -940,6 +1510,7 @@ public enum TrackedDeviceProperty
 	Prop_CurrentUniverseId_Uint64 = 2004,
 	Prop_PreviousUniverseId_Uint64 = 2005,
 	Prop_DisplayFirmwareVersion_String = 2006,
+	Prop_IsOnDesktop_Bool = 2007,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -981,6 +1552,18 @@ public enum EVREventType
 	VREvent_MouseButtonUp = 302,
 	VREvent_InputFocusCaptured = 400,
 	VREvent_InputFocusReleased = 401,
+	VREvent_SceneFocusLost = 402,
+	VREvent_SceneFocusGained = 403,
+	VREvent_OverlayShown = 500,
+	VREvent_OverlayHidden = 501,
+	VREvent_SystemOverlayActivated = 502,
+	VREvent_SystemOverlayDeactivated = 503,
+	VREvent_SystemOverlayThumbSelected = 504,
+	VREvent_Notification_Dismissed = 600,
+	VREvent_Notification_BeginInteraction = 601,
+	VREvent_Notification_Scroll = 602,
+	VREvent_Notification_ClickOn = 603,
+	VREvent_Notification_ClickOff = 604,
 }
 public enum EVRButtonId
 {
@@ -1075,6 +1658,48 @@ public enum Compositor_DeviceType
 	D3D11 = 4,
 	OpenGL = 5,
 }
+public enum VRCompositorError
+{
+	None = 0,
+	IncompatibleVersion = 100,
+	DoNotHaveFocus = 101,
+}
+public enum VROverlayError
+{
+	None = 0,
+	UnknownOverlay = 10,
+	InvalidHandle = 11,
+	PermissionDenied = 12,
+	OverlayLimitExceeded = 13,
+	WrongVisibilityType = 14,
+	KeyTooLong = 15,
+	NameTooLong = 16,
+	KeyInUse = 17,
+	WrongTransformType = 18,
+	InvalidTrackedDevice = 19,
+}
+public enum VROverlayInputMethod
+{
+	None = 0,
+	Mouse = 1,
+}
+public enum VROverlayVisibility
+{
+	Manual = 0,
+	SystemOverlay = 1,
+}
+public enum VROverlayTransformType
+{
+	VROverlayTransform_Absolute = 0,
+	VROverlayTransform_TrackedDeviceRelative = 1,
+	VROverlayTransform_SystemOverlay = 2,
+}
+public enum VROverlayFlags
+{
+	None = 0,
+	Curved = 1,
+	RGSS4X = 2,
+}
 
 [StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
 {
@@ -1162,6 +1787,13 @@ public enum Compositor_DeviceType
 	public uint unTriangleCount;
 	public RenderModel_TextureMap_t diffuseTexture;
 }
+[StructLayout(LayoutKind.Sequential)] public struct VRTextureBounds_t
+{
+	public float uMin;
+	public float vMin;
+	public float uMax;
+	public float vMax;
+}
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Controller_t
 {
 	public uint button;
@@ -1172,10 +1804,20 @@ public enum Compositor_DeviceType
 	public float y;
 	public uint button;
 }
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_Notification_t
+{
+	public float x;
+	public float y;
+	public uint notificationId;
+}
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Process_t
 {
 	public uint pid;
 	public uint oldPid;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_Overlay_t
+{
+	public ulong overlayHandle;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Reserved_t
 {
@@ -1263,12 +1905,25 @@ public enum Compositor_DeviceType
 	public uint frameIndex;
 	public TrackedDevicePose_t pose;
 }
-[StructLayout(LayoutKind.Sequential)] public struct Compositor_TextureBounds
+[StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionParams_t
 {
-	public float uMin;
-	public float vMin;
-	public float uMax;
-	public float vMax;
+	public HmdVector3_t vSource;
+	public HmdVector3_t vDirection;
+	public TrackingUniverseOrigin eOrigin;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionResults_t
+{
+	public HmdVector3_t vPoint;
+	public HmdVector3_t vNormal;
+	public HmdVector2_t vUVs;
+	public float fDistance;
+}
+[StructLayout(LayoutKind.Sequential)] public struct NotificationBitmap
+{
+	public IntPtr bytes; // char *
+	public int width;
+	public int height;
+	public int depth;
 }
 
 public class OpenVR
@@ -1301,14 +1956,21 @@ public class OpenVR
 	public const uint k_unTrackingStringSize = 32;
 	public const uint k_unMaxTrackedDeviceCount = 16;
 	public const uint k_unTrackedDeviceIndex_Hmd = 0;
+	public const uint k_unMaxDriverDebugResponseSize = 32768;
 	public const uint k_unTrackedDeviceIndexInvalid = 4294967295;
 	public const uint k_unMaxPropertyStringSize = 32768;
 	public const uint k_unControllerStateAxisCount = 5;
-	public const string IVRSystem_Version = "IVRSystem_003";
+	public const string IVRSystem_Version = "IVRSystem_004";
 	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
 	public const string IVRChaperone_Version = "IVRChaperone_002";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
-	public const string IVRCompositor_Version = "IVRCompositor_005";
+	public const string IVRCompositor_Version = "IVRCompositor_006";
+	public const ulong k_ulOverlayHandleInvalid = 0;
+	public const uint k_unVROverlayMaxKeyLength = 128;
+	public const uint k_unVROverlayMaxNameLength = 128;
+	public const string IVROverlay_Version = "IVROverlay_001";
+	public const string IVRRenderModels_Version = "IVRRenderModels_001";
+	public const string IVRNotifications_Version = "IVRNotifications_001";
 }
 
 

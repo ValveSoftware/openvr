@@ -11,6 +11,9 @@
 
 
 // vrtypes.h
+#ifndef _INCLUDE_VRTYPES_H
+#define _INCLUDE_VRTYPES_H 
+
 namespace vr
 {
 
@@ -101,6 +104,7 @@ enum HmdTrackingResult
 static const uint32_t k_unTrackingStringSize = 32;
 static const uint32_t k_unMaxTrackedDeviceCount = 16;
 static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
+static const uint32_t k_unMaxDriverDebugResponseSize = 32768;
 
 /** Describes what kind of object is being tracked at a given ID */
 enum TrackedDeviceClass
@@ -151,6 +155,8 @@ enum TrackedDeviceProperty
 	Prop_ManufacturerName_String			= 1005,
 	Prop_TrackingFirmwareVersion_String		= 1006,
 	Prop_HardwareRevision_String			= 1007,
+	Prop_AllWirelessDongleDescriptions_String= 1008,
+	Prop_ConnectedWirelessDongle_String		= 1009,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool			= 2000,
@@ -160,6 +166,7 @@ enum TrackedDeviceProperty
 	Prop_CurrentUniverseId_Uint64			= 2004, 
 	Prop_PreviousUniverseId_Uint64			= 2005, 
 	Prop_DisplayFirmwareVersion_String		= 2006,
+	Prop_IsOnDesktop_Bool					= 2007,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String			= 3000,
@@ -228,6 +235,14 @@ struct RenderModel_t
 };
 
 
+/** Allows the application to control what part of the provided texture will be used in the
+* frame buffer. */
+struct VRTextureBounds_t
+{
+	float uMin, vMin;
+	float uMax, vMax;
+};
+
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
 {
@@ -248,6 +263,21 @@ enum EVREventType
 
 	VREvent_InputFocusCaptured			= 400, // data is process
 	VREvent_InputFocusReleased			= 401, // data is process
+	VREvent_SceneFocusLost				= 402, // data is process
+	VREvent_SceneFocusGained			= 403, // data is process
+
+	VREvent_OverlayShown				= 500,
+	VREvent_OverlayHidden				= 501,
+	VREvent_SystemOverlayActivated		= 502,
+	VREvent_SystemOverlayDeactivated	= 503,
+	VREvent_SystemOverlayThumbSelected	= 504, // Handled by vrcompositor and never sent to applications - data is overlay
+
+
+	VREvent_Notification_Dismissed			= 600,
+	VREvent_Notification_BeginInteraction	= 601,
+	VREvent_Notification_Scroll				= 602,
+	VREvent_Notification_ClickOn			= 603,
+	VREvent_Notification_ClickOff			= 604,
 };
 
 
@@ -296,12 +326,26 @@ struct VREvent_Mouse_t
 	EVRMouseButton button;
 };
 
+/** notification related events. Details will still change at this point */
+struct VREvent_Notification_t
+{
+	float x, y;
+	uint32_t notificationId;
+};
+
 
 /** Used for events about processes */
 struct VREvent_Process_t
 {
 	uint32_t pid;
 	uint32_t oldPid;
+};
+
+
+/** Used for a few events about overlays */
+struct VREvent_Overlay_t
+{
+	uint64_t overlayHandle;
 };
 
 
@@ -320,6 +364,8 @@ typedef union
 	VREvent_Controller_t controller;
 	VREvent_Mouse_t mouse;
 	VREvent_Process_t process;
+	VREvent_Notification_t notification;
+	VREvent_Overlay_t overlay;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -452,6 +498,8 @@ enum HmdError
 
 }
 
+#endif // _INCLUDE_VRTYPES_H
+
 // vrannotation.h
 #ifdef __clang__
 # define VR_CLANG_ATTR(ATTR) __attribute__((annotate( ATTR )))
@@ -570,27 +618,6 @@ public:
 	* depends on what the user has set in the chaperone calibration tool and previous calls to ResetSeatedZeroPose. */
 	virtual HmdMatrix34_t GetSeatedZeroPoseToStandingAbsoluteTrackingPose() = 0;
 
-	// ------------------------------------
-	// RenderModel methods
-	// ------------------------------------
-
-	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
-	* from the Prop_RenderModelName_String property or an absolute path name to a render model on disk. 
-	*
-	* The resulting render model is valid until VR_Shutdown() is called or until FreeRenderModel() is called. When the 
-	* application is finished with the render model it should call FreeRenderModel() to free the memory associated
-	* with the model.
-	*
-	* The method returns false if the model could not be loaded.
-	*
-	* The API expects that this function will be called at startup or when tracked devices are connected and disconnected.
-	* If it is called every frame it will hurt performance.
-	*/
-	virtual bool LoadRenderModel( const char *pchRenderModelName, RenderModel_t *pRenderModel ) = 0;
-
-
-	/** Frees a previously returned render model */
-	virtual void FreeRenderModel( RenderModel_t *pRenderModel ) = 0;
 
 	// ------------------------------------
 	// Property methods
@@ -684,18 +711,6 @@ public:
 	/** returns the name of an EVRControllerAxisType enum value */
 	virtual const char *GetControllerAxisTypeNameFromEnum( EVRControllerAxisType eAxisType ) = 0;
 
-	/** Processes mouse input from the specified controller as though it were a mouse pointed at a compositor overlay with the
-	* specified settings. The controller is treated like a laser pointer on the -z axis. The point where the laser pointer would
-	* intersect with the overlay is the mouse position, the trigger is left mouse, and the track pad is right mouse. When using 
-	* system event output the caller should ensure that it has focus so that it receives the system events. 
-	*
-	* Return true if the controller is pointed at the overlay and an event was generated. */
-	virtual bool HandleControllerOverlayInteractionAsMouse( const vr::Compositor_OverlaySettings & overlaySettings, 
-		vr::HmdVector2_t vecWindowClientPositionOnScreen, vr::HmdVector2_t vecWindowClientSize,
-		vr::TrackedDeviceIndex_t unControllerDeviceIndex, 
-		vr::EVRControllerEventOutputType eOutputType
-		) = 0;
-
 	/** Tells OpenVR that this process wants exclusive access to controller button states and button events. Other apps will be notified that 
 	* they have lost input focus with a VREvent_InputFocusCaptured event. Returns false if input focus could not be captured for
 	* some reason. */
@@ -707,9 +722,19 @@ public:
 
 	/** Returns true if input focus is captured by another process. */
 	virtual bool IsInputFocusCapturedByAnotherProcess() = 0;
+
+	// ------------------------------------
+	// Debug Methods
+	// ------------------------------------
+
+	/** Sends a request to the driver for the specified device and returns the response. The maximum response size is 32k,
+	* but this method can be called with a smaller buffer. If the response exceeds the size of the buffer, it is truncated. 
+	* The size of the response including its terminating null is returned. */
+	virtual uint32_t DriverDebugRequest( vr::TrackedDeviceIndex_t unDeviceIndex, const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize ) = 0;
+
 };
 
-static const char * const IVRSystem_Version = "IVRSystem_003";
+static const char * const IVRSystem_Version = "IVRSystem_004";
 
 }
 
@@ -818,6 +843,14 @@ enum Compositor_DeviceType
 	Compositor_DeviceType_OpenGL
 };
 
+/** Errors that can occur with the VR compositor */
+enum VRCompositorError
+{
+	VRCompositorError_None						= 0,
+	VRCompositorError_IncompatibleVersion		= 100,
+	VRCompositorError_DoNotHaveFocus			= 101,
+};
+
 
 /** Provides a single frame's timing information to the app */
 struct Compositor_FrameTiming
@@ -830,14 +863,6 @@ struct Compositor_FrameTiming
 	vr::TrackedDevicePose_t pose;
 };
 
-
-/** Allows the application to control what part of the provided texture will be used in the
-* frame buffer. */
-struct Compositor_TextureBounds
-{
-	float uMin, vMin;
-	float uMax, vMax;
-};
 
 #pragma pack( pop )
 
@@ -870,41 +895,24 @@ public:
 	*	Compositor_DeviceType_D3D11		ID3D11Device*
 	*	Compositor_DeviceType_OpenGL	HGLRC
 	*
-	* Note: D3D9 and D3D9Ex are not implemented at this time
+	* Note: D3D9 is not currently supported (use D3D9Ex instead).
 	*/
 	virtual void SetGraphicsDevice( Compositor_DeviceType eType, void* pDevice ) = 0;
 
-	/** Returns pose(s) to use to render scene. */
-	virtual void WaitGetPoses( VR_ARRAY_COUNT(unPoseArrayCount) TrackedDevicePose_t* pPoseArray, uint32_t unPoseArrayCount ) = 0;
+	/** Returns pose(s) to use to render scene (and optionally poses predicted two frames out for gameplay). */
+	virtual VRCompositorError WaitGetPoses( VR_ARRAY_COUNT(unRenderPoseArrayCount) TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount,
+		VR_ARRAY_COUNT(unGamePoseArrayCount) TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount ) = 0;
 
 	/** Updated scene texture to display. If pBounds is NULL the entire texture will be used.
 	*
 	* OpenGL dirty state:
 	*	glBindTexture
 	*/
-	virtual void Submit( Hmd_Eye eEye, void* pTexture, Compositor_TextureBounds* pBounds ) = 0;
+	virtual VRCompositorError Submit( Hmd_Eye eEye, void* pTexture, VRTextureBounds_t* pBounds ) = 0;
 
 	/** Clears the frame that was sent with the last call to Submit. This will cause the 
 	* compositor to show the grid until Submit is called again. */
 	virtual void ClearLastSubmittedFrame() = 0;
-
-	/** returns the default settings that will be used for the overlay texture. Fetching these defaults 
-	* can be useful if you mostly want the default values but want to change a few settings. */
-	virtual void GetOverlayDefaults( Compositor_OverlaySettings* pSettings ) = 0;
-
-	/** Texture to draw over the scene at distortion time. This texture will appear over the world on a quad.
-	* The pSettings parameter controls the size and position of the quad. */
-	virtual void SetOverlay(void* pTexture, Compositor_OverlaySettings* pSettings ) = 0;
-
-	/** Separate interface for providing the data as a stream of bytes, but there is an upper bound on data that can be sent */
-	virtual void SetOverlayRaw(void* buffer, uint32_t width, uint32_t height, uint32_t depth, Compositor_OverlaySettings* pSettings ) = 0;
-
-	/** Separate interface for providing the image through a filename: 
-	* can be png or jpg, and should not be bigger than 1920x1080 */
-	virtual void SetOverlayFromFile( const char *pchFilePath, Compositor_OverlaySettings* pSettings ) = 0;
-
-	/** Removes the scene overlay texture. */
-	virtual void ClearOverlay() = 0;
 
 	/** Returns true if timing data is filled it.  Sets oldest timing info if nFramesAgo is larger than the stored history.
 	* Be sure to set timing.size = sizeof(Compositor_FrameTiming) on struct passed in before calling this function. */
@@ -932,21 +940,313 @@ public:
 	/** Return whether the compositor is fullscreen */
 	virtual bool IsFullscreen() = 0;
 
-	/** Computes the overlay-space pixel coordinates of where the ray intersects the overlay with the
-	* specified settings. Returns false if there is no intersection. */
-	virtual bool ComputeOverlayIntersection( const Compositor_OverlaySettings* pSettings, float fAspectRatio, vr::TrackingUniverseOrigin eOrigin, vr::HmdVector3_t vSource, vr::HmdVector3_t vDirection, vr::HmdVector2_t *pvecIntersectionUV, vr::HmdVector3_t *pvecIntersectionTrackingSpace ) = 0;
-
 	/** Sets tracking space returned by WaitGetPoses */
 	virtual void SetTrackingSpace( TrackingUniverseOrigin eOrigin ) = 0;
 
 	/** Gets current tracking space returned by WaitGetPoses */
 	virtual TrackingUniverseOrigin GetTrackingSpace() = 0;
+
+	/** Returns the process ID of the process that is currently rendering the scene */
+	virtual uint32_t GetCurrentSceneFocusProcess() = 0;
+
+	/** Returns true if the current process has the scene focus */
+	virtual bool CanRenderScene() = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_005";
+static const char * const IVRCompositor_Version = "IVRCompositor_006";
 
 } // namespace vr
 
+
+// ivroverlay.h
+namespace vr
+{
+
+	/** used to refer to a single VR overlay */
+	typedef uint64_t VROverlayHandle_t;
+
+	static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
+
+	/** The maximum length of an overlay key in bytes, counting the terminating null character. */
+	static const uint32_t k_unVROverlayMaxKeyLength = 128;
+
+	/** The maximum length of an overlay name in bytes, counting the terminating null character. */
+	static const uint32_t k_unVROverlayMaxNameLength = 128;
+
+	/** Errors that can occur around VR overlays */
+	enum VROverlayError
+	{
+		VROverlayError_None					= 0,
+
+		VROverlayError_UnknownOverlay		= 10,
+		VROverlayError_InvalidHandle		= 11,
+		VROverlayError_PermissionDenied		= 12,
+		VROverlayError_OverlayLimitExceeded = 13, // No more overlays could be created because the maximum number already exist
+		VROverlayError_WrongVisibilityType	= 14,
+		VROverlayError_KeyTooLong			= 15,
+		VROverlayError_NameTooLong			= 16,
+		VROverlayError_KeyInUse				= 17,
+		VROverlayError_WrongTransformType	= 18,
+		VROverlayError_InvalidTrackedDevice = 19,
+	};
+
+	/** Types of input supported by VR Overlays */
+	enum VROverlayInputMethod
+	{
+		VROverlayInputMethod_None		= 0, // No input events will be generated automatically for this overlay
+		VROverlayInputMethod_Mouse		= 1, // Tracked controllers will get mouse events automatically
+	};
+
+	/** Overlay visibility setting controls when the overlay is visible. */
+	enum VROverlayVisibility
+	{
+		VROverlayVisibility_Manual			= 0, // There is no automatic visibility for the overlay
+		VROverlayVisibility_SystemOverlay	= 1, // Visibility, input, and transform are controlled by the system button. 
+	};
+
+	/** Allows the caller to figure out which overlay transform getter to call. */
+	enum VROverlayTransformType
+	{
+		VROverlayTransform_Absolute					= 0,
+		VROverlayTransform_TrackedDeviceRelative	= 1,
+		VROverlayTransform_SystemOverlay			= 2,
+	};
+
+	/** Overlay control settings */
+	enum VROverlayFlags
+	{
+		VROverlayFlags_None			= 0,
+
+		// The following only take effect when rendered using the high quality render path (see SetHighQualityOverlay).
+		VROverlayFlags_Curved		= 1,
+		VROverlayFlags_RGSS4X		= 2,
+	};
+
+	struct VROverlayIntersectionParams_t
+	{
+		vr::HmdVector3_t vSource;
+		vr::HmdVector3_t vDirection;
+		TrackingUniverseOrigin eOrigin;
+	};
+
+	struct VROverlayIntersectionResults_t
+	{
+		vr::HmdVector3_t vPoint;
+		vr::HmdVector3_t vNormal;
+		vr::HmdVector2_t vUVs;
+		float fDistance;
+	};
+
+	class IVROverlay
+	{
+	public:
+
+		// ---------------------------------------------
+		// Overlay management methods
+		// ---------------------------------------------
+
+		/** Finds an existing overlay with the specified key. */
+		virtual VROverlayError FindOverlay( const char *pchOverlayKey, vr::VROverlayHandle_t * pOverlayHandle ) = 0;
+
+		/** Creates a new named overlay. All overlays start hidden and with default settings. */
+		virtual VROverlayError CreateOverlay( const char *pchOverlayKey, const char *pchOverlayFriendlyName, vr::VROverlayHandle_t * pOverlayHandle ) = 0;
+
+		/** Destroys the specified overlay. When an application calls VR_Shutdown all overlays created by that app are
+		* automatically destroyed. */
+		virtual VROverlayError DestroyOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
+
+		/** Specify which overlay to use the high quality render path.  This overlay will be composited in during the distortion pass which
+		* results in it drawing on top of everything else, but also at a higher quality as it samples the source texture directly rather than
+		* rasterizing into each eye's render texture first.  Because if this, only one of these is supported at any given time.  It is most useful
+		* for overlays that are expected to take up most of the user's view (e.g. streaming video). */
+		virtual VROverlayError SetHighQualityOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
+
+		/** Returns the overlay handle of the current overlay being rendered using the single high quality overlay render path.
+		* Otherwise it will return k_ulOverlayHandleInvalid. */
+		virtual vr::VROverlayHandle_t GetHighQualityOverlay() = 0;
+
+		/** returns a string that corresponds with the specified overlay error. The string will be the name 
+		* of the error enum value for all valid error codes */
+		virtual const char *GetOverlayErrorNameFromEnum( VROverlayError error ) = 0;
+
+
+		// ---------------------------------------------
+		// Overlay rendering methods
+		// ---------------------------------------------
+
+		/** Specify flag setting for a given overlay */
+		virtual VROverlayError SetOverlayFlag( VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled ) = 0;
+
+		/** Sets flag setting for a given overlay */
+		virtual VROverlayError GetOverlayFlag( VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool *pbEnabled ) = 0;
+
+		/** Sets the alpha of the overlay quad. Use 1.0 for 100 percent opacity to 0.0 for 0 percent opacity. */
+		virtual VROverlayError SetOverlayAlpha( VROverlayHandle_t ulOverlayHandle, float fAlpha ) = 0;
+
+		/** Gets the alpha of the overlay quad. By default overlays are rendering at 100 percent alpha (1.0). */
+		virtual VROverlayError GetOverlayAlpha( VROverlayHandle_t ulOverlayHandle, float *pfAlpha ) = 0;
+
+		/** Sets the gamma of the overlay quad. Use 2.2 when providing a texture in linear color space. */
+		virtual VROverlayError SetOverlayGamma( VROverlayHandle_t ulOverlayHandle, float fGamma ) = 0;
+
+		/** Gets the gamma of the overlay quad.  Be default overlays are rendered with 1.0 gamma. */
+		virtual VROverlayError GetOverlayGamma( VROverlayHandle_t ulOverlayHandle, float *pfGamma ) = 0;
+
+		/** Sets the width of the overlay quad in meters. By default overlays are rendered on a quad that is 1 meter across */
+		virtual VROverlayError SetOverlayWidthInMeters( VROverlayHandle_t ulOverlayHandle, float fWidthInMeters ) = 0;
+
+		/** Returns the width of the overlay quad in meters. By default overlays are rendered on a quad that is 1 meter across */
+		virtual VROverlayError GetOverlayWidthInMeters( VROverlayHandle_t ulOverlayHandle, float *pfWidthInMeters ) = 0;
+
+		/** Sets the part of the texture to use for the overlay. UV Min is the upper left corner and UV Max is the lower right corner. */
+		virtual VROverlayError SetOverlayTextureBounds( VROverlayHandle_t ulOverlayHandle, const VRTextureBounds_t *pOverlayTextureBounds ) = 0;
+
+		/** Gets the part of the texture to use for the overlay. UV Min is the upper left corner and UV Max is the lower right corner. */
+		virtual VROverlayError GetOverlayTextureBounds( VROverlayHandle_t ulOverlayHandle, VRTextureBounds_t *pOverlayTextureBounds ) = 0;
+
+		/** Returns the transform type of this overlay. */
+		virtual VROverlayError GetOverlayTransformType( VROverlayHandle_t ulOverlayHandle, VROverlayTransformType *peTransformType ) = 0;
+
+		/** Sets the transform to absolute tracking origin. */
+		virtual VROverlayError SetOverlayTransformAbsolute( VROverlayHandle_t ulOverlayHandle, TrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToOverlayTransform ) = 0;
+
+		/** Gets the transform if it is absolute. Returns an error if the transform is some other type. */
+		virtual VROverlayError GetOverlayTransformAbsolute( VROverlayHandle_t ulOverlayHandle, TrackingUniverseOrigin *peTrackingOrigin, HmdMatrix34_t *pmatTrackingOriginToOverlayTransform ) = 0;
+
+		/** Sets the transform to relative to the transform of the specified tracked device. */
+		virtual VROverlayError SetOverlayTransformTrackedDeviceRelative( VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unTrackedDevice, const HmdMatrix34_t *pmatTrackedDeviceToOverlayTransform ) = 0;
+
+		/** Gets the transform if it is relative to a tracked device. Returns an error if the transform is some other type. */
+		virtual VROverlayError GetOverlayTransformTrackedDeviceRelative( VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t *punTrackedDevice, HmdMatrix34_t *pmatTrackedDeviceToOverlayTransform ) = 0;
+
+		/** Returns the current input settings for the specified overlay. */
+		virtual VROverlayError GetOverlayVisibility( VROverlayHandle_t ulOverlayHandle, VROverlayVisibility *peOverlayVisibility ) = 0;
+
+		/** Sets the input settings for the specified overlay. */
+		virtual VROverlayError SetOverlayVisibility( VROverlayHandle_t ulOverlayHandle, VROverlayVisibility eOverlayVisibility ) = 0;
+
+		/** Shows the VR overlay. This only has an effect on VROverlayVisibility_Manual overlays */
+		virtual VROverlayError ShowOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
+
+		/** Hides the VR overlay. This only has an effect on VROverlayVisibility_Manual overlays */
+		virtual VROverlayError HideOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
+
+		/** Returns true if the overlay is visible. This could be because it has manual visibility or
+		* because the system button was pressed */
+		virtual bool IsOverlayVisible( VROverlayHandle_t ulOverlayHandle ) = 0;
+
+
+		// ---------------------------------------------
+		// Overlay input methods
+		// ---------------------------------------------
+
+		/** Returns true and fills the event with the next event on the overlay's event queue, if there is one. 
+		* If there are no events this method returns false */
+		virtual bool PollNextOverlayEvent( VROverlayHandle_t ulOverlayHandle, VREvent_t *pEvent ) = 0;
+
+		/** Returns the current input settings for the specified overlay. */
+		virtual VROverlayError GetOverlayInputMethod( VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod *peInputMethod ) = 0;
+
+		/** Sets the input settings for the specified overlay. */
+		virtual VROverlayError SetOverlayInputMethod( VROverlayHandle_t ulOverlayHandle, VROverlayInputMethod eInputMethod ) = 0;
+
+		/** Gets the mouse scaling factor that is used for mouse events. The actual texture may be a different size, but this is
+		* typically the size of the underlying UI in pixels. */
+		virtual VROverlayError GetOverlayMouseScale( VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvecMouseScale ) = 0;
+
+		/** Sets the mouse scaling factor that is used for mouse events. The actual texture may be a different size, but this is
+		* typically the size of the underlying UI in pixels. */
+		virtual VROverlayError SetOverlayMouseScale( VROverlayHandle_t ulOverlayHandle, const HmdVector2_t *pvecMouseScale ) = 0;
+
+		/** Computes the overlay-space pixel coordinates of where the ray intersects the overlay with the
+		* specified settings. Returns false if there is no intersection. */
+		virtual bool ComputeOverlayIntersection( VROverlayHandle_t ulOverlayHandle, const VROverlayIntersectionParams_t *pParams, VROverlayIntersectionResults_t *pResults ) = 0;
+
+		/** Processes mouse input from the specified controller as though it were a mouse pointed at a compositor overlay with the
+		* specified settings. The controller is treated like a laser pointer on the -z axis. The point where the laser pointer would
+		* intersect with the overlay is the mouse position, the trigger is left mouse, and the track pad is right mouse. 
+		*
+		* Return true if the controller is pointed at the overlay and an event was generated. */
+		virtual bool HandleControllerOverlayInteractionAsMouse( VROverlayHandle_t ulOverlayHandle, vr::TrackedDeviceIndex_t unControllerDeviceIndex ) = 0;
+
+		// ---------------------------------------------
+		// Overlay texture methods
+		// ---------------------------------------------
+
+		/** Texture to draw for the overlay. IVRCompositor::SetGraphicsDevice must be called before 
+		* this function. This function can only be called by the overlay's renderer process. */
+		virtual VROverlayError SetOverlayTexture( VROverlayHandle_t ulOverlayHandle, void *pTexture ) = 0;
+
+		/** Separate interface for providing the data as a stream of bytes, but there is an upper bound on data 
+		* that can be sent. IVRCompositor::SetGraphicsDevice must be called before this function.  This function 
+		* can only be called by the overlay's renderer process. */
+		virtual VROverlayError SetOverlayRaw( VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unWidth, uint32_t unHeight, uint32_t unDepth ) = 0;
+
+		/** Separate interface for providing the image through a filename: 
+		* can be png or jpg, and should not be bigger than 1920x1080. IVRCompositor::SetGraphicsDevice 
+		* must be called before this function. This function can only be called by the overlay's renderer process */
+		virtual VROverlayError SetOverlayFromFile( VROverlayHandle_t ulOverlayHandle, const char *pchFilePath ) = 0;
+
+		// ----------------------------------------------
+		// System Overlay Methods
+		// ----------------------------------------------
+
+		/** Returns true if the system overlay is visible */
+		virtual bool IsSystemOverlayVisible() = 0;
+
+		/** returns true if the system overlay is visible and the specified overlay is the active system Overlay */
+		virtual bool IsActiveSystemOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
+
+		/** Sets the system overlay to only appear when the specified process ID has scene focus */
+		virtual VROverlayError SetSystemOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t unProcessId ) = 0;
+
+		/** Gets the process ID that this system overlay requires to have scene focus */
+		virtual VROverlayError GetSystemOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t *punProcessId ) = 0;
+	};
+
+	static const char * const IVROverlay_Version = "IVROverlay_001";
+
+} // namespace vr
+// ivrrendermodels.h
+namespace vr
+{
+
+class IVRRenderModels
+{
+public:
+
+
+	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
+	* from the Prop_RenderModelName_String property or an absolute path name to a render model on disk. 
+	*
+	* The resulting render model is valid until VR_Shutdown() is called or until FreeRenderModel() is called. When the 
+	* application is finished with the render model it should call FreeRenderModel() to free the memory associated
+	* with the model.
+	*
+	* The method returns false if the model could not be loaded.
+	*
+	* The API expects that this function will be called at startup or when tracked devices are connected and disconnected.
+	* If it is called every frame it will hurt performance.
+	*/
+	virtual bool LoadRenderModel( const char *pchRenderModelName, RenderModel_t *pRenderModel ) = 0;
+
+	/** Frees a previously returned render model */
+	virtual void FreeRenderModel( RenderModel_t *pRenderModel ) = 0;
+
+	/** Use this to get the names of available render models.  Index does not correlate to a tracked device index, but
+	* is only used for iterating over all available render models.  If the index is out of range, this function will return 0.
+	* Otherwise, it will return the size of the buffer required for the name. */
+	virtual uint32_t GetRenderModelName( uint32_t unRenderModelIndex, VR_OUT_STRING() char *pchRenderModelName, uint32_t unRenderModelNameLen ) = 0;
+
+	/** Returns the number of available render models. */
+	virtual uint32_t GetRenderModelCount() = 0;
+
+
+};
+
+static const char * const IVRRenderModels_Version = "IVRRenderModels_001";
+
+}
 
 // ivrcontrolpanel.h
 namespace vr
@@ -1046,7 +1346,7 @@ namespace vr
 #define VR_INTERFACE extern "C" __declspec( dllimport )
 #endif
 
-#elif defined(GNUC) || defined(COMPILER_GCC)
+#elif defined(GNUC) || defined(COMPILER_GCC) || defined(__APPLE__)
 
 #ifdef VR_API_EXPORT
 #define VR_INTERFACE extern "C" __attribute__((visibility("default")))
