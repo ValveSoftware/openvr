@@ -3,7 +3,14 @@
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
+#if defined( OSX )
+#include <OpenGL/glu.h>
+#include <glew.h>
+// Apple's version of glut.h #undef's APIENTRY, redefine it
+#define APIENTRY
+#else
 #include <gl/glu.h>
+#endif
 #include <stdio.h>
 #include <string>
 #include <cstdlib>
@@ -208,13 +215,21 @@ void dprintf( const char *fmt, ... )
 	char buffer[ 2048 ];
 
 	va_start( args, fmt );
+#if defined( OSX )
+	vsnprintf( buffer, sizeof(buffer), fmt, args);
+#else
 	vsprintf_s( buffer, fmt, args );
+#endif
 	va_end( args );
 
 	if ( g_bPrintf )
 		printf( "%s", buffer );
 
+#if defined( OSX )
+	NSLog( @"%s", buffer );
+#else
 	OutputDebugStringA( buffer );
+#endif
 }
 
 //-----------------------------------------------------------------------------
@@ -345,7 +360,11 @@ bool CMainApplication::BInit()
 	{
 		m_pHMD = NULL;
 		char buf[1024];
+#if defined( OSX )
+		snprintf( buf, sizeof( buf ), "Unable to init VR runtime: %s", vr::VR_GetStringForHmdError( eError ) );
+#else
 		sprintf_s( buf, sizeof( buf ), "Unable to init VR runtime: %s", vr::VR_GetStringForHmdError( eError ) );
+#endif
 		SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "VR_Init Failed", buf, NULL );
 		return false;
 	}
@@ -548,8 +567,11 @@ void CMainApplication::Shutdown()
 	
 	if( m_pContext )
 	{
-		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
-		glDebugMessageCallback(nullptr, nullptr);
+		if ( m_bDebugOpenGL )
+		{
+			glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
+			glDebugMessageCallback(nullptr, nullptr);
+        }
 		glDeleteBuffers(1, &m_glSceneVertBuffer);
 		glDeleteBuffers(1, &m_glIDVertBuffer);
 		glDeleteBuffers(1, &m_glIDIndexBuffer);
