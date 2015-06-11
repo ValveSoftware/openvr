@@ -97,6 +97,7 @@ private:
 	bool m_bGlFinishHack;
 
 	vr::IVRSystem *m_pHMD;
+	vr::IVRRenderModels *m_pRenderModels;
 	vr::IVRCompositor *m_pCompositor;
 	std::string m_strDriver;
 	std::string m_strDisplay;
@@ -229,6 +230,7 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 	, m_unControllerTransformProgramID( 0 )
 	, m_unRenderModelProgramID( 0 )
 	, m_pHMD( NULL )
+	, m_pRenderModels( NULL )
 	, m_pCompositor( NULL )
 	, m_bRunOnMainWindow( true )
 	, m_bUseCompositor( true )
@@ -348,6 +350,18 @@ bool CMainApplication::BInit()
 		return false;
 	}
 
+
+	m_pRenderModels = (vr::IVRRenderModels *)vr::VR_GetGenericInterface( vr::IVRRenderModels_Version, &eError );
+	if( !m_pRenderModels )
+	{
+		m_pHMD = NULL;
+		vr::VR_Shutdown();
+
+		char buf[1024];
+		sprintf_s( buf, sizeof( buf ), "Unable to get render model interface: %s", vr::VR_GetStringForHmdError( eError ) );
+		SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "VR_Init Failed", buf, NULL );
+		return false;
+	}
 
 	int nWindowPosX = 700;
 	int nWindowPosY = 100;
@@ -703,7 +717,7 @@ void CMainApplication::RenderFrame()
 		if ( m_pCompositor )
 		{
 			// Flip y-axis since GL UV coords are backwards.
-			vr::Compositor_TextureBounds bounds;
+			vr::VRTextureBounds_t bounds;
 			bounds.uMin = 0;
 			bounds.vMin = 1;
 			bounds.uMax = 1;
@@ -1653,7 +1667,7 @@ void CMainApplication::UpdateHMDMatrixPose()
 
 	if ( m_pCompositor )
 	{
-		m_pCompositor->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount);
+		m_pCompositor->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 	}
 	else
 	{
@@ -1716,7 +1730,7 @@ CGLRenderModel *CMainApplication::FindOrLoadRenderModel( const char *pchRenderMo
 	if( !pRenderModel )
 	{
 		vr::RenderModel_t model;
-		if( !m_pHMD->LoadRenderModel( pchRenderModelName, &model ) )
+		if( !m_pRenderModels->LoadRenderModel( pchRenderModelName, &model ) )
 		{
 			dprintf( "Unable to load render model %s\n", pchRenderModelName );
 			return NULL; // move on to the next tracked device
@@ -1727,13 +1741,13 @@ CGLRenderModel *CMainApplication::FindOrLoadRenderModel( const char *pchRenderMo
 		{
 			dprintf( "Unable to create GL model from render model %s\n", pchRenderModelName );
 			delete pRenderModel;
-			m_pHMD->FreeRenderModel( &model );
+			m_pRenderModels->FreeRenderModel( &model );
 			return NULL; // move on to the next tracked device
 		}
 
 		m_vecRenderModels.push_back( pRenderModel );
 
-		m_pHMD->FreeRenderModel( &model );
+		m_pRenderModels->FreeRenderModel( &model );
 	}
 	return pRenderModel;
 }
