@@ -157,6 +157,10 @@ enum TrackedDeviceProperty
 	Prop_HardwareRevision_String			= 1007,
 	Prop_AllWirelessDongleDescriptions_String= 1008,
 	Prop_ConnectedWirelessDongle_String		= 1009,
+	Prop_DeviceIsWireless_Bool				= 1010,
+	Prop_DeviceIsCharging_Bool				= 1011,
+	Prop_DeviceBatteryPercentage_Float		= 1012, // 0 is empty, 1 is full
+	Prop_StatusDisplayTransform_Matrix34	= 1013,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool			= 2000,
@@ -268,16 +272,20 @@ enum EVREventType
 
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
-	VREvent_SystemOverlayActivated		= 502,
-	VREvent_SystemOverlayDeactivated	= 503,
-	VREvent_SystemOverlayThumbSelected	= 504, // Handled by vrcompositor and never sent to applications - data is overlay
+	VREvent_DashboardActivated		= 502,
+	VREvent_DashboardDeactivated	= 503,
+	VREvent_DashboardThumbSelected	= 504, // Sent to the overlay manager - data is overlay
+	VREvent_DashboardRequested		= 505, // Sent to the overlay manager - data is overlay
+	VREvent_ResetDashboard			= 506, // Send to the overlay manager
 
+	VREvent_Notification_Show				= 600,
+	VREvent_Notification_Dismissed			= 601,
+	VREvent_Notification_BeginInteraction	= 602,
 
-	VREvent_Notification_Dismissed			= 600,
-	VREvent_Notification_BeginInteraction	= 601,
-	VREvent_Notification_Scroll				= 602,
-	VREvent_Notification_ClickOn			= 603,
-	VREvent_Notification_ClickOff			= 604,
+	VREvent_Quit						= 700, // data is process
+	VREvent_ProcessQuit					= 701, // data is process
+
+	VREvent_ChaperoneDataHasChanged		= 800,
 };
 
 
@@ -329,7 +337,7 @@ struct VREvent_Mouse_t
 /** notification related events. Details will still change at this point */
 struct VREvent_Notification_t
 {
-	float x, y;
+	uint64_t ulUserValue;
 	uint32_t notificationId;
 };
 
@@ -481,6 +489,9 @@ enum HmdError
 	HmdError_Driver_NotLoaded			= 203,
 	HmdError_Driver_RuntimeOutOfDate	= 204,
 	HmdError_Driver_HmdInUse			= 205,
+	HmdError_Driver_NotCalibrated		= 206,
+	HmdError_Driver_CalibrationInvalid	= 207,
+	HmdError_Driver_HmdDisplayNotFound  = 208,
 
 	HmdError_IPC_ServerInitFailed		= 300,
 	HmdError_IPC_ConnectFailed			= 301,
@@ -495,6 +506,34 @@ enum HmdError
 };
 
 #pragma pack( pop )
+
+// figure out how to import from the VR API dll
+#if defined(_WIN32)
+
+#ifdef VR_API_EXPORT
+#define VR_INTERFACE extern "C" __declspec( dllexport )
+#else
+#define VR_INTERFACE extern "C" __declspec( dllimport )
+#endif
+
+#elif defined(GNUC) || defined(COMPILER_GCC) || defined(__APPLE__)
+
+#ifdef VR_API_EXPORT
+#define VR_INTERFACE extern "C" __attribute__((visibility("default")))
+#else
+#define VR_INTERFACE extern "C" 
+#endif
+
+#else
+#error "Unsupported Platform."
+#endif
+
+
+#if defined( _WIN32 )
+#define VR_CALLTYPE __cdecl
+#else
+#define VR_CALLTYPE 
+#endif
 
 }
 
@@ -720,6 +759,9 @@ public:
 
 	/** Returns a uint64 property. If the property is not available this function will return 0. */
 	virtual uint64_t GetUint64TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+
+	/** Returns a matrix property. If the device index is not valid or the property is not a matrix type, this function will return identity. */
+	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
 
 	/** Returns a string property. If the property is not available this function will return 0 and pError will be 
 	* set to an error. Otherwise it returns the length of the number of bytes necessary to hold this string including 

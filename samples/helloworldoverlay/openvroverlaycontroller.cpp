@@ -36,10 +36,7 @@ COpenVROverlayController *COpenVROverlayController::SharedInstance()
 //-----------------------------------------------------------------------------
 COpenVROverlayController::COpenVROverlayController()
 	: BaseClass()
-	, m_pVRSystem( NULL )
 	, m_eLastHmdError( vr::HmdError_None )
-	, m_pCompositor( NULL )
-    , m_pOverlay( NULL )
 	, m_eCompositorError( vr::HmdError_None )
 	, m_eOverlayError( vr::HmdError_None )
 	, m_strVRDriver( "No Driver" )
@@ -124,24 +121,24 @@ bool COpenVROverlayController::Init()
 	// Loading the OpenVR Runtime
 	bSuccess = ConnectToVRRuntime();
 
-	bSuccess = bSuccess && ConnectToCompositor(); 
+    bSuccess = bSuccess && vr::VRCompositor() != NULL;
 
-	if( m_pOverlay )
+    if( vr::VROverlay() )
 	{
         std::string sKey = std::string( "sample." ) + m_strName.toStdString();
-		vr::VROverlayError overlayError = m_pOverlay->CreateOverlay( sKey.c_str(), m_strName.toStdString().c_str(), &m_ulOverlayHandle );
+        vr::VROverlayError overlayError = vr::VROverlay()->CreateDashboardOverlay( sKey.c_str(), m_strName.toStdString().c_str(), &m_ulOverlayHandle, &m_ulOverlayThumbnailHandle );
 		bSuccess = bSuccess && overlayError == vr::VROverlayError_None;
 	}
 
 	if( bSuccess )
 	{
-		m_pOverlay->SetOverlayWidthInMeters( m_ulOverlayHandle, 1.5f );
-        m_pOverlay->SetOverlayInputMethod( m_ulOverlayHandle, vr::VROverlayInputMethod_Mouse );
-        m_pOverlay->SetOverlayVisibility( m_ulOverlayHandle, vr::VROverlayVisibility_SystemOverlay );
+        vr::VROverlay()->SetOverlayWidthInMeters( m_ulOverlayHandle, 1.5f );
+        vr::VROverlay()->SetOverlayInputMethod( m_ulOverlayHandle, vr::VROverlayInputMethod_Mouse );
 	
-		// flip V to account for GL vs. OpenVR texture origin
+        // flip V to account for GL vs. OpenVR texture origin
         vr::VRTextureBounds_t overlayTextureBounds = { 0, 1.f, 1.f, 0.f };
-		m_pOverlay->SetOverlayTextureBounds( m_ulOverlayHandle, &overlayTextureBounds );
+        vr::VROverlay()->SetOverlayTextureBounds( m_ulOverlayHandle, &overlayTextureBounds );
+        vr::VROverlay()->SetOverlayTextureBounds( m_ulOverlayThumbnailHandle, &overlayTextureBounds );
 
 		m_pPumpEventsTimer = new QTimer( this );
 		connect(m_pPumpEventsTimer, SIGNAL( timeout() ), this, SLOT( OnTimeoutPumpEvents() ) );
@@ -158,7 +155,6 @@ bool COpenVROverlayController::Init()
 //-----------------------------------------------------------------------------
 void COpenVROverlayController::Shutdown()
 {
-	DisconnectFromCompositor();
 	DisconnectFromVRRuntime();
 
 	delete m_pScene;
@@ -180,8 +176,9 @@ void COpenVROverlayController::Shutdown()
 void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 {
 	// skip rendering if the overlay isn't visible
-	if( !m_pOverlay->IsOverlayVisible( m_ulOverlayHandle ) )
-		return;
+    if( !vr::VROverlay() ||
+        !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) && !vr::VROverlay()->IsOverlayVisible( m_ulOverlayThumbnailHandle ) )
+        return;
 
 	m_pOpenGLContext->makeCurrent( m_pOffscreenSurface );
 	m_pFbo->bind();
@@ -196,7 +193,7 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 	GLuint unTexture = m_pFbo->texture();
 	if( unTexture != 0 )
 	{
-		m_pOverlay->SetOverlayTexture( m_ulOverlayHandle, (void*)unTexture );
+        vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, vr::API_OpenGL, (void*)unTexture );
 	}
 }
 
@@ -206,7 +203,7 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 //-----------------------------------------------------------------------------
 void COpenVROverlayController::OnTimeoutPumpEvents()
 {
-	if( !m_pVRSystem )
+    if( !vr::VRSystem() )
 		return;
 
 
@@ -215,16 +212,15 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 		// tell OpenVR to make some events for us
 		for( vr::TrackedDeviceIndex_t unDeviceId = 1; unDeviceId < vr::k_unControllerStateAxisCount; unDeviceId++ )
 		{
-			if( m_pOverlay->HandleControllerOverlayInteractionAsMouse( m_ulOverlayHandle, unDeviceId ) )
+            if( vr::VROverlay()->HandleControllerOverlayInteractionAsMouse( m_ulOverlayHandle, unDeviceId ) )
 			{
 				break;
 			}
 		}
-
 	}
 
 	vr::VREvent_t vrEvent;
-	while( m_pOverlay->PollNextOverlayEvent( m_ulOverlayHandle, &vrEvent ) )
+    while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayHandle, &vrEvent ) )
 	{
 		switch( vrEvent.eventType )
 		{
@@ -310,6 +306,21 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 		}
 	}
 
+    if( m_ulOverlayThumbnailHandle != vr::k_ulOverlayHandleInvalid )
+    {
+        while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayThumbnailHandle, &vrEvent ) )
+        {
+            switch( vrEvent.eventType )
+            {
+            case vr::VREvent_OverlayShown:
+                {
+                    m_pWidget->repaint();
+                }
+                break;
+            }
+        }
+    }
+
 }
 
 
@@ -328,14 +339,14 @@ void COpenVROverlayController::SetWidget( QWidget *pWidget )
 
 	m_pFbo = new QOpenGLFramebufferObject( pWidget->width(), pWidget->height(), GL_TEXTURE_2D );
 
-    if( m_pOverlay )
+    if( vr::VROverlay() )
     {
         vr::HmdVector2_t vecWindowSize =
         {
             (float)pWidget->width(),
             (float)pWidget->height()
         };
-        m_pOverlay->SetOverlayMouseScale( m_ulOverlayHandle, &vecWindowSize );
+        vr::VROverlay()->SetOverlayMouseScale( m_ulOverlayHandle, &vecWindowSize );
     }
 
 }
@@ -347,35 +358,17 @@ void COpenVROverlayController::SetWidget( QWidget *pWidget )
 bool COpenVROverlayController::ConnectToVRRuntime()
 {
 	m_eLastHmdError = vr::HmdError_None;
-	m_pVRSystem = vr::VR_Init( &m_eLastHmdError );
+    vr::IVRSystem *pVRSystem = vr::VR_Init( &m_eLastHmdError );
 
 	if ( m_eLastHmdError != vr::HmdError_None )
 	{
-		m_pVRSystem = NULL;
 		m_strVRDriver = "No Driver";
 		m_strVRDisplay = "No Display";
-		m_HMDRect.setCoords( 0, 0, 0, 0 );
-		m_HMDRenderTargetSize.setWidth( 0 );
-		m_HMDRenderTargetSize.setHeight( 0 );
 		return false;
 	}
 
-	m_strVRDriver = GetTrackedDeviceString(m_pVRSystem, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String);
-	m_strVRDisplay = GetTrackedDeviceString(m_pVRSystem, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String);
-
-	int32_t nWindowX, nWindowY;
-	uint32_t nWindowWidth, nWindowHeight;
-
-	m_pVRSystem->GetWindowBounds(&nWindowX, &nWindowY, &nWindowWidth, &nWindowHeight);
-	m_HMDRect.setLeft(nWindowX);
-	m_HMDRect.setTop(nWindowY);
-	m_HMDRect.setWidth(nWindowWidth);
-	m_HMDRect.setHeight(nWindowHeight);
-
-	uint32_t nRenderTargetWidth, nRenderTargetHeight;
-	m_pVRSystem->GetRecommendedRenderTargetSize(&nRenderTargetWidth, &nRenderTargetHeight);
-	m_HMDRenderTargetSize.setWidth(nRenderTargetWidth);
-	m_HMDRenderTargetSize.setHeight(nRenderTargetHeight);
+    m_strVRDriver = GetTrackedDeviceString(pVRSystem, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String);
+    m_strVRDisplay = GetTrackedDeviceString(pVRSystem, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String);
 
 	return true;
 }
@@ -384,45 +377,6 @@ bool COpenVROverlayController::ConnectToVRRuntime()
 void COpenVROverlayController::DisconnectFromVRRuntime()
 {
 	vr::VR_Shutdown();
-	m_pVRSystem = NULL;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool COpenVROverlayController::ConnectToCompositor()
-{
-	if ( m_pCompositor )
-		return true;
-
-	m_pCompositor = (vr::IVRCompositor *)vr::VR_GetGenericInterface( vr::IVRCompositor_Version, &m_eCompositorError );
-
-	if ( m_eCompositorError != vr::HmdError_None )
-	{
-		m_pCompositor = NULL;
-		return false;
-	}
-
-	m_pOverlay = (vr::IVROverlay *)vr::VR_GetGenericInterface( vr::IVROverlay_Version, &m_eOverlayError );
-
-	if ( m_eOverlayError != vr::HmdError_None )
-	{
-		m_pOverlay = NULL;
-		return false;
-	}
-
-	// make the GL context the active device
-	m_pCompositor->SetGraphicsDevice( vr::Compositor_DeviceType_OpenGL, NULL );
-
-	return true;
-}
-
-
-void COpenVROverlayController::DisconnectFromCompositor()
-{
-	m_pCompositor = NULL;
-    m_pOverlay = NULL;
 }
 
 
@@ -449,16 +403,7 @@ QString COpenVROverlayController::GetVRDisplayString()
 //-----------------------------------------------------------------------------
 bool COpenVROverlayController::BHMDAvailable()
 {
-	return m_pVRSystem != NULL;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-vr::IVRSystem *COpenVROverlayController::GetVRSystem()
-{
-	return m_pVRSystem;
+    return vr::VRSystem() != NULL;
 }
 
 
@@ -469,106 +414,6 @@ vr::IVRSystem *COpenVROverlayController::GetVRSystem()
 vr::HmdError COpenVROverlayController::GetLastHmdError()
 {
 	return m_eLastHmdError;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-QRect COpenVROverlayController::GetHMDGeometry()
-{
-	return m_HMDRect;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-QSize COpenVROverlayController::GetHMDRenderTargetSize()
-{
-	return m_HMDRenderTargetSize;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-QMatrix4x4 COpenVROverlayController::GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye, float flNear, float flFar )
-{
-	if ( !m_pVRSystem )
-		return QMatrix4x4();
-
-	vr::HmdMatrix44_t mat = m_pVRSystem->GetProjectionMatrix( nEye, flNear, flFar, vr::API_OpenGL);
-
-	return QMatrix4x4(
-		mat.m[0][0], mat.m[0][1], mat.m[0][2], mat.m[0][3],
-		mat.m[1][0], mat.m[1][1], mat.m[1][2], mat.m[1][3],
-		mat.m[2][0], mat.m[2][1], mat.m[2][2], mat.m[2][3],
-		mat.m[3][0], mat.m[3][1], mat.m[3][2], mat.m[3][3]
-	);
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-QMatrix4x4 COpenVROverlayController::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
-{
-	if ( !m_pVRSystem )
-		return QMatrix4x4();
-
-	vr::HmdMatrix34_t matEyeRight = m_pVRSystem->GetEyeToHeadTransform( nEye );
-	QMatrix4x4 matrixObj(
-		matEyeRight.m[0][0], matEyeRight.m[0][1], matEyeRight.m[0][2], matEyeRight.m[0][3],
-		matEyeRight.m[1][0], matEyeRight.m[1][1], matEyeRight.m[1][2], matEyeRight.m[1][3],
-		matEyeRight.m[2][0], matEyeRight.m[2][1], matEyeRight.m[2][2], matEyeRight.m[2][3],
-		0.0, 0.0, 0.0, 1.0
-		);
-
-	return matrixObj.inverted();
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-vr::IVRCompositor *COpenVROverlayController::GetCompositor()
-{ 
-	return m_pCompositor; 
-}
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-bool COpenVROverlayController::BCompositorAvailable()
-{
-	return m_pCompositor != NULL;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-vr::HmdError COpenVROverlayController::GetCompositorError()
-{
-	return m_eCompositorError;
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose:
-//-----------------------------------------------------------------------------
-QString COpenVROverlayController::GetCompositorErrorString()
-{
-	if ( m_eCompositorError != vr::HmdError_None )
-	{
-        return QString( VR_GetStringForHmdError( m_eCompositorError ) );
-	}
-	
-	if ( m_pCompositor )
-		return QString( "Running" );
-	
-	return QString( "Compositor failed to start, but no error" );
 }
 
 
