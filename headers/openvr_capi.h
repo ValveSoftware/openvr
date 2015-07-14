@@ -40,6 +40,8 @@ typedef uint32_t TrackedDeviceIndex_t;
 
 typedef uint32_t VRNotificationId;
 
+typedef uint64_t VROverlayHandle_t;
+
 typedef struct VREvent_Controller_t
 {
 	unsigned int button;
@@ -84,11 +86,13 @@ unsigned long k_ulOverlayHandleInvalid = 0;
 unsigned int k_unVROverlayMaxKeyLength = 128;
 unsigned int k_unVROverlayMaxNameLength = 128;
 unsigned int k_unMaxOverlayCount = 32;
-char * IVROverlay_Version = "IVROverlay_002";
+char * IVROverlay_Version = "IVROverlay_003";
 char * IVRRenderModels_Version = "IVRRenderModels_001";
 char * IVRControlPanel_Version = "IVRControlPanel_001";
 char * IVRCameraAccess_Version = "IVRCameraAccess_001";
 char * IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
+unsigned int k_unNotificationTypeMaxSize = 16;
+unsigned int k_unNotificationTextMaxSize = 128;
 char * IVRNotifications_Version = "IVRNotifications_001";
 typedef enum Hmd_Eye
 {
@@ -196,6 +200,8 @@ typedef enum EVREventType
 	EVREventType_VREvent_DashboardThumbSelected = 504,
 	EVREventType_VREvent_DashboardRequested = 505,
 	EVREventType_VREvent_ResetDashboard = 506,
+	EVREventType_VREvent_RenderToast = 507,
+	EVREventType_VREvent_ImageLoaded = 508,
 	EVREventType_VREvent_Notification_Show = 600,
 	EVREventType_VREvent_Notification_Dismissed = 601,
 	EVREventType_VREvent_Notification_BeginInteraction = 602,
@@ -308,6 +314,7 @@ typedef enum VROverlayError
 	VROverlayError_ArrayTooSmall = 22,
 	VROverlayError_RequestFailed = 23,
 	VROverlayError_InvalidTexture = 24,
+	VROverlayError_UnableToLoadFile = 25,
 };
 typedef enum VROverlayInputMethod
 {
@@ -583,6 +590,9 @@ S_API VROverlayError VR_IVROverlay_CreateOverlay(intptr_t instancePtr, const cha
 S_API VROverlayError VR_IVROverlay_DestroyOverlay(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle);
 S_API VROverlayError VR_IVROverlay_SetHighQualityOverlay(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle);
 S_API VROverlayHandle_t VR_IVROverlay_GetHighQualityOverlay(intptr_t instancePtr);
+S_API uint32_t VR_IVROverlay_GetOverlayKey(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, char * pchValue, uint32_t unBufferSize, VROverlayError * pError);
+S_API uint32_t VR_IVROverlay_GetOverlayName(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, char * pchValue, uint32_t unBufferSize, VROverlayError * pError);
+S_API VROverlayError VR_IVROverlay_GetOverlayImageData(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, void * pvBuffer, uint32_t unBufferSize, uint32_t * punWidth, uint32_t * punHeight);
 S_API char * VR_IVROverlay_GetOverlayErrorNameFromEnum(intptr_t instancePtr, VROverlayError error);
 S_API VROverlayError VR_IVROverlay_SetOverlayFlag(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled);
 S_API VROverlayError VR_IVROverlay_GetOverlayFlag(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool * pbEnabled);
@@ -620,6 +630,7 @@ S_API bool VR_IVROverlay_IsDashboardVisible(intptr_t instancePtr);
 S_API bool VR_IVROverlay_IsActiveDashboardOverlay(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle);
 S_API VROverlayError VR_IVROverlay_SetDashboardOverlaySceneProcess(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint32_t unProcessId);
 S_API VROverlayError VR_IVROverlay_GetDashboardOverlaySceneProcess(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint32_t * punProcessId);
+S_API void VR_IVROverlay_ShowDashboard(intptr_t instancePtr, const char * pchOverlayToShow);
 S_API bool VR_IVRRenderModels_LoadRenderModel(intptr_t instancePtr, const char * pchRenderModelName, struct RenderModel_t * pRenderModel);
 S_API void VR_IVRRenderModels_FreeRenderModel(intptr_t instancePtr, struct RenderModel_t * pRenderModel);
 S_API uint32_t VR_IVRRenderModels_GetRenderModelName(intptr_t instancePtr, uint32_t unRenderModelIndex, char * pchRenderModelName, uint32_t unRenderModelNameLen);
@@ -659,8 +670,7 @@ S_API void VR_IVRChaperoneSetup_RemoveWorkingTagPoseByName(intptr_t instancePtr,
 S_API void VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(intptr_t instancePtr);
 S_API void VR_IVRChaperoneSetup_ReloadFromDisk(intptr_t instancePtr);
 S_API uint32_t VR_IVRNotifications_GetErrorString(intptr_t instancePtr, NotificationError_t error, char * pchBuffer, uint32_t unBufferSize);
-S_API NotificationError_t VR_IVRNotifications_NotificationStart(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, char * strType, void * pTexture, uint64_t ulUserValue, VRNotificationId * pNotificationId);
-S_API NotificationError_t VR_IVRNotifications_UpdateTexture(intptr_t instancePtr, VRNotificationId notificationId, void * pTexture);
+S_API NotificationError_t VR_IVRNotifications_CreateNotification(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, char * strType, char * strText, char * strCategory, struct NotificationBitmap * photo, VRNotificationId * notificationId);
 S_API NotificationError_t VR_IVRNotifications_DismissNotification(intptr_t instancePtr, VRNotificationId notificationId);
 
 // Global entry points

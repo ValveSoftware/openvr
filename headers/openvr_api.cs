@@ -149,6 +149,12 @@ class VRNativeEntrypoints
 	internal static extern VROverlayError VR_IVROverlay_SetHighQualityOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetHighQualityOverlay")]
 	internal static extern ulong VR_IVROverlay_GetHighQualityOverlay(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayKey")]
+	internal static extern uint VR_IVROverlay_GetOverlayKey(IntPtr instancePtr, ulong ulOverlayHandle, System.Text.StringBuilder pchValue, uint unBufferSize, ref VROverlayError pError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayName")]
+	internal static extern uint VR_IVROverlay_GetOverlayName(IntPtr instancePtr, ulong ulOverlayHandle, System.Text.StringBuilder pchValue, uint unBufferSize, ref VROverlayError pError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayImageData")]
+	internal static extern VROverlayError VR_IVROverlay_GetOverlayImageData(IntPtr instancePtr, ulong ulOverlayHandle, IntPtr pvBuffer, uint unBufferSize, ref uint punWidth, ref uint punHeight);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayErrorNameFromEnum")]
 	internal static extern IntPtr VR_IVROverlay_GetOverlayErrorNameFromEnum(IntPtr instancePtr, VROverlayError error);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayFlag")]
@@ -223,6 +229,8 @@ class VRNativeEntrypoints
 	internal static extern VROverlayError VR_IVROverlay_SetDashboardOverlaySceneProcess(IntPtr instancePtr, ulong ulOverlayHandle, uint unProcessId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetDashboardOverlaySceneProcess")]
 	internal static extern VROverlayError VR_IVROverlay_GetDashboardOverlaySceneProcess(IntPtr instancePtr, ulong ulOverlayHandle, ref uint punProcessId);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_ShowDashboard")]
+	internal static extern void VR_IVROverlay_ShowDashboard(IntPtr instancePtr, string pchOverlayToShow);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadRenderModel")]
 	internal static extern bool VR_IVRRenderModels_LoadRenderModel(IntPtr instancePtr, string pchRenderModelName, ref RenderModel_t pRenderModel);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeRenderModel")]
@@ -301,10 +309,8 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRChaperoneSetup_ReloadFromDisk(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_GetErrorString")]
 	internal static extern uint VR_IVRNotifications_GetErrorString(IntPtr instancePtr, NotificationError_t error, System.Text.StringBuilder pchBuffer, uint unBufferSize);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_NotificationStart")]
-	internal static extern NotificationError_t VR_IVRNotifications_NotificationStart(IntPtr instancePtr, ulong ulOverlayHandle, string strType, IntPtr pTexture, ulong ulUserValue, ref uint pNotificationId);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_UpdateTexture")]
-	internal static extern NotificationError_t VR_IVRNotifications_UpdateTexture(IntPtr instancePtr, uint notificationId, IntPtr pTexture);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_CreateNotification")]
+	internal static extern NotificationError_t VR_IVRNotifications_CreateNotification(IntPtr instancePtr, ulong ulOverlayHandle, ulong ulUserValue, string strType, string strText, string strCategory, ref NotificationBitmap photo, ref uint notificationId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_DismissNotification")]
 	internal static extern NotificationError_t VR_IVRNotifications_DismissNotification(IntPtr instancePtr, uint notificationId);
 
@@ -402,6 +408,9 @@ public abstract class IVROverlay
 	public abstract VROverlayError DestroyOverlay(ulong ulOverlayHandle);
 	public abstract VROverlayError SetHighQualityOverlay(ulong ulOverlayHandle);
 	public abstract ulong GetHighQualityOverlay();
+	public abstract uint GetOverlayKey(ulong ulOverlayHandle,System.Text.StringBuilder pchValue,uint unBufferSize,ref VROverlayError pError);
+	public abstract uint GetOverlayName(ulong ulOverlayHandle,System.Text.StringBuilder pchValue,uint unBufferSize,ref VROverlayError pError);
+	public abstract VROverlayError GetOverlayImageData(ulong ulOverlayHandle,IntPtr pvBuffer,uint unBufferSize,ref uint punWidth,ref uint punHeight);
 	public abstract string GetOverlayErrorNameFromEnum(VROverlayError error);
 	public abstract VROverlayError SetOverlayFlag(ulong ulOverlayHandle,VROverlayFlags eOverlayFlag,bool bEnabled);
 	public abstract VROverlayError GetOverlayFlag(ulong ulOverlayHandle,VROverlayFlags eOverlayFlag,ref bool pbEnabled);
@@ -439,6 +448,7 @@ public abstract class IVROverlay
 	public abstract bool IsActiveDashboardOverlay(ulong ulOverlayHandle);
 	public abstract VROverlayError SetDashboardOverlaySceneProcess(ulong ulOverlayHandle,uint unProcessId);
 	public abstract VROverlayError GetDashboardOverlaySceneProcess(ulong ulOverlayHandle,ref uint punProcessId);
+	public abstract void ShowDashboard(string pchOverlayToShow);
 }
 
 
@@ -508,8 +518,7 @@ public abstract class IVRNotifications
 {
 	public abstract IntPtr GetIntPtr();
 	public abstract uint GetErrorString(NotificationError_t error,System.Text.StringBuilder pchBuffer,uint unBufferSize);
-	public abstract NotificationError_t NotificationStart(ulong ulOverlayHandle,string strType,IntPtr pTexture,ulong ulUserValue,ref uint pNotificationId);
-	public abstract NotificationError_t UpdateTexture(uint notificationId,IntPtr pTexture);
+	public abstract NotificationError_t CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,string strType,string strText,string strCategory,ref NotificationBitmap photo,ref uint notificationId);
 	public abstract NotificationError_t DismissNotification(uint notificationId);
 }
 
@@ -991,6 +1000,26 @@ public class CVROverlay : IVROverlay
 		ulong result = VRNativeEntrypoints.VR_IVROverlay_GetHighQualityOverlay(m_pVROverlay);
 		return result;
 	}
+	public override uint GetOverlayKey(ulong ulOverlayHandle,System.Text.StringBuilder pchValue,uint unBufferSize,ref VROverlayError pError)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayKey(m_pVROverlay,ulOverlayHandle,pchValue,unBufferSize,ref pError);
+		return result;
+	}
+	public override uint GetOverlayName(ulong ulOverlayHandle,System.Text.StringBuilder pchValue,uint unBufferSize,ref VROverlayError pError)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayName(m_pVROverlay,ulOverlayHandle,pchValue,unBufferSize,ref pError);
+		return result;
+	}
+	public override VROverlayError GetOverlayImageData(ulong ulOverlayHandle,IntPtr pvBuffer,uint unBufferSize,ref uint punWidth,ref uint punHeight)
+	{
+		CheckIfUsable();
+		punWidth = 0;
+		punHeight = 0;
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetOverlayImageData(m_pVROverlay,ulOverlayHandle,pvBuffer,unBufferSize,ref punWidth,ref punHeight);
+		return result;
+	}
 	public override string GetOverlayErrorNameFromEnum(VROverlayError error)
 	{
 		CheckIfUsable();
@@ -1223,6 +1252,11 @@ public class CVROverlay : IVROverlay
 		punProcessId = 0;
 		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetDashboardOverlaySceneProcess(m_pVROverlay,ulOverlayHandle,ref punProcessId);
 		return result;
+	}
+	public override void ShowDashboard(string pchOverlayToShow)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVROverlay_ShowDashboard(m_pVROverlay,pchOverlayToShow);
 	}
 }
 
@@ -1557,17 +1591,11 @@ public class CVRNotifications : IVRNotifications
 		uint result = VRNativeEntrypoints.VR_IVRNotifications_GetErrorString(m_pVRNotifications,error,pchBuffer,unBufferSize);
 		return result;
 	}
-	public override NotificationError_t NotificationStart(ulong ulOverlayHandle,string strType,IntPtr pTexture,ulong ulUserValue,ref uint pNotificationId)
+	public override NotificationError_t CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,string strType,string strText,string strCategory,ref NotificationBitmap photo,ref uint notificationId)
 	{
 		CheckIfUsable();
-		pNotificationId = 0;
-		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_NotificationStart(m_pVRNotifications,ulOverlayHandle,strType,pTexture,ulUserValue,ref pNotificationId);
-		return result;
-	}
-	public override NotificationError_t UpdateTexture(uint notificationId,IntPtr pTexture)
-	{
-		CheckIfUsable();
-		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_UpdateTexture(m_pVRNotifications,notificationId,pTexture);
+		notificationId = 0;
+		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_CreateNotification(m_pVRNotifications,ulOverlayHandle,ulUserValue,strType,strText,strCategory,ref photo,ref notificationId);
 		return result;
 	}
 	public override NotificationError_t DismissNotification(uint notificationId)
@@ -1700,6 +1728,8 @@ public enum EVREventType
 	VREvent_DashboardThumbSelected = 504,
 	VREvent_DashboardRequested = 505,
 	VREvent_ResetDashboard = 506,
+	VREvent_RenderToast = 507,
+	VREvent_ImageLoaded = 508,
 	VREvent_Notification_Show = 600,
 	VREvent_Notification_Dismissed = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -1812,6 +1842,7 @@ public enum VROverlayError
 	ArrayTooSmall = 22,
 	RequestFailed = 23,
 	InvalidTexture = 24,
+	UnableToLoadFile = 25,
 }
 public enum VROverlayInputMethod
 {
@@ -2120,11 +2151,13 @@ public class OpenVR
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;
-	public const string IVROverlay_Version = "IVROverlay_002";
+	public const string IVROverlay_Version = "IVROverlay_003";
 	public const string IVRRenderModels_Version = "IVRRenderModels_001";
 	public const string IVRControlPanel_Version = "IVRControlPanel_001";
 	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
+	public const uint k_unNotificationTypeMaxSize = 16;
+	public const uint k_unNotificationTextMaxSize = 128;
 	public const string IVRNotifications_Version = "IVRNotifications_001";
 }
 

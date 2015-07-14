@@ -277,6 +277,8 @@ enum EVREventType
 	VREvent_DashboardThumbSelected	= 504, // Sent to the overlay manager - data is overlay
 	VREvent_DashboardRequested		= 505, // Sent to the overlay manager - data is overlay
 	VREvent_ResetDashboard			= 506, // Send to the overlay manager
+	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
+	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
 
 	VREvent_Notification_Show				= 600,
 	VREvent_Notification_Dismissed			= 601,

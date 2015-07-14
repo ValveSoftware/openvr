@@ -277,6 +277,8 @@ enum EVREventType
 	VREvent_DashboardThumbSelected	= 504, // Sent to the overlay manager - data is overlay
 	VREvent_DashboardRequested		= 505, // Sent to the overlay manager - data is overlay
 	VREvent_ResetDashboard			= 506, // Send to the overlay manager
+	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
+	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
 
 	VREvent_Notification_Show				= 600,
 	VREvent_Notification_Dismissed			= 601,
@@ -992,6 +994,99 @@ static const char * const IVRCompositor_Version = "IVRCompositor_007";
 } // namespace vr
 
 
+// ivrnotifications.h
+namespace vr
+{
+
+#if defined(__linux__) || defined(__APPLE__) 
+	// The 32-bit version of gcc has the alignment requirement for uint64 and double set to
+	// 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
+	// The 64-bit version of gcc has the alignment requirement for these types set to
+	// 8 meaning that unless we use #pragma pack(4) our structures will get bigger.
+	// The 64-bit structure packing has to match the 32-bit structure packing for each platform.
+	#pragma pack( push, 4 )
+#else
+	#pragma pack( push, 8 )
+#endif
+
+const char * const NotificationTypeFriendUpdate = "FriendUpdate";
+
+// Used for passing graphic data
+struct NotificationBitmap
+{
+	char *bytes;
+	int32_t width;
+	int32_t height;
+	int32_t depth;
+};
+
+enum NotificationError_t
+{
+	k_ENotificationError_OK = 0,
+	k_ENotificationError_Fail = 1
+};
+
+static const uint32_t k_unNotificationTypeMaxSize = 16;
+static const uint32_t k_unNotificationTextMaxSize = 128;
+
+/** The types of events that could be posted (and what the parameters mean for each event type) */
+/*enum NotificationEventType
+{
+	Notification_None = 0,
+
+	Notification_Dismissed			= 101, // param1 = Device index
+	Notification_BeginInteraction	= 102, // param1 = Device index
+	Notification_Scroll				= 103, // param1 = Device index
+	Notification_ClickOn			= 104, // param1 = Device index
+	Notification_ClickOff			= 105, // param1 = Device index
+};*/
+
+/** An event posted by the server to all running applications */
+/*struct NotificationEvent_t
+{
+	NotificationEventType eventType;
+	int32_t x; // X coordinate in the notifications bitmap when the click happened
+	int32_t y; // Y coordinate in the notifications bitmap when the click happened
+	int32_t scroll_x; // X scrolling amount in the notifications bitmap coords
+	int32_t scroll_y; // Y scrolling amount in the notifications bitmap coords
+	uint32_t buttons; // Buttons pressed
+
+	float eventAgeSeconds;
+};*/
+
+typedef uint32_t VRNotificationId;
+
+// This struct will be used for the history list of notifications
+struct NotificationItem
+{
+	VRNotificationId notificationId;
+};
+
+
+
+#pragma pack( pop )
+
+/** Allows notification sources to interact with the VR system
+	This current interface is not yet implemented. Do not use yet. */
+class IVRNotifications
+{
+public:
+	/** Returns the last error that occurred */
+	virtual uint32_t GetErrorString( NotificationError_t error, VR_OUT_STRING() char* pchBuffer, uint32_t unBufferSize ) = 0;
+
+	VR_METHOD_DESC( Create a new notification. )
+	virtual NotificationError_t CreateNotification( VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, char *strType, char *strText, char *strCategory, NotificationBitmap *photo, /* out */ vr::VRNotificationId *notificationId  ) = 0;
+
+	VR_METHOD_DESC(Dismiss the notification)
+	virtual NotificationError_t DismissNotification( vr::VRNotificationId notificationId ) = 0;
+
+};
+
+static const char * const IVRNotifications_Version = "IVRNotifications_001";
+
+} // namespace vr
+
+
 // ivroverlay.h
 namespace vr
 {
@@ -1030,6 +1125,7 @@ namespace vr
 		VROverlayError_ArrayTooSmall		= 22,
 		VROverlayError_RequestFailed		= 23,
 		VROverlayError_InvalidTexture		= 24,
+		VROverlayError_UnableToLoadFile		= 25,
 	};
 
 	/** Types of input supported by VR Overlays */
@@ -1099,6 +1195,18 @@ namespace vr
 		/** Returns the overlay handle of the current overlay being rendered using the single high quality overlay render path.
 		* Otherwise it will return k_ulOverlayHandleInvalid. */
 		virtual vr::VROverlayHandle_t GetHighQualityOverlay() = 0;
+
+		/** Fills the provided buffer with the string key of the overlay. Returns the size of buffer required to store the key, including
+		* the terminating null character. k_unVROverlayMaxKeyLength will be enough bytes to fit the string. */
+		virtual uint32_t GetOverlayKey( VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, VROverlayError *pError = 0L ) = 0;
+
+		/** Fills the provided buffer with the friendly name of the overlay. Returns the size of buffer required to store the key, including
+		* the terminating null character. k_unVROverlayMaxNameLength will be enough bytes to fit the string. */
+		virtual uint32_t GetOverlayName( VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, VROverlayError *pError = 0L ) = 0;
+
+		/** Gets the raw image data from an overlay. Overlay image data is always returned as RGBA data, 4 bytes per pixel. If the buffer is not large enough, width and height 
+		* will be set and VROverlayError_ArrayTooSmall is returned. */
+		virtual VROverlayError GetOverlayImageData( VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unBufferSize, uint32_t *punWidth, uint32_t *punHeight ) = 0;
 
 		/** returns a string that corresponds with the specified overlay error. The string will be the name 
 		* of the error enum value for all valid error codes */
@@ -1244,11 +1352,15 @@ namespace vr
 		/** Sets the dashboard overlay to only appear when the specified process ID has scene focus */
 		virtual VROverlayError SetDashboardOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t unProcessId ) = 0;
 
-		/** Gets the process ID that this system overlay requires to have scene focus */
+		/** Gets the process ID that this dashboard overlay requires to have scene focus */
 		virtual VROverlayError GetDashboardOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t *punProcessId ) = 0;
+
+		/** Shows the dashboard. */
+		virtual void ShowDashboard( const char *pchOverlayToShow ) = 0;
+
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_002";
+	static const char * const IVROverlay_Version = "IVROverlay_003";
 
 } // namespace vr
 // ivrrendermodels.h

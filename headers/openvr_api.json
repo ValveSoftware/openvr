@@ -103,6 +103,8 @@
 	,{"name": "VREvent_DashboardThumbSelected","value": "504"}
 	,{"name": "VREvent_DashboardRequested","value": "505"}
 	,{"name": "VREvent_ResetDashboard","value": "506"}
+	,{"name": "VREvent_RenderToast","value": "507"}
+	,{"name": "VREvent_ImageLoaded","value": "508"}
 	,{"name": "VREvent_Notification_Show","value": "600"}
 	,{"name": "VREvent_Notification_Dismissed","value": "601"}
 	,{"name": "VREvent_Notification_BeginInteraction","value": "602"}
@@ -207,6 +209,7 @@
 	,{"name": "VROverlayError_ArrayTooSmall","value": "22"}
 	,{"name": "VROverlayError_RequestFailed","value": "23"}
 	,{"name": "VROverlayError_InvalidTexture","value": "24"}
+	,{"name": "VROverlayError_UnableToLoadFile","value": "25"}
 ]}
 ,	{"enumname": "vr::VROverlayInputMethod","values": [ 
 	{"name": "VROverlayInputMethod_None","value": "0"}
@@ -262,7 +265,7 @@
 ,{
 	"constname": "k_unMaxOverlayCount","consttype": "const uint32_t", "constval": "32"}
 ,{
-	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_002"}
+	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_003"}
 ,{
 	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_001"}
 ,{
@@ -271,6 +274,10 @@
 	"constname": "IVRCameraAccess_Version","consttype": "const char *const", "constval": "IVRCameraAccess_001"}
 ,{
 	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_001"}
+,{
+	"constname": "k_unNotificationTypeMaxSize","consttype": "const uint32_t", "constval": "16"}
+,{
+	"constname": "k_unNotificationTextMaxSize","consttype": "const uint32_t", "constval": "128"}
 ,{
 	"constname": "IVRNotifications_Version","consttype": "const char *const", "constval": "IVRNotifications_001"}
 ],
@@ -969,6 +976,40 @@
 }
 ,{
 	"classname": "vr::IVROverlay",
+	"methodname": "GetOverlayKey",
+	"returntype": "uint32_t",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pchValue" ,"out_string": " " ,"paramtype": "char *"},
+{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"},
+{	"paramname": "pError" ,"paramtype": "vr::VROverlayError *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "GetOverlayName",
+	"returntype": "uint32_t",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pchValue" ,"out_string": " " ,"paramtype": "char *"},
+{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"},
+{	"paramname": "pError" ,"paramtype": "vr::VROverlayError *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "GetOverlayImageData",
+	"returntype": "vr::VROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pvBuffer" ,"paramtype": "void *"},
+{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"},
+{	"paramname": "punWidth" ,"paramtype": "uint32_t *"},
+{	"paramname": "punHeight" ,"paramtype": "uint32_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
 	"methodname": "GetOverlayErrorNameFromEnum",
 	"returntype": "const char *",
 	"params": [ 
@@ -1308,6 +1349,14 @@
 	 ]
 }
 ,{
+	"classname": "vr::IVROverlay",
+	"methodname": "ShowDashboard",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "pchOverlayToShow" ,"paramtype": "const char *"}
+	 ]
+}
+,{
 	"classname": "vr::IVRRenderModels",
 	"methodname": "LoadRenderModel",
 	"returntype": "bool",
@@ -1633,23 +1682,16 @@
 }
 ,{
 	"classname": "vr::IVRNotifications",
-	"methodname": "NotificationStart", "desc": "Find out the status of an asynchronous Notification result handle.",
+	"methodname": "CreateNotification", "desc": "Create a new notification.",
 	"returntype": "vr::NotificationError_t",
 	"params": [ 
 {	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
-{	"paramname": "strType" ,"paramtype": "char *"},
-{	"paramname": "pTexture" ,"paramtype": "void *"},
 {	"paramname": "ulUserValue" ,"paramtype": "uint64_t"},
-{	"paramname": "pNotificationId" ,"paramtype": "vr::VRNotificationId *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRNotifications",
-	"methodname": "UpdateTexture", "desc": "Update the texture of the notification",
-	"returntype": "vr::NotificationError_t",
-	"params": [ 
-{	"paramname": "notificationId" ,"paramtype": "vr::VRNotificationId"},
-{	"paramname": "pTexture" ,"paramtype": "void *"}
+{	"paramname": "strType" ,"paramtype": "char *"},
+{	"paramname": "strText" ,"paramtype": "char *"},
+{	"paramname": "strCategory" ,"paramtype": "char *"},
+{	"paramname": "photo" ,"paramtype": "struct vr::NotificationBitmap *"},
+{	"paramname": "notificationId" ,"paramtype": "vr::VRNotificationId *"}
 	 ]
 }
 ,{
