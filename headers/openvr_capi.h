@@ -79,21 +79,21 @@ unsigned int k_unMaxDriverDebugResponseSize = 32768;
 unsigned int k_unTrackedDeviceIndexInvalid = 4294967295;
 unsigned int k_unMaxPropertyStringSize = 32768;
 unsigned int k_unControllerStateAxisCount = 5;
+unsigned long k_ulOverlayHandleInvalid = 0;
 char * IVRSystem_Version = "IVRSystem_005";
 char * IVRCompositor_Version = "IVRCompositor_007";
 char * IVRChaperone_Version = "IVRChaperone_002";
-unsigned long k_ulOverlayHandleInvalid = 0;
 unsigned int k_unVROverlayMaxKeyLength = 128;
 unsigned int k_unVROverlayMaxNameLength = 128;
 unsigned int k_unMaxOverlayCount = 32;
 char * IVROverlay_Version = "IVROverlay_003";
 char * IVRRenderModels_Version = "IVRRenderModels_001";
 char * IVRControlPanel_Version = "IVRControlPanel_001";
-char * IVRCameraAccess_Version = "IVRCameraAccess_001";
-char * IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
 unsigned int k_unNotificationTypeMaxSize = 16;
 unsigned int k_unNotificationTextMaxSize = 128;
 char * IVRNotifications_Version = "IVRNotifications_001";
+char * IVRCameraAccess_Version = "IVRCameraAccess_001";
+char * IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
 typedef enum Hmd_Eye
 {
 	Hmd_Eye_Eye_Left = 0,
@@ -241,6 +241,26 @@ typedef enum EVRControllerEventOutputType
 	EVRControllerEventOutputType_ControllerEventOutput_OSEvents = 0,
 	EVRControllerEventOutputType_ControllerEventOutput_VREvents = 1,
 };
+typedef enum VROverlayError
+{
+	VROverlayError_None = 0,
+	VROverlayError_UnknownOverlay = 10,
+	VROverlayError_InvalidHandle = 11,
+	VROverlayError_PermissionDenied = 12,
+	VROverlayError_OverlayLimitExceeded = 13,
+	VROverlayError_WrongVisibilityType = 14,
+	VROverlayError_KeyTooLong = 15,
+	VROverlayError_NameTooLong = 16,
+	VROverlayError_KeyInUse = 17,
+	VROverlayError_WrongTransformType = 18,
+	VROverlayError_InvalidTrackedDevice = 19,
+	VROverlayError_InvalidParameter = 20,
+	VROverlayError_ThumbnailCantBeDestroyed = 21,
+	VROverlayError_ArrayTooSmall = 22,
+	VROverlayError_RequestFailed = 23,
+	VROverlayError_InvalidTexture = 24,
+	VROverlayError_UnableToLoadFile = 25,
+};
 typedef enum HmdError
 {
 	HmdError_None = 0,
@@ -296,26 +316,6 @@ typedef enum ChaperoneCalibrationState
 	ChaperoneCalibrationState_Error_SoftBoundsInvalid = 203,
 	ChaperoneCalibrationState_Error_HardBoundsInvalid = 204,
 };
-typedef enum VROverlayError
-{
-	VROverlayError_None = 0,
-	VROverlayError_UnknownOverlay = 10,
-	VROverlayError_InvalidHandle = 11,
-	VROverlayError_PermissionDenied = 12,
-	VROverlayError_OverlayLimitExceeded = 13,
-	VROverlayError_WrongVisibilityType = 14,
-	VROverlayError_KeyTooLong = 15,
-	VROverlayError_NameTooLong = 16,
-	VROverlayError_KeyInUse = 17,
-	VROverlayError_WrongTransformType = 18,
-	VROverlayError_InvalidTrackedDevice = 19,
-	VROverlayError_InvalidParameter = 20,
-	VROverlayError_ThumbnailCantBeDestroyed = 21,
-	VROverlayError_ArrayTooSmall = 22,
-	VROverlayError_RequestFailed = 23,
-	VROverlayError_InvalidTexture = 24,
-	VROverlayError_UnableToLoadFile = 25,
-};
 typedef enum VROverlayInputMethod
 {
 	VROverlayInputMethod_None = 0,
@@ -333,17 +333,17 @@ typedef enum VROverlayFlags
 	VROverlayFlags_Curved = 1,
 	VROverlayFlags_RGSS4X = 2,
 };
+typedef enum NotificationError_t
+{
+	NotificationError_t_k_ENotificationError_OK = 0,
+	NotificationError_t_k_ENotificationError_Fail = 1,
+};
 typedef enum CameraImageResult
 {
 	CameraImageResult_OK = 0,
 	CameraImageResult_Uninitalized = 1,
 	CameraImageResult_NotReady = 2,
 	CameraImageResult_SameFrame = 3,
-};
-typedef enum NotificationError_t
-{
-	NotificationError_t_k_ENotificationError_OK = 0,
-	NotificationError_t_k_ENotificationError_Fail = 1,
 };
 typedef struct HmdMatrix34_t
 {
@@ -492,6 +492,17 @@ typedef struct VROverlayIntersectionResults_t
 	HmdVector2_t vUVs;
 	float fDistance;
 } VROverlayIntersectionResults_t;
+typedef struct NotificationBitmap
+{
+	char * bytes; // char *
+	int width;
+	int height;
+	int depth;
+} NotificationBitmap;
+typedef struct NotificationItem
+{
+	unsigned int notificationId;
+} NotificationItem;
 typedef struct CameraInfo_t
 {
 	unsigned int width;
@@ -510,17 +521,6 @@ typedef struct CameraImage_t
 	unsigned int unBufferLen;
 	CameraImageResult result;
 } CameraImage_t;
-typedef struct NotificationBitmap
-{
-	char * bytes; // char *
-	int width;
-	int height;
-	int depth;
-} NotificationBitmap;
-typedef struct NotificationItem
-{
-	unsigned int notificationId;
-} NotificationItem;
 
 
 
@@ -646,6 +646,9 @@ S_API float VR_IVRControlPanel_GetIPD(intptr_t instancePtr);
 S_API void VR_IVRControlPanel_SetIPD(intptr_t instancePtr, float fIPD);
 S_API class IVRCompositor * VR_IVRControlPanel_GetCurrentCompositorInterface(intptr_t instancePtr, const char * pchInterfaceVersion);
 S_API bool VR_IVRControlPanel_QuitProcess(intptr_t instancePtr, uint32_t pidProcessToQuit);
+S_API uint32_t VR_IVRNotifications_GetErrorString(intptr_t instancePtr, NotificationError_t error, char * pchBuffer, uint32_t unBufferSize);
+S_API NotificationError_t VR_IVRNotifications_CreateNotification(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, char * strType, char * strText, char * strCategory, struct NotificationBitmap * photo, VRNotificationId * notificationId);
+S_API NotificationError_t VR_IVRNotifications_DismissNotification(intptr_t instancePtr, VRNotificationId notificationId);
 S_API uint32_t VR_IVRCameraAccess_GetCameraCount(intptr_t instancePtr);
 S_API uint32_t VR_IVRCameraAccess_GetCameraId(intptr_t instancePtr, uint32_t unCameraIndex, char * pchBuffer, uint32_t unBufferLen);
 S_API bool VR_IVRCameraAccess_EnableCamera(intptr_t instancePtr, uint32_t unCameraIndex, bool bEnabled);
@@ -669,9 +672,6 @@ S_API void VR_IVRChaperoneSetup_SetWorkingTagPoseByName(intptr_t instancePtr, co
 S_API void VR_IVRChaperoneSetup_RemoveWorkingTagPoseByName(intptr_t instancePtr, const char * pchTagName);
 S_API void VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(intptr_t instancePtr);
 S_API void VR_IVRChaperoneSetup_ReloadFromDisk(intptr_t instancePtr);
-S_API uint32_t VR_IVRNotifications_GetErrorString(intptr_t instancePtr, NotificationError_t error, char * pchBuffer, uint32_t unBufferSize);
-S_API NotificationError_t VR_IVRNotifications_CreateNotification(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, char * strType, char * strText, char * strCategory, struct NotificationBitmap * photo, VRNotificationId * notificationId);
-S_API NotificationError_t VR_IVRNotifications_DismissNotification(intptr_t instancePtr, VRNotificationId notificationId);
 
 // Global entry points
 S_API intptr_t VR_Init( HmdError *peError );

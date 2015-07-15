@@ -140,6 +140,25 @@
 	{"name": "ControllerEventOutput_OSEvents","value": "0"}
 	,{"name": "ControllerEventOutput_VREvents","value": "1"}
 ]}
+,	{"enumname": "vr::VROverlayError","values": [ 
+	{"name": "VROverlayError_None","value": "0"}
+	,{"name": "VROverlayError_UnknownOverlay","value": "10"}
+	,{"name": "VROverlayError_InvalidHandle","value": "11"}
+	,{"name": "VROverlayError_PermissionDenied","value": "12"}
+	,{"name": "VROverlayError_OverlayLimitExceeded","value": "13"}
+	,{"name": "VROverlayError_WrongVisibilityType","value": "14"}
+	,{"name": "VROverlayError_KeyTooLong","value": "15"}
+	,{"name": "VROverlayError_NameTooLong","value": "16"}
+	,{"name": "VROverlayError_KeyInUse","value": "17"}
+	,{"name": "VROverlayError_WrongTransformType","value": "18"}
+	,{"name": "VROverlayError_InvalidTrackedDevice","value": "19"}
+	,{"name": "VROverlayError_InvalidParameter","value": "20"}
+	,{"name": "VROverlayError_ThumbnailCantBeDestroyed","value": "21"}
+	,{"name": "VROverlayError_ArrayTooSmall","value": "22"}
+	,{"name": "VROverlayError_RequestFailed","value": "23"}
+	,{"name": "VROverlayError_InvalidTexture","value": "24"}
+	,{"name": "VROverlayError_UnableToLoadFile","value": "25"}
+]}
 ,	{"enumname": "vr::HmdError","values": [ 
 	{"name": "HmdError_None","value": "0"}
 	,{"name": "HmdError_Unknown","value": "1"}
@@ -192,25 +211,6 @@
 	,{"name": "ChaperoneCalibrationState_Error_SoftBoundsInvalid","value": "203"}
 	,{"name": "ChaperoneCalibrationState_Error_HardBoundsInvalid","value": "204"}
 ]}
-,	{"enumname": "vr::VROverlayError","values": [ 
-	{"name": "VROverlayError_None","value": "0"}
-	,{"name": "VROverlayError_UnknownOverlay","value": "10"}
-	,{"name": "VROverlayError_InvalidHandle","value": "11"}
-	,{"name": "VROverlayError_PermissionDenied","value": "12"}
-	,{"name": "VROverlayError_OverlayLimitExceeded","value": "13"}
-	,{"name": "VROverlayError_WrongVisibilityType","value": "14"}
-	,{"name": "VROverlayError_KeyTooLong","value": "15"}
-	,{"name": "VROverlayError_NameTooLong","value": "16"}
-	,{"name": "VROverlayError_KeyInUse","value": "17"}
-	,{"name": "VROverlayError_WrongTransformType","value": "18"}
-	,{"name": "VROverlayError_InvalidTrackedDevice","value": "19"}
-	,{"name": "VROverlayError_InvalidParameter","value": "20"}
-	,{"name": "VROverlayError_ThumbnailCantBeDestroyed","value": "21"}
-	,{"name": "VROverlayError_ArrayTooSmall","value": "22"}
-	,{"name": "VROverlayError_RequestFailed","value": "23"}
-	,{"name": "VROverlayError_InvalidTexture","value": "24"}
-	,{"name": "VROverlayError_UnableToLoadFile","value": "25"}
-]}
 ,	{"enumname": "vr::VROverlayInputMethod","values": [ 
 	{"name": "VROverlayInputMethod_None","value": "0"}
 	,{"name": "VROverlayInputMethod_Mouse","value": "1"}
@@ -225,15 +225,15 @@
 	,{"name": "VROverlayFlags_Curved","value": "1"}
 	,{"name": "VROverlayFlags_RGSS4X","value": "2"}
 ]}
+,	{"enumname": "vr::NotificationError_t","values": [ 
+	{"name": "k_ENotificationError_OK","value": "0"}
+	,{"name": "k_ENotificationError_Fail","value": "1"}
+]}
 ,	{"enumname": "vr::CameraImageResult","values": [ 
 	{"name": "CameraImageResult_OK","value": "0"}
 	,{"name": "CameraImageResult_Uninitalized","value": "1"}
 	,{"name": "CameraImageResult_NotReady","value": "2"}
 	,{"name": "CameraImageResult_SameFrame","value": "3"}
-]}
-,	{"enumname": "vr::NotificationError_t","values": [ 
-	{"name": "k_ENotificationError_OK","value": "0"}
-	,{"name": "k_ENotificationError_Fail","value": "1"}
 ]}
 ],
 "consts":[{
@@ -251,13 +251,13 @@
 ,{
 	"constname": "k_unControllerStateAxisCount","consttype": "const uint32_t", "constval": "5"}
 ,{
+	"constname": "k_ulOverlayHandleInvalid","consttype": "const VROverlayHandle_t", "constval": "0"}
+,{
 	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_005"}
 ,{
 	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_007"}
 ,{
 	"constname": "IVRChaperone_Version","consttype": "const char *const", "constval": "IVRChaperone_002"}
-,{
-	"constname": "k_ulOverlayHandleInvalid","consttype": "const VROverlayHandle_t", "constval": "0"}
 ,{
 	"constname": "k_unVROverlayMaxKeyLength","consttype": "const uint32_t", "constval": "128"}
 ,{
@@ -271,15 +271,15 @@
 ,{
 	"constname": "IVRControlPanel_Version","consttype": "const char *const", "constval": "IVRControlPanel_001"}
 ,{
-	"constname": "IVRCameraAccess_Version","consttype": "const char *const", "constval": "IVRCameraAccess_001"}
-,{
-	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_001"}
-,{
 	"constname": "k_unNotificationTypeMaxSize","consttype": "const uint32_t", "constval": "16"}
 ,{
 	"constname": "k_unNotificationTextMaxSize","consttype": "const uint32_t", "constval": "128"}
 ,{
 	"constname": "IVRNotifications_Version","consttype": "const char *const", "constval": "IVRNotifications_001"}
+,{
+	"constname": "IVRCameraAccess_Version","consttype": "const char *const", "constval": "IVRCameraAccess_001"}
+,{
+	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_001"}
 ],
 "structs":[{"struct": "vr::HmdMatrix34_t","fields": [
 { "fieldname": "m", "fieldtype": "float [3][4]"}]}
@@ -413,6 +413,13 @@
 { "fieldname": "vNormal", "fieldtype": "struct vr::HmdVector3_t"},
 { "fieldname": "vUVs", "fieldtype": "struct vr::HmdVector2_t"},
 { "fieldname": "fDistance", "fieldtype": "float"}]}
+,{"struct": "vr::NotificationBitmap","fields": [
+{ "fieldname": "bytes", "fieldtype": "char *"},
+{ "fieldname": "width", "fieldtype": "int32_t"},
+{ "fieldname": "height", "fieldtype": "int32_t"},
+{ "fieldname": "depth", "fieldtype": "int32_t"}]}
+,{"struct": "vr::NotificationItem","fields": [
+{ "fieldname": "notificationId", "fieldtype": "VRNotificationId"}]}
 ,{"struct": "vr::CameraInfo_t","fields": [
 { "fieldname": "width", "fieldtype": "uint32_t"},
 { "fieldname": "height", "fieldtype": "uint32_t"},
@@ -427,13 +434,6 @@
 { "fieldname": "pBuffer", "fieldtype": "unsigned char *"},
 { "fieldname": "unBufferLen", "fieldtype": "uint32_t"},
 { "fieldname": "result", "fieldtype": "enum vr::CameraImageResult"}]}
-,{"struct": "vr::NotificationBitmap","fields": [
-{ "fieldname": "bytes", "fieldtype": "char *"},
-{ "fieldname": "width", "fieldtype": "int32_t"},
-{ "fieldname": "height", "fieldtype": "int32_t"},
-{ "fieldname": "depth", "fieldtype": "int32_t"}]}
-,{"struct": "vr::NotificationItem","fields": [
-{ "fieldname": "notificationId", "fieldtype": "VRNotificationId"}]}
 ],
 "methods":[{
 	"classname": "vr::IVRSystem",
@@ -1484,6 +1484,38 @@
 	 ]
 }
 ,{
+	"classname": "vr::IVRNotifications",
+	"methodname": "GetErrorString",
+	"returntype": "uint32_t",
+	"params": [ 
+{	"paramname": "error" ,"paramtype": "vr::NotificationError_t"},
+{	"paramname": "pchBuffer" ,"out_string": " " ,"paramtype": "char *"},
+{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRNotifications",
+	"methodname": "CreateNotification", "desc": "Create a new notification.",
+	"returntype": "vr::NotificationError_t",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "ulUserValue" ,"paramtype": "uint64_t"},
+{	"paramname": "strType" ,"paramtype": "char *"},
+{	"paramname": "strText" ,"paramtype": "char *"},
+{	"paramname": "strCategory" ,"paramtype": "char *"},
+{	"paramname": "photo" ,"paramtype": "struct vr::NotificationBitmap *"},
+{	"paramname": "notificationId" ,"paramtype": "vr::VRNotificationId *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRNotifications",
+	"methodname": "DismissNotification", "desc": "Dismiss the notification",
+	"returntype": "vr::NotificationError_t",
+	"params": [ 
+{	"paramname": "notificationId" ,"paramtype": "vr::VRNotificationId"}
+	 ]
+}
+,{
 	"classname": "vr::IVRCameraAccess",
 	"methodname": "GetCameraCount",
 	"returntype": "uint32_t"
@@ -1669,38 +1701,6 @@
 	"classname": "vr::IVRChaperoneSetup",
 	"methodname": "ReloadFromDisk",
 	"returntype": "void"
-}
-,{
-	"classname": "vr::IVRNotifications",
-	"methodname": "GetErrorString",
-	"returntype": "uint32_t",
-	"params": [ 
-{	"paramname": "error" ,"paramtype": "vr::NotificationError_t"},
-{	"paramname": "pchBuffer" ,"out_string": " " ,"paramtype": "char *"},
-{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRNotifications",
-	"methodname": "CreateNotification", "desc": "Create a new notification.",
-	"returntype": "vr::NotificationError_t",
-	"params": [ 
-{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
-{	"paramname": "ulUserValue" ,"paramtype": "uint64_t"},
-{	"paramname": "strType" ,"paramtype": "char *"},
-{	"paramname": "strText" ,"paramtype": "char *"},
-{	"paramname": "strCategory" ,"paramtype": "char *"},
-{	"paramname": "photo" ,"paramtype": "struct vr::NotificationBitmap *"},
-{	"paramname": "notificationId" ,"paramtype": "vr::VRNotificationId *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRNotifications",
-	"methodname": "DismissNotification", "desc": "Dismiss the notification",
-	"returntype": "vr::NotificationError_t",
-	"params": [ 
-{	"paramname": "notificationId" ,"paramtype": "vr::VRNotificationId"}
-	 ]
 }
 ]
 }

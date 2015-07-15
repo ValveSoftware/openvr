@@ -463,6 +463,34 @@ struct Compositor_OverlaySettings
 	HmdMatrix44_t transform;
 };
 
+/** used to refer to a single VR overlay */
+typedef uint64_t VROverlayHandle_t;
+
+static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
+
+/** Errors that can occur around VR overlays */
+enum VROverlayError
+{
+	VROverlayError_None					= 0,
+
+	VROverlayError_UnknownOverlay		= 10,
+	VROverlayError_InvalidHandle		= 11,
+	VROverlayError_PermissionDenied		= 12,
+	VROverlayError_OverlayLimitExceeded = 13, // No more overlays could be created because the maximum number already exist
+	VROverlayError_WrongVisibilityType	= 14,
+	VROverlayError_KeyTooLong			= 15,
+	VROverlayError_NameTooLong			= 16,
+	VROverlayError_KeyInUse				= 17,
+	VROverlayError_WrongTransformType	= 18,
+	VROverlayError_InvalidTrackedDevice = 19,
+	VROverlayError_InvalidParameter		= 20,
+	VROverlayError_ThumbnailCantBeDestroyed = 21,
+	VROverlayError_ArrayTooSmall		= 22,
+	VROverlayError_RequestFailed		= 23,
+	VROverlayError_InvalidTexture		= 24,
+	VROverlayError_UnableToLoadFile		= 25,
+};
+
 
 /** error codes returned by Vr_Init */
 enum HmdError
@@ -1091,11 +1119,6 @@ static const char * const IVRNotifications_Version = "IVRNotifications_001";
 namespace vr
 {
 
-	/** used to refer to a single VR overlay */
-	typedef uint64_t VROverlayHandle_t;
-
-	static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
-
 	/** The maximum length of an overlay key in bytes, counting the terminating null character. */
 	static const uint32_t k_unVROverlayMaxKeyLength = 128;
 
@@ -1104,29 +1127,6 @@ namespace vr
 
 	/** The maximum number of overlays that can exist in the system at one time. */
 	static const uint32_t k_unMaxOverlayCount = 32;
-
-	/** Errors that can occur around VR overlays */
-	enum VROverlayError
-	{
-		VROverlayError_None					= 0,
-
-		VROverlayError_UnknownOverlay		= 10,
-		VROverlayError_InvalidHandle		= 11,
-		VROverlayError_PermissionDenied		= 12,
-		VROverlayError_OverlayLimitExceeded = 13, // No more overlays could be created because the maximum number already exist
-		VROverlayError_WrongVisibilityType	= 14,
-		VROverlayError_KeyTooLong			= 15,
-		VROverlayError_NameTooLong			= 16,
-		VROverlayError_KeyInUse				= 17,
-		VROverlayError_WrongTransformType	= 18,
-		VROverlayError_InvalidTrackedDevice = 19,
-		VROverlayError_InvalidParameter		= 20,
-		VROverlayError_ThumbnailCantBeDestroyed = 21,
-		VROverlayError_ArrayTooSmall		= 22,
-		VROverlayError_RequestFailed		= 23,
-		VROverlayError_InvalidTexture		= 24,
-		VROverlayError_UnableToLoadFile		= 25,
-	};
 
 	/** Types of input supported by VR Overlays */
 	enum VROverlayInputMethod

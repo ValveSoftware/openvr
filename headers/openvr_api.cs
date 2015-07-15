@@ -261,6 +261,12 @@ class VRNativeEntrypoints
 	internal static extern IntPtr VR_IVRControlPanel_GetCurrentCompositorInterface(IntPtr instancePtr, string pchInterfaceVersion);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_QuitProcess")]
 	internal static extern bool VR_IVRControlPanel_QuitProcess(IntPtr instancePtr, uint pidProcessToQuit);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_GetErrorString")]
+	internal static extern uint VR_IVRNotifications_GetErrorString(IntPtr instancePtr, NotificationError_t error, System.Text.StringBuilder pchBuffer, uint unBufferSize);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_CreateNotification")]
+	internal static extern NotificationError_t VR_IVRNotifications_CreateNotification(IntPtr instancePtr, ulong ulOverlayHandle, ulong ulUserValue, string strType, string strText, string strCategory, ref NotificationBitmap photo, ref uint notificationId);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_DismissNotification")]
+	internal static extern NotificationError_t VR_IVRNotifications_DismissNotification(IntPtr instancePtr, uint notificationId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraCount")]
 	internal static extern uint VR_IVRCameraAccess_GetCameraCount(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraId")]
@@ -307,12 +313,6 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_ReloadFromDisk")]
 	internal static extern void VR_IVRChaperoneSetup_ReloadFromDisk(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_GetErrorString")]
-	internal static extern uint VR_IVRNotifications_GetErrorString(IntPtr instancePtr, NotificationError_t error, System.Text.StringBuilder pchBuffer, uint unBufferSize);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_CreateNotification")]
-	internal static extern NotificationError_t VR_IVRNotifications_CreateNotification(IntPtr instancePtr, ulong ulOverlayHandle, ulong ulUserValue, string strType, string strText, string strCategory, ref NotificationBitmap photo, ref uint notificationId);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_DismissNotification")]
-	internal static extern NotificationError_t VR_IVRNotifications_DismissNotification(IntPtr instancePtr, uint notificationId);
 
 }
 
@@ -479,6 +479,15 @@ public abstract class IVRControlPanel
 }
 
 
+public abstract class IVRNotifications
+{
+	public abstract IntPtr GetIntPtr();
+	public abstract uint GetErrorString(NotificationError_t error,System.Text.StringBuilder pchBuffer,uint unBufferSize);
+	public abstract NotificationError_t CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,string strType,string strText,string strCategory,ref NotificationBitmap photo,ref uint notificationId);
+	public abstract NotificationError_t DismissNotification(uint notificationId);
+}
+
+
 public abstract class IVRCameraAccess
 {
 	public abstract IntPtr GetIntPtr();
@@ -511,15 +520,6 @@ public abstract class IVRChaperoneSetup
 	public abstract void RemoveWorkingTagPoseByName(string pchTagName);
 	public abstract void RemoveAllWorkingTagPoses();
 	public abstract void ReloadFromDisk();
-}
-
-
-public abstract class IVRNotifications
-{
-	public abstract IntPtr GetIntPtr();
-	public abstract uint GetErrorString(NotificationError_t error,System.Text.StringBuilder pchBuffer,uint unBufferSize);
-	public abstract NotificationError_t CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,string strType,string strText,string strCategory,ref NotificationBitmap photo,ref uint notificationId);
-	public abstract NotificationError_t DismissNotification(uint notificationId);
 }
 
 
@@ -1389,6 +1389,45 @@ public class CVRControlPanel : IVRControlPanel
 }
 
 
+public class CVRNotifications : IVRNotifications
+{
+	public CVRNotifications(IntPtr VRNotifications)
+	{
+		m_pVRNotifications = VRNotifications;
+	}
+	IntPtr m_pVRNotifications;
+
+	public override IntPtr GetIntPtr() { return m_pVRNotifications; }
+
+	private void CheckIfUsable()
+	{
+		if (m_pVRNotifications == IntPtr.Zero)
+		{
+			throw new Exception("Steam Pointer not configured");
+		}
+	}
+	public override uint GetErrorString(NotificationError_t error,System.Text.StringBuilder pchBuffer,uint unBufferSize)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRNotifications_GetErrorString(m_pVRNotifications,error,pchBuffer,unBufferSize);
+		return result;
+	}
+	public override NotificationError_t CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,string strType,string strText,string strCategory,ref NotificationBitmap photo,ref uint notificationId)
+	{
+		CheckIfUsable();
+		notificationId = 0;
+		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_CreateNotification(m_pVRNotifications,ulOverlayHandle,ulUserValue,strType,strText,strCategory,ref photo,ref notificationId);
+		return result;
+	}
+	public override NotificationError_t DismissNotification(uint notificationId)
+	{
+		CheckIfUsable();
+		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_DismissNotification(m_pVRNotifications,notificationId);
+		return result;
+	}
+}
+
+
 public class CVRCameraAccess : IVRCameraAccess
 {
 	public CVRCameraAccess(IntPtr VRCameraAccess)
@@ -1568,45 +1607,6 @@ public class CVRChaperoneSetup : IVRChaperoneSetup
 }
 
 
-public class CVRNotifications : IVRNotifications
-{
-	public CVRNotifications(IntPtr VRNotifications)
-	{
-		m_pVRNotifications = VRNotifications;
-	}
-	IntPtr m_pVRNotifications;
-
-	public override IntPtr GetIntPtr() { return m_pVRNotifications; }
-
-	private void CheckIfUsable()
-	{
-		if (m_pVRNotifications == IntPtr.Zero)
-		{
-			throw new Exception("Steam Pointer not configured");
-		}
-	}
-	public override uint GetErrorString(NotificationError_t error,System.Text.StringBuilder pchBuffer,uint unBufferSize)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRNotifications_GetErrorString(m_pVRNotifications,error,pchBuffer,unBufferSize);
-		return result;
-	}
-	public override NotificationError_t CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,string strType,string strText,string strCategory,ref NotificationBitmap photo,ref uint notificationId)
-	{
-		CheckIfUsable();
-		notificationId = 0;
-		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_CreateNotification(m_pVRNotifications,ulOverlayHandle,ulUserValue,strType,strText,strCategory,ref photo,ref notificationId);
-		return result;
-	}
-	public override NotificationError_t DismissNotification(uint notificationId)
-	{
-		CheckIfUsable();
-		NotificationError_t result = VRNativeEntrypoints.VR_IVRNotifications_DismissNotification(m_pVRNotifications,notificationId);
-		return result;
-	}
-}
-
-
 public class OpenVRInterop
 {
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_Init")]
@@ -1769,6 +1769,26 @@ public enum EVRControllerEventOutputType
 	ControllerEventOutput_OSEvents = 0,
 	ControllerEventOutput_VREvents = 1,
 }
+public enum VROverlayError
+{
+	None = 0,
+	UnknownOverlay = 10,
+	InvalidHandle = 11,
+	PermissionDenied = 12,
+	OverlayLimitExceeded = 13,
+	WrongVisibilityType = 14,
+	KeyTooLong = 15,
+	NameTooLong = 16,
+	KeyInUse = 17,
+	WrongTransformType = 18,
+	InvalidTrackedDevice = 19,
+	InvalidParameter = 20,
+	ThumbnailCantBeDestroyed = 21,
+	ArrayTooSmall = 22,
+	RequestFailed = 23,
+	InvalidTexture = 24,
+	UnableToLoadFile = 25,
+}
 public enum HmdError
 {
 	None = 0,
@@ -1824,26 +1844,6 @@ public enum ChaperoneCalibrationState
 	Error_SoftBoundsInvalid = 203,
 	Error_HardBoundsInvalid = 204,
 }
-public enum VROverlayError
-{
-	None = 0,
-	UnknownOverlay = 10,
-	InvalidHandle = 11,
-	PermissionDenied = 12,
-	OverlayLimitExceeded = 13,
-	WrongVisibilityType = 14,
-	KeyTooLong = 15,
-	NameTooLong = 16,
-	KeyInUse = 17,
-	WrongTransformType = 18,
-	InvalidTrackedDevice = 19,
-	InvalidParameter = 20,
-	ThumbnailCantBeDestroyed = 21,
-	ArrayTooSmall = 22,
-	RequestFailed = 23,
-	InvalidTexture = 24,
-	UnableToLoadFile = 25,
-}
 public enum VROverlayInputMethod
 {
 	None = 0,
@@ -1861,17 +1861,17 @@ public enum VROverlayFlags
 	Curved = 1,
 	RGSS4X = 2,
 }
+public enum NotificationError_t
+{
+	k_ENotificationError_OK = 0,
+	k_ENotificationError_Fail = 1,
+}
 public enum CameraImageResult
 {
 	OK = 0,
 	Uninitalized = 1,
 	NotReady = 2,
 	SameFrame = 3,
-}
-public enum NotificationError_t
-{
-	k_ENotificationError_OK = 0,
-	k_ENotificationError_Fail = 1,
 }
 
 [StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
@@ -2080,6 +2080,17 @@ public enum NotificationError_t
 	public HmdVector2_t vUVs;
 	public float fDistance;
 }
+[StructLayout(LayoutKind.Sequential)] public struct NotificationBitmap
+{
+	public IntPtr bytes; // char *
+	public int width;
+	public int height;
+	public int depth;
+}
+[StructLayout(LayoutKind.Sequential)] public struct NotificationItem
+{
+	public uint notificationId;
+}
 [StructLayout(LayoutKind.Sequential)] public struct CameraInfo_t
 {
 	public uint width;
@@ -2097,17 +2108,6 @@ public enum NotificationError_t
 	public IntPtr pBuffer; // unsigned char *
 	public uint unBufferLen;
 	public CameraImageResult result;
-}
-[StructLayout(LayoutKind.Sequential)] public struct NotificationBitmap
-{
-	public IntPtr bytes; // char *
-	public int width;
-	public int height;
-	public int depth;
-}
-[StructLayout(LayoutKind.Sequential)] public struct NotificationItem
-{
-	public uint notificationId;
 }
 
 public class OpenVR
@@ -2144,21 +2144,21 @@ public class OpenVR
 	public const uint k_unTrackedDeviceIndexInvalid = 4294967295;
 	public const uint k_unMaxPropertyStringSize = 32768;
 	public const uint k_unControllerStateAxisCount = 5;
+	public const ulong k_ulOverlayHandleInvalid = 0;
 	public const string IVRSystem_Version = "IVRSystem_005";
 	public const string IVRCompositor_Version = "IVRCompositor_007";
 	public const string IVRChaperone_Version = "IVRChaperone_002";
-	public const ulong k_ulOverlayHandleInvalid = 0;
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;
 	public const string IVROverlay_Version = "IVROverlay_003";
 	public const string IVRRenderModels_Version = "IVRRenderModels_001";
 	public const string IVRControlPanel_Version = "IVRControlPanel_001";
-	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
-	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
 	public const uint k_unNotificationTypeMaxSize = 16;
 	public const uint k_unNotificationTextMaxSize = 128;
 	public const string IVRNotifications_Version = "IVRNotifications_001";
+	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
+	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
 }
 
 
