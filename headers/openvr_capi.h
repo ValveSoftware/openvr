@@ -91,6 +91,7 @@ char * IVRRenderModels_Version = "IVRRenderModels_001";
 char * IVRControlPanel_Version = "IVRControlPanel_001";
 unsigned int k_unNotificationTypeMaxSize = 16;
 unsigned int k_unNotificationTextMaxSize = 128;
+unsigned int k_unNotificationCatagoryMaxSize = 32;
 char * IVRNotifications_Version = "IVRNotifications_001";
 char * IVRCameraAccess_Version = "IVRCameraAccess_001";
 char * IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
@@ -176,6 +177,14 @@ typedef enum TrackedPropertyError
 	TrackedPropertyError_TrackedProp_ValueNotProvidedByDevice = 7,
 	TrackedPropertyError_TrackedProp_StringExceedsMaximumLength = 8,
 };
+typedef enum VRStatusState_t
+{
+	VRStatusState_t_State_OK = 0,
+	VRStatusState_t_State_Error = 1,
+	VRStatusState_t_State_Warning = 2,
+	VRStatusState_t_State_Undefined = 3,
+	VRStatusState_t_State_NotSet = 4,
+};
 typedef enum EVREventType
 {
 	EVREventType_VREvent_None = 0,
@@ -208,6 +217,8 @@ typedef enum EVREventType
 	EVREventType_VREvent_Quit = 700,
 	EVREventType_VREvent_ProcessQuit = 701,
 	EVREventType_VREvent_ChaperoneDataHasChanged = 800,
+	EVREventType_VREvent_ChaperoneUniverseHasChanged = 801,
+	EVREventType_VREvent_StatusUpdate = 900,
 };
 typedef enum EVRButtonId
 {
@@ -279,6 +290,7 @@ typedef enum HmdError
 	HmdError_Init_NoConfigPath = 111,
 	HmdError_Init_NoLogPath = 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
+	HmdError_Init_AppInfoInitFailed = 114,
 	HmdError_Driver_Failed = 200,
 	HmdError_Driver_Unknown = 201,
 	HmdError_Driver_HmdUnknown = 202,
@@ -332,11 +344,13 @@ typedef enum VROverlayFlags
 	VROverlayFlags_None = 0,
 	VROverlayFlags_Curved = 1,
 	VROverlayFlags_RGSS4X = 2,
+	VROverlayFlags_NoDashboardTab = 3,
 };
 typedef enum NotificationError_t
 {
 	NotificationError_t_k_ENotificationError_OK = 0,
 	NotificationError_t_k_ENotificationError_Fail = 1,
+	NotificationError_t_k_eNotificationError_InvalidParam = 2,
 };
 typedef enum CameraImageResult
 {
@@ -646,6 +660,8 @@ S_API float VR_IVRControlPanel_GetIPD(intptr_t instancePtr);
 S_API void VR_IVRControlPanel_SetIPD(intptr_t instancePtr, float fIPD);
 S_API class IVRCompositor * VR_IVRControlPanel_GetCurrentCompositorInterface(intptr_t instancePtr, const char * pchInterfaceVersion);
 S_API bool VR_IVRControlPanel_QuitProcess(intptr_t instancePtr, uint32_t pidProcessToQuit);
+S_API uint32_t VR_IVRControlPanel_StartVRProcess(intptr_t instancePtr, const char * pchExecutable, const char ** pchArguments, uint32_t unArgumentCount, const char * pchWorkingDirectory);
+S_API void VR_IVRControlPanel_SetMasterProcessToThis(intptr_t instancePtr);
 S_API uint32_t VR_IVRNotifications_GetErrorString(intptr_t instancePtr, NotificationError_t error, char * pchBuffer, uint32_t unBufferSize);
 S_API NotificationError_t VR_IVRNotifications_CreateNotification(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, char * strType, char * strText, char * strCategory, struct NotificationBitmap * photo, VRNotificationId * notificationId);
 S_API NotificationError_t VR_IVRNotifications_DismissNotification(intptr_t instancePtr, VRNotificationId notificationId);

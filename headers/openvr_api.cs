@@ -261,6 +261,10 @@ class VRNativeEntrypoints
 	internal static extern IntPtr VR_IVRControlPanel_GetCurrentCompositorInterface(IntPtr instancePtr, string pchInterfaceVersion);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_QuitProcess")]
 	internal static extern bool VR_IVRControlPanel_QuitProcess(IntPtr instancePtr, uint pidProcessToQuit);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_StartVRProcess")]
+	internal static extern uint VR_IVRControlPanel_StartVRProcess(IntPtr instancePtr, string pchExecutable, string pchArguments, uint unArgumentCount, string pchWorkingDirectory);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_SetMasterProcessToThis")]
+	internal static extern void VR_IVRControlPanel_SetMasterProcessToThis(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_GetErrorString")]
 	internal static extern uint VR_IVRNotifications_GetErrorString(IntPtr instancePtr, NotificationError_t error, System.Text.StringBuilder pchBuffer, uint unBufferSize);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_CreateNotification")]
@@ -476,6 +480,8 @@ public abstract class IVRControlPanel
 	public abstract void SetIPD(float fIPD);
 	public abstract IVRCompositor GetCurrentCompositorInterface(string pchInterfaceVersion);
 	public abstract bool QuitProcess(uint pidProcessToQuit);
+	public abstract uint StartVRProcess(string pchExecutable,string pchArguments,uint unArgumentCount,string pchWorkingDirectory);
+	public abstract void SetMasterProcessToThis();
 }
 
 
@@ -1386,6 +1392,18 @@ public class CVRControlPanel : IVRControlPanel
 		bool result = VRNativeEntrypoints.VR_IVRControlPanel_QuitProcess(m_pVRControlPanel,pidProcessToQuit);
 		return result;
 	}
+	public override uint StartVRProcess(string pchExecutable,string pchArguments,uint unArgumentCount,string pchWorkingDirectory)
+	{
+		CheckIfUsable();
+		pchArguments = "";
+		uint result = VRNativeEntrypoints.VR_IVRControlPanel_StartVRProcess(m_pVRControlPanel,pchExecutable,pchArguments,unArgumentCount,pchWorkingDirectory);
+		return result;
+	}
+	public override void SetMasterProcessToThis()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRControlPanel_SetMasterProcessToThis(m_pVRControlPanel);
+	}
 }
 
 
@@ -1704,6 +1722,14 @@ public enum TrackedPropertyError
 	TrackedProp_ValueNotProvidedByDevice = 7,
 	TrackedProp_StringExceedsMaximumLength = 8,
 }
+public enum VRStatusState_t
+{
+	State_OK = 0,
+	State_Error = 1,
+	State_Warning = 2,
+	State_Undefined = 3,
+	State_NotSet = 4,
+}
 public enum EVREventType
 {
 	VREvent_None = 0,
@@ -1736,6 +1762,8 @@ public enum EVREventType
 	VREvent_Quit = 700,
 	VREvent_ProcessQuit = 701,
 	VREvent_ChaperoneDataHasChanged = 800,
+	VREvent_ChaperoneUniverseHasChanged = 801,
+	VREvent_StatusUpdate = 900,
 }
 public enum EVRButtonId
 {
@@ -1807,6 +1835,7 @@ public enum HmdError
 	Init_NoConfigPath = 111,
 	Init_NoLogPath = 112,
 	Init_PathRegistryNotWritable = 113,
+	Init_AppInfoInitFailed = 114,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -1860,11 +1889,13 @@ public enum VROverlayFlags
 	None = 0,
 	Curved = 1,
 	RGSS4X = 2,
+	NoDashboardTab = 3,
 }
 public enum NotificationError_t
 {
 	k_ENotificationError_OK = 0,
 	k_ENotificationError_Fail = 1,
+	k_eNotificationError_InvalidParam = 2,
 }
 public enum CameraImageResult
 {
@@ -1990,6 +2021,10 @@ public enum CameraImageResult
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Overlay_t
 {
 	public ulong overlayHandle;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_Status_t
+{
+	public VRStatusState_t statusState;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Reserved_t
 {
@@ -2156,6 +2191,7 @@ public class OpenVR
 	public const string IVRControlPanel_Version = "IVRControlPanel_001";
 	public const uint k_unNotificationTypeMaxSize = 16;
 	public const uint k_unNotificationTextMaxSize = 128;
+	public const uint k_unNotificationCatagoryMaxSize = 32;
 	public const string IVRNotifications_Version = "IVRNotifications_001";
 	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";

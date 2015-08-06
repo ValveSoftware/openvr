@@ -247,6 +247,17 @@ struct VRTextureBounds_t
 	float uMax, vMax;
 };
 
+/** Status of the overall system */
+enum VRStatusState_t
+{
+	State_OK = 0,
+	State_Error = 1,
+	State_Warning = 2,
+	State_Undefined = 3,
+	State_NotSet = 4,
+};
+
+
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
 {
@@ -288,6 +299,9 @@ enum EVREventType
 	VREvent_ProcessQuit					= 701, // data is process
 
 	VREvent_ChaperoneDataHasChanged		= 800,
+	VREvent_ChaperoneUniverseHasChanged	= 801,
+
+	VREvent_StatusUpdate				= 900,
 };
 
 
@@ -359,6 +373,12 @@ struct VREvent_Overlay_t
 };
 
 
+/** Used for a few events about overlays */
+struct VREvent_Status_t
+{
+	VRStatusState_t statusState; 
+};
+
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
 struct VREvent_Reserved_t
@@ -376,6 +396,7 @@ typedef union
 	VREvent_Process_t process;
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
+	VREvent_Status_t status;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -493,6 +514,8 @@ enum VROverlayError
 
 
 /** error codes returned by Vr_Init */
+
+// Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
 enum HmdError
 {
 	HmdError_None = 0,
@@ -512,6 +535,7 @@ enum HmdError
 	HmdError_Init_NoConfigPath			= 111,
 	HmdError_Init_NoLogPath				= 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
+	HmdError_Init_AppInfoInitFailed		= 114,
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,

@@ -80,6 +80,13 @@
 	,{"name": "TrackedProp_ValueNotProvidedByDevice","value": "7"}
 	,{"name": "TrackedProp_StringExceedsMaximumLength","value": "8"}
 ]}
+,	{"enumname": "vr::VRStatusState_t","values": [ 
+	{"name": "State_OK","value": "0"}
+	,{"name": "State_Error","value": "1"}
+	,{"name": "State_Warning","value": "2"}
+	,{"name": "State_Undefined","value": "3"}
+	,{"name": "State_NotSet","value": "4"}
+]}
 ,	{"enumname": "vr::EVREventType","values": [ 
 	{"name": "VREvent_None","value": "0"}
 	,{"name": "VREvent_TrackedDeviceActivated","value": "100"}
@@ -111,6 +118,8 @@
 	,{"name": "VREvent_Quit","value": "700"}
 	,{"name": "VREvent_ProcessQuit","value": "701"}
 	,{"name": "VREvent_ChaperoneDataHasChanged","value": "800"}
+	,{"name": "VREvent_ChaperoneUniverseHasChanged","value": "801"}
+	,{"name": "VREvent_StatusUpdate","value": "900"}
 ]}
 ,	{"enumname": "vr::EVRButtonId","values": [ 
 	{"name": "k_EButton_System","value": "0"}
@@ -176,6 +185,7 @@
 	,{"name": "HmdError_Init_NoConfigPath","value": "111"}
 	,{"name": "HmdError_Init_NoLogPath","value": "112"}
 	,{"name": "HmdError_Init_PathRegistryNotWritable","value": "113"}
+	,{"name": "HmdError_Init_AppInfoInitFailed","value": "114"}
 	,{"name": "HmdError_Driver_Failed","value": "200"}
 	,{"name": "HmdError_Driver_Unknown","value": "201"}
 	,{"name": "HmdError_Driver_HmdUnknown","value": "202"}
@@ -224,10 +234,12 @@
 	{"name": "VROverlayFlags_None","value": "0"}
 	,{"name": "VROverlayFlags_Curved","value": "1"}
 	,{"name": "VROverlayFlags_RGSS4X","value": "2"}
+	,{"name": "VROverlayFlags_NoDashboardTab","value": "3"}
 ]}
 ,	{"enumname": "vr::NotificationError_t","values": [ 
 	{"name": "k_ENotificationError_OK","value": "0"}
 	,{"name": "k_ENotificationError_Fail","value": "1"}
+	,{"name": "k_eNotificationError_InvalidParam","value": "2"}
 ]}
 ,	{"enumname": "vr::CameraImageResult","values": [ 
 	{"name": "CameraImageResult_OK","value": "0"}
@@ -274,6 +286,8 @@
 	"constname": "k_unNotificationTypeMaxSize","consttype": "const uint32_t", "constval": "16"}
 ,{
 	"constname": "k_unNotificationTextMaxSize","consttype": "const uint32_t", "constval": "128"}
+,{
+	"constname": "k_unNotificationCatagoryMaxSize","consttype": "const uint32_t", "constval": "32"}
 ,{
 	"constname": "IVRNotifications_Version","consttype": "const char *const", "constval": "IVRNotifications_001"}
 ,{
@@ -343,6 +357,8 @@
 { "fieldname": "oldPid", "fieldtype": "uint32_t"}]}
 ,{"struct": "vr::VREvent_Overlay_t","fields": [
 { "fieldname": "overlayHandle", "fieldtype": "uint64_t"}]}
+,{"struct": "vr::VREvent_Status_t","fields": [
+{ "fieldname": "statusState", "fieldtype": "enum vr::VRStatusState_t"}]}
 ,{"struct": "vr::VREvent_Reserved_t","fields": [
 { "fieldname": "reserved0", "fieldtype": "uint64_t"},
 { "fieldname": "reserved1", "fieldtype": "uint64_t"}]}
@@ -352,7 +368,8 @@
 { "fieldname": "mouse", "fieldtype": "struct vr::VREvent_Mouse_t"},
 { "fieldname": "process", "fieldtype": "struct vr::VREvent_Process_t"},
 { "fieldname": "notification", "fieldtype": "struct vr::VREvent_Notification_t"},
-{ "fieldname": "overlay", "fieldtype": "struct vr::VREvent_Overlay_t"}]}
+{ "fieldname": "overlay", "fieldtype": "struct vr::VREvent_Overlay_t"},
+{ "fieldname": "status", "fieldtype": "struct vr::VREvent_Status_t"}]}
 ,{"struct": "vr::VREvent_t","fields": [
 { "fieldname": "eventType", "fieldtype": "enum vr::EVREventType"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},
@@ -1482,6 +1499,22 @@
 	"params": [ 
 {	"paramname": "pidProcessToQuit" ,"paramtype": "uint32_t"}
 	 ]
+}
+,{
+	"classname": "vr::IVRControlPanel",
+	"methodname": "StartVRProcess",
+	"returntype": "uint32_t",
+	"params": [ 
+{	"paramname": "pchExecutable" ,"paramtype": "const char *"},
+{	"paramname": "pchArguments" ,"paramtype": "const char **"},
+{	"paramname": "unArgumentCount" ,"paramtype": "uint32_t"},
+{	"paramname": "pchWorkingDirectory" ,"paramtype": "const char *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRControlPanel",
+	"methodname": "SetMasterProcessToThis",
+	"returntype": "void"
 }
 ,{
 	"classname": "vr::IVRNotifications",

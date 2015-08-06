@@ -247,6 +247,17 @@ struct VRTextureBounds_t
 	float uMax, vMax;
 };
 
+/** Status of the overall system */
+enum VRStatusState_t
+{
+	State_OK = 0,
+	State_Error = 1,
+	State_Warning = 2,
+	State_Undefined = 3,
+	State_NotSet = 4,
+};
+
+
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
 {
@@ -288,6 +299,9 @@ enum EVREventType
 	VREvent_ProcessQuit					= 701, // data is process
 
 	VREvent_ChaperoneDataHasChanged		= 800,
+	VREvent_ChaperoneUniverseHasChanged	= 801,
+
+	VREvent_StatusUpdate				= 900,
 };
 
 
@@ -359,6 +373,12 @@ struct VREvent_Overlay_t
 };
 
 
+/** Used for a few events about overlays */
+struct VREvent_Status_t
+{
+	VRStatusState_t statusState; 
+};
+
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
 struct VREvent_Reserved_t
@@ -376,6 +396,7 @@ typedef union
 	VREvent_Process_t process;
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
+	VREvent_Status_t status;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -493,6 +514,8 @@ enum VROverlayError
 
 
 /** error codes returned by Vr_Init */
+
+// Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
 enum HmdError
 {
 	HmdError_None = 0,
@@ -512,6 +535,7 @@ enum HmdError
 	HmdError_Init_NoConfigPath			= 111,
 	HmdError_Init_NoLogPath				= 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
+	HmdError_Init_AppInfoInitFailed		= 114,
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -1051,11 +1075,13 @@ struct NotificationBitmap
 enum NotificationError_t
 {
 	k_ENotificationError_OK = 0,
-	k_ENotificationError_Fail = 1
+	k_ENotificationError_Fail = 1,
+	k_eNotificationError_InvalidParam = 2,
 };
 
 static const uint32_t k_unNotificationTypeMaxSize = 16;
 static const uint32_t k_unNotificationTextMaxSize = 128;
+static const uint32_t k_unNotificationCatagoryMaxSize = 32;
 
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 /*enum NotificationEventType
@@ -1151,6 +1177,10 @@ namespace vr
 		// The following only take effect when rendered using the high quality render path (see SetHighQualityOverlay).
 		VROverlayFlags_Curved		= 1,
 		VROverlayFlags_RGSS4X		= 2,
+
+		// Set this flag on a dashboard overlay to prevent a tab from showing up for that overlay
+		VROverlayFlags_NoDashboardTab = 3,
+
 	};
 
 	struct VROverlayIntersectionParams_t
@@ -1491,6 +1521,14 @@ public:
 	* ending with the process submitting the request. Returns false if the request could not be sent. */
 	virtual bool QuitProcess( uint32_t pidProcessToQuit ) = 0;
 
+	/** Starts a process and returns the PID or 0 if the process failed to start. */
+	virtual uint32_t StartVRProcess( const char *pchExecutable, const char **pchArguments, uint32_t unArgumentCount, const char *pchWorkingDirectory) = 0;
+
+	/** Sets the master process for OpenVR. When the master process exits VRServer will send quit messages to every other process
+	* to start the shutdown process */
+	virtual void SetMasterProcessToThis() = 0;
+
+
 };
 
 static const char * const IVRControlPanel_Version = "IVRControlPanel_001";
@@ -1521,6 +1559,9 @@ namespace vr
 	* to know if initializing VR is a possibility but isn't ready to take that step yet.
 	*/
 	VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent();
+
+	/** Returns true if the OpenVR runtime is installed. */
+	VR_INTERFACE bool VR_CALLTYPE VR_IsRuntimeInstalled();
 
 	/** Returns the string version of an HMD error. This function may be called outside of VR_Init()/VR_Shutdown(). */
 	VR_INTERFACE const char *VR_CALLTYPE VR_GetStringForHmdError( vr::HmdError error );
