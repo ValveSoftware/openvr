@@ -280,7 +280,8 @@ enum EVREventType
 	VREvent_InputFocusReleased			= 401, // data is process
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
-
+	VREvent_SceneApplicationChanged		= 404, // data is process
+	
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
 	VREvent_DashboardActivated		= 502,
@@ -512,6 +513,14 @@ enum VROverlayError
 	VROverlayError_UnableToLoadFile		= 25,
 };
 
+/** enum values to pass in to VR_Init to identify whether the application will 
+* draw a 3D scene. */
+enum EVRApplicationType
+{
+	VRApplication_Other = 0,		// Some other kind of application that isn't covered by the other entries 
+	VRApplication_Scene	= 1,		// Application will submit 3D frames 
+	VRApplication_Overlay = 2,		// Application only interacts with overlays
+};
 
 /** error codes returned by Vr_Init */
 
@@ -536,6 +545,9 @@ enum HmdError
 	HmdError_Init_NoLogPath				= 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
 	HmdError_Init_AppInfoInitFailed		= 114,
+	HmdError_Init_Retry					= 115, // Used internally to cause retries to vrserver
+	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
+	HmdError_Init_AnotherAppLaunching	= 117, 
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -836,6 +848,130 @@ static const char * const IVRSystem_Version = "IVRSystem_005";
 
 }
 
+// ivrapplications.h
+namespace vr
+{
+
+	/** Used for all errors reported by the IVRApplications interface */
+	enum EVRApplicationError
+	{
+		VRApplicationError_None = 0,
+
+		VRApplicationError_AppKeyAlreadyExists = 100,	// Only one application can use any given key
+		VRApplicationError_NoManifest = 101,			// the running application does not have a manifest
+		VRApplicationError_NoApplication = 102,			// No application is running
+		VRApplicationError_InvalidIndex = 103,
+		VRApplicationError_UnknownApplication = 104,	// the application could not be found
+		VRApplicationError_IPCFailed = 105,				// An IPC failure caused the request to fail
+		VRApplicationError_ApplicationAlreadyRunning = 106, 
+		VRApplicationError_InvalidManifest = 107,
+		VRApplicationError_InvalidApplication = 108,
+		VRApplicationError_LaunchFailed = 109,			// the process didn't start
+
+		VRApplicationError_BufferTooSmall = 200,		// The provided buffer was too small to fit the requested data
+		VRApplicationError_PropertyNotSet = 201,		// The requested property was not set
+		VRApplicationError_UnknownProperty = 202,
+	};
+
+	/** The maximum length of an application key */
+	static const uint32_t k_unMaxApplicationKeyLength = 128;
+
+	/** these are the properties available on applications. */
+	enum EVRApplicationProperty
+	{
+		VRApplicationProperty_Name_String				= 0,
+
+		VRApplicationProperty_LaunchType_String			= 11,
+		VRApplicationProperty_WorkingDirectory_String	= 12,
+		VRApplicationProperty_BinaryPath_String			= 13,
+		VRApplicationProperty_Arguments_String			= 14,
+		VRApplicationProperty_URL_String				= 15,
+
+		VRApplicationProperty_Description_String		= 50,
+		VRApplicationProperty_NewsURL_String			= 51,
+		VRApplicationProperty_ImagePath_String			= 52,
+		VRApplicationProperty_Source_String				= 53,
+
+		VRApplicationProperty_IsDashboardOverlay_Bool	= 60,
+	};
+
+
+	class IVRApplications
+	{
+	public:
+
+		// ---------------  Application management  --------------- //
+
+		/** Adds an application manifest to the list to load when building the list of installed applications. 
+		* Temporary manifests are not automatically loaded */
+		virtual EVRApplicationError AddApplicationManifest( const char *pchApplicationManifestFullPath, bool bTemporary = false ) = 0;
+
+		/** Removes an application manifest from the list to load when building the list of installed applications. */
+		virtual EVRApplicationError RemoveApplicationManifest( const char *pchApplicationManifestFullPath ) = 0;
+
+		/** Returns true if an application is installed */
+		virtual bool IsApplicationInstalled( const char *pchAppKey ) = 0;
+
+		/** Returns the number of applications available in the list */
+		virtual uint32_t GetApplicationCount() = 0;
+
+		/** Returns the key of the specified application. The index is at least 0 and is less than the return 
+		* value of GetApplicationCount(). The buffer should be at least k_unMaxApplicationKeyLength in order to 
+		* fit the key. */
+		virtual EVRApplicationError GetApplicationKeyByIndex( uint32_t unApplicationIndex, char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Returns the key of the application for the specified Process Id. The buffer should be at least 
+		* k_unMaxApplicationKeyLength in order to fit the key. */
+		virtual EVRApplicationError GetApplicationKeyByProcessId( uint32_t unProcessId, char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Launches the application. The existing scene application will exit and then the new application will start.
+		* This call is not valid for dashboard overlay applications. */
+		virtual EVRApplicationError LaunchApplication( const char *pchAppKey ) = 0;
+
+		/** Launches the dashboard overlay application if it is not already running. This call is only valid for 
+		* dashboard overlay applications. */
+		virtual EVRApplicationError LaunchDashboardOverlay( const char *pchAppKey ) = 0;
+
+		/** Identifies a running application. OpenVR can't always tell which process started in response
+		* to a URL. This function allows a URL handler (or the process itself) to identify the app key 
+		* for the now running application. Passing a process ID of 0 identifies the calling process. 
+		* The application must be one that's known to the system via a call to AddApplicationManifest. */
+		virtual EVRApplicationError IdentifyApplication( uint32_t unProcessId, const char *pchAppKey ) = 0;
+
+		/** Returns the process ID for an application. Return 0 if the application was not found or is not running. */
+		virtual uint32_t GetApplicationProcessId( const char *pchAppKey ) = 0;
+
+		/** Returns a string for an applications error */
+		virtual const char *GetApplicationsErrorNameFromEnum( EVRApplicationError error ) = 0;
+
+		// ---------------  Application properties  --------------- //
+
+		/** Returns a value for an application property. The required buffer size to fit this value will be returned. */
+		virtual uint32_t GetApplicationPropertyString( const char *pchAppKey, EVRApplicationProperty eProperty, char *pchPropertyValueBuffer, uint32_t unPropertyValueBufferLen, EVRApplicationError *peError = nullptr ) = 0;
+
+		/** Returns a value for an application property. The required buffer size to fit this value will be returned. */
+		virtual bool GetApplicationPropertyBool( const char *pchAppKey, EVRApplicationProperty eProperty, EVRApplicationError *peError = nullptr ) = 0;
+
+		/** Returns the application key for the home application. The buffer should be at least k_unMaxApplicationKeyLength bytes long. */
+		virtual EVRApplicationError GetHomeApplication( char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Sets the application key for the home application */
+		virtual EVRApplicationError SetHomeApplication( const char *pchAppKey ) = 0;
+
+		/** Sets the application auto-launch flag. This is only valid for applications which return true for VRApplicationProperty_IsDashboardOverlay_Bool. */
+		virtual EVRApplicationError SetApplicationAutoLaunch( const char *pchAppKey, bool bAutoLaunch ) = 0;
+
+		/** Gets the application auto-launch flag. This is only valid for applications which return true for VRApplicationProperty_IsDashboardOverlay_Bool. */
+		virtual bool GetApplicationAutoLaunch( const char *pchAppKey ) = 0;
+
+	};
+
+	static const char * const IVRApplications_Version = "IVRApplications_001";
+
+	/** Returns the current IVRApplications pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRApplications *VR_CALLTYPE VRApplications();
+
+} // namespace vr
 // ivrchaperone.h
 namespace vr
 {
@@ -940,6 +1076,7 @@ enum VRCompositorError
 	VRCompositorError_IncompatibleVersion		= 100,
 	VRCompositorError_DoNotHaveFocus			= 101,
 	VRCompositorError_InvalidTexture			= 102,
+	VRCompositorError_IsNotSceneApplication		= 103,
 };
 
 
@@ -1066,7 +1203,7 @@ const char * const NotificationTypeFriendUpdate = "FriendUpdate";
 // Used for passing graphic data
 struct NotificationBitmap
 {
-	char *bytes;
+	void *bytes;
 	int32_t width;
 	int32_t height;
 	int32_t depth;
@@ -1277,6 +1414,13 @@ namespace vr
 		/** Returns the width of the overlay quad in meters. By default overlays are rendered on a quad that is 1 meter across */
 		virtual VROverlayError GetOverlayWidthInMeters( VROverlayHandle_t ulOverlayHandle, float *pfWidthInMeters ) = 0;
 
+		/** For high-quality curved overlays only, sets the distance range in meters from the overlay used to automatically curve
+		* the surface around the viewer.  Min is distance is when the surface will be most curved.  Max is when least curved. */
+		virtual VROverlayError SetOverlayAutoCurveDistanceRangeInMeters( VROverlayHandle_t ulOverlayHandle, float fMinDistanceInMeters, float fMaxDistanceInMeters ) = 0;
+
+		/** For high-quality curved overlays only, gets the distance range in meters from the overlay used to automatically curve
+		* the surface around the viewer.  Min is distance is when the surface will be most curved.  Max is when least curved. */
+		virtual VROverlayError GetOverlayAutoCurveDistanceRangeInMeters( VROverlayHandle_t ulOverlayHandle, float *pfMinDistanceInMeters, float *pfMaxDistanceInMeters ) = 0;
 		/** Sets the part of the texture to use for the overlay. UV Min is the upper left corner and UV Max is the lower right corner. */
 		virtual VROverlayError SetOverlayTextureBounds( VROverlayHandle_t ulOverlayHandle, const VRTextureBounds_t *pOverlayTextureBounds ) = 0;
 
@@ -1390,7 +1534,7 @@ namespace vr
 
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_003";
+	static const char * const IVROverlay_Version = "IVROverlay_004";
 
 } // namespace vr
 // ivrrendermodels.h
@@ -1548,7 +1692,7 @@ namespace vr
 	* This path is to the "root" of the VR API install. That's the directory with 
 	* the "drivers" directory and a platform (i.e. "win32") directory in it, not the directory with the DLL itself.
 	*/
-	VR_INTERFACE vr::IVRSystem *VR_CALLTYPE VR_Init( vr::HmdError *peError );
+	VR_INTERFACE vr::IVRSystem *VR_CALLTYPE VR_Init( vr::HmdError *peError, vr::EVRApplicationType eApplicationType = vr::VRApplication_Scene );
 
 	/** unloads vrclient.dll. Any interface pointers from the interface are 
 	* invalid after this point */

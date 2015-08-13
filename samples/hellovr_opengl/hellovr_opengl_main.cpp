@@ -339,7 +339,7 @@ bool CMainApplication::BInit()
 
 	// Loading the SteamVR Runtime
 	vr::HmdError eError = vr::HmdError_None;
-	m_pHMD = vr::VR_Init( &eError );
+	m_pHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
 
 	if ( eError != vr::HmdError_None )
 	{

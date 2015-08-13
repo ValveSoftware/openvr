@@ -280,7 +280,8 @@ enum EVREventType
 	VREvent_InputFocusReleased			= 401, // data is process
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
-
+	VREvent_SceneApplicationChanged		= 404, // data is process
+	
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
 	VREvent_DashboardActivated		= 502,
@@ -512,6 +513,14 @@ enum VROverlayError
 	VROverlayError_UnableToLoadFile		= 25,
 };
 
+/** enum values to pass in to VR_Init to identify whether the application will 
+* draw a 3D scene. */
+enum EVRApplicationType
+{
+	VRApplication_Other = 0,		// Some other kind of application that isn't covered by the other entries 
+	VRApplication_Scene	= 1,		// Application will submit 3D frames 
+	VRApplication_Overlay = 2,		// Application only interacts with overlays
+};
 
 /** error codes returned by Vr_Init */
 
@@ -536,6 +545,9 @@ enum HmdError
 	HmdError_Init_NoLogPath				= 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
 	HmdError_Init_AppInfoInitFailed		= 114,
+	HmdError_Init_Retry					= 115, // Used internally to cause retries to vrserver
+	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
+	HmdError_Init_AnotherAppLaunching	= 117, 
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,

@@ -303,6 +303,10 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 				m_pWidget->repaint();
 			}
 			break;
+
+        case vr::VREvent_Quit:
+            QApplication::exit();
+            break;
 		}
 	}
 
@@ -358,7 +362,7 @@ void COpenVROverlayController::SetWidget( QWidget *pWidget )
 bool COpenVROverlayController::ConnectToVRRuntime()
 {
 	m_eLastHmdError = vr::HmdError_None;
-    vr::IVRSystem *pVRSystem = vr::VR_Init( &m_eLastHmdError );
+    vr::IVRSystem *pVRSystem = vr::VR_Init( &m_eLastHmdError, vr::VRApplication_Overlay );
 
 	if ( m_eLastHmdError != vr::HmdError_None )
 	{
