@@ -157,6 +157,10 @@ enum TrackedDeviceProperty
 	Prop_HardwareRevision_String			= 1007,
 	Prop_AllWirelessDongleDescriptions_String= 1008,
 	Prop_ConnectedWirelessDongle_String		= 1009,
+	Prop_DeviceIsWireless_Bool				= 1010,
+	Prop_DeviceIsCharging_Bool				= 1011,
+	Prop_DeviceBatteryPercentage_Float		= 1012, // 0 is empty, 1 is full
+	Prop_StatusDisplayTransform_Matrix34	= 1013,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool			= 2000,
@@ -243,6 +247,17 @@ struct VRTextureBounds_t
 	float uMax, vMax;
 };
 
+/** Status of the overall system */
+enum VRStatusState_t
+{
+	State_OK = 0,
+	State_Error = 1,
+	State_Warning = 2,
+	State_Undefined = 3,
+	State_NotSet = 4,
+};
+
+
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
 {
@@ -265,19 +280,29 @@ enum EVREventType
 	VREvent_InputFocusReleased			= 401, // data is process
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
-
+	VREvent_SceneApplicationChanged		= 404, // data is process
+	
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
-	VREvent_SystemOverlayActivated		= 502,
-	VREvent_SystemOverlayDeactivated	= 503,
-	VREvent_SystemOverlayThumbSelected	= 504, // Handled by vrcompositor and never sent to applications - data is overlay
+	VREvent_DashboardActivated		= 502,
+	VREvent_DashboardDeactivated	= 503,
+	VREvent_DashboardThumbSelected	= 504, // Sent to the overlay manager - data is overlay
+	VREvent_DashboardRequested		= 505, // Sent to the overlay manager - data is overlay
+	VREvent_ResetDashboard			= 506, // Send to the overlay manager
+	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
+	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
 
+	VREvent_Notification_Show				= 600,
+	VREvent_Notification_Dismissed			= 601,
+	VREvent_Notification_BeginInteraction	= 602,
 
-	VREvent_Notification_Dismissed			= 600,
-	VREvent_Notification_BeginInteraction	= 601,
-	VREvent_Notification_Scroll				= 602,
-	VREvent_Notification_ClickOn			= 603,
-	VREvent_Notification_ClickOff			= 604,
+	VREvent_Quit						= 700, // data is process
+	VREvent_ProcessQuit					= 701, // data is process
+
+	VREvent_ChaperoneDataHasChanged		= 800,
+	VREvent_ChaperoneUniverseHasChanged	= 801,
+
+	VREvent_StatusUpdate				= 900,
 };
 
 
@@ -329,7 +354,7 @@ struct VREvent_Mouse_t
 /** notification related events. Details will still change at this point */
 struct VREvent_Notification_t
 {
-	float x, y;
+	uint64_t ulUserValue;
 	uint32_t notificationId;
 };
 
@@ -349,6 +374,12 @@ struct VREvent_Overlay_t
 };
 
 
+/** Used for a few events about overlays */
+struct VREvent_Status_t
+{
+	VRStatusState_t statusState; 
+};
+
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
 struct VREvent_Reserved_t
@@ -366,6 +397,7 @@ typedef union
 	VREvent_Process_t process;
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
+	VREvent_Status_t status;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -453,8 +485,46 @@ struct Compositor_OverlaySettings
 	HmdMatrix44_t transform;
 };
 
+/** used to refer to a single VR overlay */
+typedef uint64_t VROverlayHandle_t;
+
+static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
+
+/** Errors that can occur around VR overlays */
+enum VROverlayError
+{
+	VROverlayError_None					= 0,
+
+	VROverlayError_UnknownOverlay		= 10,
+	VROverlayError_InvalidHandle		= 11,
+	VROverlayError_PermissionDenied		= 12,
+	VROverlayError_OverlayLimitExceeded = 13, // No more overlays could be created because the maximum number already exist
+	VROverlayError_WrongVisibilityType	= 14,
+	VROverlayError_KeyTooLong			= 15,
+	VROverlayError_NameTooLong			= 16,
+	VROverlayError_KeyInUse				= 17,
+	VROverlayError_WrongTransformType	= 18,
+	VROverlayError_InvalidTrackedDevice = 19,
+	VROverlayError_InvalidParameter		= 20,
+	VROverlayError_ThumbnailCantBeDestroyed = 21,
+	VROverlayError_ArrayTooSmall		= 22,
+	VROverlayError_RequestFailed		= 23,
+	VROverlayError_InvalidTexture		= 24,
+	VROverlayError_UnableToLoadFile		= 25,
+};
+
+/** enum values to pass in to VR_Init to identify whether the application will 
+* draw a 3D scene. */
+enum EVRApplicationType
+{
+	VRApplication_Other = 0,		// Some other kind of application that isn't covered by the other entries 
+	VRApplication_Scene	= 1,		// Application will submit 3D frames 
+	VRApplication_Overlay = 2,		// Application only interacts with overlays
+};
 
 /** error codes returned by Vr_Init */
+
+// Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
 enum HmdError
 {
 	HmdError_None = 0,
@@ -474,6 +544,10 @@ enum HmdError
 	HmdError_Init_NoConfigPath			= 111,
 	HmdError_Init_NoLogPath				= 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
+	HmdError_Init_AppInfoInitFailed		= 114,
+	HmdError_Init_Retry					= 115, // Used internally to cause retries to vrserver
+	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
+	HmdError_Init_AnotherAppLaunching	= 117, 
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -481,6 +555,9 @@ enum HmdError
 	HmdError_Driver_NotLoaded			= 203,
 	HmdError_Driver_RuntimeOutOfDate	= 204,
 	HmdError_Driver_HmdInUse			= 205,
+	HmdError_Driver_NotCalibrated		= 206,
+	HmdError_Driver_CalibrationInvalid	= 207,
+	HmdError_Driver_HmdDisplayNotFound  = 208,
 
 	HmdError_IPC_ServerInitFailed		= 300,
 	HmdError_IPC_ConnectFailed			= 301,
@@ -495,6 +572,34 @@ enum HmdError
 };
 
 #pragma pack( pop )
+
+// figure out how to import from the VR API dll
+#if defined(_WIN32)
+
+#ifdef VR_API_EXPORT
+#define VR_INTERFACE extern "C" __declspec( dllexport )
+#else
+#define VR_INTERFACE extern "C" __declspec( dllimport )
+#endif
+
+#elif defined(GNUC) || defined(COMPILER_GCC) || defined(__APPLE__)
+
+#ifdef VR_API_EXPORT
+#define VR_INTERFACE extern "C" __attribute__((visibility("default")))
+#else
+#define VR_INTERFACE extern "C" 
+#endif
+
+#else
+#error "Unsupported Platform."
+#endif
+
+
+#if defined( _WIN32 )
+#define VR_CALLTYPE __cdecl
+#else
+#define VR_CALLTYPE 
+#endif
 
 }
 
@@ -618,6 +723,11 @@ public:
 	* depends on what the user has set in the chaperone calibration tool and previous calls to ResetSeatedZeroPose. */
 	virtual HmdMatrix34_t GetSeatedZeroPoseToStandingAbsoluteTrackingPose() = 0;
 
+	/** Get a sorted array of device indices of a given class of tracked devices (e.g. controllers).  Devices are sorted right to left
+	* relative to the specified tracked device (default: hmd -- pass in -1 for absolute tracking space).  Returns the number of devices
+	* in the list, or the size of the array needed if not large enough. */
+	virtual uint32_t GetSortedTrackedDeviceIndicesOfClass( TrackedDeviceClass eTrackedDeviceClass, VR_ARRAY_COUNT(unTrackedDeviceIndexArrayCount) vr::TrackedDeviceIndex_t *punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount, vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex = k_unTrackedDeviceIndex_Hmd ) = 0;
+
 
 	// ------------------------------------
 	// Property methods
@@ -734,10 +844,134 @@ public:
 
 };
 
-static const char * const IVRSystem_Version = "IVRSystem_004";
+static const char * const IVRSystem_Version = "IVRSystem_005";
 
 }
 
+// ivrapplications.h
+namespace vr
+{
+
+	/** Used for all errors reported by the IVRApplications interface */
+	enum EVRApplicationError
+	{
+		VRApplicationError_None = 0,
+
+		VRApplicationError_AppKeyAlreadyExists = 100,	// Only one application can use any given key
+		VRApplicationError_NoManifest = 101,			// the running application does not have a manifest
+		VRApplicationError_NoApplication = 102,			// No application is running
+		VRApplicationError_InvalidIndex = 103,
+		VRApplicationError_UnknownApplication = 104,	// the application could not be found
+		VRApplicationError_IPCFailed = 105,				// An IPC failure caused the request to fail
+		VRApplicationError_ApplicationAlreadyRunning = 106, 
+		VRApplicationError_InvalidManifest = 107,
+		VRApplicationError_InvalidApplication = 108,
+		VRApplicationError_LaunchFailed = 109,			// the process didn't start
+
+		VRApplicationError_BufferTooSmall = 200,		// The provided buffer was too small to fit the requested data
+		VRApplicationError_PropertyNotSet = 201,		// The requested property was not set
+		VRApplicationError_UnknownProperty = 202,
+	};
+
+	/** The maximum length of an application key */
+	static const uint32_t k_unMaxApplicationKeyLength = 128;
+
+	/** these are the properties available on applications. */
+	enum EVRApplicationProperty
+	{
+		VRApplicationProperty_Name_String				= 0,
+
+		VRApplicationProperty_LaunchType_String			= 11,
+		VRApplicationProperty_WorkingDirectory_String	= 12,
+		VRApplicationProperty_BinaryPath_String			= 13,
+		VRApplicationProperty_Arguments_String			= 14,
+		VRApplicationProperty_URL_String				= 15,
+
+		VRApplicationProperty_Description_String		= 50,
+		VRApplicationProperty_NewsURL_String			= 51,
+		VRApplicationProperty_ImagePath_String			= 52,
+		VRApplicationProperty_Source_String				= 53,
+
+		VRApplicationProperty_IsDashboardOverlay_Bool	= 60,
+	};
+
+
+	class IVRApplications
+	{
+	public:
+
+		// ---------------  Application management  --------------- //
+
+		/** Adds an application manifest to the list to load when building the list of installed applications. 
+		* Temporary manifests are not automatically loaded */
+		virtual EVRApplicationError AddApplicationManifest( const char *pchApplicationManifestFullPath, bool bTemporary = false ) = 0;
+
+		/** Removes an application manifest from the list to load when building the list of installed applications. */
+		virtual EVRApplicationError RemoveApplicationManifest( const char *pchApplicationManifestFullPath ) = 0;
+
+		/** Returns true if an application is installed */
+		virtual bool IsApplicationInstalled( const char *pchAppKey ) = 0;
+
+		/** Returns the number of applications available in the list */
+		virtual uint32_t GetApplicationCount() = 0;
+
+		/** Returns the key of the specified application. The index is at least 0 and is less than the return 
+		* value of GetApplicationCount(). The buffer should be at least k_unMaxApplicationKeyLength in order to 
+		* fit the key. */
+		virtual EVRApplicationError GetApplicationKeyByIndex( uint32_t unApplicationIndex, char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Returns the key of the application for the specified Process Id. The buffer should be at least 
+		* k_unMaxApplicationKeyLength in order to fit the key. */
+		virtual EVRApplicationError GetApplicationKeyByProcessId( uint32_t unProcessId, char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Launches the application. The existing scene application will exit and then the new application will start.
+		* This call is not valid for dashboard overlay applications. */
+		virtual EVRApplicationError LaunchApplication( const char *pchAppKey ) = 0;
+
+		/** Launches the dashboard overlay application if it is not already running. This call is only valid for 
+		* dashboard overlay applications. */
+		virtual EVRApplicationError LaunchDashboardOverlay( const char *pchAppKey ) = 0;
+
+		/** Identifies a running application. OpenVR can't always tell which process started in response
+		* to a URL. This function allows a URL handler (or the process itself) to identify the app key 
+		* for the now running application. Passing a process ID of 0 identifies the calling process. 
+		* The application must be one that's known to the system via a call to AddApplicationManifest. */
+		virtual EVRApplicationError IdentifyApplication( uint32_t unProcessId, const char *pchAppKey ) = 0;
+
+		/** Returns the process ID for an application. Return 0 if the application was not found or is not running. */
+		virtual uint32_t GetApplicationProcessId( const char *pchAppKey ) = 0;
+
+		/** Returns a string for an applications error */
+		virtual const char *GetApplicationsErrorNameFromEnum( EVRApplicationError error ) = 0;
+
+		// ---------------  Application properties  --------------- //
+
+		/** Returns a value for an application property. The required buffer size to fit this value will be returned. */
+		virtual uint32_t GetApplicationPropertyString( const char *pchAppKey, EVRApplicationProperty eProperty, char *pchPropertyValueBuffer, uint32_t unPropertyValueBufferLen, EVRApplicationError *peError = nullptr ) = 0;
+
+		/** Returns a value for an application property. The required buffer size to fit this value will be returned. */
+		virtual bool GetApplicationPropertyBool( const char *pchAppKey, EVRApplicationProperty eProperty, EVRApplicationError *peError = nullptr ) = 0;
+
+		/** Returns the application key for the home application. The buffer should be at least k_unMaxApplicationKeyLength bytes long. */
+		virtual EVRApplicationError GetHomeApplication( char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Sets the application key for the home application */
+		virtual EVRApplicationError SetHomeApplication( const char *pchAppKey ) = 0;
+
+		/** Sets the application auto-launch flag. This is only valid for applications which return true for VRApplicationProperty_IsDashboardOverlay_Bool. */
+		virtual EVRApplicationError SetApplicationAutoLaunch( const char *pchAppKey, bool bAutoLaunch ) = 0;
+
+		/** Gets the application auto-launch flag. This is only valid for applications which return true for VRApplicationProperty_IsDashboardOverlay_Bool. */
+		virtual bool GetApplicationAutoLaunch( const char *pchAppKey ) = 0;
+
+	};
+
+	static const char * const IVRApplications_Version = "IVRApplications_001";
+
+	/** Returns the current IVRApplications pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRApplications *VR_CALLTYPE VRApplications();
+
+} // namespace vr
 // ivrchaperone.h
 namespace vr
 {
@@ -810,6 +1044,9 @@ public:
 	/** Returns the preferred seated position and front edge of their desk. */
 	virtual bool GetSeatedBoundsInfo( ChaperoneSeatedBoundsInfo_t *pInfo ) = 0;
 
+	/** Reload Chaperone data from the .vrchap file on disk. */
+	virtual void ReloadInfo( void ) = 0;
+
 };
 
 static const char * const IVRChaperone_Version = "IVRChaperone_002";
@@ -832,23 +1069,14 @@ namespace vr
 	#pragma pack( push, 8 )
 #endif
 
-/** Identifies the graphics API for the associated device */
-enum Compositor_DeviceType
-{
-	Compositor_DeviceType_None,
-	Compositor_DeviceType_D3D9,
-	Compositor_DeviceType_D3D9Ex,
-	Compositor_DeviceType_D3D10,
-	Compositor_DeviceType_D3D11,
-	Compositor_DeviceType_OpenGL
-};
-
 /** Errors that can occur with the VR compositor */
 enum VRCompositorError
 {
 	VRCompositorError_None						= 0,
 	VRCompositorError_IncompatibleVersion		= 100,
 	VRCompositorError_DoNotHaveFocus			= 101,
+	VRCompositorError_InvalidTexture			= 102,
+	VRCompositorError_IsNotSceneApplication		= 103,
 };
 
 
@@ -861,6 +1089,16 @@ struct Compositor_FrameTiming
 	uint32_t droppedFrames;
 	uint32_t frameIndex;
 	vr::TrackedDevicePose_t pose;
+
+	float prediction;
+
+	float m_flFrameIntervalMs;
+	float m_flSceneRenderCpuMs;
+	float m_flSceneRenderGpuMs;
+	float m_flCompositorRenderCpuMs;
+	float m_flCompositorRenderGpuMs;
+	float m_flPresentCallCpuMs;
+	float m_flRunningStartMs;
 };
 
 
@@ -886,19 +1124,6 @@ public:
 	/** Returns the gamma for the compositor window */
 	virtual float GetGamma() = 0;
 
-	/** Sets the graphics device or context for the application that is going to feed 
-	* images to the compositor. The type of the pDevice parameter must match the 
-	* type that is provided:
-	*	Compositor_DeviceType_D3D9		IDirect3DDevice9*
-	*	Compositor_DeviceType_D3D9Ex	IDirect3DDevice9Ex*
-	*	Compositor_DeviceType_D3D10		ID3D10Device*
-	*	Compositor_DeviceType_D3D11		ID3D11Device*
-	*	Compositor_DeviceType_OpenGL	HGLRC
-	*
-	* Note: D3D9 is not currently supported (use D3D9Ex instead).
-	*/
-	virtual void SetGraphicsDevice( Compositor_DeviceType eType, void* pDevice ) = 0;
-
 	/** Returns pose(s) to use to render scene (and optionally poses predicted two frames out for gameplay). */
 	virtual VRCompositorError WaitGetPoses( VR_ARRAY_COUNT(unRenderPoseArrayCount) TrackedDevicePose_t* pRenderPoseArray, uint32_t unRenderPoseArrayCount,
 		VR_ARRAY_COUNT(unGamePoseArrayCount) TrackedDevicePose_t* pGamePoseArray, uint32_t unGamePoseArrayCount ) = 0;
@@ -908,7 +1133,7 @@ public:
 	* OpenGL dirty state:
 	*	glBindTexture
 	*/
-	virtual VRCompositorError Submit( Hmd_Eye eEye, void* pTexture, VRTextureBounds_t* pBounds ) = 0;
+	virtual VRCompositorError Submit( Hmd_Eye eEye, GraphicsAPIConvention eTextureType, void* pTexture, const VRTextureBounds_t* pBounds ) = 0;
 
 	/** Clears the frame that was sent with the last call to Submit. This will cause the 
 	* compositor to show the grid until Submit is called again. */
@@ -953,7 +1178,102 @@ public:
 	virtual bool CanRenderScene() = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_006";
+static const char * const IVRCompositor_Version = "IVRCompositor_007";
+
+} // namespace vr
+
+
+// ivrnotifications.h
+namespace vr
+{
+
+#if defined(__linux__) || defined(__APPLE__) 
+	// The 32-bit version of gcc has the alignment requirement for uint64 and double set to
+	// 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
+	// The 64-bit version of gcc has the alignment requirement for these types set to
+	// 8 meaning that unless we use #pragma pack(4) our structures will get bigger.
+	// The 64-bit structure packing has to match the 32-bit structure packing for each platform.
+	#pragma pack( push, 4 )
+#else
+	#pragma pack( push, 8 )
+#endif
+
+const char * const NotificationTypeFriendUpdate = "FriendUpdate";
+
+// Used for passing graphic data
+struct NotificationBitmap
+{
+	void *bytes;
+	int32_t width;
+	int32_t height;
+	int32_t depth;
+};
+
+enum NotificationError_t
+{
+	k_ENotificationError_OK = 0,
+	k_ENotificationError_Fail = 1,
+	k_eNotificationError_InvalidParam = 2,
+};
+
+static const uint32_t k_unNotificationTypeMaxSize = 16;
+static const uint32_t k_unNotificationTextMaxSize = 128;
+static const uint32_t k_unNotificationCatagoryMaxSize = 32;
+
+/** The types of events that could be posted (and what the parameters mean for each event type) */
+/*enum NotificationEventType
+{
+	Notification_None = 0,
+
+	Notification_Dismissed			= 101, // param1 = Device index
+	Notification_BeginInteraction	= 102, // param1 = Device index
+	Notification_Scroll				= 103, // param1 = Device index
+	Notification_ClickOn			= 104, // param1 = Device index
+	Notification_ClickOff			= 105, // param1 = Device index
+};*/
+
+/** An event posted by the server to all running applications */
+/*struct NotificationEvent_t
+{
+	NotificationEventType eventType;
+	int32_t x; // X coordinate in the notifications bitmap when the click happened
+	int32_t y; // Y coordinate in the notifications bitmap when the click happened
+	int32_t scroll_x; // X scrolling amount in the notifications bitmap coords
+	int32_t scroll_y; // Y scrolling amount in the notifications bitmap coords
+	uint32_t buttons; // Buttons pressed
+
+	float eventAgeSeconds;
+};*/
+
+typedef uint32_t VRNotificationId;
+
+// This struct will be used for the history list of notifications
+struct NotificationItem
+{
+	VRNotificationId notificationId;
+};
+
+
+
+#pragma pack( pop )
+
+/** Allows notification sources to interact with the VR system
+	This current interface is not yet implemented. Do not use yet. */
+class IVRNotifications
+{
+public:
+	/** Returns the last error that occurred */
+	virtual uint32_t GetErrorString( NotificationError_t error, VR_OUT_STRING() char* pchBuffer, uint32_t unBufferSize ) = 0;
+
+	VR_METHOD_DESC( Create a new notification. )
+	virtual NotificationError_t CreateNotification( VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, char *strType, char *strText, char *strCategory, NotificationBitmap *photo, /* out */ vr::VRNotificationId *notificationId  ) = 0;
+
+	VR_METHOD_DESC(Dismiss the notification)
+	virtual NotificationError_t DismissNotification( vr::VRNotificationId notificationId ) = 0;
+
+};
+
+static const char * const IVRNotifications_Version = "IVRNotifications_001";
 
 } // namespace vr
 
@@ -962,46 +1282,20 @@ static const char * const IVRCompositor_Version = "IVRCompositor_006";
 namespace vr
 {
 
-	/** used to refer to a single VR overlay */
-	typedef uint64_t VROverlayHandle_t;
-
-	static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
-
 	/** The maximum length of an overlay key in bytes, counting the terminating null character. */
 	static const uint32_t k_unVROverlayMaxKeyLength = 128;
 
 	/** The maximum length of an overlay name in bytes, counting the terminating null character. */
 	static const uint32_t k_unVROverlayMaxNameLength = 128;
 
-	/** Errors that can occur around VR overlays */
-	enum VROverlayError
-	{
-		VROverlayError_None					= 0,
-
-		VROverlayError_UnknownOverlay		= 10,
-		VROverlayError_InvalidHandle		= 11,
-		VROverlayError_PermissionDenied		= 12,
-		VROverlayError_OverlayLimitExceeded = 13, // No more overlays could be created because the maximum number already exist
-		VROverlayError_WrongVisibilityType	= 14,
-		VROverlayError_KeyTooLong			= 15,
-		VROverlayError_NameTooLong			= 16,
-		VROverlayError_KeyInUse				= 17,
-		VROverlayError_WrongTransformType	= 18,
-		VROverlayError_InvalidTrackedDevice = 19,
-	};
+	/** The maximum number of overlays that can exist in the system at one time. */
+	static const uint32_t k_unMaxOverlayCount = 32;
 
 	/** Types of input supported by VR Overlays */
 	enum VROverlayInputMethod
 	{
 		VROverlayInputMethod_None		= 0, // No input events will be generated automatically for this overlay
 		VROverlayInputMethod_Mouse		= 1, // Tracked controllers will get mouse events automatically
-	};
-
-	/** Overlay visibility setting controls when the overlay is visible. */
-	enum VROverlayVisibility
-	{
-		VROverlayVisibility_Manual			= 0, // There is no automatic visibility for the overlay
-		VROverlayVisibility_SystemOverlay	= 1, // Visibility, input, and transform are controlled by the system button. 
 	};
 
 	/** Allows the caller to figure out which overlay transform getter to call. */
@@ -1020,20 +1314,24 @@ namespace vr
 		// The following only take effect when rendered using the high quality render path (see SetHighQualityOverlay).
 		VROverlayFlags_Curved		= 1,
 		VROverlayFlags_RGSS4X		= 2,
+
+		// Set this flag on a dashboard overlay to prevent a tab from showing up for that overlay
+		VROverlayFlags_NoDashboardTab = 3,
+
 	};
 
 	struct VROverlayIntersectionParams_t
 	{
-		vr::HmdVector3_t vSource;
-		vr::HmdVector3_t vDirection;
+		HmdVector3_t vSource;
+		HmdVector3_t vDirection;
 		TrackingUniverseOrigin eOrigin;
 	};
 
 	struct VROverlayIntersectionResults_t
 	{
-		vr::HmdVector3_t vPoint;
-		vr::HmdVector3_t vNormal;
-		vr::HmdVector2_t vUVs;
+		HmdVector3_t vPoint;
+		HmdVector3_t vNormal;
+		HmdVector2_t vUVs;
 		float fDistance;
 	};
 
@@ -1046,10 +1344,10 @@ namespace vr
 		// ---------------------------------------------
 
 		/** Finds an existing overlay with the specified key. */
-		virtual VROverlayError FindOverlay( const char *pchOverlayKey, vr::VROverlayHandle_t * pOverlayHandle ) = 0;
+		virtual VROverlayError FindOverlay( const char *pchOverlayKey, VROverlayHandle_t * pOverlayHandle ) = 0;
 
 		/** Creates a new named overlay. All overlays start hidden and with default settings. */
-		virtual VROverlayError CreateOverlay( const char *pchOverlayKey, const char *pchOverlayFriendlyName, vr::VROverlayHandle_t * pOverlayHandle ) = 0;
+		virtual VROverlayError CreateOverlay( const char *pchOverlayKey, const char *pchOverlayFriendlyName, VROverlayHandle_t * pOverlayHandle ) = 0;
 
 		/** Destroys the specified overlay. When an application calls VR_Shutdown all overlays created by that app are
 		* automatically destroyed. */
@@ -1065,6 +1363,18 @@ namespace vr
 		* Otherwise it will return k_ulOverlayHandleInvalid. */
 		virtual vr::VROverlayHandle_t GetHighQualityOverlay() = 0;
 
+		/** Fills the provided buffer with the string key of the overlay. Returns the size of buffer required to store the key, including
+		* the terminating null character. k_unVROverlayMaxKeyLength will be enough bytes to fit the string. */
+		virtual uint32_t GetOverlayKey( VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, VROverlayError *pError = 0L ) = 0;
+
+		/** Fills the provided buffer with the friendly name of the overlay. Returns the size of buffer required to store the key, including
+		* the terminating null character. k_unVROverlayMaxNameLength will be enough bytes to fit the string. */
+		virtual uint32_t GetOverlayName( VROverlayHandle_t ulOverlayHandle, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize, VROverlayError *pError = 0L ) = 0;
+
+		/** Gets the raw image data from an overlay. Overlay image data is always returned as RGBA data, 4 bytes per pixel. If the buffer is not large enough, width and height 
+		* will be set and VROverlayError_ArrayTooSmall is returned. */
+		virtual VROverlayError GetOverlayImageData( VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unBufferSize, uint32_t *punWidth, uint32_t *punHeight ) = 0;
+
 		/** returns a string that corresponds with the specified overlay error. The string will be the name 
 		* of the error enum value for all valid error codes */
 		virtual const char *GetOverlayErrorNameFromEnum( VROverlayError error ) = 0;
@@ -1079,6 +1389,12 @@ namespace vr
 
 		/** Sets flag setting for a given overlay */
 		virtual VROverlayError GetOverlayFlag( VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool *pbEnabled ) = 0;
+
+		/** Sets the color tint of the overlay quad. Use 0.0 to 1.0 per channel. */
+		virtual VROverlayError SetOverlayColor( VROverlayHandle_t ulOverlayHandle, float fRed, float fGreen, float fBlue ) = 0;
+
+		/** Gets the color tint of the overlay quad. */
+		virtual VROverlayError GetOverlayColor( VROverlayHandle_t ulOverlayHandle, float *pfRed, float *pfGreen, float *pfBlue ) = 0;
 
 		/** Sets the alpha of the overlay quad. Use 1.0 for 100 percent opacity to 0.0 for 0 percent opacity. */
 		virtual VROverlayError SetOverlayAlpha( VROverlayHandle_t ulOverlayHandle, float fAlpha ) = 0;
@@ -1098,6 +1414,13 @@ namespace vr
 		/** Returns the width of the overlay quad in meters. By default overlays are rendered on a quad that is 1 meter across */
 		virtual VROverlayError GetOverlayWidthInMeters( VROverlayHandle_t ulOverlayHandle, float *pfWidthInMeters ) = 0;
 
+		/** For high-quality curved overlays only, sets the distance range in meters from the overlay used to automatically curve
+		* the surface around the viewer.  Min is distance is when the surface will be most curved.  Max is when least curved. */
+		virtual VROverlayError SetOverlayAutoCurveDistanceRangeInMeters( VROverlayHandle_t ulOverlayHandle, float fMinDistanceInMeters, float fMaxDistanceInMeters ) = 0;
+
+		/** For high-quality curved overlays only, gets the distance range in meters from the overlay used to automatically curve
+		* the surface around the viewer.  Min is distance is when the surface will be most curved.  Max is when least curved. */
+		virtual VROverlayError GetOverlayAutoCurveDistanceRangeInMeters( VROverlayHandle_t ulOverlayHandle, float *pfMinDistanceInMeters, float *pfMaxDistanceInMeters ) = 0;
 		/** Sets the part of the texture to use for the overlay. UV Min is the upper left corner and UV Max is the lower right corner. */
 		virtual VROverlayError SetOverlayTextureBounds( VROverlayHandle_t ulOverlayHandle, const VRTextureBounds_t *pOverlayTextureBounds ) = 0;
 
@@ -1119,20 +1442,13 @@ namespace vr
 		/** Gets the transform if it is relative to a tracked device. Returns an error if the transform is some other type. */
 		virtual VROverlayError GetOverlayTransformTrackedDeviceRelative( VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t *punTrackedDevice, HmdMatrix34_t *pmatTrackedDeviceToOverlayTransform ) = 0;
 
-		/** Returns the current input settings for the specified overlay. */
-		virtual VROverlayError GetOverlayVisibility( VROverlayHandle_t ulOverlayHandle, VROverlayVisibility *peOverlayVisibility ) = 0;
-
-		/** Sets the input settings for the specified overlay. */
-		virtual VROverlayError SetOverlayVisibility( VROverlayHandle_t ulOverlayHandle, VROverlayVisibility eOverlayVisibility ) = 0;
-
-		/** Shows the VR overlay. This only has an effect on VROverlayVisibility_Manual overlays */
+		/** Shows the VR overlay.  For dashboard overlays, only the Dashboard Manager is allowed to call this. */
 		virtual VROverlayError ShowOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
 
-		/** Hides the VR overlay. This only has an effect on VROverlayVisibility_Manual overlays */
+		/** Hides the VR overlay.  For dashboard overlays, only the Dashboard Manager is allowed to call this. */
 		virtual VROverlayError HideOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
 
-		/** Returns true if the overlay is visible. This could be because it has manual visibility or
-		* because the system button was pressed */
+		/** Returns true if the overlay is visible. */
 		virtual bool IsOverlayVisible( VROverlayHandle_t ulOverlayHandle ) = 0;
 
 
@@ -1167,44 +1483,58 @@ namespace vr
 		* intersect with the overlay is the mouse position, the trigger is left mouse, and the track pad is right mouse. 
 		*
 		* Return true if the controller is pointed at the overlay and an event was generated. */
-		virtual bool HandleControllerOverlayInteractionAsMouse( VROverlayHandle_t ulOverlayHandle, vr::TrackedDeviceIndex_t unControllerDeviceIndex ) = 0;
+		virtual bool HandleControllerOverlayInteractionAsMouse( VROverlayHandle_t ulOverlayHandle, TrackedDeviceIndex_t unControllerDeviceIndex ) = 0;
 
 		// ---------------------------------------------
 		// Overlay texture methods
 		// ---------------------------------------------
 
 		/** Texture to draw for the overlay. IVRCompositor::SetGraphicsDevice must be called before 
-		* this function. This function can only be called by the overlay's renderer process. */
-		virtual VROverlayError SetOverlayTexture( VROverlayHandle_t ulOverlayHandle, void *pTexture ) = 0;
+		* this function. This function can only be called by the overlay's renderer process.
+		*
+		* If pBounds is NULL the entire texture will be used.
+		*
+		* OpenGL dirty state:
+		*	glBindTexture
+		*/
+		virtual VROverlayError SetOverlayTexture( VROverlayHandle_t ulOverlayHandle, GraphicsAPIConvention eTextureType, void* pTexture ) = 0;
+
+		/** Use this to tell the overlay system to release the texture set for this overlay. */
+		virtual VROverlayError ClearOverlayTexture( VROverlayHandle_t ulOverlayHandle ) = 0;
 
 		/** Separate interface for providing the data as a stream of bytes, but there is an upper bound on data 
-		* that can be sent. IVRCompositor::SetGraphicsDevice must be called before this function.  This function 
-		* can only be called by the overlay's renderer process. */
+		* that can be sent. This function can only be called by the overlay's renderer process. */
 		virtual VROverlayError SetOverlayRaw( VROverlayHandle_t ulOverlayHandle, void *pvBuffer, uint32_t unWidth, uint32_t unHeight, uint32_t unDepth ) = 0;
 
-		/** Separate interface for providing the image through a filename: 
-		* can be png or jpg, and should not be bigger than 1920x1080. IVRCompositor::SetGraphicsDevice 
-		* must be called before this function. This function can only be called by the overlay's renderer process */
+		/** Separate interface for providing the image through a filename: can be png or jpg, and should not be bigger than 1920x1080.
+		* This function can only be called by the overlay's renderer process */
 		virtual VROverlayError SetOverlayFromFile( VROverlayHandle_t ulOverlayHandle, const char *pchFilePath ) = 0;
 
 		// ----------------------------------------------
-		// System Overlay Methods
+		// Dashboard Overlay Methods
 		// ----------------------------------------------
 
-		/** Returns true if the system overlay is visible */
-		virtual bool IsSystemOverlayVisible() = 0;
+		/** Creates a dashboard overlay and returns its handle */
+		virtual VROverlayError CreateDashboardOverlay( const char *pchOverlayKey, const char *pchOverlayFriendlyName, VROverlayHandle_t * pMainHandle, VROverlayHandle_t *pThumbnailHandle ) = 0;
 
-		/** returns true if the system overlay is visible and the specified overlay is the active system Overlay */
-		virtual bool IsActiveSystemOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
+		/** Returns true if the dashboard is visible */
+		virtual bool IsDashboardVisible() = 0;
 
-		/** Sets the system overlay to only appear when the specified process ID has scene focus */
-		virtual VROverlayError SetSystemOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t unProcessId ) = 0;
+		/** returns true if the dashboard is visible and the specified overlay is the active system Overlay */
+		virtual bool IsActiveDashboardOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
 
-		/** Gets the process ID that this system overlay requires to have scene focus */
-		virtual VROverlayError GetSystemOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t *punProcessId ) = 0;
+		/** Sets the dashboard overlay to only appear when the specified process ID has scene focus */
+		virtual VROverlayError SetDashboardOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t unProcessId ) = 0;
+
+		/** Gets the process ID that this dashboard overlay requires to have scene focus */
+		virtual VROverlayError GetDashboardOverlaySceneProcess( VROverlayHandle_t ulOverlayHandle, uint32_t *punProcessId ) = 0;
+
+		/** Shows the dashboard. */
+		virtual void ShowDashboard( const char *pchOverlayToShow ) = 0;
+
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_001";
+	static const char * const IVROverlay_Version = "IVROverlay_004";
 
 } // namespace vr
 // ivrrendermodels.h
@@ -1325,7 +1655,24 @@ public:
 
 	/** Returns the IVRCompositor interface that matches the specified interface version.  This will only
 	* return the compositor interface if it has already been initialized by the current process. */
-	virtual class IVRCompositor *GetCurrentCompositorInterface( const char *pchInterfaceVersion ) = 0;
+	virtual class vr::IVRCompositor *GetCurrentCompositorInterface( const char *pchInterfaceVersion ) = 0;
+
+	// ------------------------------------
+	// Process control Methods
+	// ------------------------------------
+
+	/** Tells the specified OpenVR process to quit. If the process ID is 0, all processes will be told to quit,
+	* ending with the process submitting the request. Returns false if the request could not be sent. */
+	virtual bool QuitProcess( uint32_t pidProcessToQuit ) = 0;
+
+	/** Starts a process and returns the PID or 0 if the process failed to start. */
+	virtual uint32_t StartVRProcess( const char *pchExecutable, const char **pchArguments, uint32_t unArgumentCount, const char *pchWorkingDirectory) = 0;
+
+	/** Sets the master process for OpenVR. When the master process exits VRServer will send quit messages to every other process
+	* to start the shutdown process */
+	virtual void SetMasterProcessToThis() = 0;
+
+
 };
 
 static const char * const IVRControlPanel_Version = "IVRControlPanel_001";
@@ -1337,33 +1684,6 @@ static const char * const IVRControlPanel_Version = "IVRControlPanel_001";
 
 namespace vr
 {
-	// figure out how to import from the VR API dll
-#if defined(_WIN32)
-
-#ifdef VR_API_EXPORT
-#define VR_INTERFACE extern "C" __declspec( dllexport )
-#else
-#define VR_INTERFACE extern "C" __declspec( dllimport )
-#endif
-
-#elif defined(GNUC) || defined(COMPILER_GCC) || defined(__APPLE__)
-
-#ifdef VR_API_EXPORT
-#define VR_INTERFACE extern "C" __attribute__((visibility("default")))
-#else
-#define VR_INTERFACE extern "C" 
-#endif
-
-#else
-#error "Unsupported Platform."
-#endif
-
-
-#if defined( _WIN32 )
-#define VR_CALLTYPE __cdecl
-#else
-#define VR_CALLTYPE 
-#endif
 
 	/** Finds the active installation of the VR API and initializes it. The provided path must be absolute 
 	* or relative to the current working directory. These are the local install versions of the equivalent
@@ -1372,7 +1692,7 @@ namespace vr
 	* This path is to the "root" of the VR API install. That's the directory with 
 	* the "drivers" directory and a platform (i.e. "win32") directory in it, not the directory with the DLL itself.
 	*/
-	VR_INTERFACE vr::IVRSystem *VR_CALLTYPE VR_Init( vr::HmdError *peError );
+	VR_INTERFACE vr::IVRSystem *VR_CALLTYPE VR_Init( vr::HmdError *peError, vr::EVRApplicationType eApplicationType = vr::VRApplication_Scene );
 
 	/** unloads vrclient.dll. Any interface pointers from the interface are 
 	* invalid after this point */
@@ -1384,6 +1704,9 @@ namespace vr
 	*/
 	VR_INTERFACE bool VR_CALLTYPE VR_IsHmdPresent();
 
+	/** Returns true if the OpenVR runtime is installed. */
+	VR_INTERFACE bool VR_CALLTYPE VR_IsRuntimeInstalled();
+
 	/** Returns the string version of an HMD error. This function may be called outside of VR_Init()/VR_Shutdown(). */
 	VR_INTERFACE const char *VR_CALLTYPE VR_GetStringForHmdError( vr::HmdError error );
 
@@ -1391,5 +1714,24 @@ namespace vr
 	* pointer returned is valid until VR_Shutdown is called.
 	*/
 	VR_INTERFACE void *VR_CALLTYPE VR_GetGenericInterface( const char *pchInterfaceVersion, vr::HmdError *peError );
+
+	/** Returns the current IVRSystem pointer or NULL if VR_Init has not been called successfully */
+	VR_INTERFACE vr::IVRSystem *VR_CALLTYPE VRSystem();
+
+	/** Returns the current IVRChaperone pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRChaperone *VR_CALLTYPE VRChaperone();
+
+	/** Returns the current IVRCompositor pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRCompositor *VR_CALLTYPE VRCompositor();
+
+	/** Returns the current IVROverlay pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVROverlay *VR_CALLTYPE VROverlay();
+
+	/** Returns the current IVRRenderModels pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRRenderModels *VR_CALLTYPE VRRenderModels();
+
+	/** Returns the current IVRControlPanel pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRControlPanel *VR_CALLTYPE VRControlPanel();
+
 
 }

@@ -339,7 +339,7 @@ bool CMainApplication::BInit()
 
 	// Loading the SteamVR Runtime
 	vr::HmdError eError = vr::HmdError_None;
-	m_pHMD = vr::VR_Init( &eError );
+	m_pHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
 
 	if ( eError != vr::HmdError_None )
 	{
@@ -512,8 +512,6 @@ bool CMainApplication::BInitCompositor()
 		printf( "Compositor initialization failed with error: %s\n", vr::VR_GetStringForHmdError( peError ) );
 		return false;
 	}
-
-	m_pCompositor->SetGraphicsDevice(vr::Compositor_DeviceType_OpenGL, NULL);
 
 	uint32_t unSize = m_pCompositor->GetLastError(NULL, 0);
 	if (unSize > 1)
@@ -716,15 +714,8 @@ void CMainApplication::RenderFrame()
 
 		if ( m_pCompositor )
 		{
-			// Flip y-axis since GL UV coords are backwards.
-			vr::VRTextureBounds_t bounds;
-			bounds.uMin = 0;
-			bounds.vMin = 1;
-			bounds.uMax = 1;
-			bounds.vMax = 0;
-
-			m_pCompositor->Submit(vr::Eye_Left, (void*)leftEyeDesc.m_nResolveTextureId, &bounds);
-			m_pCompositor->Submit(vr::Eye_Right, (void*)rightEyeDesc.m_nResolveTextureId, &bounds);
+			m_pCompositor->Submit(vr::Eye_Left, vr::API_OpenGL, (void*)leftEyeDesc.m_nResolveTextureId, NULL );
+			m_pCompositor->Submit(vr::Eye_Right, vr::API_OpenGL, (void*)rightEyeDesc.m_nResolveTextureId, NULL );
 		}
 	}
 

@@ -157,6 +157,10 @@ enum TrackedDeviceProperty
 	Prop_HardwareRevision_String			= 1007,
 	Prop_AllWirelessDongleDescriptions_String= 1008,
 	Prop_ConnectedWirelessDongle_String		= 1009,
+	Prop_DeviceIsWireless_Bool				= 1010,
+	Prop_DeviceIsCharging_Bool				= 1011,
+	Prop_DeviceBatteryPercentage_Float		= 1012, // 0 is empty, 1 is full
+	Prop_StatusDisplayTransform_Matrix34	= 1013,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool			= 2000,
@@ -243,6 +247,17 @@ struct VRTextureBounds_t
 	float uMax, vMax;
 };
 
+/** Status of the overall system */
+enum VRStatusState_t
+{
+	State_OK = 0,
+	State_Error = 1,
+	State_Warning = 2,
+	State_Undefined = 3,
+	State_NotSet = 4,
+};
+
+
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
 {
@@ -265,19 +280,29 @@ enum EVREventType
 	VREvent_InputFocusReleased			= 401, // data is process
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
-
+	VREvent_SceneApplicationChanged		= 404, // data is process
+	
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
-	VREvent_SystemOverlayActivated		= 502,
-	VREvent_SystemOverlayDeactivated	= 503,
-	VREvent_SystemOverlayThumbSelected	= 504, // Handled by vrcompositor and never sent to applications - data is overlay
+	VREvent_DashboardActivated		= 502,
+	VREvent_DashboardDeactivated	= 503,
+	VREvent_DashboardThumbSelected	= 504, // Sent to the overlay manager - data is overlay
+	VREvent_DashboardRequested		= 505, // Sent to the overlay manager - data is overlay
+	VREvent_ResetDashboard			= 506, // Send to the overlay manager
+	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
+	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
 
+	VREvent_Notification_Show				= 600,
+	VREvent_Notification_Dismissed			= 601,
+	VREvent_Notification_BeginInteraction	= 602,
 
-	VREvent_Notification_Dismissed			= 600,
-	VREvent_Notification_BeginInteraction	= 601,
-	VREvent_Notification_Scroll				= 602,
-	VREvent_Notification_ClickOn			= 603,
-	VREvent_Notification_ClickOff			= 604,
+	VREvent_Quit						= 700, // data is process
+	VREvent_ProcessQuit					= 701, // data is process
+
+	VREvent_ChaperoneDataHasChanged		= 800,
+	VREvent_ChaperoneUniverseHasChanged	= 801,
+
+	VREvent_StatusUpdate				= 900,
 };
 
 
@@ -329,7 +354,7 @@ struct VREvent_Mouse_t
 /** notification related events. Details will still change at this point */
 struct VREvent_Notification_t
 {
-	float x, y;
+	uint64_t ulUserValue;
 	uint32_t notificationId;
 };
 
@@ -349,6 +374,12 @@ struct VREvent_Overlay_t
 };
 
 
+/** Used for a few events about overlays */
+struct VREvent_Status_t
+{
+	VRStatusState_t statusState; 
+};
+
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
 struct VREvent_Reserved_t
@@ -366,6 +397,7 @@ typedef union
 	VREvent_Process_t process;
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
+	VREvent_Status_t status;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -453,8 +485,46 @@ struct Compositor_OverlaySettings
 	HmdMatrix44_t transform;
 };
 
+/** used to refer to a single VR overlay */
+typedef uint64_t VROverlayHandle_t;
+
+static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
+
+/** Errors that can occur around VR overlays */
+enum VROverlayError
+{
+	VROverlayError_None					= 0,
+
+	VROverlayError_UnknownOverlay		= 10,
+	VROverlayError_InvalidHandle		= 11,
+	VROverlayError_PermissionDenied		= 12,
+	VROverlayError_OverlayLimitExceeded = 13, // No more overlays could be created because the maximum number already exist
+	VROverlayError_WrongVisibilityType	= 14,
+	VROverlayError_KeyTooLong			= 15,
+	VROverlayError_NameTooLong			= 16,
+	VROverlayError_KeyInUse				= 17,
+	VROverlayError_WrongTransformType	= 18,
+	VROverlayError_InvalidTrackedDevice = 19,
+	VROverlayError_InvalidParameter		= 20,
+	VROverlayError_ThumbnailCantBeDestroyed = 21,
+	VROverlayError_ArrayTooSmall		= 22,
+	VROverlayError_RequestFailed		= 23,
+	VROverlayError_InvalidTexture		= 24,
+	VROverlayError_UnableToLoadFile		= 25,
+};
+
+/** enum values to pass in to VR_Init to identify whether the application will 
+* draw a 3D scene. */
+enum EVRApplicationType
+{
+	VRApplication_Other = 0,		// Some other kind of application that isn't covered by the other entries 
+	VRApplication_Scene	= 1,		// Application will submit 3D frames 
+	VRApplication_Overlay = 2,		// Application only interacts with overlays
+};
 
 /** error codes returned by Vr_Init */
+
+// Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
 enum HmdError
 {
 	HmdError_None = 0,
@@ -474,6 +544,10 @@ enum HmdError
 	HmdError_Init_NoConfigPath			= 111,
 	HmdError_Init_NoLogPath				= 112,
 	HmdError_Init_PathRegistryNotWritable = 113,
+	HmdError_Init_AppInfoInitFailed		= 114,
+	HmdError_Init_Retry					= 115, // Used internally to cause retries to vrserver
+	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
+	HmdError_Init_AnotherAppLaunching	= 117, 
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -481,6 +555,9 @@ enum HmdError
 	HmdError_Driver_NotLoaded			= 203,
 	HmdError_Driver_RuntimeOutOfDate	= 204,
 	HmdError_Driver_HmdInUse			= 205,
+	HmdError_Driver_NotCalibrated		= 206,
+	HmdError_Driver_CalibrationInvalid	= 207,
+	HmdError_Driver_HmdDisplayNotFound  = 208,
 
 	HmdError_IPC_ServerInitFailed		= 300,
 	HmdError_IPC_ConnectFailed			= 301,
@@ -495,6 +572,34 @@ enum HmdError
 };
 
 #pragma pack( pop )
+
+// figure out how to import from the VR API dll
+#if defined(_WIN32)
+
+#ifdef VR_API_EXPORT
+#define VR_INTERFACE extern "C" __declspec( dllexport )
+#else
+#define VR_INTERFACE extern "C" __declspec( dllimport )
+#endif
+
+#elif defined(GNUC) || defined(COMPILER_GCC) || defined(__APPLE__)
+
+#ifdef VR_API_EXPORT
+#define VR_INTERFACE extern "C" __attribute__((visibility("default")))
+#else
+#define VR_INTERFACE extern "C" 
+#endif
+
+#else
+#error "Unsupported Platform."
+#endif
+
+
+#if defined( _WIN32 )
+#define VR_CALLTYPE __cdecl
+#else
+#define VR_CALLTYPE 
+#endif
 
 }
 
@@ -720,6 +825,9 @@ public:
 
 	/** Returns a uint64 property. If the property is not available this function will return 0. */
 	virtual uint64_t GetUint64TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+
+	/** Returns a matrix property. If the device index is not valid or the property is not a matrix type, this function will return identity. */
+	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
 
 	/** Returns a string property. If the property is not available this function will return 0 and pError will be 
 	* set to an error. Otherwise it returns the length of the number of bytes necessary to hold this string including 
