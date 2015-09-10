@@ -48,6 +48,11 @@ struct HmdVector3_t
 	float v[3];
 };
 
+struct HmdVector4_t
+{
+	float v[4];
+};
+
 struct HmdVector3d_t
 {
 	double v[3];
@@ -61,6 +66,11 @@ struct HmdVector2_t
 struct HmdQuaternion_t
 {
 	double w, x, y, z;
+};
+
+struct HmdColor_t
+{
+	float r, g, b, a;
 };
 
 struct HmdQuad_t
@@ -147,47 +157,71 @@ enum TrackingUniverseOrigin
 enum TrackedDeviceProperty
 {
 	// general properties that apply to all device classes
-	Prop_TrackingSystemName_String			= 1000,
-	Prop_ModelNumber_String					= 1001,
-	Prop_SerialNumber_String				= 1002,
-	Prop_RenderModelName_String				= 1003,
-	Prop_WillDriftInYaw_Bool				= 1004,
-	Prop_ManufacturerName_String			= 1005,
-	Prop_TrackingFirmwareVersion_String		= 1006,
-	Prop_HardwareRevision_String			= 1007,
-	Prop_AllWirelessDongleDescriptions_String= 1008,
-	Prop_ConnectedWirelessDongle_String		= 1009,
-	Prop_DeviceIsWireless_Bool				= 1010,
-	Prop_DeviceIsCharging_Bool				= 1011,
-	Prop_DeviceBatteryPercentage_Float		= 1012, // 0 is empty, 1 is full
-	Prop_StatusDisplayTransform_Matrix34	= 1013,
+	Prop_TrackingSystemName_String				= 1000,
+	Prop_ModelNumber_String						= 1001,
+	Prop_SerialNumber_String					= 1002,
+	Prop_RenderModelName_String					= 1003,
+	Prop_WillDriftInYaw_Bool					= 1004,
+	Prop_ManufacturerName_String				= 1005,
+	Prop_TrackingFirmwareVersion_String			= 1006,
+	Prop_HardwareRevision_String				= 1007,
+	Prop_AllWirelessDongleDescriptions_String	= 1008,
+	Prop_ConnectedWirelessDongle_String			= 1009,
+	Prop_DeviceIsWireless_Bool					= 1010,
+	Prop_DeviceIsCharging_Bool					= 1011,
+	Prop_DeviceBatteryPercentage_Float			= 1012, // 0 is empty, 1 is full
+	Prop_StatusDisplayTransform_Matrix34		= 1013,
+	Prop_Firmware_UpdateAvailable_Bool			= 1014,
+	Prop_Firmware_ManualUpdate_Bool				= 1015,
+	Prop_Firmware_ManualUpdateURL_String		= 1016,
+	Prop_HardwareRevision_Uint64				= 1017,
+	Prop_FirmwareVersion_Uint64					= 1018,
+	Prop_FPGAVersion_Uint64						= 1019,
+	Prop_VRCVersion_Uint64						= 1020,
+	Prop_RadioVersion_Uint64					= 1021,
+	Prop_DongleVersion_Uint64					= 1022,
+
 
 	// Properties that are unique to TrackedDeviceClass_HMD
-	Prop_ReportsTimeSinceVSync_Bool			= 2000,
-	Prop_SecondsFromVsyncToPhotons_Float	= 2001,
-	Prop_DisplayFrequency_Float				= 2002,
-	Prop_UserIpdMeters_Float				= 2003,
-	Prop_CurrentUniverseId_Uint64			= 2004, 
-	Prop_PreviousUniverseId_Uint64			= 2005, 
-	Prop_DisplayFirmwareVersion_String		= 2006,
-	Prop_IsOnDesktop_Bool					= 2007,
+	Prop_ReportsTimeSinceVSync_Bool				= 2000,
+	Prop_SecondsFromVsyncToPhotons_Float		= 2001,
+	Prop_DisplayFrequency_Float					= 2002,
+	Prop_UserIpdMeters_Float					= 2003,
+	Prop_CurrentUniverseId_Uint64				= 2004, 
+	Prop_PreviousUniverseId_Uint64				= 2005, 
+	Prop_DisplayFirmwareVersion_String			= 2006,
+	Prop_IsOnDesktop_Bool						= 2007,
+	Prop_DisplayMCType_Int32					= 2008,
+	Prop_DisplayMCOffset_Float					= 2009,
+	Prop_DisplayMCScale_Float					= 2010,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
-	Prop_AttachedDeviceId_String			= 3000,
-	Prop_SupportedButtons_Uint64			= 3001,
-	Prop_Axis0Type_Int32					= 3002, // Return value is of type EVRControllerAxisType
-	Prop_Axis1Type_Int32					= 3003, // Return value is of type EVRControllerAxisType
-	Prop_Axis2Type_Int32					= 3004, // Return value is of type EVRControllerAxisType
-	Prop_Axis3Type_Int32					= 3005, // Return value is of type EVRControllerAxisType
-	Prop_Axis4Type_Int32					= 3006, // Return value is of type EVRControllerAxisType
+	Prop_AttachedDeviceId_String				= 3000,
+	Prop_SupportedButtons_Uint64				= 3001,
+	Prop_Axis0Type_Int32						= 3002, // Return value is of type EVRControllerAxisType
+	Prop_Axis1Type_Int32						= 3003, // Return value is of type EVRControllerAxisType
+	Prop_Axis2Type_Int32						= 3004, // Return value is of type EVRControllerAxisType
+	Prop_Axis3Type_Int32						= 3005, // Return value is of type EVRControllerAxisType
+	Prop_Axis4Type_Int32						= 3006, // Return value is of type EVRControllerAxisType
 
 	// Properties that are unique to TrackedDeviceClass_TrackingReference
-	Prop_FieldOfViewLeftDegrees_Float		= 4000,
-	Prop_FieldOfViewRightDegrees_Float		= 4001,
-	Prop_FieldOfViewTopDegrees_Float		= 4002,
-	Prop_FieldOfViewBottomDegrees_Float		= 4003,
-	Prop_TrackingRangeMinimumMeters_Float	= 4004,
-	Prop_TrackingRangeMaximumMeters_Float	= 4005,
+	Prop_FieldOfViewLeftDegrees_Float			= 4000,
+	Prop_FieldOfViewRightDegrees_Float			= 4001,
+	Prop_FieldOfViewTopDegrees_Float			= 4002,
+	Prop_FieldOfViewBottomDegrees_Float			= 4003,
+	Prop_TrackingRangeMinimumMeters_Float		= 4004,
+	Prop_TrackingRangeMaximumMeters_Float		= 4005,
+
+	// Camera calibration parameters
+	Prop_TrackedCamera_IntrinsicsFX_Float		= 5000,
+	Prop_TrackedCamera_IntrinsicsFY_Float		= 5001,
+	Prop_TrackedCamera_IntrinsicsCX_Float		= 5002,
+	Prop_TrackedCamera_IntrinsicsCY_Float		= 5003,
+	Prop_TrackedCamera_IntrinsicsK1_Float		= 5004,
+	Prop_TrackedCamera_IntrinsicsK2_Float		= 5005,
+	Prop_TrackedCamera_IntrinsicsP1_Float		= 5006,
+	Prop_TrackedCamera_IntrinsicsP2_Float		= 5007,
+	Prop_TrackedCamera_IntrinsicsK3_Float		= 5008,
 };
 
 /** Used to pass device IDs to API calls */
@@ -247,6 +281,20 @@ struct VRTextureBounds_t
 	float uMax, vMax;
 };
 
+
+/** Allows the applicaiton to control how scene textures are used by the compositor when calling Submit. */
+enum VRSubmitFlags_t
+{
+	// Simple render path. App submits rendered left and right eye images with no lens distortion correction applied.
+	Submit_Default = 0x00,
+
+	// App submits final left and right eye images with lens distortion already applied (lens distortion makes the images appear
+	// barrel distorted with chromatic aberration correction applied). The app would have used the data returned by
+	// vr::IVRSystem::ComputeDistortion() to apply the correct distortion to the rendered images before calling Submit().
+	Submit_LensDistortionAlreadyApplied = 0x01
+};
+
+
 /** Status of the overall system */
 enum VRStatusState_t
 {
@@ -266,6 +314,8 @@ enum EVREventType
 	VREvent_TrackedDeviceActivated		= 100,
 	VREvent_TrackedDeviceDeactivated	= 101,
 	VREvent_TrackedDeviceUpdated		= 102,
+	VREvent_TrackedDeviceUserInteractionStarted		= 103,
+	VREvent_TrackedDeviceUserInteractionEnded	= 104,
 
 	VREvent_ButtonPress					= 200, // data is controller
 	VREvent_ButtonUnpress				= 201, // data is controller
@@ -275,6 +325,8 @@ enum EVREventType
 	VREvent_MouseMove					= 300, // data is mouse
 	VREvent_MouseButtonDown				= 301, // data is mouse
 	VREvent_MouseButtonUp				= 302, // data is mouse
+	VREvent_FocusEnter					= 303, // data is overlay
+	VREvent_FocusLeave					= 304, // data is overlay
 
 	VREvent_InputFocusCaptured			= 400, // data is process
 	VREvent_InputFocusReleased			= 401, // data is process
@@ -301,8 +353,25 @@ enum EVREventType
 
 	VREvent_ChaperoneDataHasChanged		= 800,
 	VREvent_ChaperoneUniverseHasChanged	= 801,
+	VREvent_ChaperoneTempDataHasChanged = 802,
 
 	VREvent_StatusUpdate				= 900,
+
+	VREvent_MCImageUpdated				= 1000,
+
+	VREvent_FirmwareUpdateStarted	= 1100,
+	VREvent_FirmwareUpdateFinished	= 1101,
+
+};
+
+
+/** Level of Hmd activity */
+enum EDeviceActivityLevel
+{
+	k_EDeviceActivityLevel_Unknown = -1,
+	k_EDeviceActivityLevel_Idle = 0,
+	k_EDeviceActivityLevel_UserInteraction = 1,
+	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,
 };
 
 
@@ -522,6 +591,16 @@ enum EVRApplicationType
 	VRApplication_Overlay = 2,		// Application only interacts with overlays
 };
 
+
+/** error codes for firmware */
+enum VRFirmwareError
+{
+	VRFirmwareError_None = 0,
+	VRFirmwareError_Success = 1,
+	VRFirmwareError_Fail = 2,
+};
+
+
 /** error codes returned by Vr_Init */
 
 // Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
@@ -548,6 +627,7 @@ enum HmdError
 	HmdError_Init_Retry					= 115, // Used internally to cause retries to vrserver
 	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
 	HmdError_Init_AnotherAppLaunching	= 117, 
+	HmdError_Init_SettingsInitFailed	= 118, 
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -558,7 +638,7 @@ enum HmdError
 	HmdError_Driver_NotCalibrated		= 206,
 	HmdError_Driver_CalibrationInvalid	= 207,
 	HmdError_Driver_HmdDisplayNotFound  = 208,
-
+	
 	HmdError_IPC_ServerInitFailed		= 300,
 	HmdError_IPC_ConnectFailed			= 301,
 	HmdError_IPC_SharedStateInitFailed	= 302,
@@ -566,6 +646,14 @@ enum HmdError
 	HmdError_IPC_MutexInitFailed		= 304,
 
 	HmdError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
+
+	HmdError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
+	HmdError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
+	HmdError_VendorSpecific_HmdFound_NoStoredConfig 			= 1103,
+	HmdError_VendorSpecific_HmdFound_ConfigTooBig 				= 1104,
+	HmdError_VendorSpecific_HmdFound_ConfigTooSmall 			= 1105,
+	HmdError_VendorSpecific_HmdFound_UnableToInitZLib 			= 1106,
+	HmdError_VendorSpecific_HmdFound_CantReadFirmwareVersion 	= 1107,
 
 	HmdError_Steam_SteamInstallationNotFound = 2000,
 
@@ -781,6 +869,26 @@ public:
 	virtual DistortionCoordinates_t ComputeDistortion( Hmd_Eye eEye, float fU, float fV ) = 0;
 
 	// -----------------------------------
+	// Direct mode methods
+	// -----------------------------------
+
+	/** Specific to Oculus compositor support, textures supplied must be created using this method. */
+	virtual void CreateSwapTextureSet( uint32_t unPid, uint32_t unFormat, uint32_t unWidth, uint32_t unHeight, void *( *pSharedTextureHandles )[2] ) {}
+
+	/** Used to textures created using CreateSwapTextureSet.  Only one of the set's handles needs to be used to destroy the entire set. */
+	virtual void DestroySwapTextureSet( void *pSharedTextureHandle ) {}
+
+	/** Used to purge all texture sets for a given process. */
+	virtual void DestroyAllSwapTextureSets( uint32_t unPid ) {}
+
+	/** Call once per layer to draw for this frame.  One shared texture handle per eye.  Textures must be created
+	* using CreateSwapTextureSet and should be alternated per frame.  Call Present once all layers have been submitted. */
+	virtual void SubmitLayer( void *pSharedTextureHandles[2], const vr::VRTextureBounds_t * pBounds, const vr::HmdMatrix34_t * pPose ) {}
+
+	/** Submits queued layers for display. */
+	virtual void Present() {}
+
+	// -----------------------------------
 	// Assorted capability methods
 	// -----------------------------------
 
@@ -908,6 +1016,13 @@ public:
 
 	/** notifies the server than a controller axis changed */
 	virtual void TrackedDeviceAxisUpdated( uint32_t unWhichDevice, uint32_t unWhichAxis, const VRControllerAxis_t & axisState ) = 0;
+
+	/** Notifies the server that the MC image has been updated for the display attached to the device. This is
+	* only permitted on devices of the HMD class. */
+	virtual void MCImageUpdated() = 0;
+	
+	/** always returns a pointer to a valid interface pointer of IVRSettings */
+	virtual IVRSettings *GetSettings() = 0; 
 };
 
 
@@ -917,6 +1032,8 @@ class IServerTrackedDeviceProvider
 public:
 	/** initializes the driver. This will be called before any other methods are called.
 	* If Init returns anything other than HmdError_None the driver DLL will be unloaded.
+	*
+	* pDriverHost will never be NULL, and will always be a pointer to a IServerDriverHost interface
 	*
 	* pchUserDriverConfigDir - The absolute path of the directory where the driver should store user
 	*	config files.
@@ -978,6 +1095,8 @@ public:
 	* null. Strings will generally fit in buffers of k_unTrackingStringSize characters. */
 	virtual uint32_t GetStringTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, TrackedDeviceProperty prop, char *pchValue, uint32_t unBufferSize, TrackedPropertyError *pError = 0L ) = 0;
 
+	/** always returns a pointer to a valid interface pointer of IVRSettings */
+	virtual IVRSettings *GetSettings() = 0; 
 };
 
 
@@ -989,6 +1108,8 @@ public:
 	/** initializes the driver. This will be called before any other methods are called,
 	* except BIsHmdPresent(). BIsHmdPresent is called outside of the Init/Cleanup pair.
 	* If Init returns anything other than HmdError_None the driver DLL will be unloaded.
+	*
+	* pDriverHost will never be NULL, and will always be a pointer to a IClientDriverHost interface
 	*
 	* pchUserDriverConfigDir - The absolute path of the directory where the driver should store user
 	*	config files.
@@ -1021,6 +1142,10 @@ public:
 	* NOTE: Render this mesh with backface culling disabled since the winding order of the vertices can be different per-HMD or per-eye.
 	*/
 	virtual HiddenAreaMesh_t GetHiddenAreaMesh( Hmd_Eye eEye ) = 0;
+
+	/** Get the MC image for the current HMD.
+	* Returns the size in bytes of the buffer required to hold the specified resource. */
+	virtual uint32_t GetMCImage( uint32_t *pImgWidth, uint32_t *pImgHeight, uint32_t *pChannels, void *pDataBuffer, uint32_t unBufferLen ) = 0;
 };
 
 static const char *IClientTrackedDeviceProvider_Version = "IClientTrackedDeviceProvider_001";

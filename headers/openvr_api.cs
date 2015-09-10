@@ -45,8 +45,12 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRSystem_ResetSeatedZeroPose(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetSeatedZeroPoseToStandingAbsoluteTrackingPose")]
 	internal static extern HmdMatrix34_t VR_IVRSystem_GetSeatedZeroPoseToStandingAbsoluteTrackingPose(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetRawZeroPoseToStandingAbsoluteTrackingPose")]
+	internal static extern HmdMatrix34_t VR_IVRSystem_GetRawZeroPoseToStandingAbsoluteTrackingPose(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetSortedTrackedDeviceIndicesOfClass")]
 	internal static extern uint VR_IVRSystem_GetSortedTrackedDeviceIndicesOfClass(IntPtr instancePtr, TrackedDeviceClass eTrackedDeviceClass,  [In, Out] uint[] punTrackedDeviceIndexArray, uint unTrackedDeviceIndexArrayCount, uint unRelativeToTrackedDeviceIndex);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetTrackedDeviceActivityLevel")]
+	internal static extern uint VR_IVRSystem_GetTrackedDeviceActivityLevel(IntPtr instancePtr, uint unDeviceId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetTrackedDeviceClass")]
 	internal static extern TrackedDeviceClass VR_IVRSystem_GetTrackedDeviceClass(IntPtr instancePtr, uint unDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_IsTrackedDeviceConnected")]
@@ -91,6 +95,8 @@ class VRNativeEntrypoints
 	internal static extern bool VR_IVRSystem_IsInputFocusCapturedByAnotherProcess(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_DriverDebugRequest")]
 	internal static extern uint VR_IVRSystem_DriverDebugRequest(IntPtr instancePtr, uint unDeviceIndex, string pchRequest, string pchResponseBuffer, uint unResponseBufferSize);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_PerformFirmwareUpdate")]
+	internal static extern VRFirmwareError VR_IVRSystem_PerformFirmwareUpdate(IntPtr instancePtr, uint unDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_AddApplicationManifest")]
 	internal static extern uint VR_IVRApplications_AddApplicationManifest(IntPtr instancePtr, string pchApplicationManifestFullPath, bool bTemporary);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_RemoveApplicationManifest")]
@@ -135,6 +141,14 @@ class VRNativeEntrypoints
 	internal static extern bool VR_IVRChaperone_GetSeatedBoundsInfo(IntPtr instancePtr, ref ChaperoneSeatedBoundsInfo_t pInfo);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_ReloadInfo")]
 	internal static extern void VR_IVRChaperone_ReloadInfo(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_SetSceneColor")]
+	internal static extern void VR_IVRChaperone_SetSceneColor(IntPtr instancePtr, HmdColor_t color);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_GetBoundsColor")]
+	internal static extern void VR_IVRChaperone_GetBoundsColor(IntPtr instancePtr, ref HmdColor_t pOutputColorArray, int nNumOutputColors);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_AreBoundsVisible")]
+	internal static extern bool VR_IVRChaperone_AreBoundsVisible(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_ForceBoundsVisible")]
+	internal static extern void VR_IVRChaperone_ForceBoundsVisible(IntPtr instancePtr, bool bForce);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetLastError")]
 	internal static extern uint VR_IVRCompositor_GetLastError(IntPtr instancePtr, System.Text.StringBuilder pchBuffer, uint unBufferSize);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetVSync")]
@@ -148,7 +162,7 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_WaitGetPoses")]
 	internal static extern VRCompositorError VR_IVRCompositor_WaitGetPoses(IntPtr instancePtr,  [In, Out] TrackedDevicePose_t[] pRenderPoseArray, uint unRenderPoseArrayCount,  [In, Out] TrackedDevicePose_t[] pGamePoseArray, uint unGamePoseArrayCount);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_Submit")]
-	internal static extern VRCompositorError VR_IVRCompositor_Submit(IntPtr instancePtr, Hmd_Eye eEye, GraphicsAPIConvention eTextureType, IntPtr pTexture, ref VRTextureBounds_t pBounds);
+	internal static extern VRCompositorError VR_IVRCompositor_Submit(IntPtr instancePtr, Hmd_Eye eEye, GraphicsAPIConvention eTextureType, IntPtr pTexture, ref VRTextureBounds_t pBounds, VRSubmitFlags_t nSubmitFlags);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ClearLastSubmittedFrame")]
 	internal static extern void VR_IVRCompositor_ClearLastSubmittedFrame(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetFrameTiming")]
@@ -157,6 +171,10 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRCompositor_FadeToColor(IntPtr instancePtr, float fSeconds, float fRed, float fGreen, float fBlue, float fAlpha, bool bBackground);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_FadeGrid")]
 	internal static extern void VR_IVRCompositor_FadeGrid(IntPtr instancePtr, float fSeconds, bool bFadeIn);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetSkyboxOverride")]
+	internal static extern void VR_IVRCompositor_SetSkyboxOverride(IntPtr instancePtr, GraphicsAPIConvention eTextureType, IntPtr pFront, IntPtr pBack, IntPtr pLeft, IntPtr pRight, IntPtr pTop, IntPtr pBottom);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ClearSkyboxOverride")]
+	internal static extern void VR_IVRCompositor_ClearSkyboxOverride(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_CompositorBringToFront")]
 	internal static extern void VR_IVRCompositor_CompositorBringToFront(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_CompositorGoToBack")]
@@ -249,6 +267,8 @@ class VRNativeEntrypoints
 	internal static extern bool VR_IVROverlay_ComputeOverlayIntersection(IntPtr instancePtr, ulong ulOverlayHandle, ref VROverlayIntersectionParams_t pParams, ref VROverlayIntersectionResults_t pResults);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_HandleControllerOverlayInteractionAsMouse")]
 	internal static extern bool VR_IVROverlay_HandleControllerOverlayInteractionAsMouse(IntPtr instancePtr, ulong ulOverlayHandle, uint unControllerDeviceIndex);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_IsFocusOverlay")]
+	internal static extern bool VR_IVROverlay_IsFocusOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetOverlayTexture")]
 	internal static extern VROverlayError VR_IVROverlay_SetOverlayTexture(IntPtr instancePtr, ulong ulOverlayHandle, GraphicsAPIConvention eTextureType, IntPtr pTexture);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_ClearOverlayTexture")]
@@ -309,6 +329,26 @@ class VRNativeEntrypoints
 	internal static extern NotificationError_t VR_IVRNotifications_CreateNotification(IntPtr instancePtr, ulong ulOverlayHandle, ulong ulUserValue, string strType, string strText, string strCategory, ref NotificationBitmap photo, ref uint notificationId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_DismissNotification")]
 	internal static extern NotificationError_t VR_IVRNotifications_DismissNotification(IntPtr instancePtr, uint notificationId);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetSettingsErrorNameFromEnum")]
+	internal static extern IntPtr VR_IVRSettings_GetSettingsErrorNameFromEnum(IntPtr instancePtr, uint eError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_Sync")]
+	internal static extern void VR_IVRSettings_Sync(IntPtr instancePtr, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetBool")]
+	internal static extern bool VR_IVRSettings_GetBool(IntPtr instancePtr, string pchSection, string pchSettingsKey, bool bDefaultValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_SetBool")]
+	internal static extern void VR_IVRSettings_SetBool(IntPtr instancePtr, string pchSection, string pchSettingsKey, bool bValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetInt32")]
+	internal static extern int VR_IVRSettings_GetInt32(IntPtr instancePtr, string pchSection, string pchSettingsKey, int nDefaultValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_SetInt32")]
+	internal static extern void VR_IVRSettings_SetInt32(IntPtr instancePtr, string pchSection, string pchSettingsKey, int nValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetFloat")]
+	internal static extern float VR_IVRSettings_GetFloat(IntPtr instancePtr, string pchSection, string pchSettingsKey, float flDefaultValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_SetFloat")]
+	internal static extern void VR_IVRSettings_SetFloat(IntPtr instancePtr, string pchSection, string pchSettingsKey, float flValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetString")]
+	internal static extern void VR_IVRSettings_GetString(IntPtr instancePtr, string pchSection, string pchSettingsKey, string pchValue, uint unValueLen, string pchDefaultValue, ref uint peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_SetString")]
+	internal static extern void VR_IVRSettings_SetString(IntPtr instancePtr, string pchSection, string pchSettingsKey, string pchValue, ref uint peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraCount")]
 	internal static extern uint VR_IVRCameraAccess_GetCameraCount(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraId")]
@@ -320,7 +360,7 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCameraAccess_GetCameraImage")]
 	internal static extern bool VR_IVRCameraAccess_GetCameraImage(IntPtr instancePtr, uint unCameraIndex, ref CameraImage_t pCameraImage);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_CommitWorkingCopy")]
-	internal static extern bool VR_IVRChaperoneSetup_CommitWorkingCopy(IntPtr instancePtr, string pchCalibrationName);
+	internal static extern bool VR_IVRChaperoneSetup_CommitWorkingCopy(IntPtr instancePtr, uint configFile);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_RevertWorkingCopy")]
 	internal static extern void VR_IVRChaperoneSetup_RevertWorkingCopy(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetWorkingSoftBoundsInfo")]
@@ -354,7 +394,7 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses")]
 	internal static extern void VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_ReloadFromDisk")]
-	internal static extern void VR_IVRChaperoneSetup_ReloadFromDisk(IntPtr instancePtr);
+	internal static extern void VR_IVRChaperoneSetup_ReloadFromDisk(IntPtr instancePtr, uint configFile);
 
 }
 
@@ -380,7 +420,9 @@ public abstract class IVRSystem
 	public abstract void GetDeviceToAbsoluteTrackingPose(TrackingUniverseOrigin eOrigin,float fPredictedSecondsToPhotonsFromNow,TrackedDevicePose_t [] pTrackedDevicePoseArray);
 	public abstract void ResetSeatedZeroPose();
 	public abstract HmdMatrix34_t GetSeatedZeroPoseToStandingAbsoluteTrackingPose();
+	public abstract HmdMatrix34_t GetRawZeroPoseToStandingAbsoluteTrackingPose();
 	public abstract uint GetSortedTrackedDeviceIndicesOfClass(TrackedDeviceClass eTrackedDeviceClass,uint [] punTrackedDeviceIndexArray,uint unRelativeToTrackedDeviceIndex);
+	public abstract uint GetTrackedDeviceActivityLevel(uint unDeviceId);
 	public abstract TrackedDeviceClass GetTrackedDeviceClass(uint unDeviceIndex);
 	public abstract bool IsTrackedDeviceConnected(uint unDeviceIndex);
 	public abstract bool GetBoolTrackedDeviceProperty(uint unDeviceIndex,TrackedDeviceProperty prop,ref TrackedPropertyError pError);
@@ -403,6 +445,7 @@ public abstract class IVRSystem
 	public abstract void ReleaseInputFocus();
 	public abstract bool IsInputFocusCapturedByAnotherProcess();
 	public abstract uint DriverDebugRequest(uint unDeviceIndex,string pchRequest,string pchResponseBuffer,uint unResponseBufferSize);
+	public abstract VRFirmwareError PerformFirmwareUpdate(uint unDeviceIndex);
 }
 
 
@@ -437,6 +480,10 @@ public abstract class IVRChaperone
 	public abstract bool GetHardBoundsInfo(out HmdQuad_t [] pQuadsBuffer);
 	public abstract bool GetSeatedBoundsInfo(ref ChaperoneSeatedBoundsInfo_t pInfo);
 	public abstract void ReloadInfo();
+	public abstract void SetSceneColor(HmdColor_t color);
+	public abstract void GetBoundsColor(ref HmdColor_t pOutputColorArray,int nNumOutputColors);
+	public abstract bool AreBoundsVisible();
+	public abstract void ForceBoundsVisible(bool bForce);
 }
 
 
@@ -449,11 +496,13 @@ public abstract class IVRCompositor
 	public abstract void SetGamma(float fGamma);
 	public abstract float GetGamma();
 	public abstract VRCompositorError WaitGetPoses(TrackedDevicePose_t [] pRenderPoseArray,TrackedDevicePose_t [] pGamePoseArray);
-	public abstract VRCompositorError Submit(Hmd_Eye eEye,GraphicsAPIConvention eTextureType,IntPtr pTexture,ref VRTextureBounds_t pBounds);
+	public abstract VRCompositorError Submit(Hmd_Eye eEye,GraphicsAPIConvention eTextureType,IntPtr pTexture,ref VRTextureBounds_t pBounds,VRSubmitFlags_t nSubmitFlags);
 	public abstract void ClearLastSubmittedFrame();
 	public abstract bool GetFrameTiming(ref Compositor_FrameTiming pTiming,uint unFramesAgo);
 	public abstract void FadeToColor(float fSeconds,float fRed,float fGreen,float fBlue,float fAlpha,bool bBackground);
 	public abstract void FadeGrid(float fSeconds,bool bFadeIn);
+	public abstract void SetSkyboxOverride(GraphicsAPIConvention eTextureType,IntPtr pFront,IntPtr pBack,IntPtr pLeft,IntPtr pRight,IntPtr pTop,IntPtr pBottom);
+	public abstract void ClearSkyboxOverride();
 	public abstract void CompositorBringToFront();
 	public abstract void CompositorGoToBack();
 	public abstract void CompositorQuit();
@@ -506,6 +555,7 @@ public abstract class IVROverlay
 	public abstract VROverlayError SetOverlayMouseScale(ulong ulOverlayHandle,ref HmdVector2_t pvecMouseScale);
 	public abstract bool ComputeOverlayIntersection(ulong ulOverlayHandle,ref VROverlayIntersectionParams_t pParams,ref VROverlayIntersectionResults_t pResults);
 	public abstract bool HandleControllerOverlayInteractionAsMouse(ulong ulOverlayHandle,uint unControllerDeviceIndex);
+	public abstract bool IsFocusOverlay(ulong ulOverlayHandle);
 	public abstract VROverlayError SetOverlayTexture(ulong ulOverlayHandle,GraphicsAPIConvention eTextureType,IntPtr pTexture);
 	public abstract VROverlayError ClearOverlayTexture(ulong ulOverlayHandle);
 	public abstract VROverlayError SetOverlayRaw(ulong ulOverlayHandle,IntPtr pvBuffer,uint unWidth,uint unHeight,uint unDepth);
@@ -557,6 +607,22 @@ public abstract class IVRNotifications
 }
 
 
+public abstract class IVRSettings
+{
+	public abstract IntPtr GetIntPtr();
+	public abstract string GetSettingsErrorNameFromEnum(uint eError);
+	public abstract void Sync(ref uint peError);
+	public abstract bool GetBool(string pchSection,string pchSettingsKey,bool bDefaultValue,ref uint peError);
+	public abstract void SetBool(string pchSection,string pchSettingsKey,bool bValue,ref uint peError);
+	public abstract int GetInt32(string pchSection,string pchSettingsKey,int nDefaultValue,ref uint peError);
+	public abstract void SetInt32(string pchSection,string pchSettingsKey,int nValue,ref uint peError);
+	public abstract float GetFloat(string pchSection,string pchSettingsKey,float flDefaultValue,ref uint peError);
+	public abstract void SetFloat(string pchSection,string pchSettingsKey,float flValue,ref uint peError);
+	public abstract void GetString(string pchSection,string pchSettingsKey,string pchValue,uint unValueLen,string pchDefaultValue,ref uint peError);
+	public abstract void SetString(string pchSection,string pchSettingsKey,string pchValue,ref uint peError);
+}
+
+
 public abstract class IVRCameraAccess
 {
 	public abstract IntPtr GetIntPtr();
@@ -571,7 +637,7 @@ public abstract class IVRCameraAccess
 public abstract class IVRChaperoneSetup
 {
 	public abstract IntPtr GetIntPtr();
-	public abstract bool CommitWorkingCopy(string pchCalibrationName);
+	public abstract bool CommitWorkingCopy(uint configFile);
 	public abstract void RevertWorkingCopy();
 	public abstract bool GetWorkingSoftBoundsInfo(ref ChaperoneSoftBoundsInfo_t pInfo);
 	public abstract bool GetWorkingHardBoundsInfo(out HmdQuad_t [] pQuadsBuffer);
@@ -588,7 +654,7 @@ public abstract class IVRChaperoneSetup
 	public abstract void SetWorkingTagPoseByName(string pchTagName,IntPtr matSeatedZeroPoseToRawTrackingPose,float flScale);
 	public abstract void RemoveWorkingTagPoseByName(string pchTagName);
 	public abstract void RemoveAllWorkingTagPoses();
-	public abstract void ReloadFromDisk();
+	public abstract void ReloadFromDisk(uint configFile);
 }
 
 
@@ -704,10 +770,22 @@ public class CVRSystem : IVRSystem
 		HmdMatrix34_t result = VRNativeEntrypoints.VR_IVRSystem_GetSeatedZeroPoseToStandingAbsoluteTrackingPose(m_pVRSystem);
 		return result;
 	}
+	public override HmdMatrix34_t GetRawZeroPoseToStandingAbsoluteTrackingPose()
+	{
+		CheckIfUsable();
+		HmdMatrix34_t result = VRNativeEntrypoints.VR_IVRSystem_GetRawZeroPoseToStandingAbsoluteTrackingPose(m_pVRSystem);
+		return result;
+	}
 	public override uint GetSortedTrackedDeviceIndicesOfClass(TrackedDeviceClass eTrackedDeviceClass,uint [] punTrackedDeviceIndexArray,uint unRelativeToTrackedDeviceIndex)
 	{
 		CheckIfUsable();
 		uint result = VRNativeEntrypoints.VR_IVRSystem_GetSortedTrackedDeviceIndicesOfClass(m_pVRSystem,eTrackedDeviceClass,punTrackedDeviceIndexArray,(uint) punTrackedDeviceIndexArray.Length,unRelativeToTrackedDeviceIndex);
+		return result;
+	}
+	public override uint GetTrackedDeviceActivityLevel(uint unDeviceId)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRSystem_GetTrackedDeviceActivityLevel(m_pVRSystem,unDeviceId);
 		return result;
 	}
 	public override TrackedDeviceClass GetTrackedDeviceClass(uint unDeviceIndex)
@@ -838,6 +916,12 @@ public class CVRSystem : IVRSystem
 	{
 		CheckIfUsable();
 		uint result = VRNativeEntrypoints.VR_IVRSystem_DriverDebugRequest(m_pVRSystem,unDeviceIndex,pchRequest,pchResponseBuffer,unResponseBufferSize);
+		return result;
+	}
+	public override VRFirmwareError PerformFirmwareUpdate(uint unDeviceIndex)
+	{
+		CheckIfUsable();
+		VRFirmwareError result = VRNativeEntrypoints.VR_IVRSystem_PerformFirmwareUpdate(m_pVRSystem,unDeviceIndex);
 		return result;
 	}
 }
@@ -1016,6 +1100,27 @@ public class CVRChaperone : IVRChaperone
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRChaperone_ReloadInfo(m_pVRChaperone);
 	}
+	public override void SetSceneColor(HmdColor_t color)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperone_SetSceneColor(m_pVRChaperone,color);
+	}
+	public override void GetBoundsColor(ref HmdColor_t pOutputColorArray,int nNumOutputColors)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperone_GetBoundsColor(m_pVRChaperone,ref pOutputColorArray,nNumOutputColors);
+	}
+	public override bool AreBoundsVisible()
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRChaperone_AreBoundsVisible(m_pVRChaperone);
+		return result;
+	}
+	public override void ForceBoundsVisible(bool bForce)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperone_ForceBoundsVisible(m_pVRChaperone,bForce);
+	}
 }
 
 
@@ -1070,10 +1175,10 @@ public class CVRCompositor : IVRCompositor
 		VRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_WaitGetPoses(m_pVRCompositor,pRenderPoseArray,(uint) pRenderPoseArray.Length,pGamePoseArray,(uint) pGamePoseArray.Length);
 		return result;
 	}
-	public override VRCompositorError Submit(Hmd_Eye eEye,GraphicsAPIConvention eTextureType,IntPtr pTexture,ref VRTextureBounds_t pBounds)
+	public override VRCompositorError Submit(Hmd_Eye eEye,GraphicsAPIConvention eTextureType,IntPtr pTexture,ref VRTextureBounds_t pBounds,VRSubmitFlags_t nSubmitFlags)
 	{
 		CheckIfUsable();
-		VRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_Submit(m_pVRCompositor,eEye,eTextureType,pTexture,ref pBounds);
+		VRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_Submit(m_pVRCompositor,eEye,eTextureType,pTexture,ref pBounds,nSubmitFlags);
 		return result;
 	}
 	public override void ClearLastSubmittedFrame()
@@ -1096,6 +1201,16 @@ public class CVRCompositor : IVRCompositor
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRCompositor_FadeGrid(m_pVRCompositor,fSeconds,bFadeIn);
+	}
+	public override void SetSkyboxOverride(GraphicsAPIConvention eTextureType,IntPtr pFront,IntPtr pBack,IntPtr pLeft,IntPtr pRight,IntPtr pTop,IntPtr pBottom)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRCompositor_SetSkyboxOverride(m_pVRCompositor,eTextureType,pFront,pBack,pLeft,pRight,pTop,pBottom);
+	}
+	public override void ClearSkyboxOverride()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRCompositor_ClearSkyboxOverride(m_pVRCompositor);
 	}
 	public override void CompositorBringToFront()
 	{
@@ -1403,6 +1518,12 @@ public class CVROverlay : IVROverlay
 		bool result = VRNativeEntrypoints.VR_IVROverlay_HandleControllerOverlayInteractionAsMouse(m_pVROverlay,ulOverlayHandle,unControllerDeviceIndex);
 		return result;
 	}
+	public override bool IsFocusOverlay(ulong ulOverlayHandle)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVROverlay_IsFocusOverlay(m_pVROverlay,ulOverlayHandle);
+		return result;
+	}
 	public override VROverlayError SetOverlayTexture(ulong ulOverlayHandle,GraphicsAPIConvention eTextureType,IntPtr pTexture)
 	{
 		CheckIfUsable();
@@ -1647,6 +1768,89 @@ public class CVRNotifications : IVRNotifications
 }
 
 
+public class CVRSettings : IVRSettings
+{
+	public CVRSettings(IntPtr VRSettings)
+	{
+		m_pVRSettings = VRSettings;
+	}
+	IntPtr m_pVRSettings;
+
+	public override IntPtr GetIntPtr() { return m_pVRSettings; }
+
+	private void CheckIfUsable()
+	{
+		if (m_pVRSettings == IntPtr.Zero)
+		{
+			throw new Exception("Steam Pointer not configured");
+		}
+	}
+	public override string GetSettingsErrorNameFromEnum(uint eError)
+	{
+		CheckIfUsable();
+		IntPtr result = VRNativeEntrypoints.VR_IVRSettings_GetSettingsErrorNameFromEnum(m_pVRSettings,eError);
+		return (string) Marshal.PtrToStructure(result, typeof(string));
+	}
+	public override void Sync(ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		VRNativeEntrypoints.VR_IVRSettings_Sync(m_pVRSettings,ref peError);
+	}
+	public override bool GetBool(string pchSection,string pchSettingsKey,bool bDefaultValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		bool result = VRNativeEntrypoints.VR_IVRSettings_GetBool(m_pVRSettings,pchSection,pchSettingsKey,bDefaultValue,ref peError);
+		return result;
+	}
+	public override void SetBool(string pchSection,string pchSettingsKey,bool bValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		VRNativeEntrypoints.VR_IVRSettings_SetBool(m_pVRSettings,pchSection,pchSettingsKey,bValue,ref peError);
+	}
+	public override int GetInt32(string pchSection,string pchSettingsKey,int nDefaultValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		int result = VRNativeEntrypoints.VR_IVRSettings_GetInt32(m_pVRSettings,pchSection,pchSettingsKey,nDefaultValue,ref peError);
+		return result;
+	}
+	public override void SetInt32(string pchSection,string pchSettingsKey,int nValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		VRNativeEntrypoints.VR_IVRSettings_SetInt32(m_pVRSettings,pchSection,pchSettingsKey,nValue,ref peError);
+	}
+	public override float GetFloat(string pchSection,string pchSettingsKey,float flDefaultValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		float result = VRNativeEntrypoints.VR_IVRSettings_GetFloat(m_pVRSettings,pchSection,pchSettingsKey,flDefaultValue,ref peError);
+		return result;
+	}
+	public override void SetFloat(string pchSection,string pchSettingsKey,float flValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		VRNativeEntrypoints.VR_IVRSettings_SetFloat(m_pVRSettings,pchSection,pchSettingsKey,flValue,ref peError);
+	}
+	public override void GetString(string pchSection,string pchSettingsKey,string pchValue,uint unValueLen,string pchDefaultValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		VRNativeEntrypoints.VR_IVRSettings_GetString(m_pVRSettings,pchSection,pchSettingsKey,pchValue,unValueLen,pchDefaultValue,ref peError);
+	}
+	public override void SetString(string pchSection,string pchSettingsKey,string pchValue,ref uint peError)
+	{
+		CheckIfUsable();
+		peError = 0;
+		VRNativeEntrypoints.VR_IVRSettings_SetString(m_pVRSettings,pchSection,pchSettingsKey,pchValue,ref peError);
+	}
+}
+
+
 public class CVRCameraAccess : IVRCameraAccess
 {
 	public CVRCameraAccess(IntPtr VRCameraAccess)
@@ -1714,10 +1918,10 @@ public class CVRChaperoneSetup : IVRChaperoneSetup
 			throw new Exception("Steam Pointer not configured");
 		}
 	}
-	public override bool CommitWorkingCopy(string pchCalibrationName)
+	public override bool CommitWorkingCopy(uint configFile)
 	{
 		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_CommitWorkingCopy(m_pVRChaperoneSetup,pchCalibrationName);
+		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_CommitWorkingCopy(m_pVRChaperoneSetup,configFile);
 		return result;
 	}
 	public override void RevertWorkingCopy()
@@ -1818,10 +2022,10 @@ public class CVRChaperoneSetup : IVRChaperoneSetup
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRChaperoneSetup_RemoveAllWorkingTagPoses(m_pVRChaperoneSetup);
 	}
-	public override void ReloadFromDisk()
+	public override void ReloadFromDisk(uint configFile)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRChaperoneSetup_ReloadFromDisk(m_pVRChaperoneSetup);
+		VRNativeEntrypoints.VR_IVRChaperoneSetup_ReloadFromDisk(m_pVRChaperoneSetup,configFile);
 	}
 }
 
@@ -1891,6 +2095,15 @@ public enum TrackedDeviceProperty
 	Prop_DeviceIsCharging_Bool = 1011,
 	Prop_DeviceBatteryPercentage_Float = 1012,
 	Prop_StatusDisplayTransform_Matrix34 = 1013,
+	Prop_Firmware_UpdateAvailable_Bool = 1014,
+	Prop_Firmware_ManualUpdate_Bool = 1015,
+	Prop_Firmware_ManualUpdateURL_String = 1016,
+	Prop_HardwareRevision_Uint64 = 1017,
+	Prop_FirmwareVersion_Uint64 = 1018,
+	Prop_FPGAVersion_Uint64 = 1019,
+	Prop_VRCVersion_Uint64 = 1020,
+	Prop_RadioVersion_Uint64 = 1021,
+	Prop_DongleVersion_Uint64 = 1022,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -1899,6 +2112,9 @@ public enum TrackedDeviceProperty
 	Prop_PreviousUniverseId_Uint64 = 2005,
 	Prop_DisplayFirmwareVersion_String = 2006,
 	Prop_IsOnDesktop_Bool = 2007,
+	Prop_DisplayMCType_Int32 = 2008,
+	Prop_DisplayMCOffset_Float = 2009,
+	Prop_DisplayMCScale_Float = 2010,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -1912,6 +2128,15 @@ public enum TrackedDeviceProperty
 	Prop_FieldOfViewBottomDegrees_Float = 4003,
 	Prop_TrackingRangeMinimumMeters_Float = 4004,
 	Prop_TrackingRangeMaximumMeters_Float = 4005,
+	Prop_TrackedCamera_IntrinsicsFX_Float = 5000,
+	Prop_TrackedCamera_IntrinsicsFY_Float = 5001,
+	Prop_TrackedCamera_IntrinsicsCX_Float = 5002,
+	Prop_TrackedCamera_IntrinsicsCY_Float = 5003,
+	Prop_TrackedCamera_IntrinsicsK1_Float = 5004,
+	Prop_TrackedCamera_IntrinsicsK2_Float = 5005,
+	Prop_TrackedCamera_IntrinsicsP1_Float = 5006,
+	Prop_TrackedCamera_IntrinsicsP2_Float = 5007,
+	Prop_TrackedCamera_IntrinsicsK3_Float = 5008,
 }
 public enum TrackedPropertyError
 {
@@ -1924,6 +2149,11 @@ public enum TrackedPropertyError
 	TrackedProp_CouldNotContactServer = 6,
 	TrackedProp_ValueNotProvidedByDevice = 7,
 	TrackedProp_StringExceedsMaximumLength = 8,
+}
+public enum VRSubmitFlags_t
+{
+	Submit_Default = 0,
+	Submit_LensDistortionAlreadyApplied = 1,
 }
 public enum VRStatusState_t
 {
@@ -1939,6 +2169,8 @@ public enum EVREventType
 	VREvent_TrackedDeviceActivated = 100,
 	VREvent_TrackedDeviceDeactivated = 101,
 	VREvent_TrackedDeviceUpdated = 102,
+	VREvent_TrackedDeviceUserInteractionStarted = 103,
+	VREvent_TrackedDeviceUserInteractionEnded = 104,
 	VREvent_ButtonPress = 200,
 	VREvent_ButtonUnpress = 201,
 	VREvent_ButtonTouch = 202,
@@ -1946,6 +2178,8 @@ public enum EVREventType
 	VREvent_MouseMove = 300,
 	VREvent_MouseButtonDown = 301,
 	VREvent_MouseButtonUp = 302,
+	VREvent_FocusEnter = 303,
+	VREvent_FocusLeave = 304,
 	VREvent_InputFocusCaptured = 400,
 	VREvent_InputFocusReleased = 401,
 	VREvent_SceneFocusLost = 402,
@@ -1967,7 +2201,18 @@ public enum EVREventType
 	VREvent_ProcessQuit = 701,
 	VREvent_ChaperoneDataHasChanged = 800,
 	VREvent_ChaperoneUniverseHasChanged = 801,
+	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_StatusUpdate = 900,
+	VREvent_MCImageUpdated = 1000,
+	VREvent_FirmwareUpdateStarted = 1100,
+	VREvent_FirmwareUpdateFinished = 1101,
+}
+public enum EDeviceActivityLevel
+{
+	k_EDeviceActivityLevel_Unknown = -1,
+	k_EDeviceActivityLevel_Idle = 0,
+	k_EDeviceActivityLevel_UserInteraction = 1,
+	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,
 }
 public enum EVRButtonId
 {
@@ -2027,6 +2272,12 @@ public enum EVRApplicationType
 	VRApplication_Scene = 1,
 	VRApplication_Overlay = 2,
 }
+public enum VRFirmwareError
+{
+	None = 0,
+	Success = 1,
+	Fail = 2,
+}
 public enum HmdError
 {
 	None = 0,
@@ -2049,6 +2300,7 @@ public enum HmdError
 	Init_Retry = 115,
 	Init_InitCanceledByUser = 116,
 	Init_AnotherAppLaunching = 117,
+	Init_SettingsInitFailed = 118,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -2064,6 +2316,13 @@ public enum HmdError
 	IPC_CompositorInitFailed = 303,
 	IPC_MutexInitFailed = 304,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
+	VendorSpecific_HmdFound_CantOpenDevice = 1101,
+	VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
+	VendorSpecific_HmdFound_NoStoredConfig = 1103,
+	VendorSpecific_HmdFound_ConfigTooBig = 1104,
+	VendorSpecific_HmdFound_ConfigTooSmall = 1105,
+	VendorSpecific_HmdFound_UnableToInitZLib = 1106,
+	VendorSpecific_HmdFound_CantReadFirmwareVersion = 1107,
 	Steam_SteamInstallationNotFound = 2000,
 }
 public enum EVRApplicationError
@@ -2142,12 +2401,24 @@ public enum NotificationError_t
 	k_ENotificationError_Fail = 1,
 	k_eNotificationError_InvalidParam = 2,
 }
+public enum EVRSettingsError
+{
+	VRSettingsError_None = 0,
+	VRSettingsError_IPCFailed = 1,
+	VRSettingsError_WriteFailed = 2,
+	VRSettingsError_ReadFailed = 3,
+}
 public enum CameraImageResult
 {
 	OK = 0,
 	Uninitalized = 1,
 	NotReady = 2,
 	SameFrame = 3,
+}
+public enum EChaperoneConfigFile
+{
+	Live = 1,
+	Temp = 2,
 }
 
 [StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
@@ -2172,6 +2443,11 @@ public enum CameraImageResult
 	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 3, ArraySubType = UnmanagedType.R4)]
 	public float[] v; //float[3]
 }
+[StructLayout(LayoutKind.Sequential)] public struct HmdVector4_t
+{
+	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 4, ArraySubType = UnmanagedType.R4)]
+	public float[] v; //float[4]
+}
 [StructLayout(LayoutKind.Sequential)] public struct HmdVector3d_t
 {
 	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 3, ArraySubType = UnmanagedType.R8)]
@@ -2188,6 +2464,13 @@ public enum CameraImageResult
 	public double x;
 	public double y;
 	public double z;
+}
+[StructLayout(LayoutKind.Sequential)] public struct HmdColor_t
+{
+	public float r;
+	public float g;
+	public float b;
+	public float a;
 }
 [StructLayout(LayoutKind.Sequential)] public struct HmdQuad_t
 {
@@ -2425,23 +2708,63 @@ public class OpenVR
 	public const uint k_unMaxPropertyStringSize = 32768;
 	public const uint k_unControllerStateAxisCount = 5;
 	public const ulong k_ulOverlayHandleInvalid = 0;
-	public const string IVRSystem_Version = "IVRSystem_005";
+	public const string IVRSystem_Version = "IVRSystem_006";
 	public const uint k_unMaxApplicationKeyLength = 128;
 	public const string IVRApplications_Version = "IVRApplications_001";
 	public const string IVRChaperone_Version = "IVRChaperone_002";
-	public const string IVRCompositor_Version = "IVRCompositor_007";
+	public const string IVRCompositor_Version = "IVRCompositor_008";
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;
-	public const string IVROverlay_Version = "IVROverlay_004";
+	public const string IVROverlay_Version = "IVROverlay_005";
 	public const string IVRRenderModels_Version = "IVRRenderModels_001";
 	public const string IVRControlPanel_Version = "IVRControlPanel_001";
 	public const uint k_unNotificationTypeMaxSize = 16;
 	public const uint k_unNotificationTextMaxSize = 128;
 	public const uint k_unNotificationCatagoryMaxSize = 32;
 	public const string IVRNotifications_Version = "IVRNotifications_001";
+	public const uint k_unMaxSettingsKeyLength = 128;
+	public const string k_pch_SteamVR_Section = "steamvr";
+	public const string k_pch_SteamVR_RequireHmd_String = "requireHmd";
+	public const string k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
+	public const string k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
+	public const string k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
+	public const string k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
+	public const string k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
+	public const string k_pch_SteamVR_SendSystemButtonToAllApps_Bool = "sendSystemButtonToAllApps";
+	public const string k_pch_SteamVR_LogLevel_Int32 = "loglevel";
+	public const string k_pch_SteamVR_IPD_Float = "ipd";
+	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
+	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
+	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
+	public const string k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
+	public const string k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
+	public const string k_pch_Lighthouse_LighthouseName_String = "lighthousename";
+	public const string k_pch_Lighthouse_MaxIncidenceAngleDegrees_Float = "maxincidenceangledegrees";
+	public const string k_pch_Lighthouse_UseLighthouseDirect_Bool = "uselighthousedirect";
+	public const string k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
+	public const string k_pch_Lighthouse_OriginOffsetX_Float = "originoffsetx";
+	public const string k_pch_Lighthouse_OriginOffsetY_Float = "originoffsety";
+	public const string k_pch_Lighthouse_OriginOffsetZ_Float = "originoffsetz";
+	public const string k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
+	public const string k_pch_Null_Section = "driver_null";
+	public const string k_pch_Null_EnableNullDriver_Bool = "enable";
+	public const string k_pch_Null_Id_String = "id";
+	public const string k_pch_Null_SerialNumber_String = "serialNumber";
+	public const string k_pch_Null_ModelNumber_String = "modelNumber";
+	public const string k_pch_Null_WindowX_Int32 = "windowX";
+	public const string k_pch_Null_WindowY_Int32 = "windowY";
+	public const string k_pch_Null_WindowWidth_Int32 = "windowWidth";
+	public const string k_pch_Null_WindowHeight_Int32 = "windowHeight";
+	public const string k_pch_Null_RenderWidth_Int32 = "renderWidth";
+	public const string k_pch_Null_RenderHeight_Int32 = "renderHeight";
+	public const string k_pch_Null_SecondsFromVsyncToPhotons_Float = "secondsFromVsyncToPhotons";
+	public const string k_pch_Null_DisplayFrequency_Float = "displayFrequency";
+	public const string k_pch_Notifications_Section = "notifications";
+	public const string k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
+	public const string IVRSettings_Version = "IVRSettings_001";
 	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
-	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_001";
+	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_002";
 }
 
 
