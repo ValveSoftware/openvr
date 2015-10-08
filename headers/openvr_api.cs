@@ -97,6 +97,10 @@ class VRNativeEntrypoints
 	internal static extern uint VR_IVRSystem_DriverDebugRequest(IntPtr instancePtr, uint unDeviceIndex, string pchRequest, string pchResponseBuffer, uint unResponseBufferSize);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_PerformFirmwareUpdate")]
 	internal static extern VRFirmwareError VR_IVRSystem_PerformFirmwareUpdate(IntPtr instancePtr, uint unDeviceIndex);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_IsDisplayOnDesktop")]
+	internal static extern bool VR_IVRSystem_IsDisplayOnDesktop(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_SetDisplayVisibility")]
+	internal static extern bool VR_IVRSystem_SetDisplayVisibility(IntPtr instancePtr, bool bIsVisibleOnDesktop);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_AddApplicationManifest")]
 	internal static extern uint VR_IVRApplications_AddApplicationManifest(IntPtr instancePtr, string pchApplicationManifestFullPath, bool bTemporary);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_RemoveApplicationManifest")]
@@ -131,6 +135,14 @@ class VRNativeEntrypoints
 	internal static extern uint VR_IVRApplications_SetApplicationAutoLaunch(IntPtr instancePtr, string pchAppKey, bool bAutoLaunch);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_GetApplicationAutoLaunch")]
 	internal static extern bool VR_IVRApplications_GetApplicationAutoLaunch(IntPtr instancePtr, string pchAppKey);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_GetStartingApplication")]
+	internal static extern uint VR_IVRApplications_GetStartingApplication(IntPtr instancePtr, string pchAppKeyBuffer, uint unAppKeyBufferLen);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_GetTransitionState")]
+	internal static extern uint VR_IVRApplications_GetTransitionState(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_PerformApplicationPrelaunchCheck")]
+	internal static extern uint VR_IVRApplications_PerformApplicationPrelaunchCheck(IntPtr instancePtr, string pchAppKey);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_GetApplicationsTransitionStateNameFromEnum")]
+	internal static extern IntPtr VR_IVRApplications_GetApplicationsTransitionStateNameFromEnum(IntPtr instancePtr, uint state);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_GetCalibrationState")]
 	internal static extern ChaperoneCalibrationState VR_IVRChaperone_GetCalibrationState(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_GetSoftBoundsInfo")]
@@ -191,6 +203,16 @@ class VRNativeEntrypoints
 	internal static extern uint VR_IVRCompositor_GetCurrentSceneFocusProcess(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_CanRenderScene")]
 	internal static extern bool VR_IVRCompositor_CanRenderScene(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ShowMirrorWindow")]
+	internal static extern void VR_IVRCompositor_ShowMirrorWindow(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_HideMirrorWindow")]
+	internal static extern void VR_IVRCompositor_HideMirrorWindow(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_CompositorDumpImages")]
+	internal static extern void VR_IVRCompositor_CompositorDumpImages(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetFrameTimeRemaining")]
+	internal static extern float VR_IVRCompositor_GetFrameTimeRemaining(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetLastFrameRenderer")]
+	internal static extern uint VR_IVRCompositor_GetLastFrameRenderer(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_FindOverlay")]
 	internal static extern VROverlayError VR_IVROverlay_FindOverlay(IntPtr instancePtr, string pchOverlayKey, ref ulong pOverlayHandle);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_CreateOverlay")]
@@ -289,6 +311,12 @@ class VRNativeEntrypoints
 	internal static extern VROverlayError VR_IVROverlay_GetDashboardOverlaySceneProcess(IntPtr instancePtr, ulong ulOverlayHandle, ref uint punProcessId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_ShowDashboard")]
 	internal static extern void VR_IVROverlay_ShowDashboard(IntPtr instancePtr, string pchOverlayToShow);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_ShowKeyboard")]
+	internal static extern VROverlayError VR_IVROverlay_ShowKeyboard(IntPtr instancePtr, int eInputMode, int eLineInputMode, string pchDescription, uint unCharMax, string pchExistingText, bool bUseMinimalMode);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetKeyboardText")]
+	internal static extern uint VR_IVROverlay_GetKeyboardText(IntPtr instancePtr, System.Text.StringBuilder pchText, uint cchText);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_HideKeyboard")]
+	internal static extern void VR_IVROverlay_HideKeyboard(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadRenderModel")]
 	internal static extern bool VR_IVRRenderModels_LoadRenderModel(IntPtr instancePtr, string pchRenderModelName, ref RenderModel_t pRenderModel);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeRenderModel")]
@@ -446,6 +474,8 @@ public abstract class IVRSystem
 	public abstract bool IsInputFocusCapturedByAnotherProcess();
 	public abstract uint DriverDebugRequest(uint unDeviceIndex,string pchRequest,string pchResponseBuffer,uint unResponseBufferSize);
 	public abstract VRFirmwareError PerformFirmwareUpdate(uint unDeviceIndex);
+	public abstract bool IsDisplayOnDesktop();
+	public abstract bool SetDisplayVisibility(bool bIsVisibleOnDesktop);
 }
 
 
@@ -469,6 +499,10 @@ public abstract class IVRApplications
 	public abstract uint SetHomeApplication(string pchAppKey);
 	public abstract uint SetApplicationAutoLaunch(string pchAppKey,bool bAutoLaunch);
 	public abstract bool GetApplicationAutoLaunch(string pchAppKey);
+	public abstract uint GetStartingApplication(string pchAppKeyBuffer,uint unAppKeyBufferLen);
+	public abstract uint GetTransitionState();
+	public abstract uint PerformApplicationPrelaunchCheck(string pchAppKey);
+	public abstract string GetApplicationsTransitionStateNameFromEnum(uint state);
 }
 
 
@@ -511,6 +545,11 @@ public abstract class IVRCompositor
 	public abstract TrackingUniverseOrigin GetTrackingSpace();
 	public abstract uint GetCurrentSceneFocusProcess();
 	public abstract bool CanRenderScene();
+	public abstract void ShowMirrorWindow();
+	public abstract void HideMirrorWindow();
+	public abstract void CompositorDumpImages();
+	public abstract float GetFrameTimeRemaining();
+	public abstract uint GetLastFrameRenderer();
 }
 
 
@@ -566,6 +605,9 @@ public abstract class IVROverlay
 	public abstract VROverlayError SetDashboardOverlaySceneProcess(ulong ulOverlayHandle,uint unProcessId);
 	public abstract VROverlayError GetDashboardOverlaySceneProcess(ulong ulOverlayHandle,ref uint punProcessId);
 	public abstract void ShowDashboard(string pchOverlayToShow);
+	public abstract VROverlayError ShowKeyboard(int eInputMode,int eLineInputMode,string pchDescription,uint unCharMax,string pchExistingText,bool bUseMinimalMode);
+	public abstract uint GetKeyboardText(System.Text.StringBuilder pchText,uint cchText);
+	public abstract void HideKeyboard();
 }
 
 
@@ -924,6 +966,18 @@ public class CVRSystem : IVRSystem
 		VRFirmwareError result = VRNativeEntrypoints.VR_IVRSystem_PerformFirmwareUpdate(m_pVRSystem,unDeviceIndex);
 		return result;
 	}
+	public override bool IsDisplayOnDesktop()
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRSystem_IsDisplayOnDesktop(m_pVRSystem);
+		return result;
+	}
+	public override bool SetDisplayVisibility(bool bIsVisibleOnDesktop)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRSystem_SetDisplayVisibility(m_pVRSystem,bIsVisibleOnDesktop);
+		return result;
+	}
 }
 
 
@@ -1047,6 +1101,30 @@ public class CVRApplications : IVRApplications
 		CheckIfUsable();
 		bool result = VRNativeEntrypoints.VR_IVRApplications_GetApplicationAutoLaunch(m_pVRApplications,pchAppKey);
 		return result;
+	}
+	public override uint GetStartingApplication(string pchAppKeyBuffer,uint unAppKeyBufferLen)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRApplications_GetStartingApplication(m_pVRApplications,pchAppKeyBuffer,unAppKeyBufferLen);
+		return result;
+	}
+	public override uint GetTransitionState()
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRApplications_GetTransitionState(m_pVRApplications);
+		return result;
+	}
+	public override uint PerformApplicationPrelaunchCheck(string pchAppKey)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRApplications_PerformApplicationPrelaunchCheck(m_pVRApplications,pchAppKey);
+		return result;
+	}
+	public override string GetApplicationsTransitionStateNameFromEnum(uint state)
+	{
+		CheckIfUsable();
+		IntPtr result = VRNativeEntrypoints.VR_IVRApplications_GetApplicationsTransitionStateNameFromEnum(m_pVRApplications,state);
+		return (string) Marshal.PtrToStructure(result, typeof(string));
 	}
 }
 
@@ -1254,6 +1332,33 @@ public class CVRCompositor : IVRCompositor
 	{
 		CheckIfUsable();
 		bool result = VRNativeEntrypoints.VR_IVRCompositor_CanRenderScene(m_pVRCompositor);
+		return result;
+	}
+	public override void ShowMirrorWindow()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRCompositor_ShowMirrorWindow(m_pVRCompositor);
+	}
+	public override void HideMirrorWindow()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRCompositor_HideMirrorWindow(m_pVRCompositor);
+	}
+	public override void CompositorDumpImages()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRCompositor_CompositorDumpImages(m_pVRCompositor);
+	}
+	public override float GetFrameTimeRemaining()
+	{
+		CheckIfUsable();
+		float result = VRNativeEntrypoints.VR_IVRCompositor_GetFrameTimeRemaining(m_pVRCompositor);
+		return result;
+	}
+	public override uint GetLastFrameRenderer()
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRCompositor_GetLastFrameRenderer(m_pVRCompositor);
 		return result;
 	}
 }
@@ -1585,6 +1690,23 @@ public class CVROverlay : IVROverlay
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVROverlay_ShowDashboard(m_pVROverlay,pchOverlayToShow);
+	}
+	public override VROverlayError ShowKeyboard(int eInputMode,int eLineInputMode,string pchDescription,uint unCharMax,string pchExistingText,bool bUseMinimalMode)
+	{
+		CheckIfUsable();
+		VROverlayError result = VRNativeEntrypoints.VR_IVROverlay_ShowKeyboard(m_pVROverlay,eInputMode,eLineInputMode,pchDescription,unCharMax,pchExistingText,bUseMinimalMode);
+		return result;
+	}
+	public override uint GetKeyboardText(System.Text.StringBuilder pchText,uint cchText)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVROverlay_GetKeyboardText(m_pVROverlay,pchText,cchText);
+		return result;
+	}
+	public override void HideKeyboard()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVROverlay_HideKeyboard(m_pVROverlay);
 	}
 }
 
@@ -2104,6 +2226,7 @@ public enum TrackedDeviceProperty
 	Prop_VRCVersion_Uint64 = 1020,
 	Prop_RadioVersion_Uint64 = 1021,
 	Prop_DongleVersion_Uint64 = 1022,
+	Prop_BlockServerShutdown_Bool = 1023,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -2115,6 +2238,10 @@ public enum TrackedDeviceProperty
 	Prop_DisplayMCType_Int32 = 2008,
 	Prop_DisplayMCOffset_Float = 2009,
 	Prop_DisplayMCScale_Float = 2010,
+	Prop_VendorID_Int32 = 2011,
+	Prop_DisplayMCImageLeft_String = 2012,
+	Prop_DisplayMCImageRight_String = 2013,
+	Prop_DisplayGCBlackClamp_Float = 2014,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -2155,13 +2282,15 @@ public enum VRSubmitFlags_t
 	Submit_Default = 0,
 	Submit_LensDistortionAlreadyApplied = 1,
 }
-public enum VRStatusState_t
+public enum VRState_t
 {
-	State_OK = 0,
-	State_Error = 1,
-	State_Warning = 2,
-	State_Undefined = 3,
-	State_NotSet = 4,
+	VRState_Undefined = -1,
+	VRState_Off = 0,
+	VRState_Searching = 1,
+	VRState_Searching_Alert = 2,
+	VRState_Ready = 3,
+	VRState_Ready_Alert = 4,
+	VRState_NotReady = 5,
 }
 public enum EVREventType
 {
@@ -2185,6 +2314,7 @@ public enum EVREventType
 	VREvent_SceneFocusLost = 402,
 	VREvent_SceneFocusGained = 403,
 	VREvent_SceneApplicationChanged = 404,
+	VREvent_SceneFocusChanged = 405,
 	VREvent_OverlayShown = 500,
 	VREvent_OverlayHidden = 501,
 	VREvent_DashboardActivated = 502,
@@ -2194,6 +2324,7 @@ public enum EVREventType
 	VREvent_ResetDashboard = 506,
 	VREvent_RenderToast = 507,
 	VREvent_ImageLoaded = 508,
+	VREvent_ShowKeyboard = 509,
 	VREvent_Notification_Show = 600,
 	VREvent_Notification_Dismissed = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -2206,6 +2337,11 @@ public enum EVREventType
 	VREvent_MCImageUpdated = 1000,
 	VREvent_FirmwareUpdateStarted = 1100,
 	VREvent_FirmwareUpdateFinished = 1101,
+	VREvent_KeyboardClosed = 1200,
+	VREvent_KeyboardCharInput = 1201,
+	VREvent_ApplicationTransitionStarted = 1300,
+	VREvent_ApplicationTransitionAborted = 1301,
+	VREvent_ApplicationTransitionNewAppStarted = 1302,
 }
 public enum EDeviceActivityLevel
 {
@@ -2219,6 +2355,11 @@ public enum EVRButtonId
 	k_EButton_System = 0,
 	k_EButton_ApplicationMenu = 1,
 	k_EButton_Grip = 2,
+	k_EButton_DPad_Left = 3,
+	k_EButton_DPad_Up = 4,
+	k_EButton_DPad_Right = 5,
+	k_EButton_DPad_Down = 6,
+	k_EButton_A = 7,
 	k_EButton_Axis0 = 32,
 	k_EButton_Axis1 = 33,
 	k_EButton_Axis2 = 34,
@@ -2226,6 +2367,7 @@ public enum EVRButtonId
 	k_EButton_Axis4 = 36,
 	k_EButton_SteamVR_Touchpad = 32,
 	k_EButton_SteamVR_Trigger = 33,
+	k_EButton_Dashboard_Back = 2,
 	k_EButton_Max = 64,
 }
 public enum EVRMouseButton
@@ -2265,6 +2407,7 @@ public enum VROverlayError
 	RequestFailed = 23,
 	InvalidTexture = 24,
 	UnableToLoadFile = 25,
+	VROVerlayError_KeyboardAlreadyInUse = 26,
 }
 public enum EVRApplicationType
 {
@@ -2301,6 +2444,7 @@ public enum HmdError
 	Init_InitCanceledByUser = 116,
 	Init_AnotherAppLaunching = 117,
 	Init_SettingsInitFailed = 118,
+	Init_ShuttingDown = 119,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -2323,6 +2467,11 @@ public enum HmdError
 	VendorSpecific_HmdFound_ConfigTooSmall = 1105,
 	VendorSpecific_HmdFound_UnableToInitZLib = 1106,
 	VendorSpecific_HmdFound_CantReadFirmwareVersion = 1107,
+	VendorSpecific_HmdFound_UnableToSendUserDataStart = 1108,
+	VendorSpecific_HmdFound_UnableToGetUserDataStart = 1109,
+	VendorSpecific_HmdFound_UnableToGetUserDataNext = 1110,
+	VendorSpecific_HmdFound_UserDataAddressRange = 1111,
+	VendorSpecific_HmdFound_UserDataError = 1112,
 	Steam_SteamInstallationNotFound = 2000,
 }
 public enum EVRApplicationError
@@ -2338,6 +2487,9 @@ public enum EVRApplicationError
 	VRApplicationError_InvalidManifest = 107,
 	VRApplicationError_InvalidApplication = 108,
 	VRApplicationError_LaunchFailed = 109,
+	VRApplicationError_ApplicationAlreadyStarting = 110,
+	VRApplicationError_LaunchInProgress = 111,
+	VRApplicationError_OldApplicationQuitting = 112,
 	VRApplicationError_BufferTooSmall = 200,
 	VRApplicationError_PropertyNotSet = 201,
 	VRApplicationError_UnknownProperty = 202,
@@ -2355,6 +2507,12 @@ public enum EVRApplicationProperty
 	VRApplicationProperty_ImagePath_String = 52,
 	VRApplicationProperty_Source_String = 53,
 	VRApplicationProperty_IsDashboardOverlay_Bool = 60,
+}
+public enum EVRApplicationTransitionState
+{
+	VRApplicationTransition_None = 0,
+	VRApplicationTransition_OldAppQuitSent = 10,
+	VRApplicationTransition_NewAppLaunched = 20,
 }
 public enum ChaperoneCalibrationState
 {
@@ -2395,6 +2553,16 @@ public enum VROverlayFlags
 	RGSS4X = 2,
 	NoDashboardTab = 3,
 }
+public enum EGamepadTextInputMode
+{
+	k_EGamepadTextInputModeNormal = 0,
+	k_EGamepadTextInputModePassword = 1,
+}
+public enum EGamepadTextInputLineMode
+{
+	k_EGamepadTextInputLineModeSingleLine = 0,
+	k_EGamepadTextInputLineModeMultipleLines = 1,
+}
 public enum NotificationError_t
 {
 	k_ENotificationError_OK = 0,
@@ -2426,6 +2594,11 @@ public enum EChaperoneConfigFile
 	[FieldOffset(0)] public VREvent_Reserved_t reserved;
 	[FieldOffset(0)] public VREvent_Controller_t controller;
 	[FieldOffset(0)] public VREvent_Mouse_t mouse;
+	[FieldOffset(0)] public VREvent_Process_t process;
+	[FieldOffset(0)] public VREvent_Notification_t notification;
+	[FieldOffset(0)] public VREvent_Overlay_t overlay;
+	[FieldOffset(0)] public VREvent_Status_t status;
+	[FieldOffset(0)] public VREvent_Keyboard_t keyboard;
 }
 
 [StructLayout(LayoutKind.Sequential)] public struct HmdMatrix34_t
@@ -2552,7 +2725,13 @@ public enum EChaperoneConfigFile
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Status_t
 {
-	public VRStatusState_t statusState;
+	public VRState_t statusState;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_Keyboard_t
+{
+	[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 12)]
+	public string cNewInput; //char[12]
+	public uint uFlags;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Reserved_t
 {
@@ -2701,9 +2880,9 @@ public class OpenVR
 	}
 
 	public const uint k_unTrackingStringSize = 32;
-	public const uint k_unMaxTrackedDeviceCount = 16;
-	public const uint k_unTrackedDeviceIndex_Hmd = 0;
 	public const uint k_unMaxDriverDebugResponseSize = 32768;
+	public const uint k_unTrackedDeviceIndex_Hmd = 0;
+	public const uint k_unMaxTrackedDeviceCount = 16;
 	public const uint k_unTrackedDeviceIndexInvalid = 4294967295;
 	public const uint k_unMaxPropertyStringSize = 32768;
 	public const uint k_unControllerStateAxisCount = 5;
@@ -2734,6 +2913,7 @@ public class OpenVR
 	public const string k_pch_SteamVR_SendSystemButtonToAllApps_Bool = "sendSystemButtonToAllApps";
 	public const string k_pch_SteamVR_LogLevel_Int32 = "loglevel";
 	public const string k_pch_SteamVR_IPD_Float = "ipd";
+	public const string k_pch_SteamVR_Background_String = "background";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -2762,6 +2942,12 @@ public class OpenVR
 	public const string k_pch_Null_DisplayFrequency_Float = "displayFrequency";
 	public const string k_pch_Notifications_Section = "notifications";
 	public const string k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
+	public const string k_pch_Perf_Section = "perfcheck";
+	public const string k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
+	public const string k_pch_Perf_NotifyInHMD_Bool = "notifyInHMD";
+	public const string k_pch_Perf_NotifyOnlyOnce_Bool = "notifyOnlyOnce";
+	public const string k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
+	public const string k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 	public const string IVRSettings_Version = "IVRSettings_001";
 	public const string IVRCameraAccess_Version = "IVRCameraAccess_001";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_002";

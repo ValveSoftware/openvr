@@ -112,9 +112,13 @@ enum HmdTrackingResult
 };
 
 static const uint32_t k_unTrackingStringSize = 32;
-static const uint32_t k_unMaxTrackedDeviceCount = 16;
-static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
 static const uint32_t k_unMaxDriverDebugResponseSize = 32768;
+
+/** Used to pass device IDs to API calls */
+typedef uint32_t TrackedDeviceIndex_t;
+static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
+static const uint32_t k_unMaxTrackedDeviceCount = 16;
+static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
 /** Describes what kind of object is being tracked at a given ID */
 enum TrackedDeviceClass
@@ -180,7 +184,7 @@ enum TrackedDeviceProperty
 	Prop_VRCVersion_Uint64						= 1020,
 	Prop_RadioVersion_Uint64					= 1021,
 	Prop_DongleVersion_Uint64					= 1022,
-
+	Prop_BlockServerShutdown_Bool				= 1023,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -194,6 +198,10 @@ enum TrackedDeviceProperty
 	Prop_DisplayMCType_Int32					= 2008,
 	Prop_DisplayMCOffset_Float					= 2009,
 	Prop_DisplayMCScale_Float					= 2010,
+	Prop_VendorID_Int32                         = 2011,
+	Prop_DisplayMCImageLeft_String              = 2012,
+	Prop_DisplayMCImageRight_String             = 2013,
+	Prop_DisplayGCBlackClamp_Float				= 2014,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -223,10 +231,6 @@ enum TrackedDeviceProperty
 	Prop_TrackedCamera_IntrinsicsP2_Float		= 5007,
 	Prop_TrackedCamera_IntrinsicsK3_Float		= 5008,
 };
-
-/** Used to pass device IDs to API calls */
-typedef uint32_t TrackedDeviceIndex_t;
-static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
 /** No string property will ever be longer than this length */
 static const uint32_t k_unMaxPropertyStringSize = 32 * 1024;
@@ -295,16 +299,17 @@ enum VRSubmitFlags_t
 };
 
 
-/** Status of the overall system */
-enum VRStatusState_t
+/** Status of the overall system or tracked objects */
+enum VRState_t
 {
-	State_OK = 0,
-	State_Error = 1,
-	State_Warning = 2,
-	State_Undefined = 3,
-	State_NotSet = 4,
+	VRState_Undefined = -1,
+	VRState_Off = 0,
+	VRState_Searching = 1,
+	VRState_Searching_Alert = 2,
+	VRState_Ready = 3,
+	VRState_Ready_Alert = 4,
+	VRState_NotReady = 5,
 };
-
 
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
@@ -332,8 +337,9 @@ enum EVREventType
 	VREvent_InputFocusReleased			= 401, // data is process
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
-	VREvent_SceneApplicationChanged		= 404, // data is process
-	
+	VREvent_SceneApplicationChanged		= 404, // data is process - The App actually drawing the scene changed (usually to or from the compositor)
+	VREvent_SceneFocusChanged			= 405, // data is process - New app got access to draw the scene
+
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
 	VREvent_DashboardActivated		= 502,
@@ -343,6 +349,7 @@ enum EVREventType
 	VREvent_ResetDashboard			= 506, // Send to the overlay manager
 	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
 	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
+	VREvent_ShowKeyboard			= 509, // Sent to keyboard renderer in the dashboard to invoke it
 
 	VREvent_Notification_Show				= 600,
 	VREvent_Notification_Dismissed			= 601,
@@ -362,6 +369,12 @@ enum EVREventType
 	VREvent_FirmwareUpdateStarted	= 1100,
 	VREvent_FirmwareUpdateFinished	= 1101,
 
+	VREvent_KeyboardClosed				= 1200,
+	VREvent_KeyboardCharInput			= 1201,
+
+	VREvent_ApplicationTransitionStarted	= 1300,
+	VREvent_ApplicationTransitionAborted	= 1301,
+	VREvent_ApplicationTransitionNewAppStarted = 1302,
 };
 
 
@@ -381,6 +394,11 @@ enum EVRButtonId
 	k_EButton_System			= 0,
 	k_EButton_ApplicationMenu	= 1,
 	k_EButton_Grip				= 2,
+	k_EButton_DPad_Left			= 3,
+	k_EButton_DPad_Up			= 4,
+	k_EButton_DPad_Right		= 5,
+	k_EButton_DPad_Down			= 6,
+	k_EButton_A					= 7,
 
 	k_EButton_Axis0				= 32,
 	k_EButton_Axis1				= 33,
@@ -391,6 +409,8 @@ enum EVRButtonId
 	// aliases for well known controllers
 	k_EButton_SteamVR_Touchpad	= k_EButton_Axis0,
 	k_EButton_SteamVR_Trigger	= k_EButton_Axis1,
+
+	k_EButton_Dashboard_Back	= k_EButton_Grip,
 
 	k_EButton_Max				= 64
 };
@@ -446,8 +466,16 @@ struct VREvent_Overlay_t
 /** Used for a few events about overlays */
 struct VREvent_Status_t
 {
-	VRStatusState_t statusState; 
+	VRState_t statusState; 
 };
+
+/** Used for keyboard events **/
+struct VREvent_Keyboard_t
+{
+	char cNewInput[12];	// Up to 11 bytes of new input
+	uint32_t uFlags;	// Possible flags about the new input
+};
+
 
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
@@ -467,6 +495,7 @@ typedef union
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
 	VREvent_Status_t status;
+	VREvent_Keyboard_t keyboard;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -580,6 +609,7 @@ enum VROverlayError
 	VROverlayError_RequestFailed		= 23,
 	VROverlayError_InvalidTexture		= 24,
 	VROverlayError_UnableToLoadFile		= 25,
+	VROVerlayError_KeyboardAlreadyInUse = 26,
 };
 
 /** enum values to pass in to VR_Init to identify whether the application will 
@@ -628,6 +658,7 @@ enum HmdError
 	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
 	HmdError_Init_AnotherAppLaunching	= 117, 
 	HmdError_Init_SettingsInitFailed	= 118, 
+	HmdError_Init_ShuttingDown			= 119,
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -654,6 +685,11 @@ enum HmdError
 	HmdError_VendorSpecific_HmdFound_ConfigTooSmall 			= 1105,
 	HmdError_VendorSpecific_HmdFound_UnableToInitZLib 			= 1106,
 	HmdError_VendorSpecific_HmdFound_CantReadFirmwareVersion 	= 1107,
+	HmdError_VendorSpecific_HmdFound_UnableToSendUserDataStart  = 1108,
+	HmdError_VendorSpecific_HmdFound_UnableToGetUserDataStart   = 1109,
+	HmdError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
+	HmdError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
+	HmdError_VendorSpecific_HmdFound_UserDataError              = 1112,
 
 	HmdError_Steam_SteamInstallationNotFound = 2000,
 
@@ -949,6 +985,16 @@ public:
 	virtual vr::VRFirmwareError PerformFirmwareUpdate( vr::TrackedDeviceIndex_t unDeviceIndex ) = 0;
 
 
+	// ------------------------------------
+	// Display Mode methods
+	// ------------------------------------
+
+	/** Use to determine if the headset display is part of the desktop (i.e. extended) or hidden (i.e. direct mode). */
+	virtual bool IsDisplayOnDesktop() = 0;
+
+	/** Set the display visibility (true = extended, false = direct mode).  Return value of true indicates that the change was successful. */
+	virtual bool SetDisplayVisibility( bool bIsVisibleOnDesktop ) = 0;
+
 };
 
 static const char * const IVRSystem_Version = "IVRSystem_006";
@@ -974,6 +1020,9 @@ namespace vr
 		VRApplicationError_InvalidManifest = 107,
 		VRApplicationError_InvalidApplication = 108,
 		VRApplicationError_LaunchFailed = 109,			// the process didn't start
+		VRApplicationError_ApplicationAlreadyStarting = 110, // the system was already starting the same application
+		VRApplicationError_LaunchInProgress = 111,		// The system was already starting a different application
+		VRApplicationError_OldApplicationQuitting = 112, 
 
 		VRApplicationError_BufferTooSmall = 200,		// The provided buffer was too small to fit the requested data
 		VRApplicationError_PropertyNotSet = 201,		// The requested property was not set
@@ -1000,6 +1049,16 @@ namespace vr
 		VRApplicationProperty_Source_String				= 53,
 
 		VRApplicationProperty_IsDashboardOverlay_Bool	= 60,
+	};
+
+	/** These are states the scene application startup process will go through. */
+	enum EVRApplicationTransitionState
+	{
+		VRApplicationTransition_None = 0,
+
+		VRApplicationTransition_OldAppQuitSent = 10,
+		
+		VRApplicationTransition_NewAppLaunched = 20,
 	};
 
 
@@ -1071,6 +1130,29 @@ namespace vr
 		/** Gets the application auto-launch flag. This is only valid for applications which return true for VRApplicationProperty_IsDashboardOverlay_Bool. */
 		virtual bool GetApplicationAutoLaunch( const char *pchAppKey ) = 0;
 
+		// ---------------  Transition methods --------------- //
+
+		/** Returns the app key for the application that is starting up */
+		virtual EVRApplicationError GetStartingApplication( char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+
+		/** Returns the application transition state */
+		virtual EVRApplicationTransitionState GetTransitionState() = 0;
+
+		/** Returns errors that would prevent the specified application from launching immediately. Calling this function will
+		* cause the current scene application to quit, so only call it when you are actually about to launch something else.
+		* What the caller should do about these failures depends on the failure:
+		*   VRApplicationError_OldApplicationQuitting - An existing application has been told to quit. Wait for a VREvent_ProcessQuit
+		*                                               and try again.
+		*   VRApplicationError_ApplicationAlreadyStarting - This application is already starting. This is a permanent failure.
+		*   VRApplicationError_LaunchInProgress	      - A different application is already starting. This is a permanent failure.
+		*   VRApplicationError_None                   - Go ahead and launch. Everything is clear.
+		*/
+		virtual EVRApplicationError PerformApplicationPrelaunchCheck( const char *pchAppKey ) = 0;
+
+		/** Returns a string for an application transition state */
+		virtual const char *GetApplicationsTransitionStateNameFromEnum( EVRApplicationTransitionState state ) = 0;
+
+
 	};
 
 	static const char * const IVRApplications_Version = "IVRApplications_001";
@@ -1113,60 +1195,68 @@ namespace vr
 	//-----------------------------------------------------------------------------
 	// steamvr keys
 
-	static const char *k_pch_SteamVR_Section = "steamvr";
-	static const char *k_pch_SteamVR_RequireHmd_String = "requireHmd";
-	static const char *k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
-	static const char *k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
-	static const char *k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
-	static const char *k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
-	static const char *k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
-	static const char *k_pch_SteamVR_SendSystemButtonToAllApps_Bool= "sendSystemButtonToAllApps";
-	static const char *k_pch_SteamVR_LogLevel_Int32 = "loglevel";
-	static const char *k_pch_SteamVR_IPD_Float = "ipd";
+	static const char * const k_pch_SteamVR_Section = "steamvr";
+	static const char * const k_pch_SteamVR_RequireHmd_String = "requireHmd";
+	static const char * const k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
+	static const char * const k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
+	static const char * const k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
+	static const char * const k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
+	static const char * const k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
+	static const char * const k_pch_SteamVR_SendSystemButtonToAllApps_Bool= "sendSystemButtonToAllApps";
+	static const char * const k_pch_SteamVR_LogLevel_Int32 = "loglevel";
+	static const char * const k_pch_SteamVR_IPD_Float = "ipd";
+	static const char * const k_pch_SteamVR_Background_String = "background";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
 
-	static const char *k_pch_Lighthouse_Section = "driver_lighthouse";
-	static const char *k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
-	static const char *k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
-	static const char *k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
+	static const char * const k_pch_Lighthouse_Section = "driver_lighthouse";
+	static const char * const k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
+	static const char * const k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
+	static const char * const k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
 
-	static const char *k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
-	static const char *k_pch_Lighthouse_LighthouseName_String = "lighthousename";
-	static const char *k_pch_Lighthouse_MaxIncidenceAngleDegrees_Float = "maxincidenceangledegrees";
-	static const char *k_pch_Lighthouse_UseLighthouseDirect_Bool = "uselighthousedirect";
-	static const char *k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
-	static const char *k_pch_Lighthouse_OriginOffsetX_Float = "originoffsetx";
-	static const char *k_pch_Lighthouse_OriginOffsetY_Float = "originoffsety";
-	static const char *k_pch_Lighthouse_OriginOffsetZ_Float = "originoffsetz";
-	static const char *k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
+	static const char * const k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
+	static const char * const k_pch_Lighthouse_LighthouseName_String = "lighthousename";
+	static const char * const k_pch_Lighthouse_MaxIncidenceAngleDegrees_Float = "maxincidenceangledegrees";
+	static const char * const k_pch_Lighthouse_UseLighthouseDirect_Bool = "uselighthousedirect";
+	static const char * const k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
+	static const char * const k_pch_Lighthouse_OriginOffsetX_Float = "originoffsetx";
+	static const char * const k_pch_Lighthouse_OriginOffsetY_Float = "originoffsety";
+	static const char * const k_pch_Lighthouse_OriginOffsetZ_Float = "originoffsetz";
+	static const char * const k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
 
 	//-----------------------------------------------------------------------------
 	// null keys
 
-	static const char *k_pch_Null_Section = "driver_null";
-	static const char *k_pch_Null_EnableNullDriver_Bool = "enable";
-	static const char *k_pch_Null_Id_String = "id";
-	static const char *k_pch_Null_SerialNumber_String = "serialNumber";
-	static const char *k_pch_Null_ModelNumber_String = "modelNumber";
-	static const char *k_pch_Null_WindowX_Int32 = "windowX";
-	static const char *k_pch_Null_WindowY_Int32 = "windowY";
-	static const char *k_pch_Null_WindowWidth_Int32 = "windowWidth";
-	static const char *k_pch_Null_WindowHeight_Int32 = "windowHeight";
-	static const char *k_pch_Null_RenderWidth_Int32 = "renderWidth";
-	static const char *k_pch_Null_RenderHeight_Int32 = "renderHeight";
-	static const char *k_pch_Null_SecondsFromVsyncToPhotons_Float = "secondsFromVsyncToPhotons";
-	static const char *k_pch_Null_DisplayFrequency_Float = "displayFrequency";
+	static const char * const k_pch_Null_Section = "driver_null";
+	static const char * const k_pch_Null_EnableNullDriver_Bool = "enable";
+	static const char * const k_pch_Null_Id_String = "id";
+	static const char * const k_pch_Null_SerialNumber_String = "serialNumber";
+	static const char * const k_pch_Null_ModelNumber_String = "modelNumber";
+	static const char * const k_pch_Null_WindowX_Int32 = "windowX";
+	static const char * const k_pch_Null_WindowY_Int32 = "windowY";
+	static const char * const k_pch_Null_WindowWidth_Int32 = "windowWidth";
+	static const char * const k_pch_Null_WindowHeight_Int32 = "windowHeight";
+	static const char * const k_pch_Null_RenderWidth_Int32 = "renderWidth";
+	static const char * const k_pch_Null_RenderHeight_Int32 = "renderHeight";
+	static const char * const k_pch_Null_SecondsFromVsyncToPhotons_Float = "secondsFromVsyncToPhotons";
+	static const char * const k_pch_Null_DisplayFrequency_Float = "displayFrequency";
 
 	//-----------------------------------------------------------------------------
 	// notification keys
-	static const char *k_pch_Notifications_Section = "notifications";
-	static const char *k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
-	
+	static const char * const k_pch_Notifications_Section = "notifications";
+	static const char * const k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
 
 	//-----------------------------------------------------------------------------
-	
+	// perf keys
+	static const char * const k_pch_Perf_Section = "perfcheck";
+	static const char * const k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
+	static const char * const k_pch_Perf_NotifyInHMD_Bool = "notifyInHMD";
+	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "notifyOnlyOnce";
+	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
+	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+
+	//-----------------------------------------------------------------------------
 
 	static const char * const IVRSettings_Version = "IVRSettings_001";
 
@@ -1395,6 +1485,23 @@ public:
 
 	/** Returns true if the current process has the scene focus */
 	virtual bool CanRenderScene() = 0;
+
+	/** Creates a window on the primary monitor to display what is being shown in the headset. */
+	virtual void ShowMirrorWindow() = 0;
+
+	/** Closes the mirrow window. */
+	virtual void HideMirrorWindow() = 0;
+
+	/** Writes all images that the compositor knows about (including overlays) to a 'screenshots' folder in the SteamVR runtime root. */
+	virtual void CompositorDumpImages() = 0;
+
+	/** Returns the time in seconds left in the current (as identified by FrameTiming's frameIndex) frame.
+	* Due to "running start", this value may roll over to the next frame before ever reaching 0.0. */
+	virtual float GetFrameTimeRemaining() = 0;
+
+	/** Returns the process ID of the process that rendered the last frame (or 0 if the compositor itself rendered the frame.)
+	* Returns 0 when fading out from an app and the app's process Id when fading into an app. */
+	virtual uint32_t GetLastFrameRenderer() = 0;
 };
 
 static const char * const IVRCompositor_Version = "IVRCompositor_008";
@@ -1552,6 +1659,21 @@ namespace vr
 		HmdVector3_t vNormal;
 		HmdVector2_t vUVs;
 		float fDistance;
+	};
+
+	// Input modes for the Big Picture gamepad text entry
+	enum EGamepadTextInputMode
+	{
+		k_EGamepadTextInputModeNormal = 0,
+		k_EGamepadTextInputModePassword = 1
+	};
+
+
+	// Controls number of allowed lines for the Big Picture gamepad text entry
+	enum EGamepadTextInputLineMode
+	{
+		k_EGamepadTextInputLineModeSingleLine = 0,
+		k_EGamepadTextInputLineModeMultipleLines = 1
 	};
 
 	class IVROverlay
@@ -1755,6 +1877,18 @@ namespace vr
 		/** Shows the dashboard. */
 		virtual void ShowDashboard( const char *pchOverlayToShow ) = 0;
 
+		// ---------------------------------------------
+		// Keyboard methods
+		// ---------------------------------------------
+		
+		/** Show the virtual keyboard to accept input **/
+		virtual VROverlayError ShowKeyboard( EGamepadTextInputMode eInputMode, EGamepadTextInputLineMode eLineInputMode, const char *pchDescription, uint32_t unCharMax, const char *pchExistingText, bool bUseMinimalMode ) = 0;
+
+		/** Get the text that was entered into the text input **/
+		virtual uint32_t GetKeyboardText( VR_OUT_STRING() char *pchText, uint32_t cchText ) = 0;
+
+		/** Hide the virtual keyboard **/
+		virtual void HideKeyboard() = 0;
 	};
 
 	static const char * const IVROverlay_Version = "IVROverlay_005";

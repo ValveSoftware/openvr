@@ -112,9 +112,13 @@ enum HmdTrackingResult
 };
 
 static const uint32_t k_unTrackingStringSize = 32;
-static const uint32_t k_unMaxTrackedDeviceCount = 16;
-static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
 static const uint32_t k_unMaxDriverDebugResponseSize = 32768;
+
+/** Used to pass device IDs to API calls */
+typedef uint32_t TrackedDeviceIndex_t;
+static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
+static const uint32_t k_unMaxTrackedDeviceCount = 16;
+static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
 /** Describes what kind of object is being tracked at a given ID */
 enum TrackedDeviceClass
@@ -180,7 +184,7 @@ enum TrackedDeviceProperty
 	Prop_VRCVersion_Uint64						= 1020,
 	Prop_RadioVersion_Uint64					= 1021,
 	Prop_DongleVersion_Uint64					= 1022,
-
+	Prop_BlockServerShutdown_Bool				= 1023,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -194,6 +198,10 @@ enum TrackedDeviceProperty
 	Prop_DisplayMCType_Int32					= 2008,
 	Prop_DisplayMCOffset_Float					= 2009,
 	Prop_DisplayMCScale_Float					= 2010,
+	Prop_VendorID_Int32                         = 2011,
+	Prop_DisplayMCImageLeft_String              = 2012,
+	Prop_DisplayMCImageRight_String             = 2013,
+	Prop_DisplayGCBlackClamp_Float				= 2014,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -223,10 +231,6 @@ enum TrackedDeviceProperty
 	Prop_TrackedCamera_IntrinsicsP2_Float		= 5007,
 	Prop_TrackedCamera_IntrinsicsK3_Float		= 5008,
 };
-
-/** Used to pass device IDs to API calls */
-typedef uint32_t TrackedDeviceIndex_t;
-static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
 /** No string property will ever be longer than this length */
 static const uint32_t k_unMaxPropertyStringSize = 32 * 1024;
@@ -295,16 +299,17 @@ enum VRSubmitFlags_t
 };
 
 
-/** Status of the overall system */
-enum VRStatusState_t
+/** Status of the overall system or tracked objects */
+enum VRState_t
 {
-	State_OK = 0,
-	State_Error = 1,
-	State_Warning = 2,
-	State_Undefined = 3,
-	State_NotSet = 4,
+	VRState_Undefined = -1,
+	VRState_Off = 0,
+	VRState_Searching = 1,
+	VRState_Searching_Alert = 2,
+	VRState_Ready = 3,
+	VRState_Ready_Alert = 4,
+	VRState_NotReady = 5,
 };
-
 
 /** The types of events that could be posted (and what the parameters mean for each event type) */
 enum EVREventType
@@ -332,8 +337,9 @@ enum EVREventType
 	VREvent_InputFocusReleased			= 401, // data is process
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
-	VREvent_SceneApplicationChanged		= 404, // data is process
-	
+	VREvent_SceneApplicationChanged		= 404, // data is process - The App actually drawing the scene changed (usually to or from the compositor)
+	VREvent_SceneFocusChanged			= 405, // data is process - New app got access to draw the scene
+
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
 	VREvent_DashboardActivated		= 502,
@@ -343,6 +349,7 @@ enum EVREventType
 	VREvent_ResetDashboard			= 506, // Send to the overlay manager
 	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
 	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
+	VREvent_ShowKeyboard			= 509, // Sent to keyboard renderer in the dashboard to invoke it
 
 	VREvent_Notification_Show				= 600,
 	VREvent_Notification_Dismissed			= 601,
@@ -362,6 +369,12 @@ enum EVREventType
 	VREvent_FirmwareUpdateStarted	= 1100,
 	VREvent_FirmwareUpdateFinished	= 1101,
 
+	VREvent_KeyboardClosed				= 1200,
+	VREvent_KeyboardCharInput			= 1201,
+
+	VREvent_ApplicationTransitionStarted	= 1300,
+	VREvent_ApplicationTransitionAborted	= 1301,
+	VREvent_ApplicationTransitionNewAppStarted = 1302,
 };
 
 
@@ -381,6 +394,11 @@ enum EVRButtonId
 	k_EButton_System			= 0,
 	k_EButton_ApplicationMenu	= 1,
 	k_EButton_Grip				= 2,
+	k_EButton_DPad_Left			= 3,
+	k_EButton_DPad_Up			= 4,
+	k_EButton_DPad_Right		= 5,
+	k_EButton_DPad_Down			= 6,
+	k_EButton_A					= 7,
 
 	k_EButton_Axis0				= 32,
 	k_EButton_Axis1				= 33,
@@ -391,6 +409,8 @@ enum EVRButtonId
 	// aliases for well known controllers
 	k_EButton_SteamVR_Touchpad	= k_EButton_Axis0,
 	k_EButton_SteamVR_Trigger	= k_EButton_Axis1,
+
+	k_EButton_Dashboard_Back	= k_EButton_Grip,
 
 	k_EButton_Max				= 64
 };
@@ -446,8 +466,16 @@ struct VREvent_Overlay_t
 /** Used for a few events about overlays */
 struct VREvent_Status_t
 {
-	VRStatusState_t statusState; 
+	VRState_t statusState; 
 };
+
+/** Used for keyboard events **/
+struct VREvent_Keyboard_t
+{
+	char cNewInput[12];	// Up to 11 bytes of new input
+	uint32_t uFlags;	// Possible flags about the new input
+};
+
 
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
@@ -467,6 +495,7 @@ typedef union
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
 	VREvent_Status_t status;
+	VREvent_Keyboard_t keyboard;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -580,6 +609,7 @@ enum VROverlayError
 	VROverlayError_RequestFailed		= 23,
 	VROverlayError_InvalidTexture		= 24,
 	VROverlayError_UnableToLoadFile		= 25,
+	VROVerlayError_KeyboardAlreadyInUse = 26,
 };
 
 /** enum values to pass in to VR_Init to identify whether the application will 
@@ -628,6 +658,7 @@ enum HmdError
 	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
 	HmdError_Init_AnotherAppLaunching	= 117, 
 	HmdError_Init_SettingsInitFailed	= 118, 
+	HmdError_Init_ShuttingDown			= 119,
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -654,6 +685,11 @@ enum HmdError
 	HmdError_VendorSpecific_HmdFound_ConfigTooSmall 			= 1105,
 	HmdError_VendorSpecific_HmdFound_UnableToInitZLib 			= 1106,
 	HmdError_VendorSpecific_HmdFound_CantReadFirmwareVersion 	= 1107,
+	HmdError_VendorSpecific_HmdFound_UnableToSendUserDataStart  = 1108,
+	HmdError_VendorSpecific_HmdFound_UnableToGetUserDataStart   = 1109,
+	HmdError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
+	HmdError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
+	HmdError_VendorSpecific_HmdFound_UserDataError              = 1112,
 
 	HmdError_Steam_SteamInstallationNotFound = 2000,
 
@@ -954,6 +990,19 @@ public:
 	/** Returns a uint64 property. If the property is not available this function will return 0. */
 	virtual bool TriggerHapticPulse( uint32_t unAxisId, uint16_t usPulseDurationMicroseconds ) = 0;
 	
+	// ------------------------------------
+	// Camera Methods
+	// ------------------------------------
+	virtual bool HasCamera() = 0;
+	virtual bool GetCameraFrameBufferingRequirements( int *pDefaultFrameQueueSize, uint32_t *pFrameBufferDataSize ) = 0;
+	virtual bool SetCameraFrameBuffering( int nFrameBufferCount, void **ppFrameBuffers, uint32_t nFrameBufferDataSize ) = 0;
+	virtual vr::CameraVideoStreamFormat_e GetCameraVideoStreamFormat() = 0;
+	virtual const vr::CameraVideoStreamFrame_t *GetVideoStreamFrame() = 0;
+	virtual void ReleaseVideoStreamFrame( const vr::CameraVideoStreamFrame_t *pFrameImage ) = 0;
+	virtual bool StartVideoStream() = 0;
+	virtual void StopVideoStream() = 0;
+	virtual bool IsVideoStreamActive() = 0;
+	virtual float GetVideoStreamElapsedTime() = 0;
 };
 
 
