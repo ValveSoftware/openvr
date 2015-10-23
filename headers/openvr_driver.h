@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 
+
 // vrtypes.h
 #ifndef _INCLUDE_VRTYPES_H
 #define _INCLUDE_VRTYPES_H 
@@ -185,6 +186,7 @@ enum TrackedDeviceProperty
 	Prop_RadioVersion_Uint64					= 1021,
 	Prop_DongleVersion_Uint64					= 1022,
 	Prop_BlockServerShutdown_Bool				= 1023,
+	Prop_CanUnifyCoordinateSystemWithHmd_Bool	= 1024,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -295,7 +297,10 @@ enum VRSubmitFlags_t
 	// App submits final left and right eye images with lens distortion already applied (lens distortion makes the images appear
 	// barrel distorted with chromatic aberration correction applied). The app would have used the data returned by
 	// vr::IVRSystem::ComputeDistortion() to apply the correct distortion to the rendered images before calling Submit().
-	Submit_LensDistortionAlreadyApplied = 0x01
+	Submit_LensDistortionAlreadyApplied = 0x01,
+
+	// If the texture pointer passed in is actually a renderbuffer (e.g. for MSAA in OpenGL) then set this flag.
+	Submit_GlRenderBuffer = 0x02
 };
 
 
@@ -349,7 +354,10 @@ enum EVREventType
 	VREvent_ResetDashboard			= 506, // Send to the overlay manager
 	VREvent_RenderToast				= 507, // Send to the dashboard to render a toast - data is the notification ID
 	VREvent_ImageLoaded				= 508, // Sent to overlays when a SetOverlayRaw or SetOverlayFromFile call finishes loading
-	VREvent_ShowKeyboard			= 509, // Sent to keyboard renderer in the dashboard to invoke it
+	VREvent_ShowKeyboard = 509, // Sent to keyboard renderer in the dashboard to invoke it
+	VREvent_HideKeyboard = 510, // Sent to keyboard renderer in the dashboard to hide it
+	VREvent_OverlayGamepadFocusGained		= 511, // Sent to an overlay when IVROverlay::SetFocusOverlay is called on it
+	VREvent_OverlayGamepadFocusLost = 512, // Send to an overlay when it previously had focus and IVROverlay::SetFocusOverlay is called on something else
 
 	VREvent_Notification_Show				= 600,
 	VREvent_Notification_Dismissed			= 601,
@@ -472,8 +480,8 @@ struct VREvent_Status_t
 /** Used for keyboard events **/
 struct VREvent_Keyboard_t
 {
-	char cNewInput[12];	// Up to 11 bytes of new input
-	uint32_t uFlags;	// Possible flags about the new input
+	char cNewInput[8];	// Up to 11 bytes of new input
+	uint64_t uUserValue;	// Possible flags about the new input
 };
 
 
@@ -610,6 +618,7 @@ enum VROverlayError
 	VROverlayError_InvalidTexture		= 24,
 	VROverlayError_UnableToLoadFile		= 25,
 	VROVerlayError_KeyboardAlreadyInUse = 26,
+	VROverlayError_NoNeighbor			= 27,
 };
 
 /** enum values to pass in to VR_Init to identify whether the application will 
@@ -659,6 +668,7 @@ enum HmdError
 	HmdError_Init_AnotherAppLaunching	= 117, 
 	HmdError_Init_SettingsInitFailed	= 118, 
 	HmdError_Init_ShuttingDown			= 119,
+	HmdError_Init_TooManyObjects		= 120,
 
 	HmdError_Driver_Failed				= 200,
 	HmdError_Driver_Unknown				= 201,
@@ -675,9 +685,11 @@ enum HmdError
 	HmdError_IPC_SharedStateInitFailed	= 302,
 	HmdError_IPC_CompositorInitFailed	= 303,
 	HmdError_IPC_MutexInitFailed		= 304,
+	HmdError_IPC_Failed					= 305,
 
 	HmdError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 
+	HmdError_VendorSpecific_HmdFound_But						= 1100,
 	HmdError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
 	HmdError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
 	HmdError_VendorSpecific_HmdFound_NoStoredConfig 			= 1103,
@@ -728,6 +740,186 @@ enum HmdError
 }
 
 #endif // _INCLUDE_VRTYPES_H
+
+
+// vrtrackedcameratypes.h
+#ifndef _VRTRACKEDCAMERATYPES_H
+#define _VRTRACKEDCAMERATYPES_H 
+
+namespace vr
+{
+
+#if defined(__linux__) || defined(__APPLE__) 
+	// The 32-bit version of gcc has the alignment requirement for uint64 and double set to
+	// 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
+	// The 64-bit version of gcc has the alignment requirement for these types set to
+	// 8 meaning that unless we use #pragma pack(4) our structures will get bigger.
+	// The 64-bit structure packing has to match the 32-bit structure packing for each platform.
+	#pragma pack( push, 4 )
+#else
+	#pragma pack( push, 8 )
+#endif
+
+enum ECameraVideoStreamFormat
+{
+	CVS_FORMAT_UNKNOWN = 0,
+	CVS_FORMAT_RAW10 = 1,		// 10 bits per pixel
+	CVS_FORMAT_NV12 = 2,		// 12 bits per pixel
+	CVS_FORMAT_RGB24 = 3,		// 24 bits per pixel
+	CVS_MAX_FORMATS
+};
+
+#ifdef _MSC_VER
+#define VR_CAMERA_DECL_ALIGN( x ) __declspec( align( x ) )
+#else
+#define VR_CAMERA_DECL_ALIGN( x ) //
+#endif
+
+VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
+{
+	ECameraVideoStreamFormat m_nStreamFormat;
+
+	uint32_t m_nWidth;
+	uint32_t m_nHeight;
+
+	uint32_t m_nFrameSequence;	// Starts from 0 when stream starts.
+	uint32_t m_nTimeStamp;		// Driver provided time stamp per driver centric time base
+
+	uint32_t m_nBufferIndex;	// Identifies which buffer the image data is hosted
+	uint32_t m_nBufferCount;	// Total number of configured buffers
+
+	uint32_t m_nImageDataSize;	// Based on stream format, width, height
+
+	double m_flFrameTime;		// Starts from 0 when stream starts. In seconds.
+
+	bool m_bPoseValid;			// Supplied by HMD layer when used as a tracked camera
+	float m_HMDPoseMatrix[16];	
+
+	void *m_pImageData;
+};
+
+struct TrackedCameraCalibrationDevOnly_t
+{
+	double m_flIntrinsicsFX;
+	double m_flIntrinsicsFY;
+	double m_flIntrinsicsCX;
+	double m_flIntrinsicsCY;
+	double m_flIntrinsicsK1;
+	double m_flIntrinsicsK2;
+	double m_flIntrinsicsP1;
+	double m_flIntrinsicsP2;
+	double m_flIntrinsicsK3;
+};
+
+#pragma pack( pop )
+
+}
+
+#endif // _VRTRACKEDCAMERATYPES_H
+// ivrsettings.h
+namespace vr
+{
+	enum EVRSettingsError
+	{
+		VRSettingsError_None = 0,
+		VRSettingsError_IPCFailed = 1,
+		VRSettingsError_WriteFailed = 2,
+		VRSettingsError_ReadFailed = 3,
+	};
+
+	// The maximum length of a settings key
+	static const uint32_t k_unMaxSettingsKeyLength = 128;
+
+	class IVRSettings
+	{
+	public:
+		virtual const char *GetSettingsErrorNameFromEnum( EVRSettingsError eError ) = 0;
+
+		virtual void Sync( EVRSettingsError *peError = nullptr ) = 0;
+
+		virtual bool GetBool( const char *pchSection, const char *pchSettingsKey, bool bDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void SetBool( const char *pchSection, const char *pchSettingsKey, bool bValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual int32_t GetInt32( const char *pchSection, const char *pchSettingsKey, int32_t nDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void SetInt32( const char *pchSection, const char *pchSettingsKey, int32_t nValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual float GetFloat( const char *pchSection, const char *pchSettingsKey, float flDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void SetFloat( const char *pchSection, const char *pchSettingsKey, float flValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void GetString( const char *pchSection, const char *pchSettingsKey, char *pchValue, uint32_t unValueLen, const char *pchDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void SetString( const char *pchSection, const char *pchSettingsKey, const char *pchValue, EVRSettingsError *peError = nullptr ) = 0;
+	};
+
+	//-----------------------------------------------------------------------------
+	// steamvr keys
+
+	static const char * const k_pch_SteamVR_Section = "steamvr";
+	static const char * const k_pch_SteamVR_RequireHmd_String = "requireHmd";
+	static const char * const k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
+	static const char * const k_pch_SteamVR_ForcedHmdKey_String = "forcedHmd";
+	static const char * const k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
+	static const char * const k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
+	static const char * const k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
+	static const char * const k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
+	static const char * const k_pch_SteamVR_SendSystemButtonToAllApps_Bool= "sendSystemButtonToAllApps";
+	static const char * const k_pch_SteamVR_LogLevel_Int32 = "loglevel";
+	static const char * const k_pch_SteamVR_IPD_Float = "ipd";
+	static const char * const k_pch_SteamVR_Background_String = "background";
+
+	//-----------------------------------------------------------------------------
+	// lighthouse keys
+
+	static const char * const k_pch_Lighthouse_Section = "driver_lighthouse";
+	static const char * const k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
+	static const char * const k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
+	static const char * const k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
+
+	static const char * const k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
+	static const char * const k_pch_Lighthouse_LighthouseName_String = "lighthousename";
+	static const char * const k_pch_Lighthouse_MaxIncidenceAngleDegrees_Float = "maxincidenceangledegrees";
+	static const char * const k_pch_Lighthouse_UseLighthouseDirect_Bool = "uselighthousedirect";
+	static const char * const k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
+	static const char * const k_pch_Lighthouse_OriginOffsetX_Float = "originoffsetx";
+	static const char * const k_pch_Lighthouse_OriginOffsetY_Float = "originoffsety";
+	static const char * const k_pch_Lighthouse_OriginOffsetZ_Float = "originoffsetz";
+	static const char * const k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
+
+	//-----------------------------------------------------------------------------
+	// null keys
+
+	static const char * const k_pch_Null_Section = "driver_null";
+	static const char * const k_pch_Null_EnableNullDriver_Bool = "enable";
+	static const char * const k_pch_Null_Id_String = "id";
+	static const char * const k_pch_Null_SerialNumber_String = "serialNumber";
+	static const char * const k_pch_Null_ModelNumber_String = "modelNumber";
+	static const char * const k_pch_Null_WindowX_Int32 = "windowX";
+	static const char * const k_pch_Null_WindowY_Int32 = "windowY";
+	static const char * const k_pch_Null_WindowWidth_Int32 = "windowWidth";
+	static const char * const k_pch_Null_WindowHeight_Int32 = "windowHeight";
+	static const char * const k_pch_Null_RenderWidth_Int32 = "renderWidth";
+	static const char * const k_pch_Null_RenderHeight_Int32 = "renderHeight";
+	static const char * const k_pch_Null_SecondsFromVsyncToPhotons_Float = "secondsFromVsyncToPhotons";
+	static const char * const k_pch_Null_DisplayFrequency_Float = "displayFrequency";
+
+	//-----------------------------------------------------------------------------
+	// notification keys
+	static const char * const k_pch_Notifications_Section = "notifications";
+	static const char * const k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
+
+	//-----------------------------------------------------------------------------
+	// perf keys
+	static const char * const k_pch_Perf_Section = "perfcheck";
+	static const char * const k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
+	static const char * const k_pch_Perf_NotifyInHMD_Bool = "notifyInHMD";
+	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "notifyOnlyOnce";
+	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
+	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+
+	//-----------------------------------------------------------------------------
+
+	static const char * const IVRSettings_Version = "IVRSettings_001";
+
+	/** Returns the current IVRSettings pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRSettings *VR_CALLTYPE VRSettings();
+
+} // namespace vr
 
 // iservertrackeddevicedriver.h
 namespace vr
@@ -994,22 +1186,31 @@ public:
 	// Camera Methods
 	// ------------------------------------
 	virtual bool HasCamera() = 0;
+	virtual bool GetCameraFirmwareDescription( char *pBuffer, uint32_t nBufferLen ) = 0;
+	virtual bool GetCameraFrameDimensions( vr::ECameraVideoStreamFormat nVideoStreamFormat, uint32_t *pWidth, uint32_t *pHeight ) = 0;
 	virtual bool GetCameraFrameBufferingRequirements( int *pDefaultFrameQueueSize, uint32_t *pFrameBufferDataSize ) = 0;
 	virtual bool SetCameraFrameBuffering( int nFrameBufferCount, void **ppFrameBuffers, uint32_t nFrameBufferDataSize ) = 0;
-	virtual vr::CameraVideoStreamFormat_e GetCameraVideoStreamFormat() = 0;
-	virtual const vr::CameraVideoStreamFrame_t *GetVideoStreamFrame() = 0;
-	virtual void ReleaseVideoStreamFrame( const vr::CameraVideoStreamFrame_t *pFrameImage ) = 0;
+	virtual bool SetCameraVideoStreamFormat( vr::ECameraVideoStreamFormat nVideoStreamFormat ) = 0;
+	virtual vr::ECameraVideoStreamFormat GetCameraVideoStreamFormat() = 0;
 	virtual bool StartVideoStream() = 0;
 	virtual void StopVideoStream() = 0;
 	virtual bool IsVideoStreamActive() = 0;
 	virtual float GetVideoStreamElapsedTime() = 0;
+	virtual const vr::CameraVideoStreamFrame_t *GetVideoStreamFrame() = 0;
+	virtual void ReleaseVideoStreamFrame( const vr::CameraVideoStreamFrame_t *pFrameImage ) = 0;
+	virtual bool SetAutoExposure( bool bEnable ) = 0;
+	virtual bool SupportsPauseResume() = 0;
+	virtual bool PauseVideoStream() = 0;
+	virtual bool ResumeVideoStream() = 0;
+	virtual bool IsVideoStreamPaused() = 0;
 };
 
 
 
 static const char *ITrackedDeviceServerDriver_Version = "ITrackedDeviceServerDriver_001";
 
-}// itrackeddevicedriverprovider.h
+}
+// itrackeddevicedriverprovider.h
 namespace vr
 {
 
