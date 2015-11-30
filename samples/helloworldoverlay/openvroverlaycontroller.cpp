@@ -36,9 +36,9 @@ COpenVROverlayController *COpenVROverlayController::SharedInstance()
 //-----------------------------------------------------------------------------
 COpenVROverlayController::COpenVROverlayController()
 	: BaseClass()
-	, m_eLastHmdError( vr::HmdError_None )
-	, m_eCompositorError( vr::HmdError_None )
-	, m_eOverlayError( vr::HmdError_None )
+    , m_eLastHmdError( vr::VRInitError_None )
+    , m_eCompositorError( vr::VRInitError_None )
+    , m_eOverlayError( vr::VRInitError_None )
 	, m_strVRDriver( "No Driver" )
 	, m_strVRDisplay( "No Display" )
 	, m_pOpenGLContext( NULL )
@@ -193,7 +193,8 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 	GLuint unTexture = m_pFbo->texture();
 	if( unTexture != 0 )
 	{
-        vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, vr::API_OpenGL, (void*)unTexture );
+        vr::Texture_t texture = {(void*)unTexture, vr::API_OpenGL, vr::ColorSpace_Auto };
+        vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, &texture );
 	}
 }
 
@@ -361,10 +362,10 @@ void COpenVROverlayController::SetWidget( QWidget *pWidget )
 //-----------------------------------------------------------------------------
 bool COpenVROverlayController::ConnectToVRRuntime()
 {
-	m_eLastHmdError = vr::HmdError_None;
+    m_eLastHmdError = vr::VRInitError_None;
     vr::IVRSystem *pVRSystem = vr::VR_Init( &m_eLastHmdError, vr::VRApplication_Overlay );
 
-	if ( m_eLastHmdError != vr::HmdError_None )
+    if ( m_eLastHmdError != vr::VRInitError_None )
 	{
 		m_strVRDriver = "No Driver";
 		m_strVRDisplay = "No Display";

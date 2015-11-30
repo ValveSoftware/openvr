@@ -20,7 +20,7 @@ public:
 	CGLRenderModel( const std::string & sRenderModelName );
 	~CGLRenderModel();
 
-	bool BInit( const vr::RenderModel_t & vrModel );
+	bool BInit( const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture );
 	void Cleanup();
 	void Draw();
 	const std::string & GetName() const { return m_sModelName; }
@@ -88,8 +88,6 @@ public:
 	CGLRenderModel *FindOrLoadRenderModel( const char *pchRenderModelName );
 
 private: 
-	bool m_bRunOnMainWindow;
-	bool m_bUseCompositor;
 	bool m_bDebugOpenGL;
 	bool m_bVerbose;
 	bool m_bPerf;
@@ -98,7 +96,6 @@ private:
 
 	vr::IVRSystem *m_pHMD;
 	vr::IVRRenderModels *m_pRenderModels;
-	vr::IVRCompositor *m_pCompositor;
 	std::string m_strDriver;
 	std::string m_strDisplay;
 	vr::TrackedDevicePose_t m_rTrackedDevicePose[ vr::k_unMaxTrackedDeviceCount ];
@@ -231,9 +228,6 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 	, m_unRenderModelProgramID( 0 )
 	, m_pHMD( NULL )
 	, m_pRenderModels( NULL )
-	, m_pCompositor( NULL )
-	, m_bRunOnMainWindow( true )
-	, m_bUseCompositor( true )
 	, m_bDebugOpenGL( false )
 	, m_bVerbose( false )
 	, m_bPerf( false )
@@ -257,11 +251,7 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 
 	for( int i = 1; i < argc; i++ )
 	{
-		if( !stricmp( argv[i], "-windowed" ) )
-		{
-			m_bRunOnMainWindow = true;
-		}
-		else if( !stricmp( argv[i], "-gldebug" ) )
+		if( !stricmp( argv[i], "-gldebug" ) )
 		{
 			m_bDebugOpenGL = true;
 		}
@@ -285,12 +275,6 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 		{
 			m_iSceneVolumeInit = atoi( argv[ i + 1 ] );
 			i++;
-		}
-		else if( !stricmp( argv[i], "-nocompositor" ) )
-		{
-			m_bUseCompositor = false;
-			m_bRunOnMainWindow = false;
-			m_bVblank = true;
 		}
 	}
 	// other initialization tasks are done in BInit
@@ -338,14 +322,14 @@ bool CMainApplication::BInit()
 	}
 
 	// Loading the SteamVR Runtime
-	vr::HmdError eError = vr::HmdError_None;
+	vr::EVRInitError eError = vr::VRInitError_None;
 	m_pHMD = vr::VR_Init( &eError, vr::VRApplication_Scene );
 
-	if ( eError != vr::HmdError_None )
+	if ( eError != vr::VRInitError_None )
 	{
 		m_pHMD = NULL;
 		char buf[1024];
-		sprintf_s( buf, sizeof( buf ), "Unable to init VR runtime: %s", vr::VR_GetStringForHmdError( eError ) );
+		sprintf_s( buf, sizeof( buf ), "Unable to init VR runtime: %s", vr::VR_GetVRInitErrorAsEnglishDescription( eError ) );
 		SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "VR_Init Failed", buf, NULL );
 		return false;
 	}
@@ -358,7 +342,7 @@ bool CMainApplication::BInit()
 		vr::VR_Shutdown();
 
 		char buf[1024];
-		sprintf_s( buf, sizeof( buf ), "Unable to get render model interface: %s", vr::VR_GetStringForHmdError( eError ) );
+		sprintf_s( buf, sizeof( buf ), "Unable to get render model interface: %s", vr::VR_GetVRInitErrorAsEnglishDescription( eError ) );
 		SDL_ShowSimpleMessageBox( SDL_MESSAGEBOX_ERROR, "VR_Init Failed", buf, NULL );
 		return false;
 	}
@@ -368,12 +352,6 @@ bool CMainApplication::BInit()
 	m_nWindowWidth = 1280;
 	m_nWindowHeight = 720;
 	Uint32 unWindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
-	if ( !m_bRunOnMainWindow )
-	{
-		m_pHMD->GetWindowBounds( &nWindowPosX, &nWindowPosY, &m_nWindowWidth, &m_nWindowHeight );
-		// SDL_WINDOW_FULLSCREEN seems to give us a black flicker, while SDL_WINDOW_FULLSCREEN_DESKTOP does not
-		unWindowFlags |= SDL_WINDOW_FULLSCREEN_DESKTOP; 
-	}
 
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
@@ -447,13 +425,10 @@ bool CMainApplication::BInit()
 		return false;
 	}
 
-	if (m_bUseCompositor)
+	if (!BInitCompositor())
 	{
-		if (!BInitCompositor())
-		{
-			printf("%s - Failed to initialize VR Compositor!\n", __FUNCTION__);
-			return false;
-		}
+		printf("%s - Failed to initialize VR Compositor!\n", __FUNCTION__);
+		return false;
 	}
 
 	return true;
@@ -501,25 +476,11 @@ bool CMainApplication::BInitGL()
 //-----------------------------------------------------------------------------
 bool CMainApplication::BInitCompositor()
 {
-	vr::HmdError peError = vr::HmdError_None;
+	vr::EVRInitError peError = vr::VRInitError_None;
 
-	m_pCompositor = (vr::IVRCompositor*)vr::VR_GetGenericInterface(vr::IVRCompositor_Version, &peError);
-
-	if ( peError != vr::HmdError_None )
+	if ( !vr::VRCompositor() )
 	{
-		m_pCompositor = NULL;
-
-		printf( "Compositor initialization failed with error: %s\n", vr::VR_GetStringForHmdError( peError ) );
-		return false;
-	}
-
-	uint32_t unSize = m_pCompositor->GetLastError(NULL, 0);
-	if (unSize > 1)
-	{
-		char* buffer = new char[unSize];
-		m_pCompositor->GetLastError(buffer, unSize);
-		printf( "Compositor - %s\n", buffer );
-		delete [] buffer;
+		printf( "Compositor initialization failed. See log file for details\n" );
 		return false;
 	}
 
@@ -712,11 +673,10 @@ void CMainApplication::RenderFrame()
 		RenderStereoTargets();
 		RenderDistortion();
 
-		if ( m_pCompositor )
-		{
-			m_pCompositor->Submit(vr::Eye_Left, vr::API_OpenGL, (void*)leftEyeDesc.m_nResolveTextureId, NULL );
-			m_pCompositor->Submit(vr::Eye_Right, vr::API_OpenGL, (void*)rightEyeDesc.m_nResolveTextureId, NULL );
-		}
+		vr::Texture_t leftEyeTexture = {(void*)leftEyeDesc.m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+		vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture );
+		vr::Texture_t rightEyeTexture = {(void*)rightEyeDesc.m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+		vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
 	}
 
 	if ( m_bVblank && m_bGlFinishHack )
@@ -1656,20 +1616,7 @@ void CMainApplication::UpdateHMDMatrixPose()
 	if ( !m_pHMD )
 		return;
 
-	if ( m_pCompositor )
-	{
-		m_pCompositor->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
-	}
-	else
-	{
-		// We just got done with the glFinish - the seconds since last vsync should be 0.
-		float fSecondsSinceLastVsync = 0.0f;
-
-		float fFrameDuration = 1.0f / m_pHMD->GetFloatTrackedDeviceProperty( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_DisplayFrequency_Float );
-
-		float fSecondsUntilPhotons = fFrameDuration - fSecondsSinceLastVsync + m_pHMD->GetFloatTrackedDeviceProperty( vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SecondsFromVsyncToPhotons_Float );
-		m_pHMD->GetDeviceToAbsoluteTrackingPose( vr::TrackingUniverseStanding, fSecondsUntilPhotons, m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount );
-	}
+	vr::VRCompositor()->WaitGetPoses(m_rTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0 );
 
 	m_iValidPoseCount = 0;
 	m_strPoseClasses = "";
@@ -1720,25 +1667,34 @@ CGLRenderModel *CMainApplication::FindOrLoadRenderModel( const char *pchRenderMo
 	// load the model if we didn't find one
 	if( !pRenderModel )
 	{
-		vr::RenderModel_t model;
-		if( !m_pRenderModels->LoadRenderModel( pchRenderModelName, &model ) )
+		vr::RenderModel_t *pModel = NULL;
+		if ( !vr::VRRenderModels()->LoadRenderModel( pchRenderModelName, &pModel ) || pModel == NULL )
 		{
 			dprintf( "Unable to load render model %s\n", pchRenderModelName );
 			return NULL; // move on to the next tracked device
 		}
 
-		pRenderModel = new CGLRenderModel( pchRenderModelName );
-		if( !pRenderModel->BInit( model ) )
+		vr::RenderModel_TextureMap_t *pTexture = NULL;
+		if ( !vr::VRRenderModels( )->LoadTexture( pModel->diffuseTextureId, &pTexture ) || pTexture == NULL )
 		{
-			dprintf( "Unable to create GL model from render model %s\n", pchRenderModelName );
-			delete pRenderModel;
-			m_pRenderModels->FreeRenderModel( &model );
+			dprintf( "Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName );
+			vr::VRRenderModels()->FreeRenderModel( pModel );
 			return NULL; // move on to the next tracked device
 		}
 
-		m_vecRenderModels.push_back( pRenderModel );
-
-		m_pRenderModels->FreeRenderModel( &model );
+		pRenderModel = new CGLRenderModel( pchRenderModelName );
+		if ( !pRenderModel->BInit( *pModel, *pTexture ) )
+		{
+			dprintf( "Unable to create GL model from render model %s\n", pchRenderModelName );
+			delete pRenderModel;
+			pRenderModel = NULL;
+		}
+		else
+		{
+			m_vecRenderModels.push_back( pRenderModel );
+		}
+		vr::VRRenderModels()->FreeRenderModel( pModel );
+		vr::VRRenderModels()->FreeTexture( pTexture );
 	}
 	return pRenderModel;
 }
@@ -1826,7 +1782,7 @@ CGLRenderModel::~CGLRenderModel()
 //-----------------------------------------------------------------------------
 // Purpose: Allocates and populates the GL resources for a render model
 //-----------------------------------------------------------------------------
-bool CGLRenderModel::BInit( const vr::RenderModel_t & vrModel )
+bool CGLRenderModel::BInit( const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture )
 {
 	// create and bind a VAO to hold state for this model
 	glGenVertexArrays( 1, &m_glVertArray );
@@ -1844,7 +1800,7 @@ bool CGLRenderModel::BInit( const vr::RenderModel_t & vrModel )
 	glVertexAttribPointer( 1, 3, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, vNormal ) );
 	glEnableVertexAttribArray( 2 );
 	glVertexAttribPointer( 2, 2, GL_FLOAT, GL_FALSE, sizeof( vr::RenderModel_Vertex_t ), (void *)offsetof( vr::RenderModel_Vertex_t, rfTextureCoord ) );
-	
+
 	// Create and populate the index buffer
 	glGenBuffers( 1, &m_glIndexBuffer );
 	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer );
@@ -1856,8 +1812,8 @@ bool CGLRenderModel::BInit( const vr::RenderModel_t & vrModel )
 	glGenTextures(1, &m_glTexture );
 	glBindTexture( GL_TEXTURE_2D, m_glTexture );
 
-	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, vrModel.diffuseTexture.unWidth, vrModel.diffuseTexture.unHeight,
-		0, GL_RGBA, GL_UNSIGNED_BYTE, vrModel.diffuseTexture.rubTextureMapData );
+	glTexImage2D( GL_TEXTURE_2D, 0, GL_RGBA, vrDiffuseTexture.unWidth, vrDiffuseTexture.unHeight,
+		0, GL_RGBA, GL_UNSIGNED_BYTE, vrDiffuseTexture.rubTextureMapData );
 
 	// If this renders black ask McJohn what's wrong.
 	glGenerateMipmap(GL_TEXTURE_2D);

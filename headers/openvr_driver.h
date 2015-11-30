@@ -89,19 +89,33 @@ struct DistortionCoordinates_t
 	float rfBlue[2];
 };
 
-enum Hmd_Eye
+enum EVREye
 {
 	Eye_Left = 0,
 	Eye_Right = 1
 };
 
-enum GraphicsAPIConvention
+enum EGraphicsAPIConvention
 {
 	API_DirectX = 0, // Normalized Z goes from 0 at the viewer to 1 at the far clip plane
 	API_OpenGL = 1,  // Normalized Z goes from 1 at the viewer to -1 at the far clip plane
 };
 
-enum HmdTrackingResult
+enum EColorSpace
+{
+	ColorSpace_Auto = 0,	// Assumes 'gamma' for 8-bit per component formats, otherwise 'linear'.  This mirrors the DXGI formats which have _SRGB variants.
+	ColorSpace_Gamma = 1,	// Texture data can be displayed directly on the display without any conversion (a.k.a. display native format).
+	ColorSpace_Linear = 2,	// Same as gamma but has been converted to a linear representation using DXGI's sRGB conversion algorithm.
+};
+
+struct Texture_t
+{
+	void* handle; // Native d3d texture pointer or GL texture id.
+	EGraphicsAPIConvention eType;
+	EColorSpace eColorSpace;
+};
+
+enum ETrackingResult
 {
 	TrackingResult_Uninitialized			= 1,
 
@@ -122,7 +136,7 @@ static const uint32_t k_unMaxTrackedDeviceCount = 16;
 static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
 /** Describes what kind of object is being tracked at a given ID */
-enum TrackedDeviceClass
+enum ETrackedDeviceClass
 {
 	TrackedDeviceClass_Invalid = 0,				// the ID was not valid.
 	TrackedDeviceClass_HMD = 1,					// Head-Mounted Displays
@@ -139,7 +153,7 @@ struct TrackedDevicePose_t
 	HmdMatrix34_t mDeviceToAbsoluteTracking;
 	HmdVector3_t vVelocity;				// velocity in tracker space in m/s
 	HmdVector3_t vAngularVelocity;		// angular velocity in radians/s (?)
-	HmdTrackingResult eTrackingResult;
+	ETrackingResult eTrackingResult;
 	bool bPoseIsValid;
 
 	// This indicates that there is a device connected for this spot in the pose array.
@@ -149,7 +163,7 @@ struct TrackedDevicePose_t
 
 /** Identifies which style of tracking origin the application wants to use
 * for the poses it is requesting */
-enum TrackingUniverseOrigin
+enum ETrackingUniverseOrigin
 {
 	TrackingUniverseSeated = 0,		// Poses are provided relative to the seated zero pose
 	TrackingUniverseStanding = 1,	// Poses are provided relative to the safe bounds configured by the user
@@ -158,8 +172,8 @@ enum TrackingUniverseOrigin
 
 
 /** Each entry in this enum represents a property that can be retrieved about a
-* tracked device. Many fields are only valid for one TrackedDeviceClass. */
-enum TrackedDeviceProperty
+* tracked device. Many fields are only valid for one ETrackedDeviceClass. */
+enum ETrackedDeviceProperty
 {
 	// general properties that apply to all device classes
 	Prop_TrackingSystemName_String				= 1000,
@@ -187,6 +201,8 @@ enum TrackedDeviceProperty
 	Prop_DongleVersion_Uint64					= 1022,
 	Prop_BlockServerShutdown_Bool				= 1023,
 	Prop_CanUnifyCoordinateSystemWithHmd_Bool	= 1024,
+	Prop_ContainsProximitySensor_Bool			= 1025,
+	Prop_DeviceProvidesBatteryStatus_Bool		= 1026,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -200,10 +216,12 @@ enum TrackedDeviceProperty
 	Prop_DisplayMCType_Int32					= 2008,
 	Prop_DisplayMCOffset_Float					= 2009,
 	Prop_DisplayMCScale_Float					= 2010,
-	Prop_VendorID_Int32                         = 2011,
+	Prop_EdidVendorID_Int32						= 2011,
 	Prop_DisplayMCImageLeft_String              = 2012,
 	Prop_DisplayMCImageRight_String             = 2013,
 	Prop_DisplayGCBlackClamp_Float				= 2014,
+	Prop_EdidProductID_Int32					= 2015,
+	Prop_CameraToHeadTransform_Matrix34		    = 2016,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -222,23 +240,16 @@ enum TrackedDeviceProperty
 	Prop_TrackingRangeMinimumMeters_Float		= 4004,
 	Prop_TrackingRangeMaximumMeters_Float		= 4005,
 
-	// Camera calibration parameters
-	Prop_TrackedCamera_IntrinsicsFX_Float		= 5000,
-	Prop_TrackedCamera_IntrinsicsFY_Float		= 5001,
-	Prop_TrackedCamera_IntrinsicsCX_Float		= 5002,
-	Prop_TrackedCamera_IntrinsicsCY_Float		= 5003,
-	Prop_TrackedCamera_IntrinsicsK1_Float		= 5004,
-	Prop_TrackedCamera_IntrinsicsK2_Float		= 5005,
-	Prop_TrackedCamera_IntrinsicsP1_Float		= 5006,
-	Prop_TrackedCamera_IntrinsicsP2_Float		= 5007,
-	Prop_TrackedCamera_IntrinsicsK3_Float		= 5008,
+	// Vendors are free to expose private debug data in this reserved region
+	Prop_VendorSpecific_Reserved_Start			= 10000,
+	Prop_VendorSpecific_Reserved_End			= 10999,
 };
 
 /** No string property will ever be longer than this length */
 static const uint32_t k_unMaxPropertyStringSize = 32 * 1024;
 
 /** Used to return errors that occur when reading properties. */
-enum TrackedPropertyError
+enum ETrackedPropertyError
 {
 	TrackedProp_Success						= 0,
 	TrackedProp_WrongDataType				= 1,
@@ -249,35 +260,8 @@ enum TrackedPropertyError
 	TrackedProp_CouldNotContactServer		= 6,
 	TrackedProp_ValueNotProvidedByDevice	= 7,
 	TrackedProp_StringExceedsMaximumLength	= 8,
+	TrackedProp_NotYetAvailable				= 9, // The property value isn't known yet, but is expected soon. Call again later.
 };
-
-
-/** a single vertex in a render model */
-struct RenderModel_Vertex_t
-{
-	HmdVector3_t vPosition;		// position in meters in device space
-	HmdVector3_t vNormal;		
-	float rfTextureCoord[ 2 ];
-};
-
-/** A texture map for use on a render model */
-struct RenderModel_TextureMap_t
-{
-	uint16_t unWidth, unHeight; // width and height of the texture map in pixels
-	const uint8_t *rubTextureMapData;	// Map texture data. All textures are RGBA with 8 bits per channel per pixel. Data size is width * height * 4ub
-};
-
-/** Contains everything a game needs to render a single tracked or static object for the user. */
-struct RenderModel_t
-{
-	uint64_t ulInternalHandle;					// Used internally by SteamVR
-	const RenderModel_Vertex_t *rVertexData;			// Vertex data for the mesh
-	uint32_t unVertexCount;						// Number of vertices in the vertex data
-	const uint16_t *rIndexData;						// Indices into the vertex data for each triangle
-	uint32_t unTriangleCount;					// Number of triangles in the mesh. Index count is 3 * TriangleCount
-	RenderModel_TextureMap_t diffuseTexture;	// RGBA diffuse texture for the model
-};
-
 
 /** Allows the application to control what part of the provided texture will be used in the
 * frame buffer. */
@@ -289,7 +273,7 @@ struct VRTextureBounds_t
 
 
 /** Allows the applicaiton to control how scene textures are used by the compositor when calling Submit. */
-enum VRSubmitFlags_t
+enum EVRSubmitFlags
 {
 	// Simple render path. App submits rendered left and right eye images with no lens distortion correction applied.
 	Submit_Default = 0x00,
@@ -305,7 +289,7 @@ enum VRSubmitFlags_t
 
 
 /** Status of the overall system or tracked objects */
-enum VRState_t
+enum EVRState
 {
 	VRState_Undefined = -1,
 	VRState_Off = 0,
@@ -326,6 +310,7 @@ enum EVREventType
 	VREvent_TrackedDeviceUpdated		= 102,
 	VREvent_TrackedDeviceUserInteractionStarted		= 103,
 	VREvent_TrackedDeviceUserInteractionEnded	= 104,
+	VREvent_IpdChanged					= 105,
 
 	VREvent_ButtonPress					= 200, // data is controller
 	VREvent_ButtonUnpress				= 201, // data is controller
@@ -359,16 +344,20 @@ enum EVREventType
 	VREvent_OverlayGamepadFocusGained		= 511, // Sent to an overlay when IVROverlay::SetFocusOverlay is called on it
 	VREvent_OverlayGamepadFocusLost = 512, // Send to an overlay when it previously had focus and IVROverlay::SetFocusOverlay is called on something else
 
-	VREvent_Notification_Show				= 600,
-	VREvent_Notification_Dismissed			= 601,
+	VREvent_Notification_Shown				= 600,
+	VREvent_Notification_Hidden				= 601,
 	VREvent_Notification_BeginInteraction	= 602,
+	VREvent_Notification_Destroyed			= 603,
 
 	VREvent_Quit						= 700, // data is process
 	VREvent_ProcessQuit					= 701, // data is process
+	VREvent_QuitAborted_UserPrompt		= 702, // data is process
+	VREvent_QuitAcknowledged			= 703, // data is process
 
 	VREvent_ChaperoneDataHasChanged		= 800,
 	VREvent_ChaperoneUniverseHasChanged	= 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
+	VREvent_ChaperoneSettingsHaveChanged = 803,
 
 	VREvent_StatusUpdate				= 900,
 
@@ -383,6 +372,18 @@ enum EVREventType
 	VREvent_ApplicationTransitionStarted	= 1300,
 	VREvent_ApplicationTransitionAborted	= 1301,
 	VREvent_ApplicationTransitionNewAppStarted = 1302,
+
+	VREvent_Compositor_MirrorWindowShown	= 1400,
+	VREvent_Compositor_MirrorWindowHidden	= 1401,
+
+	VREvent_TrackedCamera_StartVideoStream  = 1500,
+	VREvent_TrackedCamera_StopVideoStream   = 1501,
+	VREvent_TrackedCamera_PauseVideoStream  = 1502,
+	VREvent_TrackedCamera_ResumeVideoStream = 1503,
+	
+	// Vendors are free to expose private events in this reserved region
+	VREvent_VendorSpecific_Reserved_Start = 10000,
+	VREvent_VendorSpecific_Reserved_End = 19999,
 };
 
 
@@ -461,6 +462,7 @@ struct VREvent_Process_t
 {
 	uint32_t pid;
 	uint32_t oldPid;
+	bool bForced;
 };
 
 
@@ -474,7 +476,7 @@ struct VREvent_Overlay_t
 /** Used for a few events about overlays */
 struct VREvent_Status_t
 {
-	VRState_t statusState; 
+	EVRState statusState; 
 };
 
 /** Used for keyboard events **/
@@ -484,6 +486,16 @@ struct VREvent_Keyboard_t
 	uint64_t uUserValue;	// Possible flags about the new input
 };
 
+struct VREvent_Ipd_t
+{
+	float ipdMeters;
+};
+
+struct VREvent_Chaperone_t
+{
+	uint64_t m_nPreviousUniverse;
+	uint64_t m_nCurrentUniverse;
+};
 
 /** Not actually used for any events. It is just used to reserve
 * space in the union for future event types */
@@ -504,6 +516,8 @@ typedef union
 	VREvent_Overlay_t overlay;
 	VREvent_Status_t status;
 	VREvent_Keyboard_t keyboard;
+	VREvent_Ipd_t ipd;
+	VREvent_Chaperone_t chaperone;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -580,6 +594,19 @@ enum EVRControllerEventOutputType
 };
 
 
+
+/** Collision Bounds Style */
+enum ECollisionBoundsStyle
+{
+	COLLISION_BOUNDS_STYLE_BEGINNER = 0,
+	COLLISION_BOUNDS_STYLE_INTERMEDIATE,
+	COLLISION_BOUNDS_STYLE_SQUARES,
+	COLLISION_BOUNDS_STYLE_ADVANCED,
+	COLLISION_BOUNDS_STYLE_NONE,
+
+	COLLISION_BOUNDS_STYLE_COUNT
+};
+
 /** Allows the application to customize how the overlay appears in the compositor */
 struct Compositor_OverlaySettings
 {
@@ -597,7 +624,7 @@ typedef uint64_t VROverlayHandle_t;
 static const VROverlayHandle_t k_ulOverlayHandleInvalid = 0;
 
 /** Errors that can occur around VR overlays */
-enum VROverlayError
+enum EVROverlayError
 {
 	VROverlayError_None					= 0,
 
@@ -628,11 +655,13 @@ enum EVRApplicationType
 	VRApplication_Other = 0,		// Some other kind of application that isn't covered by the other entries 
 	VRApplication_Scene	= 1,		// Application will submit 3D frames 
 	VRApplication_Overlay = 2,		// Application only interacts with overlays
+	VRApplication_Background = 3,	// Application should not start SteamVR if it's not already running, and should not
+									// keep it running if everything else quits.
 };
 
 
 /** error codes for firmware */
-enum VRFirmwareError
+enum EVRFirmwareError
 {
 	VRFirmwareError_None = 0,
 	VRFirmwareError_Success = 1,
@@ -640,70 +669,80 @@ enum VRFirmwareError
 };
 
 
+/** error codes for notifications */
+enum EVRNotificationError
+{
+	VRNotificationError_OK = 0,
+	VRNotificationError_InvalidNotificationId = 100,
+};
+
+
 /** error codes returned by Vr_Init */
 
 // Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
-enum HmdError
+enum EVRInitError
 {
-	HmdError_None = 0,
-	HmdError_Unknown = 1,
+	VRInitError_None = 0,
+	VRInitError_Unknown = 1,
 
-	HmdError_Init_InstallationNotFound	= 100,
-	HmdError_Init_InstallationCorrupt	= 101,
-	HmdError_Init_VRClientDLLNotFound	= 102,
-	HmdError_Init_FileNotFound			= 103,
-	HmdError_Init_FactoryNotFound		= 104,
-	HmdError_Init_InterfaceNotFound		= 105,
-	HmdError_Init_InvalidInterface		= 106,
-	HmdError_Init_UserConfigDirectoryInvalid = 107,
-	HmdError_Init_HmdNotFound			= 108,
-	HmdError_Init_NotInitialized		= 109,
-	HmdError_Init_PathRegistryNotFound	= 110,
-	HmdError_Init_NoConfigPath			= 111,
-	HmdError_Init_NoLogPath				= 112,
-	HmdError_Init_PathRegistryNotWritable = 113,
-	HmdError_Init_AppInfoInitFailed		= 114,
-	HmdError_Init_Retry					= 115, // Used internally to cause retries to vrserver
-	HmdError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
-	HmdError_Init_AnotherAppLaunching	= 117, 
-	HmdError_Init_SettingsInitFailed	= 118, 
-	HmdError_Init_ShuttingDown			= 119,
-	HmdError_Init_TooManyObjects		= 120,
+	VRInitError_Init_InstallationNotFound	= 100,
+	VRInitError_Init_InstallationCorrupt	= 101,
+	VRInitError_Init_VRClientDLLNotFound	= 102,
+	VRInitError_Init_FileNotFound			= 103,
+	VRInitError_Init_FactoryNotFound		= 104,
+	VRInitError_Init_InterfaceNotFound		= 105,
+	VRInitError_Init_InvalidInterface		= 106,
+	VRInitError_Init_UserConfigDirectoryInvalid = 107,
+	VRInitError_Init_HmdNotFound			= 108,
+	VRInitError_Init_NotInitialized		= 109,
+	VRInitError_Init_PathRegistryNotFound	= 110,
+	VRInitError_Init_NoConfigPath			= 111,
+	VRInitError_Init_NoLogPath				= 112,
+	VRInitError_Init_PathRegistryNotWritable = 113,
+	VRInitError_Init_AppInfoInitFailed		= 114,
+	VRInitError_Init_Retry					= 115, // Used internally to cause retries to vrserver
+	VRInitError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
+	VRInitError_Init_AnotherAppLaunching	= 117, 
+	VRInitError_Init_SettingsInitFailed	= 118, 
+	VRInitError_Init_ShuttingDown			= 119,
+	VRInitError_Init_TooManyObjects		= 120,
+	VRInitError_Init_NoServerForBackgroundApp = 121,
+	VRInitError_Init_NotSupportedWithCompositor = 122,
 
-	HmdError_Driver_Failed				= 200,
-	HmdError_Driver_Unknown				= 201,
-	HmdError_Driver_HmdUnknown			= 202,
-	HmdError_Driver_NotLoaded			= 203,
-	HmdError_Driver_RuntimeOutOfDate	= 204,
-	HmdError_Driver_HmdInUse			= 205,
-	HmdError_Driver_NotCalibrated		= 206,
-	HmdError_Driver_CalibrationInvalid	= 207,
-	HmdError_Driver_HmdDisplayNotFound  = 208,
+	VRInitError_Driver_Failed				= 200,
+	VRInitError_Driver_Unknown				= 201,
+	VRInitError_Driver_HmdUnknown			= 202,
+	VRInitError_Driver_NotLoaded			= 203,
+	VRInitError_Driver_RuntimeOutOfDate	= 204,
+	VRInitError_Driver_HmdInUse			= 205,
+	VRInitError_Driver_NotCalibrated		= 206,
+	VRInitError_Driver_CalibrationInvalid	= 207,
+	VRInitError_Driver_HmdDisplayNotFound  = 208,
 	
-	HmdError_IPC_ServerInitFailed		= 300,
-	HmdError_IPC_ConnectFailed			= 301,
-	HmdError_IPC_SharedStateInitFailed	= 302,
-	HmdError_IPC_CompositorInitFailed	= 303,
-	HmdError_IPC_MutexInitFailed		= 304,
-	HmdError_IPC_Failed					= 305,
+	VRInitError_IPC_ServerInitFailed		= 300,
+	VRInitError_IPC_ConnectFailed			= 301,
+	VRInitError_IPC_SharedStateInitFailed	= 302,
+	VRInitError_IPC_CompositorInitFailed	= 303,
+	VRInitError_IPC_MutexInitFailed		= 304,
+	VRInitError_IPC_Failed					= 305,
 
-	HmdError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
+	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 
-	HmdError_VendorSpecific_HmdFound_But						= 1100,
-	HmdError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
-	HmdError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
-	HmdError_VendorSpecific_HmdFound_NoStoredConfig 			= 1103,
-	HmdError_VendorSpecific_HmdFound_ConfigTooBig 				= 1104,
-	HmdError_VendorSpecific_HmdFound_ConfigTooSmall 			= 1105,
-	HmdError_VendorSpecific_HmdFound_UnableToInitZLib 			= 1106,
-	HmdError_VendorSpecific_HmdFound_CantReadFirmwareVersion 	= 1107,
-	HmdError_VendorSpecific_HmdFound_UnableToSendUserDataStart  = 1108,
-	HmdError_VendorSpecific_HmdFound_UnableToGetUserDataStart   = 1109,
-	HmdError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
-	HmdError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
-	HmdError_VendorSpecific_HmdFound_UserDataError              = 1112,
+	VRInitError_VendorSpecific_HmdFound_But						= 1100,
+	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
+	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
+	VRInitError_VendorSpecific_HmdFound_NoStoredConfig 			= 1103,
+	VRInitError_VendorSpecific_HmdFound_ConfigTooBig 				= 1104,
+	VRInitError_VendorSpecific_HmdFound_ConfigTooSmall 			= 1105,
+	VRInitError_VendorSpecific_HmdFound_UnableToInitZLib 			= 1106,
+	VRInitError_VendorSpecific_HmdFound_CantReadFirmwareVersion 	= 1107,
+	VRInitError_VendorSpecific_HmdFound_UnableToSendUserDataStart  = 1108,
+	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataStart   = 1109,
+	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
+	VRInitError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
+	VRInitError_VendorSpecific_HmdFound_UserDataError              = 1112,
 
-	HmdError_Steam_SteamInstallationNotFound = 2000,
+	VRInitError_Steam_SteamInstallationNotFound = 2000,
 
 };
 
@@ -782,33 +821,23 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 	uint32_t m_nWidth;
 	uint32_t m_nHeight;
 
-	uint32_t m_nFrameSequence;	// Starts from 0 when stream starts.
-	uint32_t m_nTimeStamp;		// Driver provided time stamp per driver centric time base
+	uint32_t m_nFrameSequence;			// Starts from 0 when stream starts.
+	uint32_t m_nTimeStamp;				// Driver provided time stamp per driver centric time base
 
-	uint32_t m_nBufferIndex;	// Identifies which buffer the image data is hosted
-	uint32_t m_nBufferCount;	// Total number of configured buffers
+	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
+	uint32_t m_nBufferCount;			// Total number of configured buffers
 
-	uint32_t m_nImageDataSize;	// Based on stream format, width, height
+	uint32_t m_nImageDataSize;			// Based on stream format, width, height
 
-	double m_flFrameTime;		// Starts from 0 when stream starts. In seconds.
+	double m_flFrameElapsedTime;		// Starts from 0 when stream starts. In seconds.
+	double m_flFrameCaptureTime;		// Relative to when the frame was exposed/captured.
 
-	bool m_bPoseValid;			// Supplied by HMD layer when used as a tracked camera
-	float m_HMDPoseMatrix[16];	
+	bool m_bPoseIsValid;				// Supplied by HMD layer when used as a tracked camera
+	vr::HmdMatrix34_t m_matDeviceToAbsoluteTracking;	
+
+	float m_Pad[4];
 
 	void *m_pImageData;
-};
-
-struct TrackedCameraCalibrationDevOnly_t
-{
-	double m_flIntrinsicsFX;
-	double m_flIntrinsicsFY;
-	double m_flIntrinsicsCX;
-	double m_flIntrinsicsCY;
-	double m_flIntrinsicsK1;
-	double m_flIntrinsicsK2;
-	double m_flIntrinsicsP1;
-	double m_flIntrinsicsP2;
-	double m_flIntrinsicsK3;
 };
 
 #pragma pack( pop )
@@ -862,6 +891,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_LogLevel_Int32 = "loglevel";
 	static const char * const k_pch_SteamVR_IPD_Float = "ipd";
 	static const char * const k_pch_SteamVR_Background_String = "background";
+	static const char * const k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -907,8 +937,8 @@ namespace vr
 	// perf keys
 	static const char * const k_pch_Perf_Section = "perfcheck";
 	static const char * const k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
-	static const char * const k_pch_Perf_NotifyInHMD_Bool = "notifyInHMD";
-	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "notifyOnlyOnce";
+	static const char * const k_pch_Perf_NotifyInHMD_Bool = "warnInHMD";
+	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
 	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 
@@ -933,7 +963,7 @@ struct TrackedDeviceDriverInfo_t
 	char rchModelNumber[ k_unTrackingStringSize ];		// Model number of the tracked object
 	char rchRenderModelName[ k_unTrackingStringSize ];	// Pass this to GetRenderModel to get the mesh and texture to render this device
 
-	TrackedDeviceClass eClass;	
+	ETrackedDeviceClass eClass;	
 
 	// This indicates that there is a device connected for this spot in the info array.
 	// It could go from true to false if the user unplugs the device.
@@ -957,6 +987,8 @@ struct TrackedDeviceDriverInfo_t
 	// The number of frames per second on the display itself. Applications should
 	// target this frame rate to keep up with the display
 	float fDisplayFrequency;
+
+	bool m_bHasCamera;
 };
 
 
@@ -1024,7 +1056,7 @@ struct DriverPose_t
 	* that axis in radians/second^2. */
 	double vecAngularAcceleration[ 3 ];
 
-	HmdTrackingResult result;
+	ETrackingResult result;
 
 	bool poseIsValid;
 	bool willDriftInYaw;
@@ -1047,7 +1079,7 @@ public:
 	* ITrackedDeviceServerDriver object should be kept to a minimum until it is activated. 
 	* The pose listener is guaranteed to be valid until Deactivate is called, but 
 	* should not be used after that point. */
-	virtual HmdError Activate( uint32_t unObjectId ) = 0;
+	virtual EVRInitError Activate( uint32_t unObjectId ) = 0;
 
 	/** This is called when The VR system is switching from this Hmd being the active display
 	* to another Hmd being the active display. The driver should clean whatever memory
@@ -1080,21 +1112,15 @@ public:
 	virtual void GetRecommendedRenderTargetSize( uint32_t *pnWidth, uint32_t *pnHeight ) = 0;
 
 	/** Gets the viewport in the frame buffer to draw the output of the distortion into */
-	virtual void GetEyeOutputViewport( Hmd_Eye eEye, uint32_t *pnX, uint32_t *pnY, uint32_t *pnWidth, uint32_t *pnHeight ) = 0;
+	virtual void GetEyeOutputViewport( EVREye eEye, uint32_t *pnX, uint32_t *pnY, uint32_t *pnWidth, uint32_t *pnHeight ) = 0;
 
 	/** The components necessary to build your own projection matrix in case your
 	* application is doing something fancy like infinite Z */
-	virtual void GetProjectionRaw( Hmd_Eye eEye, float *pfLeft, float *pfRight, float *pfTop, float *pfBottom ) = 0;
-
-	/** Returns the transform from eye space to the head space. Eye space is the per-eye flavor of head
-	* space that provides stereo disparity. Instead of Model * View * Projection the sequence is Model * View * Eye^-1 * Projection. 
-	* Normally View and Eye^-1 will be multiplied together and treated as View in your application. 
-	*/
-	virtual HmdMatrix34_t GetHeadFromEyePose( Hmd_Eye eEye ) = 0;
+	virtual void GetProjectionRaw( EVREye eEye, float *pfLeft, float *pfRight, float *pfTop, float *pfBottom ) = 0;
 
 	/** Returns the result of the distortion function for the specified eye and input UVs. UVs go from 0,0 in 
 	* the upper left of that eye's viewport and 1,1 in the lower right of that eye's viewport. */
-	virtual DistortionCoordinates_t ComputeDistortion( Hmd_Eye eEye, float fU, float fV ) = 0;
+	virtual DistortionCoordinates_t ComputeDistortion( EVREye eEye, float fU, float fV ) = 0;
 
 	// -----------------------------------
 	// Direct mode methods
@@ -1134,43 +1160,35 @@ public:
 	virtual const char *GetSerialNumber() = 0;
 
 	// ------------------------------------
-	// IPD Methods
-	// ------------------------------------
-
-	/** Gets the current IPD (Interpupillary Distance) in meters. */
-	virtual float GetIPD() = 0;
-
-	// ------------------------------------
 	// Tracking Methods
 	// ------------------------------------
 	virtual DriverPose_t GetPose() = 0;
-
 
 	// ------------------------------------
 	// Property Methods
 	// ------------------------------------
 
 	/** Returns a bool property. If the property is not available this function will return false. */
-	virtual bool GetBoolTrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+	virtual bool GetBoolTrackedDeviceProperty( ETrackedDeviceProperty prop, ETrackedPropertyError *pError ) = 0;
 
 	/** Returns a float property. If the property is not available this function will return 0. */
-	virtual float GetFloatTrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+	virtual float GetFloatTrackedDeviceProperty( ETrackedDeviceProperty prop, ETrackedPropertyError *pError ) = 0;
 
 	/** Returns an int property. If the property is not available this function will return 0. */
-	virtual int32_t GetInt32TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+	virtual int32_t GetInt32TrackedDeviceProperty( ETrackedDeviceProperty prop, ETrackedPropertyError *pError ) = 0;
 
 	/** Returns a uint64 property. If the property is not available this function will return 0. */
-	virtual uint64_t GetUint64TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+	virtual uint64_t GetUint64TrackedDeviceProperty( ETrackedDeviceProperty prop, ETrackedPropertyError *pError ) = 0;
 
 	/** Returns a matrix property. If the device index is not valid or the property is not a matrix type, this function will return identity. */
-	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty( TrackedDeviceProperty prop, TrackedPropertyError *pError ) = 0;
+	virtual HmdMatrix34_t GetMatrix34TrackedDeviceProperty( ETrackedDeviceProperty prop, ETrackedPropertyError *pError ) = 0;
 
 	/** Returns a string property. If the property is not available this function will return 0 and pError will be 
 	* set to an error. Otherwise it returns the length of the number of bytes necessary to hold this string including 
 	* the trailing null. If the buffer is too small the error will be TrackedProp_BufferTooSmall. Strings will 
 	* generally fit in buffers of k_unTrackingStringSize characters. Drivers may not return strings longer than 
 	* k_unMaxPropertyStringSize. */
-	virtual uint32_t GetStringTrackedDeviceProperty( TrackedDeviceProperty prop, char *pchValue, uint32_t unBufferSize, TrackedPropertyError *pError ) = 0;
+	virtual uint32_t GetStringTrackedDeviceProperty( ETrackedDeviceProperty prop, char *pchValue, uint32_t unBufferSize, ETrackedPropertyError *pError ) = 0;
 
 	// ------------------------------------
 	// Controller Methods
@@ -1203,11 +1221,13 @@ public:
 	virtual bool PauseVideoStream() = 0;
 	virtual bool ResumeVideoStream() = 0;
 	virtual bool IsVideoStreamPaused() = 0;
+	virtual bool GetCameraDistortion( float flInputU, float flInputV, float *pflOutputU, float *pflOutputV ) = 0;
+	virtual bool GetCameraProjection( float flWidthPixels, float flHeightPixels, float flZNear, float flZFar, vr::HmdMatrix44_t *pProjection ) = 0;
 };
 
 
 
-static const char *ITrackedDeviceServerDriver_Version = "ITrackedDeviceServerDriver_001";
+static const char *ITrackedDeviceServerDriver_Version = "ITrackedDeviceServerDriver_002";
 
 }
 // itrackeddevicedriverprovider.h
@@ -1273,6 +1293,15 @@ public:
 	
 	/** always returns a pointer to a valid interface pointer of IVRSettings */
 	virtual IVRSettings *GetSettings() = 0; 
+
+	/** Notifies the server that the physical IPD adjustment has been moved on the HMD */
+	virtual void PhysicalIpdSet( uint32_t unWhichDevice, float fPhysicalIpdMeters ) = 0;
+
+	/** Notifies the server that the proximity sensor on the specified device  */
+	virtual void ProximitySensorState( uint32_t unWhichDevice, bool bProximitySensorTriggered ) = 0;
+
+	/** Sends a vendor specific event (VREvent_VendorSpecific_Reserved_Start..VREvent_VendorSpecific_Reserved_End */
+	virtual void VendorSpecificEvent( uint32_t unWhichDevice, vr::EVREventType eventType, const VREvent_Data_t & eventData, double eventTimeOffset ) = 0;
 };
 
 
@@ -1281,7 +1310,7 @@ class IServerTrackedDeviceProvider
 {
 public:
 	/** initializes the driver. This will be called before any other methods are called.
-	* If Init returns anything other than HmdError_None the driver DLL will be unloaded.
+	* If Init returns anything other than VRInitError_None the driver DLL will be unloaded.
 	*
 	* pDriverHost will never be NULL, and will always be a pointer to a IServerDriverHost interface
 	*
@@ -1289,7 +1318,7 @@ public:
 	*	config files.
 	* pchDriverInstallDir - The absolute path of the root directory for the driver.
 	*/
-	virtual HmdError Init( IDriverLog *pDriverLog, vr::IServerDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) = 0;
+	virtual EVRInitError Init( IDriverLog *pDriverLog, vr::IServerDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) = 0;
 
 	/** cleans up the driver right before it is unloaded */
 	virtual void Cleanup() = 0;
@@ -1323,27 +1352,27 @@ public:
 	* To determine which devices exist on the system, just loop from 0 to k_unMaxTrackedDeviceCount and check
 	* the device class. Every device with something other than TrackedDevice_Invalid is associated with an 
 	* actual tracked device. */
-	virtual TrackedDeviceClass GetTrackedDeviceClass( vr::TrackedDeviceIndex_t unDeviceIndex ) = 0;
+	virtual ETrackedDeviceClass GetTrackedDeviceClass( vr::TrackedDeviceIndex_t unDeviceIndex ) = 0;
 
 	/** Returns true if there is a device connected in this slot. */
 	virtual bool IsTrackedDeviceConnected( vr::TrackedDeviceIndex_t unDeviceIndex ) = 0;
 
 	/** Returns a bool property. If the device index is not valid or the property is not a bool type this function will return false. */
-	virtual bool GetBoolTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, TrackedDeviceProperty prop, TrackedPropertyError *pError = 0L ) = 0;
+	virtual bool GetBoolTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pError = 0L ) = 0;
 
 	/** Returns a float property. If the device index is not valid or the property is not a float type this function will return 0. */
-	virtual float GetFloatTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, TrackedDeviceProperty prop, TrackedPropertyError *pError = 0L ) = 0;
+	virtual float GetFloatTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pError = 0L ) = 0;
 
 	/** Returns an int property. If the device index is not valid or the property is not a int type this function will return 0. */
-	virtual int32_t GetInt32TrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, TrackedDeviceProperty prop, TrackedPropertyError *pError = 0L ) = 0;
+	virtual int32_t GetInt32TrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pError = 0L ) = 0;
 
 	/** Returns a uint64 property. If the device index is not valid or the property is not a uint64 type this function will return 0. */
-	virtual uint64_t GetUint64TrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, TrackedDeviceProperty prop, TrackedPropertyError *pError = 0L ) = 0;
+	virtual uint64_t GetUint64TrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, ETrackedPropertyError *pError = 0L ) = 0;
 
 	/** Returns a string property. If the device index is not valid or the property is not a float type this function will 
 	* return 0. Otherwise it returns the length of the number of bytes necessary to hold this string including the trailing
 	* null. Strings will generally fit in buffers of k_unTrackingStringSize characters. */
-	virtual uint32_t GetStringTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, TrackedDeviceProperty prop, char *pchValue, uint32_t unBufferSize, TrackedPropertyError *pError = 0L ) = 0;
+	virtual uint32_t GetStringTrackedDeviceProperty( vr::TrackedDeviceIndex_t unDeviceIndex, ETrackedDeviceProperty prop, char *pchValue, uint32_t unBufferSize, ETrackedPropertyError *pError = 0L ) = 0;
 
 	/** always returns a pointer to a valid interface pointer of IVRSettings */
 	virtual IVRSettings *GetSettings() = 0; 
@@ -1357,7 +1386,7 @@ class IClientTrackedDeviceProvider
 public:
 	/** initializes the driver. This will be called before any other methods are called,
 	* except BIsHmdPresent(). BIsHmdPresent is called outside of the Init/Cleanup pair.
-	* If Init returns anything other than HmdError_None the driver DLL will be unloaded.
+	* If Init returns anything other than VRInitError_None the driver DLL will be unloaded.
 	*
 	* pDriverHost will never be NULL, and will always be a pointer to a IClientDriverHost interface
 	*
@@ -1365,7 +1394,7 @@ public:
 	*	config files.
 	* pchDriverInstallDir - The absolute path of the root directory for the driver.
 	*/
-	virtual HmdError Init( IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) = 0;
+	virtual EVRInitError Init( IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) = 0;
 
 	/** cleans up the driver right before it is unloaded */
 	virtual void Cleanup() = 0;
@@ -1378,12 +1407,7 @@ public:
 	virtual bool BIsHmdPresent( const char *pchUserConfigDir ) = 0;
 
 	/** called when the client inits an HMD to let the client driver know which one is in use */
-	virtual HmdError SetDisplayId( const char *pchDisplayId ) = 0;
-
-	/** [Windows Only]
-	* Notifies the driver that the VR output will appear in a particular window.
-	*/
-	virtual bool AttachToWindow( void *hWnd ) = 0;
+	virtual EVRInitError SetDisplayId( const char *pchDisplayId ) = 0;
 
 	/** Returns the stencil mesh information for the current HMD. If this HMD does not have a stencil mesh the vertex data and count will be
 	* NULL and 0 respectively. This mesh is meant to be rendered into the stencil buffer (or into the depth buffer setting nearz) before rendering
@@ -1391,14 +1415,14 @@ public:
 	* This will improve perf by letting the GPU early-reject pixels the user will never see before running the pixel shader.
 	* NOTE: Render this mesh with backface culling disabled since the winding order of the vertices can be different per-HMD or per-eye.
 	*/
-	virtual HiddenAreaMesh_t GetHiddenAreaMesh( Hmd_Eye eEye ) = 0;
+	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye ) = 0;
 
 	/** Get the MC image for the current HMD.
 	* Returns the size in bytes of the buffer required to hold the specified resource. */
 	virtual uint32_t GetMCImage( uint32_t *pImgWidth, uint32_t *pImgHeight, uint32_t *pChannels, void *pDataBuffer, uint32_t unBufferLen ) = 0;
 };
 
-static const char *IClientTrackedDeviceProvider_Version = "IClientTrackedDeviceProvider_001";
+static const char *IClientTrackedDeviceProvider_Version = "IClientTrackedDeviceProvider_002";
 
 }// End
 
