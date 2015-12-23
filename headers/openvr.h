@@ -2340,8 +2340,6 @@ static const char * const IVRRenderModels_Version = "IVRRenderModels_002";
 }
 
 
-
-}
 // ivrtrackedcamera.h
 namespace vr
 {
