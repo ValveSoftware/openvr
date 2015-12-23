@@ -29,6 +29,10 @@ namespace vr
 	#pragma pack( push, 8 )
 #endif
 
+typedef void* glSharedTextureHandle_t;
+typedef int32_t glInt_t;
+typedef uint32_t glUInt_t;
+
 // right-handed system
 // +y is up
 // +x is to the right
@@ -77,6 +81,12 @@ struct HmdColor_t
 struct HmdQuad_t
 {
 	HmdVector3_t vCorners[ 4 ];
+};
+
+struct HmdRect2_t
+{
+	HmdVector2_t vTopLeft;
+	HmdVector2_t vBottomRight;
 };
 
 /** Used to return the post-distortion UVs for each color channel. 
@@ -147,6 +157,15 @@ enum ETrackedDeviceClass
 };
 
 
+/** Describes what specific role associated with a tracked device */
+enum ETrackedControllerRole
+{
+	TrackedControllerRole_Invalid = 0,					// Invalid value for controller type
+	TrackedControllerRole_LeftHand = 1,					// Tracked device associated with the left hand
+	TrackedControllerRole_RightHand = 2,				// Tracked device associated with the right hand
+};
+
+
 /** describes a single pose for a tracked object */
 struct TrackedDevicePose_t
 {
@@ -203,6 +222,7 @@ enum ETrackedDeviceProperty
 	Prop_CanUnifyCoordinateSystemWithHmd_Bool	= 1024,
 	Prop_ContainsProximitySensor_Bool			= 1025,
 	Prop_DeviceProvidesBatteryStatus_Bool		= 1026,
+	Prop_DeviceCanPowerOff_Bool					= 1027,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -221,7 +241,18 @@ enum ETrackedDeviceProperty
 	Prop_DisplayMCImageRight_String             = 2013,
 	Prop_DisplayGCBlackClamp_Float				= 2014,
 	Prop_EdidProductID_Int32					= 2015,
-	Prop_CameraToHeadTransform_Matrix34		    = 2016,
+	Prop_CameraToHeadTransform_Matrix34			= 2016,
+	Prop_DisplayGCType_Int32					= 2017,
+	Prop_DisplayGCOffset_Float					= 2018,
+	Prop_DisplayGCScale_Float					= 2019,
+	Prop_DisplayGCPrescale_Float				= 2020,
+	Prop_DisplayGCImage_String					= 2021,
+	Prop_LensCenterLeftU_Float					= 2022,
+	Prop_LensCenterLeftV_Float					= 2023,
+	Prop_LensCenterRightU_Float					= 2024,
+	Prop_LensCenterRightV_Float					= 2025,
+	Prop_UserHeadToEyeDepthMeters_Float			= 2026,
+	Prop_CameraFirmwareVersion_Uint64			= 2027,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -311,6 +342,8 @@ enum EVREventType
 	VREvent_TrackedDeviceUserInteractionStarted		= 103,
 	VREvent_TrackedDeviceUserInteractionEnded	= 104,
 	VREvent_IpdChanged					= 105,
+	VREvent_EnterStandbyMode			= 106,
+	VREvent_LeaveStandbyMode			= 107,
 
 	VREvent_ButtonPress					= 200, // data is controller
 	VREvent_ButtonUnpress				= 201, // data is controller
@@ -359,6 +392,8 @@ enum EVREventType
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
 
+	VREvent_BackgroundSettingHasChanged	= 850,
+
 	VREvent_StatusUpdate				= 900,
 
 	VREvent_MCImageUpdated				= 1000,
@@ -394,6 +429,7 @@ enum EDeviceActivityLevel
 	k_EDeviceActivityLevel_Idle = 0,
 	k_EDeviceActivityLevel_UserInteraction = 1,
 	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,
+	k_EDeviceActivityLevel_Standby = 3,
 };
 
 
@@ -657,6 +693,8 @@ enum EVRApplicationType
 	VRApplication_Overlay = 2,		// Application only interacts with overlays
 	VRApplication_Background = 3,	// Application should not start SteamVR if it's not already running, and should not
 									// keep it running if everything else quits.
+	VRApplication_Utility = 4,		// Init should not try to load any drivers. The application needs access to utility
+									// interfaces (like IVRSettings and IVRApplications) but not hardware.
 };
 
 
@@ -674,6 +712,8 @@ enum EVRNotificationError
 {
 	VRNotificationError_OK = 0,
 	VRNotificationError_InvalidNotificationId = 100,
+	VRNotificationError_NotificationQueueFull = 101,
+	VRNotificationError_InvalidOverlayHandle = 102,
 };
 
 
@@ -708,6 +748,7 @@ enum EVRInitError
 	VRInitError_Init_TooManyObjects		= 120,
 	VRInitError_Init_NoServerForBackgroundApp = 121,
 	VRInitError_Init_NotSupportedWithCompositor = 122,
+	VRInitError_Init_NotAvailableToUtilityApps = 123,
 
 	VRInitError_Driver_Failed				= 200,
 	VRInitError_Driver_Unknown				= 201,
@@ -741,6 +782,7 @@ enum EVRInitError
 	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
 	VRInitError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
 	VRInitError_VendorSpecific_HmdFound_UserDataError              = 1112,
+	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck    = 1113,
 
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
 
@@ -976,13 +1018,19 @@ public:
 	* in the list, or the size of the array needed if not large enough. */
 	virtual uint32_t GetSortedTrackedDeviceIndicesOfClass( ETrackedDeviceClass eTrackedDeviceClass, VR_ARRAY_COUNT(unTrackedDeviceIndexArrayCount) vr::TrackedDeviceIndex_t *punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount, vr::TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex = k_unTrackedDeviceIndex_Hmd ) = 0;
 
-	/** Returns the level of activity on the HMD. */
+	/** Returns the level of activity on the device. */
 	virtual EDeviceActivityLevel GetTrackedDeviceActivityLevel( vr::TrackedDeviceIndex_t unDeviceId ) = 0;
 
 	/** Convenience utility to apply the specified transform to the specified pose.
 	*   This properly transforms all pose components, including velocity and angular velocity
 	*/
 	virtual void ApplyTransform( TrackedDevicePose_t *pOutputPose, const TrackedDevicePose_t *pTrackedDevicePose, const HmdMatrix34_t *pTransform ) = 0;
+
+	/** Returns the device index associated with a specific role, for example the left hand or the right hand. */
+	virtual vr::TrackedDeviceIndex_t GetTrackedDeviceIndexForControllerRole( vr::ETrackedControllerRole unDeviceType ) = 0;
+
+	/** Returns the controller type associated with a device index. */
+	virtual vr::ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex( vr::TrackedDeviceIndex_t unDeviceIndex ) = 0;
 
 	// ------------------------------------
 	// Property methods
@@ -1124,7 +1172,7 @@ public:
 	virtual void AcknowledgeQuit_UserPrompt() = 0;
 };
 
-static const char * const IVRSystem_Version = "IVRSystem_009";
+static const char * const IVRSystem_Version = "IVRSystem_010";
 
 }
 
@@ -1334,7 +1382,13 @@ namespace vr
 	static const char * const k_pch_SteamVR_LogLevel_Int32 = "loglevel";
 	static const char * const k_pch_SteamVR_IPD_Float = "ipd";
 	static const char * const k_pch_SteamVR_Background_String = "background";
+	static const char * const k_pch_SteamVR_GridColor_String = "gridColor";
+	static const char * const k_pch_SteamVR_PlayAreaColor_String = "playAreaColor";
 	static const char * const k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
+	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
+	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
+	static const char * const k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
+
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1459,11 +1513,11 @@ public:
 	virtual void SetSceneColor( HmdColor_t color ) = 0;
 
 	/** Get the current chaperone bounds draw color and brightness **/
-	virtual void GetBoundsColor( HmdColor_t *pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance ) = 0;
-	
+	virtual void GetBoundsColor( HmdColor_t *pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance, HmdColor_t *pOutputCameraColor ) = 0;
+
 	/** Determine whether the bounds are showing right now **/
 	virtual bool AreBoundsVisible() = 0;
-	
+
 	/** Force the bounds to show, mostly for utilities **/
 	virtual void ForceBoundsVisible( bool bForce ) = 0;
 };
@@ -1575,6 +1629,7 @@ enum EVRCompositorError
 	VRCompositorError_IsNotSceneApplication		= 103,
 	VRCompositorError_TextureIsOnWrongDevice	= 104,
 	VRCompositorError_TextureUsesUnsupportedFormat = 105,
+	VRCompositorError_SharedTexturesNotSupported = 106,
 };
 
 
@@ -1599,6 +1654,7 @@ struct Compositor_FrameTiming
 	float m_flRunningStartMs;
 	float m_flHandoffStartMs;
 	float m_flHandoffEndMs;
+	float m_flCompositorUpdateCpuMs;
 };
 
 
@@ -1999,6 +2055,8 @@ namespace vr
 		/** Returns true if the overlay is visible. */
 		virtual bool IsOverlayVisible( VROverlayHandle_t ulOverlayHandle ) = 0;
 
+		/** Get the transform in 3d space associated with a specific 2d point in the overlay's coordinate space (where 0,0 is the lower left). -Z points out of the overlay */
+		virtual EVROverlayError GetTransformForOverlayCoordinates( VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, HmdMatrix34_t *pmatTransform ) = 0;
 
 		// ---------------------------------------------
 		// Overlay input methods
@@ -2114,9 +2172,14 @@ namespace vr
 		/** Hide the virtual keyboard **/
 		virtual void HideKeyboard() = 0;
 
+		/** Set the position of the keyboard in world space **/
+		virtual void SetKeyboardTransformAbsolute( ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t *pmatTrackingOriginToKeyboardTransform ) = 0;
+
+		/** Set the position of the keyboard in overlay space by telling it to avoid a rectangle in the overlay. Rectangle coords have (0,0) in the bottom left **/
+		virtual void SetKeyboardPositionForOverlay( VROverlayHandle_t ulOverlayHandle, HmdRect2_t avoidRect ) = 0;
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_007";
+	static const char * const IVROverlay_Version = "IVROverlay_008";
 
 } // namespace vr
 
@@ -2277,113 +2340,6 @@ static const char * const IVRRenderModels_Version = "IVRRenderModels_002";
 }
 
 
-// ivrcontrolpanel.h
-namespace vr
-{
-
-class IVRControlPanel
-{
-public:
-
-	// ------------------------------------
-	// Driver enumeration methods
-	// ------------------------------------
-
-	/** the number of active drivers */
-	virtual uint32_t GetDriverCount() = 0;
-
-	/** The ID of the specified driver as a UTF-8 string. Returns the length of the ID in bytes. If 
-	* the buffer is not large enough to fit the ID an empty string will be returned. In general, 128 bytes
-	* will be enough to fit any ID. */
-	virtual uint32_t GetDriverId( uint32_t unDriverIndex, char *pchBuffer, uint32_t unBufferLen ) = 0;
-
-	// ------------------------------------
-	// Display Enumeration Methods
-	// ------------------------------------
-
-	/** the number of active displays on the specified driver */
-	virtual uint32_t GetDriverDisplayCount( const char *pchDriverId ) = 0;
-
-	/** The ID of the specified display in the specified driver as a UTF-8 string. Returns the 
-	* length of the ID in bytes. If the buffer is not large enough to fit the ID an empty
-	* string will be returned. In general, 128 bytes will be enough to fit any ID. */
-	virtual uint32_t GetDriverDisplayId( const char *pchDriverId, uint32_t unDisplayIndex, char *pchBuffer, uint32_t unBufferLen ) = 0;
-
-	// ------------------------------------
-	// Display Detail Methods
-	// ------------------------------------
-
-	/** The model name of the specified driver in the specified driver as a UTF-8 string. Returns the 
-	* length of the model name in bytes. If the buffer is not large enough to fit the model name an empty
-	* string will be returned. In general, 128 bytes will be enough to fit any model name. Returns 0 if
-	* the display or driver was not found. */
-	virtual uint32_t GetDriverDisplayModelNumber( const char *pchDriverId, const char *pchDisplayId, char *pchBuffer, uint32_t unBufferLen ) = 0;
-
-	/** The serial number of the specified driver in the specified driver as a UTF-8 string. Returns the 
-	* length of the serial number in bytes. If the buffer is not large enough to fit the serial number an empty
-	* string will be returned. In general, 128 bytes will be enough to fit any model name. Returns 0 if
-	* the display or driver was not found. */
-	virtual uint32_t GetDriverDisplaySerialNumber( const char *pchDriverId, const char *pchDisplayId, char *pchBuffer, uint32_t unBufferLen ) = 0;
-
-	/** Returns the IVRSystem interface for the current display that matches the specified version number. 
-	* This is usually unnecessary and the return value of VR_Init can be used without calling this method. */
-	VR_IGNOREATTR()
-	virtual class IVRSystem *GetCurrentDisplayInterface( const char *pchHmdInterfaceVersion ) = 0;
-
-	// ------------------------------------
-	// Shared Resource Methods
-	// ------------------------------------
-
-	/** Loads the specified resource into the provided buffer if large enough.
-	* Returns the size in bytes of the buffer required to hold the specified resource. */
-	virtual uint32_t LoadSharedResource( const char *pchResourceName, char *pchBuffer, uint32_t unBufferLen ) = 0;
-
-	// ------------------------------------
-	// IPD Methods
-	// ------------------------------------
-
-	/** Gets the current IPD (Interpupillary Distance) in meters. */
-	virtual float GetIPD() = 0;
-
-	/** Sets the current IPD (Interpupillary Distance) in meters. */
-	virtual void SetIPD( float fIPD ) = 0;
-
-	// ------------------------------------
-	// Compositor Methods
-	// ------------------------------------
-
-	/** Returns the IVRCompositor interface that matches the specified interface version.  This will only
-	* return the compositor interface if it has already been initialized by the current process. */
-	virtual class vr::IVRCompositor *GetCurrentCompositorInterface( const char *pchInterfaceVersion ) = 0;
-
-	// ------------------------------------
-	// Process control Methods
-	// ------------------------------------
-
-	/** Tells the specified OpenVR process to quit. If the process ID is 0, all processes will be told to quit,
-	* ending with the process submitting the request. Returns false if the request could not be sent. */
-	virtual bool QuitProcess( uint32_t pidProcessToQuit ) = 0;
-
-	/** Starts a process and returns the PID or 0 if the process failed to start. */
-	virtual uint32_t StartVRProcess( const char *pchExecutable, const char **pchArguments, uint32_t unArgumentCount, const char *pchWorkingDirectory) = 0;
-
-	/** Sets the master process for OpenVR. When the master process exits VRServer will send quit messages to every other process
-	* to start the shutdown process */
-	virtual void SetMasterProcessToThis() = 0;
-	
-	/** Tells the application system to start all autolaunched dashboard overlays */
-	virtual void StartAutolaunchOverlays() = 0;
-
-	/** Tells the specified OpenVR process to quit. The process ID must be valid. Quitting all processes by passing 0 is not supported.  
-	* Returns false if the request could not be sent. */
-	virtual bool ForceQuitProcess( uint32_t pidProcessToQuit ) = 0;
-
-	/** Aborts a process quit/application transition at the user's request. */
-	virtual void AbortTransition() = 0;
-
-};
-
-static const char * const IVRControlPanel_Version = "IVRControlPanel_001";
 
 }
 // ivrtrackedcamera.h
@@ -2537,9 +2493,6 @@ namespace vr
 
 	/** Returns the current IVRRenderModels pointer or NULL the interface could not be found. */
 	VR_INTERFACE vr::IVRRenderModels *VR_CALLTYPE VRRenderModels();
-
-	/** Returns the current IVRControlPanel pointer or NULL the interface could not be found. */
-	VR_INTERFACE vr::IVRControlPanel *VR_CALLTYPE VRControlPanel();
 
 	/** Returns the current IVRTrackedCamera pointer or NULL the interface could not be found. */
 	VR_INTERFACE vr::IVRTrackedCamera *VR_CALLTYPE VRTrackedCamera();

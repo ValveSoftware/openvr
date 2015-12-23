@@ -51,6 +51,10 @@ class VRNativeEntrypoints
 	internal static extern EDeviceActivityLevel VR_IVRSystem_GetTrackedDeviceActivityLevel(IntPtr instancePtr, uint unDeviceId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_ApplyTransform")]
 	internal static extern void VR_IVRSystem_ApplyTransform(IntPtr instancePtr, ref TrackedDevicePose_t pOutputPose, ref TrackedDevicePose_t pTrackedDevicePose, ref HmdMatrix34_t pTransform);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetTrackedDeviceIndexForControllerRole")]
+	internal static extern uint VR_IVRSystem_GetTrackedDeviceIndexForControllerRole(IntPtr instancePtr, ETrackedControllerRole unDeviceType);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetControllerRoleForTrackedDeviceIndex")]
+	internal static extern ETrackedControllerRole VR_IVRSystem_GetControllerRoleForTrackedDeviceIndex(IntPtr instancePtr, uint unDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_GetTrackedDeviceClass")]
 	internal static extern ETrackedDeviceClass VR_IVRSystem_GetTrackedDeviceClass(IntPtr instancePtr, uint unDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_IsTrackedDeviceConnected")]
@@ -158,7 +162,7 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_SetSceneColor")]
 	internal static extern void VR_IVRChaperone_SetSceneColor(IntPtr instancePtr, HmdColor_t color);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_GetBoundsColor")]
-	internal static extern void VR_IVRChaperone_GetBoundsColor(IntPtr instancePtr, ref HmdColor_t pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance);
+	internal static extern void VR_IVRChaperone_GetBoundsColor(IntPtr instancePtr, ref HmdColor_t pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance, ref HmdColor_t pOutputCameraColor);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_AreBoundsVisible")]
 	internal static extern bool VR_IVRChaperone_AreBoundsVisible(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperone_ForceBoundsVisible")]
@@ -301,6 +305,8 @@ class VRNativeEntrypoints
 	internal static extern EVROverlayError VR_IVROverlay_HideOverlay(IntPtr instancePtr, ulong ulOverlayHandle);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_IsOverlayVisible")]
 	internal static extern bool VR_IVROverlay_IsOverlayVisible(IntPtr instancePtr, ulong ulOverlayHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetTransformForOverlayCoordinates")]
+	internal static extern EVROverlayError VR_IVROverlay_GetTransformForOverlayCoordinates(IntPtr instancePtr, ulong ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, ref HmdMatrix34_t pmatTransform);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_PollNextOverlayEvent")]
 	internal static extern bool VR_IVROverlay_PollNextOverlayEvent(IntPtr instancePtr, ulong ulOverlayHandle, ref VREvent_t pEvent);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_GetOverlayInputMethod")]
@@ -353,6 +359,10 @@ class VRNativeEntrypoints
 	internal static extern uint VR_IVROverlay_GetKeyboardText(IntPtr instancePtr, System.Text.StringBuilder pchText, uint cchText);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_HideKeyboard")]
 	internal static extern void VR_IVROverlay_HideKeyboard(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetKeyboardTransformAbsolute")]
+	internal static extern void VR_IVROverlay_SetKeyboardTransformAbsolute(IntPtr instancePtr, ETrackingUniverseOrigin eTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToKeyboardTransform);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetKeyboardPositionForOverlay")]
+	internal static extern void VR_IVROverlay_SetKeyboardPositionForOverlay(IntPtr instancePtr, ulong ulOverlayHandle, HmdRect2_t avoidRect);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadRenderModel")]
 	internal static extern bool VR_IVRRenderModels_LoadRenderModel(IntPtr instancePtr, string pchRenderModelName, ref IntPtr ppRenderModel);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeRenderModel")]
@@ -375,38 +385,6 @@ class VRNativeEntrypoints
 	internal static extern uint VR_IVRRenderModels_GetComponentRenderModelName(IntPtr instancePtr, string pchRenderModelName, string pchComponentName, System.Text.StringBuilder pchComponentRenderModelName, uint unComponentRenderModelNameLen);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetComponentState")]
 	internal static extern bool VR_IVRRenderModels_GetComponentState(IntPtr instancePtr, string pchRenderModelName, string pchComponentName, ref VRControllerState_t pControllerState, ref RenderModel_ComponentState_t pComponentState);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetDriverCount")]
-	internal static extern uint VR_IVRControlPanel_GetDriverCount(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetDriverId")]
-	internal static extern uint VR_IVRControlPanel_GetDriverId(IntPtr instancePtr, uint unDriverIndex, string pchBuffer, uint unBufferLen);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetDriverDisplayCount")]
-	internal static extern uint VR_IVRControlPanel_GetDriverDisplayCount(IntPtr instancePtr, string pchDriverId);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetDriverDisplayId")]
-	internal static extern uint VR_IVRControlPanel_GetDriverDisplayId(IntPtr instancePtr, string pchDriverId, uint unDisplayIndex, string pchBuffer, uint unBufferLen);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetDriverDisplayModelNumber")]
-	internal static extern uint VR_IVRControlPanel_GetDriverDisplayModelNumber(IntPtr instancePtr, string pchDriverId, string pchDisplayId, string pchBuffer, uint unBufferLen);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetDriverDisplaySerialNumber")]
-	internal static extern uint VR_IVRControlPanel_GetDriverDisplaySerialNumber(IntPtr instancePtr, string pchDriverId, string pchDisplayId, string pchBuffer, uint unBufferLen);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_LoadSharedResource")]
-	internal static extern uint VR_IVRControlPanel_LoadSharedResource(IntPtr instancePtr, string pchResourceName, string pchBuffer, uint unBufferLen);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetIPD")]
-	internal static extern float VR_IVRControlPanel_GetIPD(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_SetIPD")]
-	internal static extern void VR_IVRControlPanel_SetIPD(IntPtr instancePtr, float fIPD);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_GetCurrentCompositorInterface")]
-	internal static extern IntPtr VR_IVRControlPanel_GetCurrentCompositorInterface(IntPtr instancePtr, string pchInterfaceVersion);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_QuitProcess")]
-	internal static extern bool VR_IVRControlPanel_QuitProcess(IntPtr instancePtr, uint pidProcessToQuit);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_StartVRProcess")]
-	internal static extern uint VR_IVRControlPanel_StartVRProcess(IntPtr instancePtr, string pchExecutable, ref string pchArguments, uint unArgumentCount, string pchWorkingDirectory);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_SetMasterProcessToThis")]
-	internal static extern void VR_IVRControlPanel_SetMasterProcessToThis(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_StartAutolaunchOverlays")]
-	internal static extern void VR_IVRControlPanel_StartAutolaunchOverlays(IntPtr instancePtr);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_ForceQuitProcess")]
-	internal static extern bool VR_IVRControlPanel_ForceQuitProcess(IntPtr instancePtr, uint pidProcessToQuit);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRControlPanel_AbortTransition")]
-	internal static extern void VR_IVRControlPanel_AbortTransition(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_CreateNotification")]
 	internal static extern EVRNotificationError VR_IVRNotifications_CreateNotification(IntPtr instancePtr, ulong ulOverlayHandle, ulong ulUserValue, EVRNotificationType type, string pchText, EVRNotificationStyle style, ref NotificationBitmap_t pImage, ref uint pNotificationId);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_RemoveNotification")]
@@ -497,6 +475,8 @@ public abstract class IVRSystem
 	public abstract uint GetSortedTrackedDeviceIndicesOfClass(ETrackedDeviceClass eTrackedDeviceClass,uint [] punTrackedDeviceIndexArray,uint unRelativeToTrackedDeviceIndex);
 	public abstract EDeviceActivityLevel GetTrackedDeviceActivityLevel(uint unDeviceId);
 	public abstract void ApplyTransform(ref TrackedDevicePose_t pOutputPose,ref TrackedDevicePose_t pTrackedDevicePose,ref HmdMatrix34_t pTransform);
+	public abstract uint GetTrackedDeviceIndexForControllerRole(ETrackedControllerRole unDeviceType);
+	public abstract ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex(uint unDeviceIndex);
 	public abstract ETrackedDeviceClass GetTrackedDeviceClass(uint unDeviceIndex);
 	public abstract bool IsTrackedDeviceConnected(uint unDeviceIndex);
 	public abstract bool GetBoolTrackedDeviceProperty(uint unDeviceIndex,ETrackedDeviceProperty prop,ref ETrackedPropertyError pError);
@@ -568,7 +548,7 @@ public abstract class IVRChaperone
 	public abstract bool GetPlayAreaRect(ref HmdQuad_t rect);
 	public abstract void ReloadInfo();
 	public abstract void SetSceneColor(HmdColor_t color);
-	public abstract void GetBoundsColor(ref HmdColor_t pOutputColorArray,int nNumOutputColors,float flCollisionBoundsFadeDistance);
+	public abstract void GetBoundsColor(ref HmdColor_t pOutputColorArray,int nNumOutputColors,float flCollisionBoundsFadeDistance,ref HmdColor_t pOutputCameraColor);
 	public abstract bool AreBoundsVisible();
 	public abstract void ForceBoundsVisible(bool bForce);
 }
@@ -658,6 +638,7 @@ public abstract class IVROverlay
 	public abstract EVROverlayError ShowOverlay(ulong ulOverlayHandle);
 	public abstract EVROverlayError HideOverlay(ulong ulOverlayHandle);
 	public abstract bool IsOverlayVisible(ulong ulOverlayHandle);
+	public abstract EVROverlayError GetTransformForOverlayCoordinates(ulong ulOverlayHandle,ETrackingUniverseOrigin eTrackingOrigin,HmdVector2_t coordinatesInOverlay,ref HmdMatrix34_t pmatTransform);
 	public abstract bool PollNextOverlayEvent(ulong ulOverlayHandle,ref VREvent_t pEvent);
 	public abstract EVROverlayError GetOverlayInputMethod(ulong ulOverlayHandle,ref VROverlayInputMethod peInputMethod);
 	public abstract EVROverlayError SetOverlayInputMethod(ulong ulOverlayHandle,VROverlayInputMethod eInputMethod);
@@ -684,6 +665,8 @@ public abstract class IVROverlay
 	public abstract EVROverlayError ShowKeyboardForOverlay(ulong ulOverlayHandle,int eInputMode,int eLineInputMode,string pchDescription,uint unCharMax,string pchExistingText,bool bUseMinimalMode,ulong uUserValue);
 	public abstract uint GetKeyboardText(System.Text.StringBuilder pchText,uint cchText);
 	public abstract void HideKeyboard();
+	public abstract void SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToKeyboardTransform);
+	public abstract void SetKeyboardPositionForOverlay(ulong ulOverlayHandle,HmdRect2_t avoidRect);
 }
 
 
@@ -701,28 +684,6 @@ public abstract class IVRRenderModels
 	public abstract ulong GetComponentButtonMask(string pchRenderModelName,string pchComponentName);
 	public abstract uint GetComponentRenderModelName(string pchRenderModelName,string pchComponentName,System.Text.StringBuilder pchComponentRenderModelName,uint unComponentRenderModelNameLen);
 	public abstract bool GetComponentState(string pchRenderModelName,string pchComponentName,ref VRControllerState_t pControllerState,ref RenderModel_ComponentState_t pComponentState);
-}
-
-
-public abstract class IVRControlPanel
-{
-	public abstract IntPtr GetIntPtr();
-	public abstract uint GetDriverCount();
-	public abstract uint GetDriverId(uint unDriverIndex,string pchBuffer,uint unBufferLen);
-	public abstract uint GetDriverDisplayCount(string pchDriverId);
-	public abstract uint GetDriverDisplayId(string pchDriverId,uint unDisplayIndex,string pchBuffer,uint unBufferLen);
-	public abstract uint GetDriverDisplayModelNumber(string pchDriverId,string pchDisplayId,string pchBuffer,uint unBufferLen);
-	public abstract uint GetDriverDisplaySerialNumber(string pchDriverId,string pchDisplayId,string pchBuffer,uint unBufferLen);
-	public abstract uint LoadSharedResource(string pchResourceName,string pchBuffer,uint unBufferLen);
-	public abstract float GetIPD();
-	public abstract void SetIPD(float fIPD);
-	public abstract IVRCompositor GetCurrentCompositorInterface(string pchInterfaceVersion);
-	public abstract bool QuitProcess(uint pidProcessToQuit);
-	public abstract uint StartVRProcess(string pchExecutable,ref string pchArguments,uint unArgumentCount,string pchWorkingDirectory);
-	public abstract void SetMasterProcessToThis();
-	public abstract void StartAutolaunchOverlays();
-	public abstract bool ForceQuitProcess(uint pidProcessToQuit);
-	public abstract void AbortTransition();
 }
 
 
@@ -896,6 +857,18 @@ public class CVRSystem : IVRSystem
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRSystem_ApplyTransform(m_pVRSystem,ref pOutputPose,ref pTrackedDevicePose,ref pTransform);
+	}
+	public override uint GetTrackedDeviceIndexForControllerRole(ETrackedControllerRole unDeviceType)
+	{
+		CheckIfUsable();
+		uint result = VRNativeEntrypoints.VR_IVRSystem_GetTrackedDeviceIndexForControllerRole(m_pVRSystem,unDeviceType);
+		return result;
+	}
+	public override ETrackedControllerRole GetControllerRoleForTrackedDeviceIndex(uint unDeviceIndex)
+	{
+		CheckIfUsable();
+		ETrackedControllerRole result = VRNativeEntrypoints.VR_IVRSystem_GetControllerRoleForTrackedDeviceIndex(m_pVRSystem,unDeviceIndex);
+		return result;
 	}
 	public override ETrackedDeviceClass GetTrackedDeviceClass(uint unDeviceIndex)
 	{
@@ -1278,10 +1251,10 @@ public class CVRChaperone : IVRChaperone
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRChaperone_SetSceneColor(m_pVRChaperone,color);
 	}
-	public override void GetBoundsColor(ref HmdColor_t pOutputColorArray,int nNumOutputColors,float flCollisionBoundsFadeDistance)
+	public override void GetBoundsColor(ref HmdColor_t pOutputColorArray,int nNumOutputColors,float flCollisionBoundsFadeDistance,ref HmdColor_t pOutputCameraColor)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRChaperone_GetBoundsColor(m_pVRChaperone,ref pOutputColorArray,nNumOutputColors,flCollisionBoundsFadeDistance);
+		VRNativeEntrypoints.VR_IVRChaperone_GetBoundsColor(m_pVRChaperone,ref pOutputColorArray,nNumOutputColors,flCollisionBoundsFadeDistance,ref pOutputCameraColor);
 	}
 	public override bool AreBoundsVisible()
 	{
@@ -1771,6 +1744,12 @@ public class CVROverlay : IVROverlay
 		bool result = VRNativeEntrypoints.VR_IVROverlay_IsOverlayVisible(m_pVROverlay,ulOverlayHandle);
 		return result;
 	}
+	public override EVROverlayError GetTransformForOverlayCoordinates(ulong ulOverlayHandle,ETrackingUniverseOrigin eTrackingOrigin,HmdVector2_t coordinatesInOverlay,ref HmdMatrix34_t pmatTransform)
+	{
+		CheckIfUsable();
+		EVROverlayError result = VRNativeEntrypoints.VR_IVROverlay_GetTransformForOverlayCoordinates(m_pVROverlay,ulOverlayHandle,eTrackingOrigin,coordinatesInOverlay,ref pmatTransform);
+		return result;
+	}
 	public override bool PollNextOverlayEvent(ulong ulOverlayHandle,ref VREvent_t pEvent)
 	{
 		CheckIfUsable();
@@ -1928,6 +1907,16 @@ public class CVROverlay : IVROverlay
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVROverlay_HideKeyboard(m_pVROverlay);
 	}
+	public override void SetKeyboardTransformAbsolute(ETrackingUniverseOrigin eTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToKeyboardTransform)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVROverlay_SetKeyboardTransformAbsolute(m_pVROverlay,eTrackingOrigin,ref pmatTrackingOriginToKeyboardTransform);
+	}
+	public override void SetKeyboardPositionForOverlay(ulong ulOverlayHandle,HmdRect2_t avoidRect)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVROverlay_SetKeyboardPositionForOverlay(m_pVROverlay,ulOverlayHandle,avoidRect);
+	}
 }
 
 
@@ -2015,117 +2004,6 @@ public class CVRRenderModels : IVRRenderModels
 }
 
 
-public class CVRControlPanel : IVRControlPanel
-{
-	public CVRControlPanel(IntPtr VRControlPanel)
-	{
-		m_pVRControlPanel = VRControlPanel;
-	}
-	IntPtr m_pVRControlPanel;
-
-	public override IntPtr GetIntPtr() { return m_pVRControlPanel; }
-
-	private void CheckIfUsable()
-	{
-		if (m_pVRControlPanel == IntPtr.Zero)
-		{
-			throw new Exception("Steam Pointer not configured");
-		}
-	}
-	public override uint GetDriverCount()
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_GetDriverCount(m_pVRControlPanel);
-		return result;
-	}
-	public override uint GetDriverId(uint unDriverIndex,string pchBuffer,uint unBufferLen)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_GetDriverId(m_pVRControlPanel,unDriverIndex,pchBuffer,unBufferLen);
-		return result;
-	}
-	public override uint GetDriverDisplayCount(string pchDriverId)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_GetDriverDisplayCount(m_pVRControlPanel,pchDriverId);
-		return result;
-	}
-	public override uint GetDriverDisplayId(string pchDriverId,uint unDisplayIndex,string pchBuffer,uint unBufferLen)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_GetDriverDisplayId(m_pVRControlPanel,pchDriverId,unDisplayIndex,pchBuffer,unBufferLen);
-		return result;
-	}
-	public override uint GetDriverDisplayModelNumber(string pchDriverId,string pchDisplayId,string pchBuffer,uint unBufferLen)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_GetDriverDisplayModelNumber(m_pVRControlPanel,pchDriverId,pchDisplayId,pchBuffer,unBufferLen);
-		return result;
-	}
-	public override uint GetDriverDisplaySerialNumber(string pchDriverId,string pchDisplayId,string pchBuffer,uint unBufferLen)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_GetDriverDisplaySerialNumber(m_pVRControlPanel,pchDriverId,pchDisplayId,pchBuffer,unBufferLen);
-		return result;
-	}
-	public override uint LoadSharedResource(string pchResourceName,string pchBuffer,uint unBufferLen)
-	{
-		CheckIfUsable();
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_LoadSharedResource(m_pVRControlPanel,pchResourceName,pchBuffer,unBufferLen);
-		return result;
-	}
-	public override float GetIPD()
-	{
-		CheckIfUsable();
-		float result = VRNativeEntrypoints.VR_IVRControlPanel_GetIPD(m_pVRControlPanel);
-		return result;
-	}
-	public override void SetIPD(float fIPD)
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRControlPanel_SetIPD(m_pVRControlPanel,fIPD);
-	}
-	public override IVRCompositor GetCurrentCompositorInterface(string pchInterfaceVersion)
-	{
-		CheckIfUsable();
-		IntPtr result = VRNativeEntrypoints.VR_IVRControlPanel_GetCurrentCompositorInterface(m_pVRControlPanel,pchInterfaceVersion);
-		return (IVRCompositor) Marshal.PtrToStructure(result, typeof(IVRCompositor));
-	}
-	public override bool QuitProcess(uint pidProcessToQuit)
-	{
-		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRControlPanel_QuitProcess(m_pVRControlPanel,pidProcessToQuit);
-		return result;
-	}
-	public override uint StartVRProcess(string pchExecutable,ref string pchArguments,uint unArgumentCount,string pchWorkingDirectory)
-	{
-		CheckIfUsable();
-		pchArguments = "";
-		uint result = VRNativeEntrypoints.VR_IVRControlPanel_StartVRProcess(m_pVRControlPanel,pchExecutable,ref pchArguments,unArgumentCount,pchWorkingDirectory);
-		return result;
-	}
-	public override void SetMasterProcessToThis()
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRControlPanel_SetMasterProcessToThis(m_pVRControlPanel);
-	}
-	public override void StartAutolaunchOverlays()
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRControlPanel_StartAutolaunchOverlays(m_pVRControlPanel);
-	}
-	public override bool ForceQuitProcess(uint pidProcessToQuit)
-	{
-		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRControlPanel_ForceQuitProcess(m_pVRControlPanel,pidProcessToQuit);
-		return result;
-	}
-	public override void AbortTransition()
-	{
-		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRControlPanel_AbortTransition(m_pVRControlPanel);
-	}
-}
 
 
 public class CVRNotifications : IVRNotifications
@@ -2422,6 +2300,12 @@ public enum ETrackedDeviceClass
 	TrackingReference = 4,
 	Other = 1000,
 }
+public enum ETrackedControllerRole
+{
+	Invalid = 0,
+	LeftHand = 1,
+	RightHand = 2,
+}
 public enum ETrackingUniverseOrigin
 {
 	TrackingUniverseSeated = 0,
@@ -2457,6 +2341,7 @@ public enum ETrackedDeviceProperty
 	Prop_CanUnifyCoordinateSystemWithHmd_Bool = 1024,
 	Prop_ContainsProximitySensor_Bool = 1025,
 	Prop_DeviceProvidesBatteryStatus_Bool = 1026,
+	Prop_DeviceCanPowerOff_Bool = 1027,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -2474,6 +2359,17 @@ public enum ETrackedDeviceProperty
 	Prop_DisplayGCBlackClamp_Float = 2014,
 	Prop_EdidProductID_Int32 = 2015,
 	Prop_CameraToHeadTransform_Matrix34 = 2016,
+	Prop_DisplayGCType_Int32 = 2017,
+	Prop_DisplayGCOffset_Float = 2018,
+	Prop_DisplayGCScale_Float = 2019,
+	Prop_DisplayGCPrescale_Float = 2020,
+	Prop_DisplayGCImage_String = 2021,
+	Prop_LensCenterLeftU_Float = 2022,
+	Prop_LensCenterLeftV_Float = 2023,
+	Prop_LensCenterRightU_Float = 2024,
+	Prop_LensCenterRightV_Float = 2025,
+	Prop_UserHeadToEyeDepthMeters_Float = 2026,
+	Prop_CameraFirmwareVersion_Uint64 = 2027,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -2528,6 +2424,8 @@ public enum EVREventType
 	VREvent_TrackedDeviceUserInteractionStarted = 103,
 	VREvent_TrackedDeviceUserInteractionEnded = 104,
 	VREvent_IpdChanged = 105,
+	VREvent_EnterStandbyMode = 106,
+	VREvent_LeaveStandbyMode = 107,
 	VREvent_ButtonPress = 200,
 	VREvent_ButtonUnpress = 201,
 	VREvent_ButtonTouch = 202,
@@ -2568,6 +2466,7 @@ public enum EVREventType
 	VREvent_ChaperoneUniverseHasChanged = 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
+	VREvent_BackgroundSettingHasChanged = 850,
 	VREvent_StatusUpdate = 900,
 	VREvent_MCImageUpdated = 1000,
 	VREvent_FirmwareUpdateStarted = 1100,
@@ -2592,6 +2491,7 @@ public enum EDeviceActivityLevel
 	k_EDeviceActivityLevel_Idle = 0,
 	k_EDeviceActivityLevel_UserInteraction = 1,
 	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,
+	k_EDeviceActivityLevel_Standby = 3,
 }
 public enum EVRButtonId
 {
@@ -2668,6 +2568,7 @@ public enum EVRApplicationType
 	VRApplication_Scene = 1,
 	VRApplication_Overlay = 2,
 	VRApplication_Background = 3,
+	VRApplication_Utility = 4,
 }
 public enum EVRFirmwareError
 {
@@ -2679,6 +2580,8 @@ public enum EVRNotificationError
 {
 	OK = 0,
 	InvalidNotificationId = 100,
+	NotificationQueueFull = 101,
+	InvalidOverlayHandle = 102,
 }
 public enum EVRInitError
 {
@@ -2707,6 +2610,7 @@ public enum EVRInitError
 	Init_TooManyObjects = 120,
 	Init_NoServerForBackgroundApp = 121,
 	Init_NotSupportedWithCompositor = 122,
+	Init_NotAvailableToUtilityApps = 123,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -2736,6 +2640,7 @@ public enum EVRInitError
 	VendorSpecific_HmdFound_UnableToGetUserDataNext = 1110,
 	VendorSpecific_HmdFound_UserDataAddressRange = 1111,
 	VendorSpecific_HmdFound_UserDataError = 1112,
+	VendorSpecific_HmdFound_ConfigFailedSanityCheck = 1113,
 	Steam_SteamInstallationNotFound = 2000,
 }
 public enum EVRApplicationError
@@ -2807,6 +2712,7 @@ public enum EVRCompositorError
 	IsNotSceneApplication = 103,
 	TextureIsOnWrongDevice = 104,
 	TextureUsesUnsupportedFormat = 105,
+	SharedTexturesNotSupported = 106,
 }
 public enum VROverlayInputMethod
 {
@@ -2942,6 +2848,11 @@ public enum ECameraVideoStreamFormat
 {
 	[MarshalAs(UnmanagedType.ByValArray, SizeConst = 4, ArraySubType = UnmanagedType.Struct)]
 	public HmdVector3_t[] vCorners; //HmdVector3_t[4]
+}
+[StructLayout(LayoutKind.Sequential)] public struct HmdRect2_t
+{
+	public HmdVector2_t vTopLeft;
+	public HmdVector2_t vBottomRight;
 }
 [StructLayout(LayoutKind.Sequential)] public struct DistortionCoordinates_t
 {
@@ -3088,6 +2999,7 @@ public enum ECameraVideoStreamFormat
 	public float m_flRunningStartMs;
 	public float m_flHandoffStartMs;
 	public float m_flHandoffEndMs;
+	public float m_flCompositorUpdateCpuMs;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionParams_t
 {
@@ -3143,6 +3055,8 @@ public enum ECameraVideoStreamFormat
 	public uint m_nHeight;
 	public uint m_nFrameSequence;
 	public uint m_nTimeStamp;
+	public uint m_nISPTimeStamp;
+	public uint m_nExposureTime;
 	public uint m_nBufferIndex;
 	public uint m_nBufferCount;
 	public uint m_nImageDataSize;
@@ -3191,7 +3105,7 @@ public class OpenVR
 	public const uint k_unMaxPropertyStringSize = 32768;
 	public const uint k_unControllerStateAxisCount = 5;
 	public const ulong k_ulOverlayHandleInvalid = 0;
-	public const string IVRSystem_Version = "IVRSystem_009";
+	public const string IVRSystem_Version = "IVRSystem_010";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
 	public const uint k_unMaxApplicationKeyLength = 128;
 	public const string IVRApplications_Version = "IVRApplications_002";
@@ -3201,13 +3115,12 @@ public class OpenVR
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;
-	public const string IVROverlay_Version = "IVROverlay_007";
+	public const string IVROverlay_Version = "IVROverlay_008";
 	public const string k_pch_Controller_Component_GDC2015 = "gdc2015";
 	public const string k_pch_Controller_Component_Base = "base";
 	public const string k_pch_Controller_Component_Tip = "tip";
 	public const string k_pch_Controller_Component_HandGrip = "handgrip";
 	public const string IVRRenderModels_Version = "IVRRenderModels_002";
-	public const string IVRControlPanel_Version = "IVRControlPanel_001";
 	public const uint k_unNotificationTextMaxSize = 256;
 	public const string IVRNotifications_Version = "IVRNotifications_002";
 	public const uint k_unMaxSettingsKeyLength = 128;
@@ -3223,7 +3136,12 @@ public class OpenVR
 	public const string k_pch_SteamVR_LogLevel_Int32 = "loglevel";
 	public const string k_pch_SteamVR_IPD_Float = "ipd";
 	public const string k_pch_SteamVR_Background_String = "background";
+	public const string k_pch_SteamVR_GridColor_String = "gridColor";
+	public const string k_pch_SteamVR_PlayAreaColor_String = "playAreaColor";
 	public const string k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
+	public const string k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
+	public const string k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
+	public const string k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";

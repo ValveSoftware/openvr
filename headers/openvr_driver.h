@@ -29,6 +29,10 @@ namespace vr
 	#pragma pack( push, 8 )
 #endif
 
+typedef void* glSharedTextureHandle_t;
+typedef int32_t glInt_t;
+typedef uint32_t glUInt_t;
+
 // right-handed system
 // +y is up
 // +x is to the right
@@ -77,6 +81,12 @@ struct HmdColor_t
 struct HmdQuad_t
 {
 	HmdVector3_t vCorners[ 4 ];
+};
+
+struct HmdRect2_t
+{
+	HmdVector2_t vTopLeft;
+	HmdVector2_t vBottomRight;
 };
 
 /** Used to return the post-distortion UVs for each color channel. 
@@ -147,6 +157,15 @@ enum ETrackedDeviceClass
 };
 
 
+/** Describes what specific role associated with a tracked device */
+enum ETrackedControllerRole
+{
+	TrackedControllerRole_Invalid = 0,					// Invalid value for controller type
+	TrackedControllerRole_LeftHand = 1,					// Tracked device associated with the left hand
+	TrackedControllerRole_RightHand = 2,				// Tracked device associated with the right hand
+};
+
+
 /** describes a single pose for a tracked object */
 struct TrackedDevicePose_t
 {
@@ -203,6 +222,7 @@ enum ETrackedDeviceProperty
 	Prop_CanUnifyCoordinateSystemWithHmd_Bool	= 1024,
 	Prop_ContainsProximitySensor_Bool			= 1025,
 	Prop_DeviceProvidesBatteryStatus_Bool		= 1026,
+	Prop_DeviceCanPowerOff_Bool					= 1027,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -221,7 +241,18 @@ enum ETrackedDeviceProperty
 	Prop_DisplayMCImageRight_String             = 2013,
 	Prop_DisplayGCBlackClamp_Float				= 2014,
 	Prop_EdidProductID_Int32					= 2015,
-	Prop_CameraToHeadTransform_Matrix34		    = 2016,
+	Prop_CameraToHeadTransform_Matrix34			= 2016,
+	Prop_DisplayGCType_Int32					= 2017,
+	Prop_DisplayGCOffset_Float					= 2018,
+	Prop_DisplayGCScale_Float					= 2019,
+	Prop_DisplayGCPrescale_Float				= 2020,
+	Prop_DisplayGCImage_String					= 2021,
+	Prop_LensCenterLeftU_Float					= 2022,
+	Prop_LensCenterLeftV_Float					= 2023,
+	Prop_LensCenterRightU_Float					= 2024,
+	Prop_LensCenterRightV_Float					= 2025,
+	Prop_UserHeadToEyeDepthMeters_Float			= 2026,
+	Prop_CameraFirmwareVersion_Uint64			= 2027,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -311,6 +342,8 @@ enum EVREventType
 	VREvent_TrackedDeviceUserInteractionStarted		= 103,
 	VREvent_TrackedDeviceUserInteractionEnded	= 104,
 	VREvent_IpdChanged					= 105,
+	VREvent_EnterStandbyMode			= 106,
+	VREvent_LeaveStandbyMode			= 107,
 
 	VREvent_ButtonPress					= 200, // data is controller
 	VREvent_ButtonUnpress				= 201, // data is controller
@@ -359,6 +392,8 @@ enum EVREventType
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
 
+	VREvent_BackgroundSettingHasChanged	= 850,
+
 	VREvent_StatusUpdate				= 900,
 
 	VREvent_MCImageUpdated				= 1000,
@@ -394,6 +429,7 @@ enum EDeviceActivityLevel
 	k_EDeviceActivityLevel_Idle = 0,
 	k_EDeviceActivityLevel_UserInteraction = 1,
 	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,
+	k_EDeviceActivityLevel_Standby = 3,
 };
 
 
@@ -657,6 +693,8 @@ enum EVRApplicationType
 	VRApplication_Overlay = 2,		// Application only interacts with overlays
 	VRApplication_Background = 3,	// Application should not start SteamVR if it's not already running, and should not
 									// keep it running if everything else quits.
+	VRApplication_Utility = 4,		// Init should not try to load any drivers. The application needs access to utility
+									// interfaces (like IVRSettings and IVRApplications) but not hardware.
 };
 
 
@@ -674,6 +712,8 @@ enum EVRNotificationError
 {
 	VRNotificationError_OK = 0,
 	VRNotificationError_InvalidNotificationId = 100,
+	VRNotificationError_NotificationQueueFull = 101,
+	VRNotificationError_InvalidOverlayHandle = 102,
 };
 
 
@@ -708,6 +748,7 @@ enum EVRInitError
 	VRInitError_Init_TooManyObjects		= 120,
 	VRInitError_Init_NoServerForBackgroundApp = 121,
 	VRInitError_Init_NotSupportedWithCompositor = 122,
+	VRInitError_Init_NotAvailableToUtilityApps = 123,
 
 	VRInitError_Driver_Failed				= 200,
 	VRInitError_Driver_Unknown				= 201,
@@ -741,6 +782,7 @@ enum EVRInitError
 	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
 	VRInitError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
 	VRInitError_VendorSpecific_HmdFound_UserDataError              = 1112,
+	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck    = 1113,
 
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
 
@@ -823,6 +865,8 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 
 	uint32_t m_nFrameSequence;			// Starts from 0 when stream starts.
 	uint32_t m_nTimeStamp;				// Driver provided time stamp per driver centric time base
+	uint32_t m_nISPTimeStamp;
+	uint32_t m_nExposureTime;
 
 	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
 	uint32_t m_nBufferCount;			// Total number of configured buffers
@@ -891,7 +935,13 @@ namespace vr
 	static const char * const k_pch_SteamVR_LogLevel_Int32 = "loglevel";
 	static const char * const k_pch_SteamVR_IPD_Float = "ipd";
 	static const char * const k_pch_SteamVR_Background_String = "background";
+	static const char * const k_pch_SteamVR_GridColor_String = "gridColor";
+	static const char * const k_pch_SteamVR_PlayAreaColor_String = "playAreaColor";
 	static const char * const k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
+	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
+	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
+	static const char * const k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
+
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1076,8 +1126,8 @@ public:
 	// ------------------------------------
 	/** This is called before an HMD is returned to the application. It will always be
 	* called before any display or tracking methods. Memory and processor use by the
-	* ITrackedDeviceServerDriver object should be kept to a minimum until it is activated. 
-	* The pose listener is guaranteed to be valid until Deactivate is called, but 
+	* ITrackedDeviceServerDriver object should be kept to a minimum until it is activated.
+	* The pose listener is guaranteed to be valid until Deactivate is called, but
 	* should not be used after that point. */
 	virtual EVRInitError Activate( uint32_t unObjectId ) = 0;
 
@@ -1089,6 +1139,9 @@ public:
 	/** returns the ID of this particular HMD. This value is opaque to the VR system itself,
 	* but should be unique within the driver because it will be passed back in via FindHmd */
 	virtual const char *GetId() = 0;
+
+	/** Handles a request from the system to power off this device */
+	virtual void PowerOff() {}
 
 	/** A VR Client has made this debug request of the driver. The set of valid requests is entirely
 	* up to the driver and the client to figure out, as is the format of the response. Responses that
@@ -1223,11 +1276,14 @@ public:
 	virtual bool IsVideoStreamPaused() = 0;
 	virtual bool GetCameraDistortion( float flInputU, float flInputV, float *pflOutputU, float *pflOutputV ) = 0;
 	virtual bool GetCameraProjection( float flWidthPixels, float flHeightPixels, float flZNear, float flZFar, vr::HmdMatrix44_t *pProjection ) = 0;
+	virtual bool GetRecommendedCameraUndistortion( uint32_t *pUndistortionWidthPixels, uint32_t *pUndistortionHeightPixels ) = 0;
+	virtual bool SetCameraUndistortion( uint32_t nUndistortionWidthPixels, uint32_t nUndistortionHeightPixels ) = 0;
+	virtual bool GetCameraFirmwareVersion( uint64_t *pFirmwareVersion ) = 0;
 };
 
 
 
-static const char *ITrackedDeviceServerDriver_Version = "ITrackedDeviceServerDriver_002";
+static const char *ITrackedDeviceServerDriver_Version = "ITrackedDeviceServerDriver_003";
 
 }
 // itrackeddevicedriverprovider.h
@@ -1334,6 +1390,20 @@ public:
 
 	/** Allows the driver do to some work in the main loop of the server. */
 	virtual void RunFrame() = 0;
+
+
+	// ------------  Power State Functions ----------------------- //
+
+	/** Returns true if the driver wants to block Standby mode. */
+	virtual bool ShouldBlockStandbyMode() = 0;
+
+	/** Called when the system is entering Standby mode. The driver should switch itself into whatever sort of low-power
+	* state it has. */
+	virtual void EnterStandby() = 0;
+
+	/** Called when the system is leaving Standby mode. The driver should switch itself back to
+	full operation. */
+	virtual void LeaveStandby() = 0;
 
 };
 
