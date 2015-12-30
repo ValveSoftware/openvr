@@ -415,6 +415,10 @@ enum EVREventType
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
 	VREvent_TrackedCamera_PauseVideoStream  = 1502,
 	VREvent_TrackedCamera_ResumeVideoStream = 1503,
+
+	VREvent_PerformanceTest_EnableCapture = 1600,
+	VREvent_PerformanceTest_DisableCapture = 1601,
+	VREvent_PerformanceTest_FidelityLevel = 1602,
 	
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start = 10000,
@@ -541,6 +545,11 @@ struct VREvent_Reserved_t
 	uint64_t reserved1;
 };
 
+struct VREvent_PerformanceTest_t
+{
+	uint32_t m_nFidelityLevel;
+};
+
 /** If you change this you must manually update openvr_interop.cs.py */
 typedef union
 {
@@ -554,6 +563,7 @@ typedef union
 	VREvent_Keyboard_t keyboard;
 	VREvent_Ipd_t ipd;
 	VREvent_Chaperone_t chaperone;
+	VREvent_PerformanceTest_t performanceTest;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -863,18 +873,23 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 	uint32_t m_nWidth;
 	uint32_t m_nHeight;
 
+	uint32_t m_nImageDataSize;			// Based on stream format, width, height
+
 	uint32_t m_nFrameSequence;			// Starts from 0 when stream starts.
-	uint32_t m_nTimeStamp;				// Driver provided time stamp per driver centric time base
-	uint32_t m_nISPTimeStamp;
+
+	uint32_t m_nISPFrameTimeStamp;		// Driver provided time stamp per driver centric time base
+	uint32_t m_nISPReferenceTimeStamp;
+	uint32_t m_nSyncCounter;
+
 	uint32_t m_nExposureTime;
 
 	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
 	uint32_t m_nBufferCount;			// Total number of configured buffers
 
-	uint32_t m_nImageDataSize;			// Based on stream format, width, height
-
 	double m_flFrameElapsedTime;		// Starts from 0 when stream starts. In seconds.
+
 	double m_flFrameCaptureTime;		// Relative to when the frame was exposed/captured.
+	uint64_t m_nFrameCaptureTicks;
 
 	bool m_bPoseIsValid;				// Supplied by HMD layer when used as a tracked camera
 	vr::HmdMatrix34_t m_matDeviceToAbsoluteTracking;	
@@ -1270,7 +1285,6 @@ public:
 	virtual const vr::CameraVideoStreamFrame_t *GetVideoStreamFrame() = 0;
 	virtual void ReleaseVideoStreamFrame( const vr::CameraVideoStreamFrame_t *pFrameImage ) = 0;
 	virtual bool SetAutoExposure( bool bEnable ) = 0;
-	virtual bool SupportsPauseResume() = 0;
 	virtual bool PauseVideoStream() = 0;
 	virtual bool ResumeVideoStream() = 0;
 	virtual bool IsVideoStreamPaused() = 0;
@@ -1279,6 +1293,7 @@ public:
 	virtual bool GetRecommendedCameraUndistortion( uint32_t *pUndistortionWidthPixels, uint32_t *pUndistortionHeightPixels ) = 0;
 	virtual bool SetCameraUndistortion( uint32_t nUndistortionWidthPixels, uint32_t nUndistortionHeightPixels ) = 0;
 	virtual bool GetCameraFirmwareVersion( uint64_t *pFirmwareVersion ) = 0;
+	virtual bool SetFrameRate( int nISPFrameRate, int nSensorFrameRate ) = 0;
 };
 
 

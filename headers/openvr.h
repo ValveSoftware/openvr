@@ -415,6 +415,10 @@ enum EVREventType
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
 	VREvent_TrackedCamera_PauseVideoStream  = 1502,
 	VREvent_TrackedCamera_ResumeVideoStream = 1503,
+
+	VREvent_PerformanceTest_EnableCapture = 1600,
+	VREvent_PerformanceTest_DisableCapture = 1601,
+	VREvent_PerformanceTest_FidelityLevel = 1602,
 	
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start = 10000,
@@ -541,6 +545,11 @@ struct VREvent_Reserved_t
 	uint64_t reserved1;
 };
 
+struct VREvent_PerformanceTest_t
+{
+	uint32_t m_nFidelityLevel;
+};
+
 /** If you change this you must manually update openvr_interop.cs.py */
 typedef union
 {
@@ -554,6 +563,7 @@ typedef union
 	VREvent_Keyboard_t keyboard;
 	VREvent_Ipd_t ipd;
 	VREvent_Chaperone_t chaperone;
+	VREvent_PerformanceTest_t performanceTest;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -882,16 +892,23 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 	uint32_t m_nWidth;
 	uint32_t m_nHeight;
 
+	uint32_t m_nImageDataSize;			// Based on stream format, width, height
+
 	uint32_t m_nFrameSequence;			// Starts from 0 when stream starts.
-	uint32_t m_nTimeStamp;				// Driver provided time stamp per driver centric time base
+
+	uint32_t m_nISPFrameTimeStamp;		// Driver provided time stamp per driver centric time base
+	uint32_t m_nISPReferenceTimeStamp;
+	uint32_t m_nSyncCounter;
+
+	uint32_t m_nExposureTime;
 
 	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
 	uint32_t m_nBufferCount;			// Total number of configured buffers
 
-	uint32_t m_nImageDataSize;			// Based on stream format, width, height
-
 	double m_flFrameElapsedTime;		// Starts from 0 when stream starts. In seconds.
+
 	double m_flFrameCaptureTime;		// Relative to when the frame was exposed/captured.
+	uint64_t m_nFrameCaptureTicks;
 
 	bool m_bPoseIsValid;				// Supplied by HMD layer when used as a tracked camera
 	vr::HmdMatrix34_t m_matDeviceToAbsoluteTracking;	
@@ -1170,6 +1187,18 @@ public:
 	* halts the timeout and dismisses the dashboard (if it was up). Applications should be sure to actually 
 	* prompt the user to save and then exit afterward, otherwise the user will be left in a confusing state. */
 	virtual void AcknowledgeQuit_UserPrompt() = 0;
+
+	// ------------------------------------
+	// Performance Test methods
+	// ------------------------------------
+
+	/** Performance Testing applications can call this to enable/disable when frame timing data should be 
+	* captured for the Perf Test Report. */
+	virtual void PerformanceTestEnableCapture( bool bEnable ) = 0;
+
+	/** Performance Testing applications can call this to note on the Perf Test Report when they've shifted 
+	* their fidelity to a new mode. */
+	virtual void PerformanceTestReportFidelityLevelChange( int nFidelityLevel ) = 0;
 };
 
 static const char * const IVRSystem_Version = "IVRSystem_010";
@@ -1597,6 +1626,9 @@ public:
 
 	/** Returns the preferred seated position. */
 	virtual bool GetLiveSeatedZeroPoseToRawTrackingPose( HmdMatrix34_t *pmatSeatedZeroPoseToRawTrackingPose ) = 0;
+
+	virtual void SetWorkingWallTagInfo( VR_ARRAY_COUNT(unTagCount) uint8_t *pTagsBuffer, uint32_t unTagCount ) = 0;
+	virtual bool GetLiveWallTagInfo( VR_OUT_ARRAY_COUNT(punTagCount) uint8_t *pTagsBuffer, uint32_t *punTagCount ) = 0;
 };
 
 static const char * const IVRChaperoneSetup_Version = "IVRChaperoneSetup_004";
@@ -1655,6 +1687,8 @@ struct Compositor_FrameTiming
 	float m_flHandoffStartMs;
 	float m_flHandoffEndMs;
 	float m_flCompositorUpdateCpuMs;
+
+	uint32_t m_nPresents; // number of times this frame was presented
 };
 
 
@@ -1759,7 +1793,7 @@ public:
 	virtual void CompositorDumpImages() = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_009";
+static const char * const IVRCompositor_Version = "IVRCompositor_010";
 
 } // namespace vr
 
@@ -2391,8 +2425,6 @@ public:
 	virtual bool SetAutoExposure( vr::TrackedDeviceIndex_t nDeviceIndex, bool bEnable ) = 0;
 
 	// A stream can only be paused after it is started. The pause state is cleared after stopping.
-	// The camera may not support pause/resume semantics due to HW limitations.
-	virtual bool SupportsPauseResume( vr::TrackedDeviceIndex_t nDeviceIndex ) = 0;
 	virtual bool PauseVideoStream( vr::TrackedDeviceIndex_t nDeviceIndex ) = 0;
 	virtual bool ResumeVideoStream( vr::TrackedDeviceIndex_t nDeviceIndex ) = 0;
 	virtual bool IsVideoStreamPaused( vr::TrackedDeviceIndex_t nDeviceIndex ) = 0;

@@ -105,6 +105,10 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRSystem_AcknowledgeQuit_Exiting(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_AcknowledgeQuit_UserPrompt")]
 	internal static extern void VR_IVRSystem_AcknowledgeQuit_UserPrompt(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_PerformanceTestEnableCapture")]
+	internal static extern void VR_IVRSystem_PerformanceTestEnableCapture(IntPtr instancePtr, bool bEnable);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSystem_PerformanceTestReportFidelityLevelChange")]
+	internal static extern void VR_IVRSystem_PerformanceTestReportFidelityLevelChange(IntPtr instancePtr, int nFidelityLevel);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRExtendedDisplay_GetWindowBounds")]
 	internal static extern void VR_IVRExtendedDisplay_GetWindowBounds(IntPtr instancePtr, ref int pnX, ref int pnY, ref uint pnWidth, ref uint pnHeight);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRExtendedDisplay_GetEyeOutputViewport")]
@@ -195,6 +199,10 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRChaperoneSetup_ReloadFromDisk(IntPtr instancePtr, EChaperoneConfigFile configFile);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetLiveSeatedZeroPoseToRawTrackingPose")]
 	internal static extern bool VR_IVRChaperoneSetup_GetLiveSeatedZeroPoseToRawTrackingPose(IntPtr instancePtr, ref HmdMatrix34_t pmatSeatedZeroPoseToRawTrackingPose);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_SetWorkingWallTagInfo")]
+	internal static extern void VR_IVRChaperoneSetup_SetWorkingWallTagInfo(IntPtr instancePtr,  [In, Out] byte[] pTagsBuffer, uint unTagCount);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRChaperoneSetup_GetLiveWallTagInfo")]
+	internal static extern bool VR_IVRChaperoneSetup_GetLiveWallTagInfo(IntPtr instancePtr,  [In, Out] byte[] pTagsBuffer, ref uint punTagCount);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_SetTrackingSpace")]
 	internal static extern void VR_IVRCompositor_SetTrackingSpace(IntPtr instancePtr, ETrackingUniverseOrigin eOrigin);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetTrackingSpace")]
@@ -435,8 +443,6 @@ class VRNativeEntrypoints
 	internal static extern bool VR_IVRTrackedCamera_ReleaseVideoStreamFrame(IntPtr instancePtr, uint nDeviceIndex, ref CameraVideoStreamFrame_t pFrameImage);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_SetAutoExposure")]
 	internal static extern bool VR_IVRTrackedCamera_SetAutoExposure(IntPtr instancePtr, uint nDeviceIndex, bool bEnable);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_SupportsPauseResume")]
-	internal static extern bool VR_IVRTrackedCamera_SupportsPauseResume(IntPtr instancePtr, uint nDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_PauseVideoStream")]
 	internal static extern bool VR_IVRTrackedCamera_PauseVideoStream(IntPtr instancePtr, uint nDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_ResumeVideoStream")]
@@ -502,6 +508,8 @@ public abstract class IVRSystem
 	public abstract EVRFirmwareError PerformFirmwareUpdate(uint unDeviceIndex);
 	public abstract void AcknowledgeQuit_Exiting();
 	public abstract void AcknowledgeQuit_UserPrompt();
+	public abstract void PerformanceTestEnableCapture(bool bEnable);
+	public abstract void PerformanceTestReportFidelityLevelChange(int nFidelityLevel);
 }
 
 
@@ -571,6 +579,8 @@ public abstract class IVRChaperoneSetup
 	public abstract void SetWorkingStandingZeroPoseToRawTrackingPose(ref HmdMatrix34_t pMatStandingZeroPoseToRawTrackingPose);
 	public abstract void ReloadFromDisk(EChaperoneConfigFile configFile);
 	public abstract bool GetLiveSeatedZeroPoseToRawTrackingPose(ref HmdMatrix34_t pmatSeatedZeroPoseToRawTrackingPose);
+	public abstract void SetWorkingWallTagInfo(byte [] pTagsBuffer);
+	public abstract bool GetLiveWallTagInfo(out byte [] pTagsBuffer);
 }
 
 
@@ -727,7 +737,6 @@ public abstract class IVRTrackedCamera
 	public abstract CameraVideoStreamFrame_t GetVideoStreamFrame(uint nDeviceIndex);
 	public abstract bool ReleaseVideoStreamFrame(uint nDeviceIndex,ref CameraVideoStreamFrame_t pFrameImage);
 	public abstract bool SetAutoExposure(uint nDeviceIndex,bool bEnable);
-	public abstract bool SupportsPauseResume(uint nDeviceIndex);
 	public abstract bool PauseVideoStream(uint nDeviceIndex);
 	public abstract bool ResumeVideoStream(uint nDeviceIndex);
 	public abstract bool IsVideoStreamPaused(uint nDeviceIndex);
@@ -1015,6 +1024,16 @@ public class CVRSystem : IVRSystem
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRSystem_AcknowledgeQuit_UserPrompt(m_pVRSystem);
+	}
+	public override void PerformanceTestEnableCapture(bool bEnable)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRSystem_PerformanceTestEnableCapture(m_pVRSystem,bEnable);
+	}
+	public override void PerformanceTestReportFidelityLevelChange(int nFidelityLevel)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRSystem_PerformanceTestReportFidelityLevelChange(m_pVRSystem,nFidelityLevel);
 	}
 }
 
@@ -1371,6 +1390,20 @@ public class CVRChaperoneSetup : IVRChaperoneSetup
 	{
 		CheckIfUsable();
 		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetLiveSeatedZeroPoseToRawTrackingPose(m_pVRChaperoneSetup,ref pmatSeatedZeroPoseToRawTrackingPose);
+		return result;
+	}
+	public override void SetWorkingWallTagInfo(byte [] pTagsBuffer)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRChaperoneSetup_SetWorkingWallTagInfo(m_pVRChaperoneSetup,pTagsBuffer,(uint) pTagsBuffer.Length);
+	}
+	public override bool GetLiveWallTagInfo(out byte [] pTagsBuffer)
+	{
+		CheckIfUsable();
+		uint punTagCount = 0;
+		bool result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetLiveWallTagInfo(m_pVRChaperoneSetup,null,ref punTagCount);
+		pTagsBuffer= new byte[punTagCount];
+		result = VRNativeEntrypoints.VR_IVRChaperoneSetup_GetLiveWallTagInfo(m_pVRChaperoneSetup,pTagsBuffer,ref punTagCount);
 		return result;
 	}
 }
@@ -2004,8 +2037,6 @@ public class CVRRenderModels : IVRRenderModels
 }
 
 
-
-
 public class CVRNotifications : IVRNotifications
 {
 	public CVRNotifications(IntPtr VRNotifications)
@@ -2208,12 +2239,6 @@ public class CVRTrackedCamera : IVRTrackedCamera
 	{
 		CheckIfUsable();
 		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_SetAutoExposure(m_pVRTrackedCamera,nDeviceIndex,bEnable);
-		return result;
-	}
-	public override bool SupportsPauseResume(uint nDeviceIndex)
-	{
-		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_SupportsPauseResume(m_pVRTrackedCamera,nDeviceIndex);
 		return result;
 	}
 	public override bool PauseVideoStream(uint nDeviceIndex)
@@ -2482,6 +2507,9 @@ public enum EVREventType
 	VREvent_TrackedCamera_StopVideoStream = 1501,
 	VREvent_TrackedCamera_PauseVideoStream = 1502,
 	VREvent_TrackedCamera_ResumeVideoStream = 1503,
+	VREvent_PerformanceTest_EnableCapture = 1600,
+	VREvent_PerformanceTest_DisableCapture = 1601,
+	VREvent_PerformanceTest_FidelityLevel = 1602,
 	VREvent_VendorSpecific_Reserved_Start = 10000,
 	VREvent_VendorSpecific_Reserved_End = 19999,
 }
@@ -2937,6 +2965,10 @@ public enum ECameraVideoStreamFormat
 	public ulong reserved0;
 	public ulong reserved1;
 }
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_PerformanceTest_t
+{
+	public uint m_nFidelityLevel;
+}
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_t
 {
 	public EVREventType eventType;
@@ -3000,6 +3032,7 @@ public enum ECameraVideoStreamFormat
 	public float m_flHandoffStartMs;
 	public float m_flHandoffEndMs;
 	public float m_flCompositorUpdateCpuMs;
+	public uint m_nPresents;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionParams_t
 {
@@ -3053,15 +3086,17 @@ public enum ECameraVideoStreamFormat
 	public ECameraVideoStreamFormat m_nStreamFormat;
 	public uint m_nWidth;
 	public uint m_nHeight;
+	public uint m_nImageDataSize;
 	public uint m_nFrameSequence;
-	public uint m_nTimeStamp;
-	public uint m_nISPTimeStamp;
+	public uint m_nISPFrameTimeStamp;
+	public uint m_nISPReferenceTimeStamp;
+	public uint m_nSyncCounter;
 	public uint m_nExposureTime;
 	public uint m_nBufferIndex;
 	public uint m_nBufferCount;
-	public uint m_nImageDataSize;
 	public double m_flFrameElapsedTime;
 	public double m_flFrameCaptureTime;
+	public ulong m_nFrameCaptureTicks;
 	[MarshalAs(UnmanagedType.I1)]
 	public bool m_bPoseIsValid;
 	public HmdMatrix34_t m_matDeviceToAbsoluteTracking;
@@ -3111,7 +3146,7 @@ public class OpenVR
 	public const string IVRApplications_Version = "IVRApplications_002";
 	public const string IVRChaperone_Version = "IVRChaperone_003";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_004";
-	public const string IVRCompositor_Version = "IVRCompositor_009";
+	public const string IVRCompositor_Version = "IVRCompositor_010";
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;

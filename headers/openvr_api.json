@@ -227,6 +227,9 @@
 	,{"name": "VREvent_TrackedCamera_StopVideoStream","value": "1501"}
 	,{"name": "VREvent_TrackedCamera_PauseVideoStream","value": "1502"}
 	,{"name": "VREvent_TrackedCamera_ResumeVideoStream","value": "1503"}
+	,{"name": "VREvent_PerformanceTest_EnableCapture","value": "1600"}
+	,{"name": "VREvent_PerformanceTest_DisableCapture","value": "1601"}
+	,{"name": "VREvent_PerformanceTest_FidelityLevel","value": "1602"}
 	,{"name": "VREvent_VendorSpecific_Reserved_Start","value": "10000"}
 	,{"name": "VREvent_VendorSpecific_Reserved_End","value": "19999"}
 ]}
@@ -534,7 +537,7 @@
 ,{
 	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_004"}
 ,{
-	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_009"}
+	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_010"}
 ,{
 	"constname": "k_unVROverlayMaxKeyLength","consttype": "const uint32_t", "constval": "128"}
 ,{
@@ -743,6 +746,8 @@
 ,{"struct": "vr::VREvent_Reserved_t","fields": [
 { "fieldname": "reserved0", "fieldtype": "uint64_t"},
 { "fieldname": "reserved1", "fieldtype": "uint64_t"}]}
+,{"struct": "vr::VREvent_PerformanceTest_t","fields": [
+{ "fieldname": "m_nFidelityLevel", "fieldtype": "uint32_t"}]}
 ,{"struct": "vr::(anonymous)","fields": [
 { "fieldname": "reserved", "fieldtype": "struct vr::VREvent_Reserved_t"},
 { "fieldname": "controller", "fieldtype": "struct vr::VREvent_Controller_t"},
@@ -753,7 +758,8 @@
 { "fieldname": "status", "fieldtype": "struct vr::VREvent_Status_t"},
 { "fieldname": "keyboard", "fieldtype": "struct vr::VREvent_Keyboard_t"},
 { "fieldname": "ipd", "fieldtype": "struct vr::VREvent_Ipd_t"},
-{ "fieldname": "chaperone", "fieldtype": "struct vr::VREvent_Chaperone_t"}]}
+{ "fieldname": "chaperone", "fieldtype": "struct vr::VREvent_Chaperone_t"},
+{ "fieldname": "performanceTest", "fieldtype": "struct vr::VREvent_PerformanceTest_t"}]}
 ,{"struct": "vr::VREvent_t","fields": [
 { "fieldname": "eventType", "fieldtype": "enum vr::EVREventType"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},
@@ -802,7 +808,8 @@
 { "fieldname": "m_flRunningStartMs", "fieldtype": "float"},
 { "fieldname": "m_flHandoffStartMs", "fieldtype": "float"},
 { "fieldname": "m_flHandoffEndMs", "fieldtype": "float"},
-{ "fieldname": "m_flCompositorUpdateCpuMs", "fieldtype": "float"}]}
+{ "fieldname": "m_flCompositorUpdateCpuMs", "fieldtype": "float"},
+{ "fieldname": "m_nPresents", "fieldtype": "uint32_t"}]}
 ,{"struct": "vr::VROverlayIntersectionParams_t","fields": [
 { "fieldname": "vSource", "fieldtype": "struct vr::HmdVector3_t"},
 { "fieldname": "vDirection", "fieldtype": "struct vr::HmdVector3_t"},
@@ -839,15 +846,17 @@
 { "fieldname": "m_nStreamFormat", "fieldtype": "enum vr::ECameraVideoStreamFormat"},
 { "fieldname": "m_nWidth", "fieldtype": "uint32_t"},
 { "fieldname": "m_nHeight", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nImageDataSize", "fieldtype": "uint32_t"},
 { "fieldname": "m_nFrameSequence", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nTimeStamp", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nISPTimeStamp", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nISPFrameTimeStamp", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nISPReferenceTimeStamp", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nSyncCounter", "fieldtype": "uint32_t"},
 { "fieldname": "m_nExposureTime", "fieldtype": "uint32_t"},
 { "fieldname": "m_nBufferIndex", "fieldtype": "uint32_t"},
 { "fieldname": "m_nBufferCount", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nImageDataSize", "fieldtype": "uint32_t"},
 { "fieldname": "m_flFrameElapsedTime", "fieldtype": "double"},
 { "fieldname": "m_flFrameCaptureTime", "fieldtype": "double"},
+{ "fieldname": "m_nFrameCaptureTicks", "fieldtype": "uint64_t"},
 { "fieldname": "m_bPoseIsValid", "fieldtype": "_Bool"},
 { "fieldname": "m_matDeviceToAbsoluteTracking", "fieldtype": "vr::HmdMatrix34_t"},
 { "fieldname": "m_Pad", "fieldtype": "float [4]"},
@@ -1220,6 +1229,22 @@
 	"returntype": "void"
 }
 ,{
+	"classname": "vr::IVRSystem",
+	"methodname": "PerformanceTestEnableCapture",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "bEnable" ,"paramtype": "bool"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSystem",
+	"methodname": "PerformanceTestReportFidelityLevelChange",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "nFidelityLevel" ,"paramtype": "int"}
+	 ]
+}
+,{
 	"classname": "vr::IVRExtendedDisplay",
 	"methodname": "GetWindowBounds",
 	"returntype": "void",
@@ -1587,6 +1612,24 @@
 	"returntype": "bool",
 	"params": [ 
 {	"paramname": "pmatSeatedZeroPoseToRawTrackingPose" ,"paramtype": "struct vr::HmdMatrix34_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRChaperoneSetup",
+	"methodname": "SetWorkingWallTagInfo",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "pTagsBuffer" ,"array_count": "unTagCount" ,"paramtype": "uint8_t *"},
+{	"paramname": "unTagCount" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRChaperoneSetup",
+	"methodname": "GetLiveWallTagInfo",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "pTagsBuffer" ,"out_array_count": "punTagCount" ,"paramtype": "uint8_t *"},
+{	"paramname": "punTagCount" ,"paramtype": "uint32_t *"}
 	 ]
 }
 ,{
@@ -2641,14 +2684,6 @@
 	"params": [ 
 {	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
 {	"paramname": "bEnable" ,"paramtype": "bool"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "SupportsPauseResume",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
 	 ]
 }
 ,{
