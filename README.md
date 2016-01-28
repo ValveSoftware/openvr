@@ -1,4 +1,4 @@
-OpenVR SDK (http://steamvr.com)
+OpenVR SDK
 ---
 
 OpenVR is an API and runtime that allows access to VR hardware from multiple 
