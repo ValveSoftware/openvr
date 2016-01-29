@@ -223,6 +223,7 @@ enum ETrackedDeviceProperty
 	Prop_ContainsProximitySensor_Bool			= 1025,
 	Prop_DeviceProvidesBatteryStatus_Bool		= 1026,
 	Prop_DeviceCanPowerOff_Bool					= 1027,
+	Prop_Firmware_ProgrammingTarget_String		= 1028,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -231,7 +232,7 @@ enum ETrackedDeviceProperty
 	Prop_UserIpdMeters_Float					= 2003,
 	Prop_CurrentUniverseId_Uint64				= 2004, 
 	Prop_PreviousUniverseId_Uint64				= 2005, 
-	Prop_DisplayFirmwareVersion_String			= 2006,
+	Prop_DisplayFirmwareVersion_Uint64			= 2006,
 	Prop_IsOnDesktop_Bool						= 2007,
 	Prop_DisplayMCType_Int32					= 2008,
 	Prop_DisplayMCOffset_Float					= 2009,
@@ -253,6 +254,8 @@ enum ETrackedDeviceProperty
 	Prop_LensCenterRightV_Float					= 2025,
 	Prop_UserHeadToEyeDepthMeters_Float			= 2026,
 	Prop_CameraFirmwareVersion_Uint64			= 2027,
+	Prop_CameraFirmwareDescription_String		= 2028,
+	Prop_DisplayFPGAVersion_Uint64				= 2029,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -270,6 +273,7 @@ enum ETrackedDeviceProperty
 	Prop_FieldOfViewBottomDegrees_Float			= 4003,
 	Prop_TrackingRangeMinimumMeters_Float		= 4004,
 	Prop_TrackingRangeMaximumMeters_Float		= 4005,
+	Prop_ModeLabel_String						= 4006,
 
 	// Vendors are free to expose private debug data in this reserved region
 	Prop_VendorSpecific_Reserved_Start			= 10000,
@@ -355,6 +359,8 @@ enum EVREventType
 	VREvent_MouseButtonUp				= 302, // data is mouse
 	VREvent_FocusEnter					= 303, // data is overlay
 	VREvent_FocusLeave					= 304, // data is overlay
+	VREvent_Scroll						= 305, // data is mouse
+	VREvent_TouchPadMove				= 306, // data is mouse
 
 	VREvent_InputFocusCaptured			= 400, // data is process
 	VREvent_InputFocusReleased			= 401, // data is process
@@ -469,7 +475,7 @@ inline uint64_t ButtonMaskFromId( EVRButtonId id ) { return 1ull << id; }
 /** used for controller button events */
 struct VREvent_Controller_t
 {
-	EVRButtonId button;
+	uint32_t button; // EVRButtonId enum
 };
 
 
@@ -485,8 +491,35 @@ enum EVRMouseButton
 /** used for simulated mouse events in overlay space */
 struct VREvent_Mouse_t
 {
-	float x, y;
-	EVRMouseButton button;
+	float x, y; // co-ords are in GL space, bottom left of the texture is 0,0
+	uint32_t button; // EVRMouseButton enum
+};
+
+/** used for simulated mouse wheel scroll in overlay space */
+struct VREvent_Scroll_t
+{
+	float xdelta, ydelta; // movement in fraction of the pad traversed since last delta, 1.0 for a full swipe
+	uint32_t repeatCount;
+};
+
+/** when in mouse input mode you can receive data from the touchpad, these events are only sent if the users finger
+   is on the touchpad (or just released from it) 
+**/
+struct VREvent_TouchPadMove_t
+{
+	// true if the users finger is detected on the touch pad
+	bool bFingerDown;
+
+	// How long the finger has been down in seconds
+	float flSecondsFingerDown;
+
+	// These values indicate the starting finger position (so you can do some basic swipe stuff)
+	float fValueXFirst;
+	float fValueYFirst;
+
+	// This is the raw sampled coordinate without deadzoning
+	float fValueXRaw;
+	float fValueYRaw;
 };
 
 /** notification related events. Details will still change at this point */
@@ -495,7 +528,6 @@ struct VREvent_Notification_t
 	uint64_t ulUserValue;
 	uint32_t notificationId;
 };
-
 
 /** Used for events about processes */
 struct VREvent_Process_t
@@ -516,7 +548,7 @@ struct VREvent_Overlay_t
 /** Used for a few events about overlays */
 struct VREvent_Status_t
 {
-	EVRState statusState; 
+	uint32_t statusState; // EVRState enum
 };
 
 /** Used for keyboard events **/
@@ -537,8 +569,7 @@ struct VREvent_Chaperone_t
 	uint64_t m_nCurrentUniverse;
 };
 
-/** Not actually used for any events. It is just used to reserve
-* space in the union for future event types */
+/** Not actually used for any events */
 struct VREvent_Reserved_t
 {
 	uint64_t reserved0;
@@ -556,6 +587,7 @@ typedef union
 	VREvent_Reserved_t reserved;
 	VREvent_Controller_t controller;
 	VREvent_Mouse_t mouse;
+	VREvent_Scroll_t scroll;
 	VREvent_Process_t process;
 	VREvent_Notification_t notification;
 	VREvent_Overlay_t overlay;
@@ -564,15 +596,17 @@ typedef union
 	VREvent_Ipd_t ipd;
 	VREvent_Chaperone_t chaperone;
 	VREvent_PerformanceTest_t performanceTest;
+	VREvent_TouchPadMove_t touchPadMove;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
 struct VREvent_t
 {
-	EVREventType eventType;
+	uint32_t eventType; // EVREventType enum
 	TrackedDeviceIndex_t trackedDeviceIndex;
-	VREvent_Data_t data;
 	float eventAgeSeconds;
+	// event data must be the end of the struct as its size is variable
+	VREvent_Data_t data;
 };
 
 
@@ -779,7 +813,6 @@ enum EVRInitError
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 
-	VRInitError_VendorSpecific_HmdFound_But						= 1100,
 	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
 	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
 	VRInitError_VendorSpecific_HmdFound_NoStoredConfig 			= 1103,
@@ -994,9 +1027,19 @@ namespace vr
 	static const char * const k_pch_Null_DisplayFrequency_Float = "displayFrequency";
 
 	//-----------------------------------------------------------------------------
+	// user interface keys
+	static const char * const k_pch_UserInterface_Section = "userinterface";
+	static const char * const k_pch_UserInterface_StatusAlwaysOnTop_Bool = "StatusAlwaysOnTop";
+
+	//-----------------------------------------------------------------------------
 	// notification keys
 	static const char * const k_pch_Notifications_Section = "notifications";
 	static const char * const k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
+
+	//-----------------------------------------------------------------------------
+	// keyboard keys
+	static const char * const k_pch_Keyboard_Section = "keyboard";
+	static const char * const k_pch_Keyboard_TutorialCompletions = "TutorialCompletions";
 
 	//-----------------------------------------------------------------------------
 	// perf keys

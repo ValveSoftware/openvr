@@ -595,7 +595,7 @@ bool CMainApplication::HandleInput()
 
 	// Process SteamVR events
 	vr::VREvent_t event;
-	while( m_pHMD->PollNextEvent( &event ) )
+	while( m_pHMD->PollNextEvent( &event, sizeof( event ) ) )
 	{
 		ProcessVREvent( event );
 	}

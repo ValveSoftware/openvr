@@ -221,7 +221,7 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 	}
 
 	vr::VREvent_t vrEvent;
-    while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayHandle, &vrEvent ) )
+    while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayHandle, &vrEvent, sizeof( vrEvent )  ) )
 	{
 		switch( vrEvent.eventType )
 		{
@@ -313,7 +313,7 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 
     if( m_ulOverlayThumbnailHandle != vr::k_ulOverlayHandleInvalid )
     {
-        while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayThumbnailHandle, &vrEvent ) )
+        while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayThumbnailHandle, &vrEvent, sizeof( vrEvent)  ) )
         {
             switch( vrEvent.eventType )
             {
