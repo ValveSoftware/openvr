@@ -383,14 +383,18 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVROverlay_SetKeyboardTransformAbsolute(IntPtr instancePtr, ETrackingUniverseOrigin eTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToKeyboardTransform);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_SetKeyboardPositionForOverlay")]
 	internal static extern void VR_IVROverlay_SetKeyboardPositionForOverlay(IntPtr instancePtr, ulong ulOverlayHandle, HmdRect2_t avoidRect);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadRenderModel")]
-	internal static extern bool VR_IVRRenderModels_LoadRenderModel(IntPtr instancePtr, string pchRenderModelName, ref IntPtr ppRenderModel);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadRenderModel_Async")]
+	internal static extern EVRRenderModelError VR_IVRRenderModels_LoadRenderModel_Async(IntPtr instancePtr, string pchRenderModelName, ref IntPtr ppRenderModel);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeRenderModel")]
-	internal static extern void VR_IVRRenderModels_FreeRenderModel(IntPtr instancePtr, ref RenderModel_t pRenderModel);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadTexture")]
-	internal static extern bool VR_IVRRenderModels_LoadTexture(IntPtr instancePtr, int textureId, ref IntPtr ppTexture);
+	internal static extern void VR_IVRRenderModels_FreeRenderModel(IntPtr instancePtr, IntPtr pRenderModel);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadTexture_Async")]
+	internal static extern EVRRenderModelError VR_IVRRenderModels_LoadTexture_Async(IntPtr instancePtr, int textureId, ref IntPtr ppTexture);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeTexture")]
-	internal static extern void VR_IVRRenderModels_FreeTexture(IntPtr instancePtr, ref RenderModel_TextureMap_t pTexture);
+	internal static extern void VR_IVRRenderModels_FreeTexture(IntPtr instancePtr, IntPtr pTexture);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_LoadTextureD3D11_Async")]
+	internal static extern EVRRenderModelError VR_IVRRenderModels_LoadTextureD3D11_Async(IntPtr instancePtr, int textureId, IntPtr pD3D11Device, ref IntPtr ppD3D11Texture2D);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_FreeTextureD3D11")]
+	internal static extern void VR_IVRRenderModels_FreeTextureD3D11(IntPtr instancePtr, IntPtr pD3D11Texture2D);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetRenderModelName")]
 	internal static extern uint VR_IVRRenderModels_GetRenderModelName(IntPtr instancePtr, uint unRenderModelIndex, System.Text.StringBuilder pchRenderModelName, uint unRenderModelNameLen);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetRenderModelCount")]
@@ -404,7 +408,7 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetComponentRenderModelName")]
 	internal static extern uint VR_IVRRenderModels_GetComponentRenderModelName(IntPtr instancePtr, string pchRenderModelName, string pchComponentName, System.Text.StringBuilder pchComponentRenderModelName, uint unComponentRenderModelNameLen);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_GetComponentState")]
-	internal static extern bool VR_IVRRenderModels_GetComponentState(IntPtr instancePtr, string pchRenderModelName, string pchComponentName, ref VRControllerState_t pControllerState, ref RenderModel_ComponentState_t pComponentState);
+	internal static extern bool VR_IVRRenderModels_GetComponentState(IntPtr instancePtr, string pchRenderModelName, string pchComponentName, ref VRControllerState_t pControllerState, ref RenderModel_ControllerMode_State_t pState, ref RenderModel_ComponentState_t pComponentState);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRRenderModels_RenderModelHasComponent")]
 	internal static extern bool VR_IVRRenderModels_RenderModelHasComponent(IntPtr instancePtr, string pchRenderModelName, string pchComponentName);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRNotifications_CreateNotification")]
@@ -414,7 +418,7 @@ class VRNativeEntrypoints
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetSettingsErrorNameFromEnum")]
 	internal static extern IntPtr VR_IVRSettings_GetSettingsErrorNameFromEnum(IntPtr instancePtr, EVRSettingsError eError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_Sync")]
-	internal static extern void VR_IVRSettings_Sync(IntPtr instancePtr, ref EVRSettingsError peError);
+	internal static extern bool VR_IVRSettings_Sync(IntPtr instancePtr, bool bForce, ref EVRSettingsError peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_GetBool")]
 	internal static extern bool VR_IVRSettings_GetBool(IntPtr instancePtr, string pchSection, string pchSettingsKey, bool bDefaultValue, ref EVRSettingsError peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_SetBool")]
@@ -431,6 +435,8 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRSettings_GetString(IntPtr instancePtr, string pchSection, string pchSettingsKey, string pchValue, uint unValueLen, string pchDefaultValue, ref EVRSettingsError peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_SetString")]
 	internal static extern void VR_IVRSettings_SetString(IntPtr instancePtr, string pchSection, string pchSettingsKey, string pchValue, ref EVRSettingsError peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_RemoveSection")]
+	internal static extern void VR_IVRSettings_RemoveSection(IntPtr instancePtr, string pchSection, ref EVRSettingsError peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_HasCamera")]
 	internal static extern bool VR_IVRTrackedCamera_HasCamera(IntPtr instancePtr, uint nDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_GetCameraFirmwareDescription")]
@@ -699,17 +705,19 @@ public abstract class IVROverlay
 public abstract class IVRRenderModels
 {
 	public abstract IntPtr GetIntPtr();
-	public abstract bool LoadRenderModel(string pchRenderModelName,ref IntPtr ppRenderModel);
-	public abstract void FreeRenderModel(ref RenderModel_t pRenderModel);
-	public abstract bool LoadTexture(int textureId,ref IntPtr ppTexture);
-	public abstract void FreeTexture(ref RenderModel_TextureMap_t pTexture);
+	public abstract EVRRenderModelError LoadRenderModel_Async(string pchRenderModelName,ref IntPtr ppRenderModel);
+	public abstract void FreeRenderModel(IntPtr pRenderModel);
+	public abstract EVRRenderModelError LoadTexture_Async(int textureId,ref IntPtr ppTexture);
+	public abstract void FreeTexture(IntPtr pTexture);
+	public abstract EVRRenderModelError LoadTextureD3D11_Async(int textureId,IntPtr pD3D11Device,ref IntPtr ppD3D11Texture2D);
+	public abstract void FreeTextureD3D11(IntPtr pD3D11Texture2D);
 	public abstract uint GetRenderModelName(uint unRenderModelIndex,System.Text.StringBuilder pchRenderModelName,uint unRenderModelNameLen);
 	public abstract uint GetRenderModelCount();
 	public abstract uint GetComponentCount(string pchRenderModelName);
 	public abstract uint GetComponentName(string pchRenderModelName,uint unComponentIndex,System.Text.StringBuilder pchComponentName,uint unComponentNameLen);
 	public abstract ulong GetComponentButtonMask(string pchRenderModelName,string pchComponentName);
 	public abstract uint GetComponentRenderModelName(string pchRenderModelName,string pchComponentName,System.Text.StringBuilder pchComponentRenderModelName,uint unComponentRenderModelNameLen);
-	public abstract bool GetComponentState(string pchRenderModelName,string pchComponentName,ref VRControllerState_t pControllerState,ref RenderModel_ComponentState_t pComponentState);
+	public abstract bool GetComponentState(string pchRenderModelName,string pchComponentName,ref VRControllerState_t pControllerState,ref RenderModel_ControllerMode_State_t pState,ref RenderModel_ComponentState_t pComponentState);
 	public abstract bool RenderModelHasComponent(string pchRenderModelName,string pchComponentName);
 }
 
@@ -726,7 +734,7 @@ public abstract class IVRSettings
 {
 	public abstract IntPtr GetIntPtr();
 	public abstract string GetSettingsErrorNameFromEnum(EVRSettingsError eError);
-	public abstract void Sync(ref EVRSettingsError peError);
+	public abstract bool Sync(bool bForce,ref EVRSettingsError peError);
 	public abstract bool GetBool(string pchSection,string pchSettingsKey,bool bDefaultValue,ref EVRSettingsError peError);
 	public abstract void SetBool(string pchSection,string pchSettingsKey,bool bValue,ref EVRSettingsError peError);
 	public abstract int GetInt32(string pchSection,string pchSettingsKey,int nDefaultValue,ref EVRSettingsError peError);
@@ -735,6 +743,7 @@ public abstract class IVRSettings
 	public abstract void SetFloat(string pchSection,string pchSettingsKey,float flValue,ref EVRSettingsError peError);
 	public abstract void GetString(string pchSection,string pchSettingsKey,string pchValue,uint unValueLen,string pchDefaultValue,ref EVRSettingsError peError);
 	public abstract void SetString(string pchSection,string pchSettingsKey,string pchValue,ref EVRSettingsError peError);
+	public abstract void RemoveSection(string pchSection,ref EVRSettingsError peError);
 }
 
 
@@ -2025,27 +2034,38 @@ public class CVRRenderModels : IVRRenderModels
 			throw new Exception("Steam Pointer not configured");
 		}
 	}
-	public override bool LoadRenderModel(string pchRenderModelName,ref IntPtr ppRenderModel)
+	public override EVRRenderModelError LoadRenderModel_Async(string pchRenderModelName,ref IntPtr ppRenderModel)
 	{
 		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRRenderModels_LoadRenderModel(m_pVRRenderModels,pchRenderModelName,ref ppRenderModel);
+		EVRRenderModelError result = VRNativeEntrypoints.VR_IVRRenderModels_LoadRenderModel_Async(m_pVRRenderModels,pchRenderModelName,ref ppRenderModel);
 		return result;
 	}
-	public override void FreeRenderModel(ref RenderModel_t pRenderModel)
+	public override void FreeRenderModel(IntPtr pRenderModel)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRRenderModels_FreeRenderModel(m_pVRRenderModels,ref pRenderModel);
+		VRNativeEntrypoints.VR_IVRRenderModels_FreeRenderModel(m_pVRRenderModels,pRenderModel);
 	}
-	public override bool LoadTexture(int textureId,ref IntPtr ppTexture)
+	public override EVRRenderModelError LoadTexture_Async(int textureId,ref IntPtr ppTexture)
 	{
 		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRRenderModels_LoadTexture(m_pVRRenderModels,textureId,ref ppTexture);
+		EVRRenderModelError result = VRNativeEntrypoints.VR_IVRRenderModels_LoadTexture_Async(m_pVRRenderModels,textureId,ref ppTexture);
 		return result;
 	}
-	public override void FreeTexture(ref RenderModel_TextureMap_t pTexture)
+	public override void FreeTexture(IntPtr pTexture)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRRenderModels_FreeTexture(m_pVRRenderModels,ref pTexture);
+		VRNativeEntrypoints.VR_IVRRenderModels_FreeTexture(m_pVRRenderModels,pTexture);
+	}
+	public override EVRRenderModelError LoadTextureD3D11_Async(int textureId,IntPtr pD3D11Device,ref IntPtr ppD3D11Texture2D)
+	{
+		CheckIfUsable();
+		EVRRenderModelError result = VRNativeEntrypoints.VR_IVRRenderModels_LoadTextureD3D11_Async(m_pVRRenderModels,textureId,pD3D11Device,ref ppD3D11Texture2D);
+		return result;
+	}
+	public override void FreeTextureD3D11(IntPtr pD3D11Texture2D)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRRenderModels_FreeTextureD3D11(m_pVRRenderModels,pD3D11Texture2D);
 	}
 	public override uint GetRenderModelName(uint unRenderModelIndex,System.Text.StringBuilder pchRenderModelName,uint unRenderModelNameLen)
 	{
@@ -2083,10 +2103,10 @@ public class CVRRenderModels : IVRRenderModels
 		uint result = VRNativeEntrypoints.VR_IVRRenderModels_GetComponentRenderModelName(m_pVRRenderModels,pchRenderModelName,pchComponentName,pchComponentRenderModelName,unComponentRenderModelNameLen);
 		return result;
 	}
-	public override bool GetComponentState(string pchRenderModelName,string pchComponentName,ref VRControllerState_t pControllerState,ref RenderModel_ComponentState_t pComponentState)
+	public override bool GetComponentState(string pchRenderModelName,string pchComponentName,ref VRControllerState_t pControllerState,ref RenderModel_ControllerMode_State_t pState,ref RenderModel_ComponentState_t pComponentState)
 	{
 		CheckIfUsable();
-		bool result = VRNativeEntrypoints.VR_IVRRenderModels_GetComponentState(m_pVRRenderModels,pchRenderModelName,pchComponentName,ref pControllerState,ref pComponentState);
+		bool result = VRNativeEntrypoints.VR_IVRRenderModels_GetComponentState(m_pVRRenderModels,pchRenderModelName,pchComponentName,ref pControllerState,ref pState,ref pComponentState);
 		return result;
 	}
 	public override bool RenderModelHasComponent(string pchRenderModelName,string pchComponentName)
@@ -2154,10 +2174,11 @@ public class CVRSettings : IVRSettings
 		IntPtr result = VRNativeEntrypoints.VR_IVRSettings_GetSettingsErrorNameFromEnum(m_pVRSettings,eError);
 		return (string) Marshal.PtrToStructure(result, typeof(string));
 	}
-	public override void Sync(ref EVRSettingsError peError)
+	public override bool Sync(bool bForce,ref EVRSettingsError peError)
 	{
 		CheckIfUsable();
-		VRNativeEntrypoints.VR_IVRSettings_Sync(m_pVRSettings,ref peError);
+		bool result = VRNativeEntrypoints.VR_IVRSettings_Sync(m_pVRSettings,bForce,ref peError);
+		return result;
 	}
 	public override bool GetBool(string pchSection,string pchSettingsKey,bool bDefaultValue,ref EVRSettingsError peError)
 	{
@@ -2201,6 +2222,11 @@ public class CVRSettings : IVRSettings
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRSettings_SetString(m_pVRSettings,pchSection,pchSettingsKey,pchValue,ref peError);
+	}
+	public override void RemoveSection(string pchSection,ref EVRSettingsError peError)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRSettings_RemoveSection(m_pVRSettings,pchSection,ref peError);
 	}
 }
 
@@ -2419,6 +2445,8 @@ public enum ETrackedDeviceProperty
 	Prop_DeviceProvidesBatteryStatus_Bool = 1026,
 	Prop_DeviceCanPowerOff_Bool = 1027,
 	Prop_Firmware_ProgrammingTarget_String = 1028,
+	Prop_DeviceClass_Int32 = 1029,
+	Prop_HasCamera_Bool = 1030,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -2449,6 +2477,9 @@ public enum ETrackedDeviceProperty
 	Prop_CameraFirmwareVersion_Uint64 = 2027,
 	Prop_CameraFirmwareDescription_String = 2028,
 	Prop_DisplayFPGAVersion_Uint64 = 2029,
+	Prop_DisplayBootloaderVersion_Uint64 = 2030,
+	Prop_DisplayHardwareVersion_Uint64 = 2031,
+	Prop_AudioFirmwareVersion_Uint64 = 2032,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -2506,6 +2537,7 @@ public enum EVREventType
 	VREvent_IpdChanged = 105,
 	VREvent_EnterStandbyMode = 106,
 	VREvent_LeaveStandbyMode = 107,
+	VREvent_TrackedDeviceRoleChanged = 108,
 	VREvent_ButtonPress = 200,
 	VREvent_ButtonUnpress = 201,
 	VREvent_ButtonTouch = 202,
@@ -2549,6 +2581,7 @@ public enum EVREventType
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
 	VREvent_BackgroundSettingHasChanged = 850,
+	VREvent_CameraSettingsHaveChanged = 851,
 	VREvent_StatusUpdate = 900,
 	VREvent_MCImageUpdated = 1000,
 	VREvent_FirmwareUpdateStarted = 1100,
@@ -2841,12 +2874,26 @@ public enum EOverlayDirection
 	Right = 3,
 	Count = 4,
 }
+public enum EVRRenderModelError
+{
+	None = 0,
+	Loading = 100,
+	NotSupported = 200,
+	InvalidArg = 300,
+	InvalidModel = 301,
+	NoShapes = 302,
+	MultipleShapes = 303,
+	TooManyIndices = 304,
+	MultipleTextures = 305,
+	InvalidTexture = 400,
+}
 public enum EVRComponentProperty
 {
 	IsStatic = 1,
 	IsVisible = 2,
 	IsTouched = 4,
 	IsPressed = 8,
+	IsScrolled = 16,
 }
 public enum EVRNotificationType
 {
@@ -3156,6 +3203,11 @@ public enum ECameraVideoStreamFormat
 	public uint unTriangleCount;
 	public int diffuseTextureId;
 }
+[StructLayout(LayoutKind.Sequential)] public struct RenderModel_ControllerMode_State_t
+{
+	[MarshalAs(UnmanagedType.I1)]
+	public bool bScrollWheelVisible;
+}
 [StructLayout(LayoutKind.Sequential)] public struct NotificationBitmap_t
 {
 	public IntPtr bytes; // void *
@@ -3238,7 +3290,7 @@ public class OpenVR
 	public const string k_pch_Controller_Component_Tip = "tip";
 	public const string k_pch_Controller_Component_HandGrip = "handgrip";
 	public const string k_pch_Controller_Component_Status = "status";
-	public const string IVRRenderModels_Version = "IVRRenderModels_002";
+	public const string IVRRenderModels_Version = "IVRRenderModels_004";
 	public const uint k_unNotificationTextMaxSize = 256;
 	public const string IVRNotifications_Version = "IVRNotifications_002";
 	public const uint k_unMaxSettingsKeyLength = 128;
@@ -3260,6 +3312,9 @@ public class OpenVR
 	public const string k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
 	public const string k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
 	public const string k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
+	public const string k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
+	public const string k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
+	public const string k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -3275,7 +3330,6 @@ public class OpenVR
 	public const string k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
 	public const string k_pch_Null_Section = "driver_null";
 	public const string k_pch_Null_EnableNullDriver_Bool = "enable";
-	public const string k_pch_Null_Id_String = "id";
 	public const string k_pch_Null_SerialNumber_String = "serialNumber";
 	public const string k_pch_Null_ModelNumber_String = "modelNumber";
 	public const string k_pch_Null_WindowX_Int32 = "windowX";
@@ -3298,6 +3352,7 @@ public class OpenVR
 	public const string k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
 	public const string k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	public const string k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+	public const string k_pch_Camera_Section = "camera";
 	public const string IVRSettings_Version = "IVRSettings_001";
 	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_001";
 }

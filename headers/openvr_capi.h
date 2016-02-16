@@ -125,7 +125,7 @@ char * k_pch_Controller_Component_Base = "base";
 char * k_pch_Controller_Component_Tip = "tip";
 char * k_pch_Controller_Component_HandGrip = "handgrip";
 char * k_pch_Controller_Component_Status = "status";
-char * IVRRenderModels_Version = "IVRRenderModels_002";
+char * IVRRenderModels_Version = "IVRRenderModels_004";
 unsigned int k_unNotificationTextMaxSize = 256;
 char * IVRNotifications_Version = "IVRNotifications_002";
 unsigned int k_unMaxSettingsKeyLength = 128;
@@ -147,6 +147,9 @@ char * k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
 char * k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
 char * k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
 char * k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
+char * k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
+char * k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
+char * k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
 char * k_pch_Lighthouse_Section = "driver_lighthouse";
 char * k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 char * k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -162,7 +165,6 @@ char * k_pch_Lighthouse_OriginOffsetZ_Float = "originoffsetz";
 char * k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
 char * k_pch_Null_Section = "driver_null";
 char * k_pch_Null_EnableNullDriver_Bool = "enable";
-char * k_pch_Null_Id_String = "id";
 char * k_pch_Null_SerialNumber_String = "serialNumber";
 char * k_pch_Null_ModelNumber_String = "modelNumber";
 char * k_pch_Null_WindowX_Int32 = "windowX";
@@ -185,6 +187,7 @@ char * k_pch_Perf_NotifyInHMD_Bool = "warnInHMD";
 char * k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
 char * k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 char * k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+char * k_pch_Camera_Section = "camera";
 char * IVRSettings_Version = "IVRSettings_001";
 char * IVRTrackedCamera_Version = "IVRTrackedCamera_001";
 
@@ -273,6 +276,8 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_DeviceProvidesBatteryStatus_Bool = 1026,
 	ETrackedDeviceProperty_Prop_DeviceCanPowerOff_Bool = 1027,
 	ETrackedDeviceProperty_Prop_Firmware_ProgrammingTarget_String = 1028,
+	ETrackedDeviceProperty_Prop_DeviceClass_Int32 = 1029,
+	ETrackedDeviceProperty_Prop_HasCamera_Bool = 1030,
 	ETrackedDeviceProperty_Prop_ReportsTimeSinceVSync_Bool = 2000,
 	ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	ETrackedDeviceProperty_Prop_DisplayFrequency_Float = 2002,
@@ -303,6 +308,9 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_CameraFirmwareVersion_Uint64 = 2027,
 	ETrackedDeviceProperty_Prop_CameraFirmwareDescription_String = 2028,
 	ETrackedDeviceProperty_Prop_DisplayFPGAVersion_Uint64 = 2029,
+	ETrackedDeviceProperty_Prop_DisplayBootloaderVersion_Uint64 = 2030,
+	ETrackedDeviceProperty_Prop_DisplayHardwareVersion_Uint64 = 2031,
+	ETrackedDeviceProperty_Prop_AudioFirmwareVersion_Uint64 = 2032,
 	ETrackedDeviceProperty_Prop_AttachedDeviceId_String = 3000,
 	ETrackedDeviceProperty_Prop_SupportedButtons_Uint64 = 3001,
 	ETrackedDeviceProperty_Prop_Axis0Type_Int32 = 3002,
@@ -364,6 +372,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_IpdChanged = 105,
 	EVREventType_VREvent_EnterStandbyMode = 106,
 	EVREventType_VREvent_LeaveStandbyMode = 107,
+	EVREventType_VREvent_TrackedDeviceRoleChanged = 108,
 	EVREventType_VREvent_ButtonPress = 200,
 	EVREventType_VREvent_ButtonUnpress = 201,
 	EVREventType_VREvent_ButtonTouch = 202,
@@ -407,6 +416,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_ChaperoneTempDataHasChanged = 802,
 	EVREventType_VREvent_ChaperoneSettingsHaveChanged = 803,
 	EVREventType_VREvent_BackgroundSettingHasChanged = 850,
+	EVREventType_VREvent_CameraSettingsHaveChanged = 851,
 	EVREventType_VREvent_StatusUpdate = 900,
 	EVREventType_VREvent_MCImageUpdated = 1000,
 	EVREventType_VREvent_FirmwareUpdateStarted = 1100,
@@ -723,12 +733,27 @@ typedef enum EOverlayDirection
 	EOverlayDirection_OverlayDirection_Count = 4,
 } EOverlayDirection;
 
+typedef enum EVRRenderModelError
+{
+	EVRRenderModelError_VRRenderModelError_None = 0,
+	EVRRenderModelError_VRRenderModelError_Loading = 100,
+	EVRRenderModelError_VRRenderModelError_NotSupported = 200,
+	EVRRenderModelError_VRRenderModelError_InvalidArg = 300,
+	EVRRenderModelError_VRRenderModelError_InvalidModel = 301,
+	EVRRenderModelError_VRRenderModelError_NoShapes = 302,
+	EVRRenderModelError_VRRenderModelError_MultipleShapes = 303,
+	EVRRenderModelError_VRRenderModelError_TooManyIndices = 304,
+	EVRRenderModelError_VRRenderModelError_MultipleTextures = 305,
+	EVRRenderModelError_VRRenderModelError_InvalidTexture = 400,
+} EVRRenderModelError;
+
 typedef enum EVRComponentProperty
 {
 	EVRComponentProperty_VRComponentProperty_IsStatic = 1,
 	EVRComponentProperty_VRComponentProperty_IsVisible = 2,
 	EVRComponentProperty_VRComponentProperty_IsTouched = 4,
 	EVRComponentProperty_VRComponentProperty_IsPressed = 8,
+	EVRComponentProperty_VRComponentProperty_IsScrolled = 16,
 } EVRComponentProperty;
 
 typedef enum EVRNotificationType
@@ -962,6 +987,11 @@ typedef struct RenderModel_t
 	TextureID_t diffuseTextureId;
 } RenderModel_t;
 
+typedef struct RenderModel_ControllerMode_State_t
+{
+	bool bScrollWheelVisible;
+} RenderModel_ControllerMode_State_t;
+
 typedef struct NotificationBitmap_t
 {
 	void * bytes; // void *
@@ -1178,22 +1208,24 @@ S_API uint32_t VR_IVROverlay_GetKeyboardText(intptr_t instancePtr, char * pchTex
 S_API void VR_IVROverlay_HideKeyboard(intptr_t instancePtr);
 S_API void VR_IVROverlay_SetKeyboardTransformAbsolute(intptr_t instancePtr, ETrackingUniverseOrigin eTrackingOrigin, const struct HmdMatrix34_t * pmatTrackingOriginToKeyboardTransform);
 S_API void VR_IVROverlay_SetKeyboardPositionForOverlay(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, struct HmdRect2_t avoidRect);
-S_API bool VR_IVRRenderModels_LoadRenderModel(intptr_t instancePtr, const char * pchRenderModelName, struct RenderModel_t ** ppRenderModel);
+S_API EVRRenderModelError VR_IVRRenderModels_LoadRenderModel_Async(intptr_t instancePtr, const char * pchRenderModelName, struct RenderModel_t ** ppRenderModel);
 S_API void VR_IVRRenderModels_FreeRenderModel(intptr_t instancePtr, struct RenderModel_t * pRenderModel);
-S_API bool VR_IVRRenderModels_LoadTexture(intptr_t instancePtr, TextureID_t textureId, struct RenderModel_TextureMap_t ** ppTexture);
+S_API EVRRenderModelError VR_IVRRenderModels_LoadTexture_Async(intptr_t instancePtr, TextureID_t textureId, struct RenderModel_TextureMap_t ** ppTexture);
 S_API void VR_IVRRenderModels_FreeTexture(intptr_t instancePtr, struct RenderModel_TextureMap_t * pTexture);
+S_API EVRRenderModelError VR_IVRRenderModels_LoadTextureD3D11_Async(intptr_t instancePtr, TextureID_t textureId, void * pD3D11Device, void ** ppD3D11Texture2D);
+S_API void VR_IVRRenderModels_FreeTextureD3D11(intptr_t instancePtr, void * pD3D11Texture2D);
 S_API uint32_t VR_IVRRenderModels_GetRenderModelName(intptr_t instancePtr, uint32_t unRenderModelIndex, char * pchRenderModelName, uint32_t unRenderModelNameLen);
 S_API uint32_t VR_IVRRenderModels_GetRenderModelCount(intptr_t instancePtr);
 S_API uint32_t VR_IVRRenderModels_GetComponentCount(intptr_t instancePtr, const char * pchRenderModelName);
 S_API uint32_t VR_IVRRenderModels_GetComponentName(intptr_t instancePtr, const char * pchRenderModelName, uint32_t unComponentIndex, char * pchComponentName, uint32_t unComponentNameLen);
 S_API uint64_t VR_IVRRenderModels_GetComponentButtonMask(intptr_t instancePtr, const char * pchRenderModelName, const char * pchComponentName);
 S_API uint32_t VR_IVRRenderModels_GetComponentRenderModelName(intptr_t instancePtr, const char * pchRenderModelName, const char * pchComponentName, char * pchComponentRenderModelName, uint32_t unComponentRenderModelNameLen);
-S_API bool VR_IVRRenderModels_GetComponentState(intptr_t instancePtr, const char * pchRenderModelName, const char * pchComponentName, const VRControllerState_t * pControllerState, struct RenderModel_ComponentState_t * pComponentState);
+S_API bool VR_IVRRenderModels_GetComponentState(intptr_t instancePtr, const char * pchRenderModelName, const char * pchComponentName, const VRControllerState_t * pControllerState, const struct RenderModel_ControllerMode_State_t * pState, struct RenderModel_ComponentState_t * pComponentState);
 S_API bool VR_IVRRenderModels_RenderModelHasComponent(intptr_t instancePtr, const char * pchRenderModelName, const char * pchComponentName);
 S_API EVRNotificationError VR_IVRNotifications_CreateNotification(intptr_t instancePtr, VROverlayHandle_t ulOverlayHandle, uint64_t ulUserValue, EVRNotificationType type, const char * pchText, EVRNotificationStyle style, const struct NotificationBitmap_t * pImage, VRNotificationId * pNotificationId);
 S_API EVRNotificationError VR_IVRNotifications_RemoveNotification(intptr_t instancePtr, VRNotificationId notificationId);
 S_API char * VR_IVRSettings_GetSettingsErrorNameFromEnum(intptr_t instancePtr, EVRSettingsError eError);
-S_API void VR_IVRSettings_Sync(intptr_t instancePtr, EVRSettingsError * peError);
+S_API bool VR_IVRSettings_Sync(intptr_t instancePtr, bool bForce, EVRSettingsError * peError);
 S_API bool VR_IVRSettings_GetBool(intptr_t instancePtr, const char * pchSection, const char * pchSettingsKey, bool bDefaultValue, EVRSettingsError * peError);
 S_API void VR_IVRSettings_SetBool(intptr_t instancePtr, const char * pchSection, const char * pchSettingsKey, bool bValue, EVRSettingsError * peError);
 S_API int32_t VR_IVRSettings_GetInt32(intptr_t instancePtr, const char * pchSection, const char * pchSettingsKey, int32_t nDefaultValue, EVRSettingsError * peError);
@@ -1202,6 +1234,7 @@ S_API float VR_IVRSettings_GetFloat(intptr_t instancePtr, const char * pchSectio
 S_API void VR_IVRSettings_SetFloat(intptr_t instancePtr, const char * pchSection, const char * pchSettingsKey, float flValue, EVRSettingsError * peError);
 S_API void VR_IVRSettings_GetString(intptr_t instancePtr, const char * pchSection, const char * pchSettingsKey, char * pchValue, uint32_t unValueLen, const char * pchDefaultValue, EVRSettingsError * peError);
 S_API void VR_IVRSettings_SetString(intptr_t instancePtr, const char * pchSection, const char * pchSettingsKey, const char * pchValue, EVRSettingsError * peError);
+S_API void VR_IVRSettings_RemoveSection(intptr_t instancePtr, const char * pchSection, EVRSettingsError * peError);
 S_API bool VR_IVRTrackedCamera_HasCamera(intptr_t instancePtr, TrackedDeviceIndex_t nDeviceIndex);
 S_API bool VR_IVRTrackedCamera_GetCameraFirmwareDescription(intptr_t instancePtr, TrackedDeviceIndex_t nDeviceIndex, char * pBuffer, uint32_t nBufferLen);
 S_API bool VR_IVRTrackedCamera_GetCameraFrameDimensions(intptr_t instancePtr, TrackedDeviceIndex_t nDeviceIndex, ECameraVideoStreamFormat nVideoStreamFormat, uint32_t * pWidth, uint32_t * pHeight);

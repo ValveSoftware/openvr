@@ -224,6 +224,8 @@ enum ETrackedDeviceProperty
 	Prop_DeviceProvidesBatteryStatus_Bool		= 1026,
 	Prop_DeviceCanPowerOff_Bool					= 1027,
 	Prop_Firmware_ProgrammingTarget_String		= 1028,
+	Prop_DeviceClass_Int32						= 1029,
+	Prop_HasCamera_Bool							= 1030,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -256,6 +258,9 @@ enum ETrackedDeviceProperty
 	Prop_CameraFirmwareVersion_Uint64			= 2027,
 	Prop_CameraFirmwareDescription_String		= 2028,
 	Prop_DisplayFPGAVersion_Uint64				= 2029,
+	Prop_DisplayBootloaderVersion_Uint64		= 2030,
+	Prop_DisplayHardwareVersion_Uint64			= 2031,
+	Prop_AudioFirmwareVersion_Uint64			= 2032,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -348,6 +353,7 @@ enum EVREventType
 	VREvent_IpdChanged					= 105,
 	VREvent_EnterStandbyMode			= 106,
 	VREvent_LeaveStandbyMode			= 107,
+	VREvent_TrackedDeviceRoleChanged	= 108,
 
 	VREvent_ButtonPress					= 200, // data is controller
 	VREvent_ButtonUnpress				= 201, // data is controller
@@ -399,6 +405,7 @@ enum EVREventType
 	VREvent_ChaperoneSettingsHaveChanged = 803,
 
 	VREvent_BackgroundSettingHasChanged	= 850,
+	VREvent_CameraSettingsHaveChanged	= 851,
 
 	VREvent_StatusUpdate				= 900,
 
@@ -1352,7 +1359,8 @@ namespace vr
 	public:
 		virtual const char *GetSettingsErrorNameFromEnum( EVRSettingsError eError ) = 0;
 
-		virtual void Sync( EVRSettingsError *peError = nullptr ) = 0;
+		// Returns true if file sync occurred (force or settings dirty)
+		virtual bool Sync( bool bForce = false, EVRSettingsError *peError = nullptr ) = 0;
 
 		virtual bool GetBool( const char *pchSection, const char *pchSettingsKey, bool bDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetBool( const char *pchSection, const char *pchSettingsKey, bool bValue, EVRSettingsError *peError = nullptr ) = 0;
@@ -1362,6 +1370,7 @@ namespace vr
 		virtual void SetFloat( const char *pchSection, const char *pchSettingsKey, float flValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void GetString( const char *pchSection, const char *pchSettingsKey, char *pchValue, uint32_t unValueLen, const char *pchDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetString( const char *pchSection, const char *pchSettingsKey, const char *pchValue, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void RemoveSection( const char *pchSection, EVRSettingsError *peError = nullptr ) = 0;
 	};
 
 	//-----------------------------------------------------------------------------
@@ -1385,7 +1394,9 @@ namespace vr
 	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
 	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
 	static const char * const k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
-
+	static const char * const k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
+	static const char * const k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
+	static const char * const k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1410,7 +1421,6 @@ namespace vr
 
 	static const char * const k_pch_Null_Section = "driver_null";
 	static const char * const k_pch_Null_EnableNullDriver_Bool = "enable";
-	static const char * const k_pch_Null_Id_String = "id";
 	static const char * const k_pch_Null_SerialNumber_String = "serialNumber";
 	static const char * const k_pch_Null_ModelNumber_String = "modelNumber";
 	static const char * const k_pch_Null_WindowX_Int32 = "windowX";
@@ -1445,6 +1455,10 @@ namespace vr
 	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
 	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+
+	//-----------------------------------------------------------------------------
+	// camera keys
+	static const char * const k_pch_Camera_Section = "camera";
 
 	//-----------------------------------------------------------------------------
 
@@ -1482,7 +1496,7 @@ enum ChaperoneCalibrationState
 	ChaperoneCalibrationState_Warning_SeatedBoundsInvalid = 103,		// Seated bounds haven't been calibrated for the current tracking center
 
 	// Errors
-	ChaperoneCalibrationState_Error = 200,
+	ChaperoneCalibrationState_Error = 200,								// The UniverseID is invalid
 	ChaperoneCalibrationState_Error_BaseStationUninitalized = 201,		// Tracking center hasn't be calibrated for at least one of the base stations
 	ChaperoneCalibrationState_Error_BaseStationConflict = 202,			// Tracking center is calibrated, but base stations disagree on the tracking space
 	ChaperoneCalibrationState_Error_PlayAreaInvalid = 203,				// Play Area hasn't been calibrated for the current tracking center
@@ -2246,6 +2260,21 @@ static const char * const k_pch_Controller_Component_Status = "status";		// 1:1 
 #pragma pack( push, 8 )
 #endif
 
+/** Errors that can occur with the VR compositor */
+enum EVRRenderModelError
+{
+	VRRenderModelError_None = 0,
+	VRRenderModelError_Loading = 100,
+	VRRenderModelError_NotSupported = 200,
+	VRRenderModelError_InvalidArg = 300,
+	VRRenderModelError_InvalidModel = 301,
+	VRRenderModelError_NoShapes = 302,
+	VRRenderModelError_MultipleShapes = 303,
+	VRRenderModelError_TooManyIndices = 304,
+	VRRenderModelError_MultipleTextures = 305,
+	VRRenderModelError_InvalidTexture = 400,
+};
+
 typedef uint32_t VRComponentProperties;
 
 enum EVRComponentProperty
@@ -2254,10 +2283,10 @@ enum EVRComponentProperty
 	VRComponentProperty_IsVisible = (1 << 1),
 	VRComponentProperty_IsTouched = (1 << 2),
 	VRComponentProperty_IsPressed = (1 << 3),
+	VRComponentProperty_IsScrolled = (1 << 4),
 };
 
-/** Describes state information about a render-model component, including transforms and other dynamic properties
-*/
+/** Describes state information about a render-model component, including transforms and other dynamic properties */
 struct RenderModel_ComponentState_t
 {
 	HmdMatrix34_t mTrackingToComponentRenderModel;  // Transform required when drawing the component render model
@@ -2265,7 +2294,7 @@ struct RenderModel_ComponentState_t
 	VRComponentProperties uProperties;
 };
 
-/** a single vertex in a render model */
+/** A single vertex in a render model */
 struct RenderModel_Vertex_t
 {
 	HmdVector3_t vPosition;		// position in meters in device space
@@ -2281,8 +2310,7 @@ struct RenderModel_TextureMap_t
 };
 
 /**  Session unique texture identifier. Rendermodels which share the same texture will have the same id.
-IDs <0 denote the texture is not present
-*/
+IDs <0 denote the texture is not present */
 
 typedef int32_t TextureID_t;
 
@@ -2295,12 +2323,16 @@ struct RenderModel_t
 	TextureID_t diffuseTextureId;				// Session unique texture identifier. Rendermodels which share the same texture will have the same id. <0 == texture not present
 };
 
+struct RenderModel_ControllerMode_State_t
+{
+	bool bScrollWheelVisible; // is this controller currently set to be in a scroll wheel mode
+};
+
 #pragma pack( pop )
 
 class IVRRenderModels
 {
 public:
-
 
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
 	* from the Prop_RenderModelName_String property or an absolute path name to a render model on disk. 
@@ -2309,26 +2341,26 @@ public:
 	* application is finished with the render model it should call FreeRenderModel() to free the memory associated
 	* with the model.
 	*
-	* The method returns false if the model could not be loaded.
-	*
-	* The API expects that this function will be called at startup or when tracked devices are connected and disconnected.
-	* If it is called every frame it will hurt performance.
-	*/
-	virtual bool LoadRenderModel( const char *pchRenderModelName, RenderModel_t **ppRenderModel ) = 0;
+	* The method returns VRRenderModelError_Loading while the render model is still being loaded.
+	* The method returns VRRenderModelError_None once loaded successfully, otherwise will return an error. */
+	virtual EVRRenderModelError LoadRenderModel_Async( const char *pchRenderModelName, RenderModel_t **ppRenderModel ) = 0;
 
 	/** Frees a previously returned render model
-	*   It is safe to call this on a null ptr.
-	**/
+	*   It is safe to call this on a null ptr. */
 	virtual void FreeRenderModel( RenderModel_t *pRenderModel ) = 0;
 
-	/** Loads and returns a texture for use in the application.
-	*/
-	virtual bool LoadTexture( TextureID_t textureId, RenderModel_TextureMap_t **ppTexture ) = 0;
+	/** Loads and returns a texture for use in the application. */
+	virtual EVRRenderModelError LoadTexture_Async( TextureID_t textureId, RenderModel_TextureMap_t **ppTexture ) = 0;
 
 	/** Frees a previously returned texture
-	*   It is safe to call this on a null ptr.
-	*/
+	*   It is safe to call this on a null ptr. */
 	virtual void FreeTexture( RenderModel_TextureMap_t *pTexture ) = 0;
+
+	/** Creates a D3D11 texture and loads data into it. */
+	virtual EVRRenderModelError LoadTextureD3D11_Async( TextureID_t textureId, void *pD3D11Device, void **ppD3D11Texture2D ) = 0;
+
+	/** Use this to free textures created with LoadTextureD3D11_Async instead of calling Release on them. */
+	virtual void FreeTextureD3D11( void *pD3D11Texture2D ) = 0;
 
 	/** Use this to get the names of available render models.  Index does not correlate to a tracked device index, but
 	* is only used for iterating over all available render models.  If the index is out of range, this function will return 0.
@@ -2339,15 +2371,13 @@ public:
 	virtual uint32_t GetRenderModelCount() = 0;
 
 
-
 	/** Returns the number of components of the specified render model.
 	*  Components are useful when client application wish to draw, label, or otherwise interact with components of tracked objects.
 	*  Examples controller components:
 	*   renderable things such as triggers, buttons
 	*   non-renderable things which include coordinate systems such as 'tip', 'base', a neutral controller agnostic hand-pose
 	*   If all controller components are enumerated and rendered, it will be equivalent to drawing the traditional render model
-	*   Returns 0 if components not supported, >0 otherwise
-	*/
+	*   Returns 0 if components not supported, >0 otherwise */
 	virtual uint32_t GetComponentCount( const char *pchRenderModelName ) = 0;
 
 	/** Use this to get the names of available components.  Index does not correlate to a tracked device index, but
@@ -2373,15 +2403,14 @@ public:
 	*
 	* If the pchRenderModelName or pchComponentName is invalid, this will return false (and transforms will be set to identity).
 	* Otherwise, return true
-	* Note: For dynamic objects, visibility may be dynamic. (I.e., true/false will be returned based on controller state ) */
-	virtual bool GetComponentState( const char *pchRenderModelName, const char *pchComponentName, const vr::VRControllerState_t *pControllerState, RenderModel_ComponentState_t *pComponentState ) = 0;
+	* Note: For dynamic objects, visibility may be dynamic. (I.e., true/false will be returned based on controller state and controller mode state ) */
+	virtual bool GetComponentState( const char *pchRenderModelName, const char *pchComponentName, const vr::VRControllerState_t *pControllerState, const RenderModel_ControllerMode_State_t *pState, RenderModel_ComponentState_t *pComponentState ) = 0;
 
 	/** Returns true if the render model has a component with the specified name */
 	virtual bool RenderModelHasComponent( const char *pchRenderModelName, const char *pchComponentName ) = 0;
-
 };
 
-static const char * const IVRRenderModels_Version = "IVRRenderModels_002";
+static const char * const IVRRenderModels_Version = "IVRRenderModels_004";
 
 }
 

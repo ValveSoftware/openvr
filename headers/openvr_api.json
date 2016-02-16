@@ -92,6 +92,8 @@
 	,{"name": "Prop_DeviceProvidesBatteryStatus_Bool","value": "1026"}
 	,{"name": "Prop_DeviceCanPowerOff_Bool","value": "1027"}
 	,{"name": "Prop_Firmware_ProgrammingTarget_String","value": "1028"}
+	,{"name": "Prop_DeviceClass_Int32","value": "1029"}
+	,{"name": "Prop_HasCamera_Bool","value": "1030"}
 	,{"name": "Prop_ReportsTimeSinceVSync_Bool","value": "2000"}
 	,{"name": "Prop_SecondsFromVsyncToPhotons_Float","value": "2001"}
 	,{"name": "Prop_DisplayFrequency_Float","value": "2002"}
@@ -122,6 +124,9 @@
 	,{"name": "Prop_CameraFirmwareVersion_Uint64","value": "2027"}
 	,{"name": "Prop_CameraFirmwareDescription_String","value": "2028"}
 	,{"name": "Prop_DisplayFPGAVersion_Uint64","value": "2029"}
+	,{"name": "Prop_DisplayBootloaderVersion_Uint64","value": "2030"}
+	,{"name": "Prop_DisplayHardwareVersion_Uint64","value": "2031"}
+	,{"name": "Prop_AudioFirmwareVersion_Uint64","value": "2032"}
 	,{"name": "Prop_AttachedDeviceId_String","value": "3000"}
 	,{"name": "Prop_SupportedButtons_Uint64","value": "3001"}
 	,{"name": "Prop_Axis0Type_Int32","value": "3002"}
@@ -175,6 +180,7 @@
 	,{"name": "VREvent_IpdChanged","value": "105"}
 	,{"name": "VREvent_EnterStandbyMode","value": "106"}
 	,{"name": "VREvent_LeaveStandbyMode","value": "107"}
+	,{"name": "VREvent_TrackedDeviceRoleChanged","value": "108"}
 	,{"name": "VREvent_ButtonPress","value": "200"}
 	,{"name": "VREvent_ButtonUnpress","value": "201"}
 	,{"name": "VREvent_ButtonTouch","value": "202"}
@@ -218,6 +224,7 @@
 	,{"name": "VREvent_ChaperoneTempDataHasChanged","value": "802"}
 	,{"name": "VREvent_ChaperoneSettingsHaveChanged","value": "803"}
 	,{"name": "VREvent_BackgroundSettingHasChanged","value": "850"}
+	,{"name": "VREvent_CameraSettingsHaveChanged","value": "851"}
 	,{"name": "VREvent_StatusUpdate","value": "900"}
 	,{"name": "VREvent_MCImageUpdated","value": "1000"}
 	,{"name": "VREvent_FirmwareUpdateStarted","value": "1100"}
@@ -487,11 +494,24 @@
 	,{"name": "OverlayDirection_Right","value": "3"}
 	,{"name": "OverlayDirection_Count","value": "4"}
 ]}
+,	{"enumname": "vr::EVRRenderModelError","values": [ 
+	{"name": "VRRenderModelError_None","value": "0"}
+	,{"name": "VRRenderModelError_Loading","value": "100"}
+	,{"name": "VRRenderModelError_NotSupported","value": "200"}
+	,{"name": "VRRenderModelError_InvalidArg","value": "300"}
+	,{"name": "VRRenderModelError_InvalidModel","value": "301"}
+	,{"name": "VRRenderModelError_NoShapes","value": "302"}
+	,{"name": "VRRenderModelError_MultipleShapes","value": "303"}
+	,{"name": "VRRenderModelError_TooManyIndices","value": "304"}
+	,{"name": "VRRenderModelError_MultipleTextures","value": "305"}
+	,{"name": "VRRenderModelError_InvalidTexture","value": "400"}
+]}
 ,	{"enumname": "vr::EVRComponentProperty","values": [ 
 	{"name": "VRComponentProperty_IsStatic","value": "1"}
 	,{"name": "VRComponentProperty_IsVisible","value": "2"}
 	,{"name": "VRComponentProperty_IsTouched","value": "4"}
 	,{"name": "VRComponentProperty_IsPressed","value": "8"}
+	,{"name": "VRComponentProperty_IsScrolled","value": "16"}
 ]}
 ,	{"enumname": "vr::EVRNotificationType","values": [ 
 	{"name": "EVRNotificationType_Transient","value": "0"}
@@ -567,7 +587,7 @@
 ,{
 	"constname": "k_pch_Controller_Component_Status","consttype": "const char *const", "constval": "status"}
 ,{
-	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_002"}
+	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_004"}
 ,{
 	"constname": "k_unNotificationTextMaxSize","consttype": "const uint32_t", "constval": "256"}
 ,{
@@ -611,6 +631,12 @@
 ,{
 	"constname": "k_pch_SteamVR_StandbyNoAppTimeout_Float","consttype": "const char *const", "constval": "standbyNoAppTimeout"}
 ,{
+	"constname": "k_pch_SteamVR_AutomaticDirectModeEnabled_Bool","consttype": "const char *const", "constval": "automaticDirectModeEnabled"}
+,{
+	"constname": "k_pch_SteamVR_RequestDirectModeEnabled_Bool","consttype": "const char *const", "constval": "requestDirectModeEnabled"}
+,{
+	"constname": "k_pch_SteamVR_RequestDirectModeDisabled_Bool","consttype": "const char *const", "constval": "requestDirectModeDisabled"}
+,{
 	"constname": "k_pch_Lighthouse_Section","consttype": "const char *const", "constval": "driver_lighthouse"}
 ,{
 	"constname": "k_pch_Lighthouse_DisableIMU_Bool","consttype": "const char *const", "constval": "disableimu"}
@@ -640,8 +666,6 @@
 	"constname": "k_pch_Null_Section","consttype": "const char *const", "constval": "driver_null"}
 ,{
 	"constname": "k_pch_Null_EnableNullDriver_Bool","consttype": "const char *const", "constval": "enable"}
-,{
-	"constname": "k_pch_Null_Id_String","consttype": "const char *const", "constval": "id"}
 ,{
 	"constname": "k_pch_Null_SerialNumber_String","consttype": "const char *const", "constval": "serialNumber"}
 ,{
@@ -686,6 +710,8 @@
 	"constname": "k_pch_Perf_AllowTimingStore_Bool","consttype": "const char *const", "constval": "allowTimingStore"}
 ,{
 	"constname": "k_pch_Perf_SaveTimingsOnExit_Bool","consttype": "const char *const", "constval": "saveTimingsOnExit"}
+,{
+	"constname": "k_pch_Camera_Section","consttype": "const char *const", "constval": "camera"}
 ,{
 	"constname": "IVRSettings_Version","consttype": "const char *const", "constval": "IVRSettings_001"}
 ,{
@@ -874,6 +900,8 @@
 { "fieldname": "rIndexData", "fieldtype": "const uint16_t *"},
 { "fieldname": "unTriangleCount", "fieldtype": "uint32_t"},
 { "fieldname": "diffuseTextureId", "fieldtype": "TextureID_t"}]}
+,{"struct": "vr::RenderModel_ControllerMode_State_t","fields": [
+{ "fieldname": "bScrollWheelVisible", "fieldtype": "_Bool"}]}
 ,{"struct": "vr::NotificationBitmap_t","fields": [
 { "fieldname": "bytes", "fieldtype": "void *"},
 { "fieldname": "width", "fieldtype": "int32_t"},
@@ -2442,8 +2470,8 @@
 }
 ,{
 	"classname": "vr::IVRRenderModels",
-	"methodname": "LoadRenderModel",
-	"returntype": "bool",
+	"methodname": "LoadRenderModel_Async",
+	"returntype": "vr::EVRRenderModelError",
 	"params": [ 
 {	"paramname": "pchRenderModelName" ,"paramtype": "const char *"},
 {	"paramname": "ppRenderModel" ,"paramtype": "struct vr::RenderModel_t **"}
@@ -2459,8 +2487,8 @@
 }
 ,{
 	"classname": "vr::IVRRenderModels",
-	"methodname": "LoadTexture",
-	"returntype": "bool",
+	"methodname": "LoadTexture_Async",
+	"returntype": "vr::EVRRenderModelError",
 	"params": [ 
 {	"paramname": "textureId" ,"paramtype": "vr::TextureID_t"},
 {	"paramname": "ppTexture" ,"paramtype": "struct vr::RenderModel_TextureMap_t **"}
@@ -2472,6 +2500,24 @@
 	"returntype": "void",
 	"params": [ 
 {	"paramname": "pTexture" ,"paramtype": "struct vr::RenderModel_TextureMap_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRRenderModels",
+	"methodname": "LoadTextureD3D11_Async",
+	"returntype": "vr::EVRRenderModelError",
+	"params": [ 
+{	"paramname": "textureId" ,"paramtype": "vr::TextureID_t"},
+{	"paramname": "pD3D11Device" ,"paramtype": "void *"},
+{	"paramname": "ppD3D11Texture2D" ,"paramtype": "void **"}
+	 ]
+}
+,{
+	"classname": "vr::IVRRenderModels",
+	"methodname": "FreeTextureD3D11",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "pD3D11Texture2D" ,"paramtype": "void *"}
 	 ]
 }
 ,{
@@ -2536,6 +2582,7 @@
 {	"paramname": "pchRenderModelName" ,"paramtype": "const char *"},
 {	"paramname": "pchComponentName" ,"paramtype": "const char *"},
 {	"paramname": "pControllerState" ,"paramtype": "const vr::VRControllerState_t *"},
+{	"paramname": "pState" ,"paramtype": "const struct vr::RenderModel_ControllerMode_State_t *"},
 {	"paramname": "pComponentState" ,"paramtype": "struct vr::RenderModel_ComponentState_t *"}
 	 ]
 }
@@ -2581,8 +2628,9 @@
 ,{
 	"classname": "vr::IVRSettings",
 	"methodname": "Sync",
-	"returntype": "void",
+	"returntype": "bool",
 	"params": [ 
+{	"paramname": "bForce" ,"paramtype": "bool"},
 {	"paramname": "peError" ,"paramtype": "vr::EVRSettingsError *"}
 	 ]
 }
@@ -2673,6 +2721,15 @@
 {	"paramname": "pchSection" ,"paramtype": "const char *"},
 {	"paramname": "pchSettingsKey" ,"paramtype": "const char *"},
 {	"paramname": "pchValue" ,"paramtype": "const char *"},
+{	"paramname": "peError" ,"paramtype": "vr::EVRSettingsError *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSettings",
+	"methodname": "RemoveSection",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "pchSection" ,"paramtype": "const char *"},
 {	"paramname": "peError" ,"paramtype": "vr::EVRSettingsError *"}
 	 ]
 }
