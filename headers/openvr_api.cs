@@ -3054,7 +3054,6 @@ public enum ECameraVideoStreamFormat
 	[FieldOffset(0)] public VREvent_Chaperone_t chaperone;
 	[FieldOffset(0)] public VREvent_PerformanceTest_t performanceTest;
 	[FieldOffset(0)] public VREvent_TouchPadMove_t touchPadMove;
-	[FieldOffset(0)] public VREvent_SeatedZeroPoseReset_t seatedZeroPoseReset;
 	[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 }
 
