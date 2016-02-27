@@ -375,6 +375,9 @@ enum EVREventType
 	VREvent_SceneApplicationChanged		= 404, // data is process - The App actually drawing the scene changed (usually to or from the compositor)
 	VREvent_SceneFocusChanged			= 405, // data is process - New app got access to draw the scene
 
+	VREvent_HideRenderModels			= 410, // Sent to the scene application to request hiding render models temporarily
+	VREvent_ShowRenderModels			= 411, // Sent to the scene application to request restoring render model visibility
+
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
 	VREvent_DashboardActivated		= 502,
@@ -416,6 +419,7 @@ enum EVREventType
 
 	VREvent_KeyboardClosed				= 1200,
 	VREvent_KeyboardCharInput			= 1201,
+	VREvent_KeyboardDone				= 1202, // Sent when DONE button clicked on keyboard
 
 	VREvent_ApplicationTransitionStarted	= 1300,
 	VREvent_ApplicationTransitionAborted	= 1301,
@@ -818,6 +822,9 @@ enum EVRInitError
 	VRInitError_IPC_MutexInitFailed		= 304,
 	VRInitError_IPC_Failed					= 305,
 
+	VRInitError_Compositor_Failed		= 400,
+	VRInitError_Compositor_D3D11HardwareRequired = 401,
+
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 
 	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
@@ -974,7 +981,9 @@ namespace vr
 		virtual void SetFloat( const char *pchSection, const char *pchSettingsKey, float flValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void GetString( const char *pchSection, const char *pchSettingsKey, char *pchValue, uint32_t unValueLen, const char *pchDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetString( const char *pchSection, const char *pchSettingsKey, const char *pchValue, EVRSettingsError *peError = nullptr ) = 0;
+		
 		virtual void RemoveSection( const char *pchSection, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void RemoveKeyInSection( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr ) = 0;
 	};
 
 	//-----------------------------------------------------------------------------
@@ -1001,6 +1010,10 @@ namespace vr
 	static const char * const k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
 	static const char * const k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
 	static const char * const k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
+	static const char * const k_pch_SteamVR_RequestDirectModeEdidVid_Int32 = "requestDirectModeEdidVid";
+	static const char * const k_pch_SteamVR_RequestDirectModeEdidPid_Int32 = "requestDirectModeEdidPid";
+	static const char * const k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
+	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1059,6 +1072,7 @@ namespace vr
 	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
 	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+	static const char * const k_pch_Perf_TestData_Float = "perfTestData";
 
 	//-----------------------------------------------------------------------------
 	// camera keys
@@ -1067,9 +1081,6 @@ namespace vr
 	//-----------------------------------------------------------------------------
 
 	static const char * const IVRSettings_Version = "IVRSettings_001";
-
-	/** Returns the current IVRSettings pointer or NULL the interface could not be found. */
-	VR_INTERFACE vr::IVRSettings *VR_CALLTYPE VRSettings();
 
 } // namespace vr
 
@@ -1276,7 +1287,7 @@ namespace vr
 
 		/** Call once per layer to draw for this frame.  One shared texture handle per eye.  Textures must be created
 		* using CreateSwapTextureSet and should be alternated per frame.  Call Present once all layers have been submitted. */
-		virtual void SubmitLayer( void *pSharedTextureHandles[2], const vr::VRTextureBounds_t * pBounds, const vr::HmdMatrix34_t * pPose ) {}
+		virtual void SubmitLayer( void *pSharedTextureHandles[ 2 ], const vr::VRTextureBounds_t( &bounds )[ 2 ], const vr::HmdMatrix34_t *pPose ) {}
 
 		/** Submits queued layers for display. */
 		virtual void Present( void *hSyncTexture ) {}

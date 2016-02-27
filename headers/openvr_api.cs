@@ -131,6 +131,8 @@ class VRNativeEntrypoints
 	internal static extern EVRApplicationError VR_IVRApplications_LaunchApplication(IntPtr instancePtr, string pchAppKey);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_LaunchDashboardOverlay")]
 	internal static extern EVRApplicationError VR_IVRApplications_LaunchDashboardOverlay(IntPtr instancePtr, string pchAppKey);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_CancelApplicationLaunch")]
+	internal static extern bool VR_IVRApplications_CancelApplicationLaunch(IntPtr instancePtr, string pchAppKey);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_IdentifyApplication")]
 	internal static extern EVRApplicationError VR_IVRApplications_IdentifyApplication(IntPtr instancePtr, uint unProcessId, string pchAppKey);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRApplications_GetApplicationProcessId")]
@@ -217,6 +219,8 @@ class VRNativeEntrypoints
 	internal static extern EVRCompositorError VR_IVRCompositor_WaitGetPoses(IntPtr instancePtr,  [In, Out] TrackedDevicePose_t[] pRenderPoseArray, uint unRenderPoseArrayCount,  [In, Out] TrackedDevicePose_t[] pGamePoseArray, uint unGamePoseArrayCount);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetLastPoses")]
 	internal static extern EVRCompositorError VR_IVRCompositor_GetLastPoses(IntPtr instancePtr,  [In, Out] TrackedDevicePose_t[] pRenderPoseArray, uint unRenderPoseArrayCount,  [In, Out] TrackedDevicePose_t[] pGamePoseArray, uint unGamePoseArrayCount);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_GetLastPoseForTrackedDeviceIndex")]
+	internal static extern EVRCompositorError VR_IVRCompositor_GetLastPoseForTrackedDeviceIndex(IntPtr instancePtr, uint unDeviceIndex, ref TrackedDevicePose_t pOutputPose, ref TrackedDevicePose_t pOutputGamePose);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_Submit")]
 	internal static extern EVRCompositorError VR_IVRCompositor_Submit(IntPtr instancePtr, EVREye eEye, ref Texture_t pTexture, ref VRTextureBounds_t pBounds, EVRSubmitFlags nSubmitFlags);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ClearLastSubmittedFrame")]
@@ -257,6 +261,8 @@ class VRNativeEntrypoints
 	internal static extern bool VR_IVRCompositor_IsMirrorWindowVisible(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_CompositorDumpImages")]
 	internal static extern void VR_IVRCompositor_CompositorDumpImages(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRCompositor_ShouldAppRenderWithLowResources")]
+	internal static extern bool VR_IVRCompositor_ShouldAppRenderWithLowResources(IntPtr instancePtr);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_FindOverlay")]
 	internal static extern EVROverlayError VR_IVROverlay_FindOverlay(IntPtr instancePtr, string pchOverlayKey, ref ulong pOverlayHandle);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVROverlay_CreateOverlay")]
@@ -437,6 +443,8 @@ class VRNativeEntrypoints
 	internal static extern void VR_IVRSettings_SetString(IntPtr instancePtr, string pchSection, string pchSettingsKey, string pchValue, ref EVRSettingsError peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_RemoveSection")]
 	internal static extern void VR_IVRSettings_RemoveSection(IntPtr instancePtr, string pchSection, ref EVRSettingsError peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRSettings_RemoveKeyInSection")]
+	internal static extern void VR_IVRSettings_RemoveKeyInSection(IntPtr instancePtr, string pchSection, string pchSettingsKey, ref EVRSettingsError peError);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_HasCamera")]
 	internal static extern bool VR_IVRTrackedCamera_HasCamera(IntPtr instancePtr, uint nDeviceIndex);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_GetCameraFirmwareDescription")]
@@ -469,6 +477,22 @@ class VRNativeEntrypoints
 	internal static extern bool VR_IVRTrackedCamera_GetCameraDistortion(IntPtr instancePtr, uint nDeviceIndex, float flInputU, float flInputV, ref float pflOutputU, ref float pflOutputV);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_GetCameraProjection")]
 	internal static extern bool VR_IVRTrackedCamera_GetCameraProjection(IntPtr instancePtr, uint nDeviceIndex, float flWidthPixels, float flHeightPixels, float flZNear, float flZFar, ref HmdMatrix44_t pProjection);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_GetRecommendedCameraUndistortion")]
+	internal static extern bool VR_IVRTrackedCamera_GetRecommendedCameraUndistortion(IntPtr instancePtr, uint nDeviceIndex, ref uint pUndistortionWidthPixels, ref uint pUndistortionHeightPixels);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_SetCameraUndistortion")]
+	internal static extern bool VR_IVRTrackedCamera_SetCameraUndistortion(IntPtr instancePtr, uint nDeviceIndex, uint nUndistortionWidthPixels, uint nUndistortionHeightPixels);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_RequestVideoServicesForTool")]
+	internal static extern void VR_IVRTrackedCamera_RequestVideoServicesForTool(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_ReleaseVideoServicesForTool")]
+	internal static extern void VR_IVRTrackedCamera_ReleaseVideoServicesForTool(IntPtr instancePtr);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_GetVideoStreamFrameSharedTextureGL")]
+	internal static extern bool VR_IVRTrackedCamera_GetVideoStreamFrameSharedTextureGL(IntPtr instancePtr, bool bUndistorted, ref uint pglTextureId, IntPtr pglSharedTextureHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_ReleaseVideoStreamFrameSharedTextureGL")]
+	internal static extern bool VR_IVRTrackedCamera_ReleaseVideoStreamFrameSharedTextureGL(IntPtr instancePtr, uint glTextureId, IntPtr glSharedTextureHandle);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_LockSharedTextureGL")]
+	internal static extern void VR_IVRTrackedCamera_LockSharedTextureGL(IntPtr instancePtr, IntPtr glSharedTextureHandle, ref CameraVideoStreamFrame_t pFrameImage);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IVRTrackedCamera_UnlockSharedTextureGL")]
+	internal static extern void VR_IVRTrackedCamera_UnlockSharedTextureGL(IntPtr instancePtr, IntPtr glSharedTextureHandle);
 
 }
 
@@ -549,6 +573,7 @@ public abstract class IVRApplications
 	public abstract EVRApplicationError GetApplicationKeyByProcessId(uint unProcessId,string pchAppKeyBuffer,uint unAppKeyBufferLen);
 	public abstract EVRApplicationError LaunchApplication(string pchAppKey);
 	public abstract EVRApplicationError LaunchDashboardOverlay(string pchAppKey);
+	public abstract bool CancelApplicationLaunch(string pchAppKey);
 	public abstract EVRApplicationError IdentifyApplication(uint unProcessId,string pchAppKey);
 	public abstract uint GetApplicationProcessId(string pchAppKey);
 	public abstract string GetApplicationsErrorNameFromEnum(EVRApplicationError error);
@@ -610,6 +635,7 @@ public abstract class IVRCompositor
 	public abstract ETrackingUniverseOrigin GetTrackingSpace();
 	public abstract EVRCompositorError WaitGetPoses(TrackedDevicePose_t [] pRenderPoseArray,TrackedDevicePose_t [] pGamePoseArray);
 	public abstract EVRCompositorError GetLastPoses(TrackedDevicePose_t [] pRenderPoseArray,TrackedDevicePose_t [] pGamePoseArray);
+	public abstract EVRCompositorError GetLastPoseForTrackedDeviceIndex(uint unDeviceIndex,ref TrackedDevicePose_t pOutputPose,ref TrackedDevicePose_t pOutputGamePose);
 	public abstract EVRCompositorError Submit(EVREye eEye,ref Texture_t pTexture,ref VRTextureBounds_t pBounds,EVRSubmitFlags nSubmitFlags);
 	public abstract void ClearLastSubmittedFrame();
 	public abstract void PostPresentHandoff();
@@ -630,6 +656,7 @@ public abstract class IVRCompositor
 	public abstract void HideMirrorWindow();
 	public abstract bool IsMirrorWindowVisible();
 	public abstract void CompositorDumpImages();
+	public abstract bool ShouldAppRenderWithLowResources();
 }
 
 
@@ -744,6 +771,7 @@ public abstract class IVRSettings
 	public abstract void GetString(string pchSection,string pchSettingsKey,string pchValue,uint unValueLen,string pchDefaultValue,ref EVRSettingsError peError);
 	public abstract void SetString(string pchSection,string pchSettingsKey,string pchValue,ref EVRSettingsError peError);
 	public abstract void RemoveSection(string pchSection,ref EVRSettingsError peError);
+	public abstract void RemoveKeyInSection(string pchSection,string pchSettingsKey,ref EVRSettingsError peError);
 }
 
 
@@ -766,6 +794,14 @@ public abstract class IVRTrackedCamera
 	public abstract bool ResumeVideoStream(uint nDeviceIndex);
 	public abstract bool GetCameraDistortion(uint nDeviceIndex,float flInputU,float flInputV,ref float pflOutputU,ref float pflOutputV);
 	public abstract bool GetCameraProjection(uint nDeviceIndex,float flWidthPixels,float flHeightPixels,float flZNear,float flZFar,ref HmdMatrix44_t pProjection);
+	public abstract bool GetRecommendedCameraUndistortion(uint nDeviceIndex,ref uint pUndistortionWidthPixels,ref uint pUndistortionHeightPixels);
+	public abstract bool SetCameraUndistortion(uint nDeviceIndex,uint nUndistortionWidthPixels,uint nUndistortionHeightPixels);
+	public abstract void RequestVideoServicesForTool();
+	public abstract void ReleaseVideoServicesForTool();
+	public abstract bool GetVideoStreamFrameSharedTextureGL(bool bUndistorted,ref uint pglTextureId,IntPtr pglSharedTextureHandle);
+	public abstract bool ReleaseVideoStreamFrameSharedTextureGL(uint glTextureId,IntPtr glSharedTextureHandle);
+	public abstract void LockSharedTextureGL(IntPtr glSharedTextureHandle,ref CameraVideoStreamFrame_t pFrameImage);
+	public abstract void UnlockSharedTextureGL(IntPtr glSharedTextureHandle);
 }
 
 
@@ -1172,6 +1208,12 @@ public class CVRApplications : IVRApplications
 		EVRApplicationError result = VRNativeEntrypoints.VR_IVRApplications_LaunchDashboardOverlay(m_pVRApplications,pchAppKey);
 		return result;
 	}
+	public override bool CancelApplicationLaunch(string pchAppKey)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRApplications_CancelApplicationLaunch(m_pVRApplications,pchAppKey);
+		return result;
+	}
 	public override EVRApplicationError IdentifyApplication(uint unProcessId,string pchAppKey)
 	{
 		CheckIfUsable();
@@ -1494,6 +1536,12 @@ public class CVRCompositor : IVRCompositor
 		EVRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_GetLastPoses(m_pVRCompositor,pRenderPoseArray,(uint) pRenderPoseArray.Length,pGamePoseArray,(uint) pGamePoseArray.Length);
 		return result;
 	}
+	public override EVRCompositorError GetLastPoseForTrackedDeviceIndex(uint unDeviceIndex,ref TrackedDevicePose_t pOutputPose,ref TrackedDevicePose_t pOutputGamePose)
+	{
+		CheckIfUsable();
+		EVRCompositorError result = VRNativeEntrypoints.VR_IVRCompositor_GetLastPoseForTrackedDeviceIndex(m_pVRCompositor,unDeviceIndex,ref pOutputPose,ref pOutputGamePose);
+		return result;
+	}
 	public override EVRCompositorError Submit(EVREye eEye,ref Texture_t pTexture,ref VRTextureBounds_t pBounds,EVRSubmitFlags nSubmitFlags)
 	{
 		CheckIfUsable();
@@ -1602,6 +1650,12 @@ public class CVRCompositor : IVRCompositor
 	{
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRCompositor_CompositorDumpImages(m_pVRCompositor);
+	}
+	public override bool ShouldAppRenderWithLowResources()
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRCompositor_ShouldAppRenderWithLowResources(m_pVRCompositor);
+		return result;
 	}
 }
 
@@ -2228,6 +2282,11 @@ public class CVRSettings : IVRSettings
 		CheckIfUsable();
 		VRNativeEntrypoints.VR_IVRSettings_RemoveSection(m_pVRSettings,pchSection,ref peError);
 	}
+	public override void RemoveKeyInSection(string pchSection,string pchSettingsKey,ref EVRSettingsError peError)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRSettings_RemoveKeyInSection(m_pVRSettings,pchSection,pchSettingsKey,ref peError);
+	}
 }
 
 
@@ -2350,23 +2409,74 @@ public class CVRTrackedCamera : IVRTrackedCamera
 		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_GetCameraProjection(m_pVRTrackedCamera,nDeviceIndex,flWidthPixels,flHeightPixels,flZNear,flZFar,ref pProjection);
 		return result;
 	}
+	public override bool GetRecommendedCameraUndistortion(uint nDeviceIndex,ref uint pUndistortionWidthPixels,ref uint pUndistortionHeightPixels)
+	{
+		CheckIfUsable();
+		pUndistortionWidthPixels = 0;
+		pUndistortionHeightPixels = 0;
+		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_GetRecommendedCameraUndistortion(m_pVRTrackedCamera,nDeviceIndex,ref pUndistortionWidthPixels,ref pUndistortionHeightPixels);
+		return result;
+	}
+	public override bool SetCameraUndistortion(uint nDeviceIndex,uint nUndistortionWidthPixels,uint nUndistortionHeightPixels)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_SetCameraUndistortion(m_pVRTrackedCamera,nDeviceIndex,nUndistortionWidthPixels,nUndistortionHeightPixels);
+		return result;
+	}
+	public override void RequestVideoServicesForTool()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRTrackedCamera_RequestVideoServicesForTool(m_pVRTrackedCamera);
+	}
+	public override void ReleaseVideoServicesForTool()
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRTrackedCamera_ReleaseVideoServicesForTool(m_pVRTrackedCamera);
+	}
+	public override bool GetVideoStreamFrameSharedTextureGL(bool bUndistorted,ref uint pglTextureId,IntPtr pglSharedTextureHandle)
+	{
+		CheckIfUsable();
+		pglTextureId = 0;
+		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_GetVideoStreamFrameSharedTextureGL(m_pVRTrackedCamera,bUndistorted,ref pglTextureId,pglSharedTextureHandle);
+		return result;
+	}
+	public override bool ReleaseVideoStreamFrameSharedTextureGL(uint glTextureId,IntPtr glSharedTextureHandle)
+	{
+		CheckIfUsable();
+		bool result = VRNativeEntrypoints.VR_IVRTrackedCamera_ReleaseVideoStreamFrameSharedTextureGL(m_pVRTrackedCamera,glTextureId,glSharedTextureHandle);
+		return result;
+	}
+	public override void LockSharedTextureGL(IntPtr glSharedTextureHandle,ref CameraVideoStreamFrame_t pFrameImage)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRTrackedCamera_LockSharedTextureGL(m_pVRTrackedCamera,glSharedTextureHandle,ref pFrameImage);
+	}
+	public override void UnlockSharedTextureGL(IntPtr glSharedTextureHandle)
+	{
+		CheckIfUsable();
+		VRNativeEntrypoints.VR_IVRTrackedCamera_UnlockSharedTextureGL(m_pVRTrackedCamera,glSharedTextureHandle);
+	}
 }
 
 
 public class OpenVRInterop
 {
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_Init")]
-	internal static extern IntPtr Init(ref EVRInitError peError, EVRApplicationType eApplicationType);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_Shutdown")]
-	internal static extern void Shutdown();
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetGenericInterface")]
-	internal static extern IntPtr GetGenericInterface([In, MarshalAs(UnmanagedType.LPStr)] string pchInterfaceVersion, ref EVRInitError peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_InitInternal")]
+	internal static extern uint InitInternal(ref EVRInitError peError, EVRApplicationType eApplicationType);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_ShutdownInternal")]
+	internal static extern void ShutdownInternal();
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IsHmdPresent")]
 	internal static extern bool IsHmdPresent();
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IsRuntimeInstalled")]
+	internal static extern bool IsRuntimeInstalled();
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetStringForHmdError")]
 	internal static extern IntPtr GetStringForHmdError(EVRInitError error);
-	[DllImportAttribute("openvr_api", EntryPoint = "VR_IsRuntimeInstalled")]
-	internal static extern bool VR_IsRuntimeInstalled();
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetGenericInterface")]
+	internal static extern IntPtr GetGenericInterface([In, MarshalAs(UnmanagedType.LPStr)] string pchInterfaceVersion, ref EVRInitError peError);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_IsInterfaceVersionValid")]
+	internal static extern bool IsInterfaceVersionValid([In, MarshalAs(UnmanagedType.LPStr)] string pchInterfaceVersion);
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetInitToken")]
+	internal static extern uint GetInitToken();
 }
 
 
@@ -2555,6 +2665,8 @@ public enum EVREventType
 	VREvent_SceneFocusGained = 403,
 	VREvent_SceneApplicationChanged = 404,
 	VREvent_SceneFocusChanged = 405,
+	VREvent_HideRenderModels = 410,
+	VREvent_ShowRenderModels = 411,
 	VREvent_OverlayShown = 500,
 	VREvent_OverlayHidden = 501,
 	VREvent_DashboardActivated = 502,
@@ -2588,6 +2700,7 @@ public enum EVREventType
 	VREvent_FirmwareUpdateFinished = 1101,
 	VREvent_KeyboardClosed = 1200,
 	VREvent_KeyboardCharInput = 1201,
+	VREvent_KeyboardDone = 1202,
 	VREvent_ApplicationTransitionStarted = 1300,
 	VREvent_ApplicationTransitionAborted = 1301,
 	VREvent_ApplicationTransitionNewAppStarted = 1302,
@@ -2744,6 +2857,8 @@ public enum EVRInitError
 	IPC_CompositorInitFailed = 303,
 	IPC_MutexInitFailed = 304,
 	IPC_Failed = 305,
+	Compositor_Failed = 400,
+	Compositor_D3D11HardwareRequired = 401,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	VendorSpecific_HmdFound_CantOpenDevice = 1101,
 	VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
@@ -2831,6 +2946,7 @@ public enum EVRCompositorError
 	TextureIsOnWrongDevice = 104,
 	TextureUsesUnsupportedFormat = 105,
 	SharedTexturesNotSupported = 106,
+	IndexOutOfRange = 107,
 }
 public enum VROverlayInputMethod
 {
@@ -2934,7 +3050,12 @@ public enum ECameraVideoStreamFormat
 	[FieldOffset(0)] public VREvent_Notification_t notification;
 	[FieldOffset(0)] public VREvent_Overlay_t overlay;
 	[FieldOffset(0)] public VREvent_Status_t status;
-	[FieldOffset(0)] public VREvent_Keyboard_t keyboard;
+	[FieldOffset(0)] public VREvent_Ipd_t ipd;
+	[FieldOffset(0)] public VREvent_Chaperone_t chaperone;
+	[FieldOffset(0)] public VREvent_PerformanceTest_t performanceTest;
+	[FieldOffset(0)] public VREvent_TouchPadMove_t touchPadMove;
+	[FieldOffset(0)] public VREvent_SeatedZeroPoseReset_t seatedZeroPoseReset;
+	[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 }
 
 [StructLayout(LayoutKind.Sequential)] public struct HmdMatrix34_t
@@ -3238,22 +3359,30 @@ public enum ECameraVideoStreamFormat
 	public float[] m_Pad; //float[4]
 	public IntPtr m_pImageData; // void *
 }
+[StructLayout(LayoutKind.Sequential)] public struct COpenVRContext
+{
+	public IntPtr m_pVRSystem; // class vr::IVRSystem *
+	public IntPtr m_pVRChaperone; // class vr::IVRChaperone *
+	public IntPtr m_pVRChaperoneSetup; // class vr::IVRChaperoneSetup *
+	public IntPtr m_pVRCompositor; // class vr::IVRCompositor *
+	public IntPtr m_pVROverlay; // class vr::IVROverlay *
+	public IntPtr m_pVRRenderModels; // class vr::IVRRenderModels *
+	public IntPtr m_pVRExtendedDisplay; // class vr::IVRExtendedDisplay *
+	public IntPtr m_pVRSettings; // class vr::IVRSettings *
+	public IntPtr m_pVRApplications; // class vr::IVRApplications *
+}
 
 public class OpenVR
 {
-	public static IntPtr Init(ref EVRInitError peError, EVRApplicationType eApplicationType = EVRApplicationType.VRApplication_Scene)
+
+	public static uint InitInternal(ref EVRInitError peError, EVRApplicationType eApplicationType)
 	{
-		return OpenVRInterop.Init(ref peError, eApplicationType);
+		return OpenVRInterop.InitInternal(ref peError, eApplicationType);
 	}
 
-	public static void Shutdown()
+	public static void ShutdownInternal()
 	{
-		OpenVRInterop.Shutdown();
-	}
-
-	public static IntPtr GetGenericInterface(string pchInterfaceVersion, ref EVRInitError peError)
-	{
-		return OpenVRInterop.GetGenericInterface(pchInterfaceVersion, ref peError);
+		OpenVRInterop.ShutdownInternal();
 	}
 
 	public static bool IsHmdPresent()
@@ -3261,9 +3390,29 @@ public class OpenVR
 		return OpenVRInterop.IsHmdPresent();
 	}
 
+	public static bool IsRuntimeInstalled()
+	{
+		return OpenVRInterop.IsRuntimeInstalled();
+	}
+
 	public static string GetStringForHmdError(EVRInitError error)
 	{
 		return Marshal.PtrToStringAnsi(OpenVRInterop.GetStringForHmdError(error));
+	}
+
+	public static IntPtr GetGenericInterface(string pchInterfaceVersion, ref EVRInitError peError)
+	{
+		return OpenVRInterop.GetGenericInterface(pchInterfaceVersion, ref peError);
+	}
+
+	public static bool IsInterfaceVersionValid(string pchInterfaceVersion)
+	{
+		return OpenVRInterop.IsInterfaceVersionValid(pchInterfaceVersion);
+	}
+
+	public static uint GetInitToken()
+	{
+		return OpenVRInterop.GetInitToken();
 	}
 
 	public const uint k_unTrackingStringSize = 32;
@@ -3277,10 +3426,10 @@ public class OpenVR
 	public const string IVRSystem_Version = "IVRSystem_011";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
 	public const uint k_unMaxApplicationKeyLength = 128;
-	public const string IVRApplications_Version = "IVRApplications_003";
+	public const string IVRApplications_Version = "IVRApplications_004";
 	public const string IVRChaperone_Version = "IVRChaperone_003";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_005";
-	public const string IVRCompositor_Version = "IVRCompositor_011";
+	public const string IVRCompositor_Version = "IVRCompositor_012";
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;
@@ -3315,6 +3464,10 @@ public class OpenVR
 	public const string k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
 	public const string k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
 	public const string k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
+	public const string k_pch_SteamVR_RequestDirectModeEdidVid_Int32 = "requestDirectModeEdidVid";
+	public const string k_pch_SteamVR_RequestDirectModeEdidPid_Int32 = "requestDirectModeEdidPid";
+	public const string k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
+	public const string k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -3352,33 +3505,217 @@ public class OpenVR
 	public const string k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
 	public const string k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	public const string k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
+	public const string k_pch_Perf_TestData_Float = "perfTestData";
 	public const string k_pch_Camera_Section = "camera";
 	public const string IVRSettings_Version = "IVRSettings_001";
 	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_001";
+
+	static uint VRToken { get; set; }
+
+	class COpenVRContext
+	{
+		public COpenVRContext() { Clear(); }
+
+		public void Clear()
+		{
+			m_pVRSystem = null;
+			m_pVRChaperone = null;
+			m_pVRChaperoneSetup = null;
+			m_pVRCompositor = null;
+			m_pVROverlay = null;
+			m_pVRRenderModels = null;
+			m_pVRExtendedDisplay = null;
+			m_pVRSettings = null;
+			m_pVRApplications = null;
+		}
+
+		void CheckClear()
+		{
+			if (VRToken != GetInitToken())
+			{
+				Clear();
+				VRToken = GetInitToken();
+			}
+		}
+
+		public CVRSystem VRSystem()
+		{
+			CheckClear();
+			if (m_pVRSystem == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRSystem_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRSystem = new CVRSystem(pInterface);
+			}
+			return m_pVRSystem;
+		}
+
+		public CVRChaperone VRChaperone()
+		{
+			CheckClear();
+			if (m_pVRChaperone == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRChaperone_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRChaperone = new CVRChaperone(pInterface);
+			}
+			return m_pVRChaperone;
+		}
+
+		public CVRChaperoneSetup VRChaperoneSetup()
+		{
+			CheckClear();
+			if (m_pVRChaperoneSetup == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRChaperoneSetup_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRChaperoneSetup = new CVRChaperoneSetup(pInterface);
+			}
+			return m_pVRChaperoneSetup;
+		}
+
+		public CVRCompositor VRCompositor()
+		{
+			CheckClear();
+			if (m_pVRCompositor == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRCompositor_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRCompositor = new CVRCompositor(pInterface);
+			}
+			return m_pVRCompositor;
+		}
+
+		public CVROverlay VROverlay()
+		{
+			CheckClear();
+			if (m_pVROverlay == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVROverlay_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVROverlay = new CVROverlay(pInterface);
+			}
+			return m_pVROverlay;
+		}
+
+		public CVRRenderModels VRRenderModels()
+		{
+			CheckClear();
+			if (m_pVRRenderModels == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRRenderModels_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRRenderModels = new CVRRenderModels(pInterface);
+			}
+			return m_pVRRenderModels;
+		}
+
+		public CVRExtendedDisplay VRExtendedDisplay()
+		{
+			CheckClear();
+			if (m_pVRExtendedDisplay == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRExtendedDisplay_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRExtendedDisplay = new CVRExtendedDisplay(pInterface);
+			}
+			return m_pVRExtendedDisplay;
+		}
+
+		public CVRSettings VRSettings()
+		{
+			CheckClear();
+			if (m_pVRSettings == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRSettings_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRSettings = new CVRSettings(pInterface);
+			}
+			return m_pVRSettings;
+		}
+
+		public CVRApplications VRApplications()
+		{
+			CheckClear();
+			if (m_pVRApplications == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = GetGenericInterface(IVRApplications_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRApplications = new CVRApplications(pInterface);
+			}
+			return m_pVRApplications;
+		}
+
+		private CVRSystem m_pVRSystem;
+		private CVRChaperone m_pVRChaperone;
+		private CVRChaperoneSetup m_pVRChaperoneSetup;
+		private CVRCompositor m_pVRCompositor;
+		private CVROverlay m_pVROverlay;
+		private CVRRenderModels m_pVRRenderModels;
+		private CVRExtendedDisplay m_pVRExtendedDisplay;
+		private CVRSettings m_pVRSettings;
+		private CVRApplications m_pVRApplications;
+	};
+
+	private static COpenVRContext _OpenVRInternal_ModuleContext = null;
+	static COpenVRContext OpenVRInternal_ModuleContext
+	{
+		get
+		{
+			if (_OpenVRInternal_ModuleContext == null)
+				_OpenVRInternal_ModuleContext = new COpenVRContext();
+			return _OpenVRInternal_ModuleContext;
+		}
+	}
+
+	public static CVRSystem System { get { return OpenVRInternal_ModuleContext.VRSystem(); } }
+	public static CVRChaperone Chaperone { get { return OpenVRInternal_ModuleContext.VRChaperone(); } }
+	public static CVRChaperoneSetup ChaperoneSetup { get { return OpenVRInternal_ModuleContext.VRChaperoneSetup(); } }
+	public static CVRCompositor Compositor { get { return OpenVRInternal_ModuleContext.VRCompositor(); } }
+	public static CVROverlay Overlay { get { return OpenVRInternal_ModuleContext.VROverlay(); } }
+	public static CVRRenderModels RenderModels { get { return OpenVRInternal_ModuleContext.VRRenderModels(); } }
+	public static CVRApplications Applications { get { return OpenVRInternal_ModuleContext.VRApplications(); } }
+	public static CVRSettings Settings { get { return OpenVRInternal_ModuleContext.VRSettings(); } }
+	public static CVRExtendedDisplay ExtendedDisplay { get { return OpenVRInternal_ModuleContext.VRExtendedDisplay(); } }
+
+	/** Finds the active installation of vrclient.dll and initializes it */
+	public static CVRSystem Init(ref EVRInitError peError, EVRApplicationType eApplicationType = EVRApplicationType.VRApplication_Scene)
+	{
+		VRToken = InitInternal(ref peError, eApplicationType);
+		OpenVRInternal_ModuleContext.Clear();
+
+		if (peError != EVRInitError.None)
+			return null;
+
+		bool bInterfaceValid = IsInterfaceVersionValid(IVRSystem_Version);
+		if (!bInterfaceValid)
+		{
+			ShutdownInternal();
+			peError = EVRInitError.Init_InterfaceNotFound;
+			return null;
+		}
+
+		return OpenVR.System;
+	}
+
+	/** unloads vrclient.dll. Any interface pointers from the interface are
+	* invalid after this point */
+	public static void Shutdown()
+	{
+		ShutdownInternal();
+	}
+
 }
 
-
-
-public class Unity
-{
-	public const int k_nRenderEventID_WaitGetPoses = 201510020;
-	public const int k_nRenderEventID_SubmitL = 201510021;
-	public const int k_nRenderEventID_SubmitR = 201510022;
-	public const int k_nRenderEventID_Flush = 201510023;
-	public const int k_nRenderEventID_PostPresentHandoff = 201510024;
-
-	[DllImport("openvr_api", EntryPoint="UnityHooks_GetRenderEventFunc")]
-	public static extern IntPtr GetRenderEventFunc();
-
-	[DllImport("openvr_api", EntryPoint="UnityHooks_SetSubmitParams")]
-	public static extern void SetSubmitParams(VRTextureBounds_t boundsL, VRTextureBounds_t boundsR, EVRSubmitFlags nSubmitFlags);
-
-	[DllImport("openvr_api", EntryPoint="UnityHooks_SetColorSpace")]
-	public static extern void SetColorSpace(EColorSpace eColorSpace);
-
-	[DllImport("openvr_api", EntryPoint="UnityHooks_EventWriteString")]
-	public static extern void EventWriteString([In, MarshalAs(UnmanagedType.LPWStr)] string sEvent);
-}
 
 
 }
