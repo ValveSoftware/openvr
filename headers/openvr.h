@@ -856,7 +856,7 @@ enum EVRInitError
 #define VR_INTERFACE extern "C" __declspec( dllimport )
 #endif
 
-#elif defined(GNUC) || defined(COMPILER_GCC) || defined(__APPLE__)
+#elif defined(__GNUC__) || defined(COMPILER_GCC) || defined(__APPLE__)
 
 #ifdef VR_API_EXPORT
 #define VR_INTERFACE extern "C" __attribute__((visibility("default")))

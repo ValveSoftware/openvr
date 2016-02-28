@@ -11,7 +11,7 @@ using namespace vr;
 #if defined(_WIN32)
 #define HMD_DLL_EXPORT extern "C" __declspec( dllexport )
 #define HMD_DLL_IMPORT extern "C" __declspec( dllimport )
-#elif defined(GNUC) || defined(COMPILER_GCC)
+#elif defined(__GNUC__) || defined(COMPILER_GCC)
 #define HMD_DLL_EXPORT extern "C" __attribute__((visibility("default")))
 #define HMD_DLL_IMPORT extern "C" 
 #else
