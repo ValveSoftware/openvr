@@ -406,6 +406,7 @@ enum EVREventType
 	VREvent_ChaperoneUniverseHasChanged	= 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
+	VREvent_SeatedZeroPoseReset			= 804,
 
 	VREvent_BackgroundSettingHasChanged	= 850,
 	VREvent_CameraSettingsHaveChanged	= 851,
@@ -427,6 +428,8 @@ enum EVREventType
 
 	VREvent_Compositor_MirrorWindowShown	= 1400,
 	VREvent_Compositor_MirrorWindowHidden	= 1401,
+	VREvent_Compositor_ChaperoneBoundsShown = 1410,
+	VREvent_Compositor_ChaperoneBoundsHidden = 1411,
 
 	VREvent_TrackedCamera_StartVideoStream  = 1500,
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
@@ -592,6 +595,11 @@ struct VREvent_PerformanceTest_t
 	uint32_t m_nFidelityLevel;
 };
 
+struct VREvent_SeatedZeroPoseReset_t
+{
+	bool bResetBySystemMenu;
+};
+
 /** If you change this you must manually update openvr_interop.cs.py */
 typedef union
 {
@@ -608,6 +616,7 @@ typedef union
 	VREvent_Chaperone_t chaperone;
 	VREvent_PerformanceTest_t performanceTest;
 	VREvent_TouchPadMove_t touchPadMove;
+	VREvent_SeatedZeroPoseReset_t seatedZeroPoseReset;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -1077,7 +1086,7 @@ public:
 	* this method returns false. Fills in the pose of the associated tracked device in the provided pose struct. 
 	* This pose will always be older than the call to this function and should not be used to render the device. 
 	uncbVREvent should be the size in bytes of the VREvent_t struct */
-	virtual bool PollNextEventWithPose( ETrackingUniverseOrigin eOrigin, vr::VREvent_t *pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t *pTrackedDevicePose ) = 0;
+	virtual bool PollNextEventWithPose( ETrackingUniverseOrigin eOrigin, VREvent_t *pEvent, uint32_t uncbVREvent, vr::TrackedDevicePose_t *pTrackedDevicePose ) = 0;
 
 	/** returns the name of an EVREvent enum value */
 	virtual const char *GetEventTypeNameFromEnum( EVREventType eType ) = 0;
@@ -1340,6 +1349,13 @@ namespace vr
 
 		/** Returns true if the outgoing scene app has requested a save prompt before exiting */
 		virtual bool IsQuitUserPromptRequested() = 0;
+
+		/** Starts a subprocess within the calling application. This
+		* suppresses all application transition UI and automatically identifies the new executable 
+		* as part of the same application. On success the calling process should exit immediately. 
+		* If working directory is NULL or "" the directory portion of the binary path will be 
+		* the working directory. */
+		virtual EVRApplicationError LaunchInternalProcess( const char *pchBinaryPath, const char *pchArguments, const char *pchWorkingDirectory ) = 0;
 	};
 
 	static const char * const IVRApplications_Version = "IVRApplications_004";
@@ -1389,6 +1405,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
 	static const char * const k_pch_SteamVR_ForcedHmdKey_String = "forcedHmd";
 	static const char * const k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
+	static const char * const k_pch_SteamVR_DebugProcessPipe_String = "debugProcessPipe";
 	static const char * const k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
 	static const char * const k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
 	static const char * const k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
@@ -1402,11 +1419,9 @@ namespace vr
 	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
 	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
 	static const char * const k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
-	static const char * const k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
-	static const char * const k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
-	static const char * const k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
-	static const char * const k_pch_SteamVR_RequestDirectModeEdidVid_Int32 = "requestDirectModeEdidVid";
-	static const char * const k_pch_SteamVR_RequestDirectModeEdidPid_Int32 = "requestDirectModeEdidPid";
+	static const char * const k_pch_SteamVR_DirectMode_Bool = "directMode";
+	static const char * const k_pch_SteamVR_DirectModeEdidVid_Int32 = "directModeEdidVid";
+	static const char * const k_pch_SteamVR_DirectModeEdidPid_Int32 = "directModeEdidPid";
 	static const char * const k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
 	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 
@@ -1477,6 +1492,14 @@ namespace vr
 
 	static const char * const IVRSettings_Version = "IVRSettings_001";
 
+	//-----------------------------------------------------------------------------
+	// audio keys
+	static const char * const k_pch_audio_Section = "audio";
+	static const char * const k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
+	static const char * const k_pch_audio_OnRecordDevice_String = "onRecordDevice";
+	static const char * const k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
+	static const char * const k_pch_audio_OffRecordDevice_String = "offRecordDevice";
+	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
 } // namespace vr
 
 // ivrchaperone.h
@@ -1569,6 +1592,11 @@ enum EChaperoneConfigFile
 	EChaperoneConfigFile_Temp = 2,		// The temporary chaperone config, used to live-preview collision bounds in room setup
 };
 
+enum EChaperoneImportFlags
+{
+	EChaperoneImport_BoundsOnly = 0x0001,
+};
+
 /** Manages the working copy of the chaperone info. By default this will be the same as the 
 * live copy. Any changes made with this interface will stay in the working copy until 
 * CommitWorkingCopy() is called, at which point the working copy and the live copy will be 
@@ -1634,6 +1662,9 @@ public:
 
 	virtual bool SetWorkingPhysicalBoundsInfo( VR_ARRAY_COUNT(unQuadsCount) HmdQuad_t *pQuadsBuffer, uint32_t unQuadsCount ) = 0;
 	virtual bool GetLivePhysicalBoundsInfo( VR_OUT_ARRAY_COUNT(punQuadsCount) HmdQuad_t *pQuadsBuffer, uint32_t* punQuadsCount ) = 0;
+
+	virtual bool ExportLiveToBuffer( VR_OUT_STRING() char *pBuffer, uint32_t *pnBufferLength ) = 0;
+	virtual bool ImportFromBufferToWorking( const char *pBuffer, uint32_t nImportFlags ) = 0;
 };
 
 static const char * const IVRChaperoneSetup_Version = "IVRChaperoneSetup_005";
@@ -1810,17 +1841,20 @@ public:
 	/** Closes the mirror window. */
 	virtual void HideMirrorWindow() = 0;
 
-	/** Returns true if the mirror window is shown */
+	/** Returns true if the mirror window is shown. */
 	virtual bool IsMirrorWindowVisible() = 0;
 
 	/** Writes all images that the compositor knows about (including overlays) to a 'screenshots' folder in the SteamVR runtime root. */
 	virtual void CompositorDumpImages() = 0;
 
-	/** Let an app know it should be rendering with low resources */
+	/** Let an app know it should be rendering with low resources. */
 	virtual bool ShouldAppRenderWithLowResources() = 0;
+
+	/** Override interleaved reprojection logic to force on. */
+	virtual void ForceInterleavedReprojectionOn( bool bOverride ) = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_012";
+static const char * const IVRCompositor_Version = "IVRCompositor_013";
 
 } // namespace vr
 
@@ -1959,6 +1993,10 @@ namespace vr
 		// When in VROverlayInputMethod_Mouse you can optionally enable sending VRScroll_t 
 		VROverlayFlags_SendVRScrollEvents = 6,
 		VROverlayFlags_SendVRTouchpadEvents = 7,
+
+		// If set this will render a vertical scroll wheel on the primary controller, 
+		//  only needed if not using VROverlayFlags_SendVRScrollEvents but you still want to represent a scroll wheel
+		VROverlayFlags_ShowTouchPadScrollWheel = 8,
 	};
 
 	struct VROverlayIntersectionParams_t

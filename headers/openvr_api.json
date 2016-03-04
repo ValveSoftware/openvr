@@ -225,6 +225,7 @@
 	,{"name": "VREvent_ChaperoneUniverseHasChanged","value": "801"}
 	,{"name": "VREvent_ChaperoneTempDataHasChanged","value": "802"}
 	,{"name": "VREvent_ChaperoneSettingsHaveChanged","value": "803"}
+	,{"name": "VREvent_SeatedZeroPoseReset","value": "804"}
 	,{"name": "VREvent_BackgroundSettingHasChanged","value": "850"}
 	,{"name": "VREvent_CameraSettingsHaveChanged","value": "851"}
 	,{"name": "VREvent_StatusUpdate","value": "900"}
@@ -239,6 +240,8 @@
 	,{"name": "VREvent_ApplicationTransitionNewAppStarted","value": "1302"}
 	,{"name": "VREvent_Compositor_MirrorWindowShown","value": "1400"}
 	,{"name": "VREvent_Compositor_MirrorWindowHidden","value": "1401"}
+	,{"name": "VREvent_Compositor_ChaperoneBoundsShown","value": "1410"}
+	,{"name": "VREvent_Compositor_ChaperoneBoundsHidden","value": "1411"}
 	,{"name": "VREvent_TrackedCamera_StartVideoStream","value": "1500"}
 	,{"name": "VREvent_TrackedCamera_StopVideoStream","value": "1501"}
 	,{"name": "VREvent_TrackedCamera_PauseVideoStream","value": "1502"}
@@ -453,6 +456,9 @@
 	{"name": "EChaperoneConfigFile_Live","value": "1"}
 	,{"name": "EChaperoneConfigFile_Temp","value": "2"}
 ]}
+,	{"enumname": "vr::EChaperoneImportFlags","values": [ 
+	{"name": "EChaperoneImport_BoundsOnly","value": "1"}
+]}
 ,	{"enumname": "vr::EVRCompositorError","values": [ 
 	{"name": "VRCompositorError_None","value": "0"}
 	,{"name": "VRCompositorError_IncompatibleVersion","value": "100"}
@@ -483,6 +489,7 @@
 	,{"name": "VROverlayFlags_ShowGamepadFocus","value": "5"}
 	,{"name": "VROverlayFlags_SendVRScrollEvents","value": "6"}
 	,{"name": "VROverlayFlags_SendVRTouchpadEvents","value": "7"}
+	,{"name": "VROverlayFlags_ShowTouchPadScrollWheel","value": "8"}
 ]}
 ,	{"enumname": "vr::EGamepadTextInputMode","values": [ 
 	{"name": "k_EGamepadTextInputModeNormal","value": "0"}
@@ -573,7 +580,7 @@
 ,{
 	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_005"}
 ,{
-	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_012"}
+	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_013"}
 ,{
 	"constname": "k_unVROverlayMaxKeyLength","consttype": "const uint32_t", "constval": "128"}
 ,{
@@ -611,6 +618,8 @@
 ,{
 	"constname": "k_pch_SteamVR_DisplayDebug_Bool","consttype": "const char *const", "constval": "displayDebug"}
 ,{
+	"constname": "k_pch_SteamVR_DebugProcessPipe_String","consttype": "const char *const", "constval": "debugProcessPipe"}
+,{
 	"constname": "k_pch_SteamVR_EnableDistortion_Bool","consttype": "const char *const", "constval": "enableDistortion"}
 ,{
 	"constname": "k_pch_SteamVR_DisplayDebugX_Int32","consttype": "const char *const", "constval": "displayDebugX"}
@@ -637,15 +646,11 @@
 ,{
 	"constname": "k_pch_SteamVR_StandbyNoAppTimeout_Float","consttype": "const char *const", "constval": "standbyNoAppTimeout"}
 ,{
-	"constname": "k_pch_SteamVR_AutomaticDirectModeEnabled_Bool","consttype": "const char *const", "constval": "automaticDirectModeEnabled"}
+	"constname": "k_pch_SteamVR_DirectMode_Bool","consttype": "const char *const", "constval": "directMode"}
 ,{
-	"constname": "k_pch_SteamVR_RequestDirectModeEnabled_Bool","consttype": "const char *const", "constval": "requestDirectModeEnabled"}
+	"constname": "k_pch_SteamVR_DirectModeEdidVid_Int32","consttype": "const char *const", "constval": "directModeEdidVid"}
 ,{
-	"constname": "k_pch_SteamVR_RequestDirectModeDisabled_Bool","consttype": "const char *const", "constval": "requestDirectModeDisabled"}
-,{
-	"constname": "k_pch_SteamVR_RequestDirectModeEdidVid_Int32","consttype": "const char *const", "constval": "requestDirectModeEdidVid"}
-,{
-	"constname": "k_pch_SteamVR_RequestDirectModeEdidPid_Int32","consttype": "const char *const", "constval": "requestDirectModeEdidPid"}
+	"constname": "k_pch_SteamVR_DirectModeEdidPid_Int32","consttype": "const char *const", "constval": "directModeEdidPid"}
 ,{
 	"constname": "k_pch_SteamVR_UsingSpeakers_Bool","consttype": "const char *const", "constval": "usingSpeakers"}
 ,{
@@ -730,6 +735,18 @@
 	"constname": "k_pch_Camera_Section","consttype": "const char *const", "constval": "camera"}
 ,{
 	"constname": "IVRSettings_Version","consttype": "const char *const", "constval": "IVRSettings_001"}
+,{
+	"constname": "k_pch_audio_Section","consttype": "const char *const", "constval": "audio"}
+,{
+	"constname": "k_pch_audio_OnPlaybackDevice_String","consttype": "const char *const", "constval": "onPlaybackDevice"}
+,{
+	"constname": "k_pch_audio_OnRecordDevice_String","consttype": "const char *const", "constval": "onRecordDevice"}
+,{
+	"constname": "k_pch_audio_OffPlaybackDevice_String","consttype": "const char *const", "constval": "offPlaybackDevice"}
+,{
+	"constname": "k_pch_audio_OffRecordDevice_String","consttype": "const char *const", "constval": "offRecordDevice"}
+,{
+	"constname": "k_pch_audio_VIVEHDMIGain","consttype": "const char *const", "constval": "viveHDMIGain"}
 ,{
 	"constname": "IVRTrackedCamera_Version","consttype": "const char *const", "constval": "IVRTrackedCamera_001"}
 ],
@@ -821,6 +838,8 @@
 { "fieldname": "reserved1", "fieldtype": "uint64_t"}]}
 ,{"struct": "vr::VREvent_PerformanceTest_t","fields": [
 { "fieldname": "m_nFidelityLevel", "fieldtype": "uint32_t"}]}
+,{"struct": "vr::VREvent_SeatedZeroPoseReset_t","fields": [
+{ "fieldname": "bResetBySystemMenu", "fieldtype": "_Bool"}]}
 ,{"struct": "vr::(anonymous)","fields": [
 { "fieldname": "reserved", "fieldtype": "struct vr::VREvent_Reserved_t"},
 { "fieldname": "controller", "fieldtype": "struct vr::VREvent_Controller_t"},
@@ -834,7 +853,8 @@
 { "fieldname": "ipd", "fieldtype": "struct vr::VREvent_Ipd_t"},
 { "fieldname": "chaperone", "fieldtype": "struct vr::VREvent_Chaperone_t"},
 { "fieldname": "performanceTest", "fieldtype": "struct vr::VREvent_PerformanceTest_t"},
-{ "fieldname": "touchPadMove", "fieldtype": "struct vr::VREvent_TouchPadMove_t"}]}
+{ "fieldname": "touchPadMove", "fieldtype": "struct vr::VREvent_TouchPadMove_t"},
+{ "fieldname": "seatedZeroPoseReset", "fieldtype": "struct vr::VREvent_SeatedZeroPoseReset_t"}]}
 ,{"struct": "vr::VREvent_t","fields": [
 { "fieldname": "eventType", "fieldtype": "uint32_t"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},
@@ -932,6 +952,7 @@
 { "fieldname": "m_nISPFrameTimeStamp", "fieldtype": "uint32_t"},
 { "fieldname": "m_nISPReferenceTimeStamp", "fieldtype": "uint32_t"},
 { "fieldname": "m_nSyncCounter", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nCamSyncEvents", "fieldtype": "uint32_t"},
 { "fieldname": "m_nExposureTime", "fieldtype": "uint32_t"},
 { "fieldname": "m_nBufferIndex", "fieldtype": "uint32_t"},
 { "fieldname": "m_nBufferCount", "fieldtype": "uint32_t"},
@@ -1210,7 +1231,7 @@
 	"returntype": "bool",
 	"params": [ 
 {	"paramname": "eOrigin" ,"paramtype": "vr::ETrackingUniverseOrigin"},
-{	"paramname": "pEvent" ,"paramtype": "vr::VREvent_t *"},
+{	"paramname": "pEvent" ,"paramtype": "struct vr::VREvent_t *"},
 {	"paramname": "uncbVREvent" ,"paramtype": "uint32_t"},
 {	"paramname": "pTrackedDevicePose" ,"paramtype": "vr::TrackedDevicePose_t *"}
 	 ]
@@ -1553,6 +1574,16 @@
 	"returntype": "bool"
 }
 ,{
+	"classname": "vr::IVRApplications",
+	"methodname": "LaunchInternalProcess",
+	"returntype": "vr::EVRApplicationError",
+	"params": [ 
+{	"paramname": "pchBinaryPath" ,"paramtype": "const char *"},
+{	"paramname": "pchArguments" ,"paramtype": "const char *"},
+{	"paramname": "pchWorkingDirectory" ,"paramtype": "const char *"}
+	 ]
+}
+,{
 	"classname": "vr::IVRChaperone",
 	"methodname": "GetCalibrationState",
 	"returntype": "vr::ChaperoneCalibrationState"
@@ -1762,6 +1793,24 @@
 	 ]
 }
 ,{
+	"classname": "vr::IVRChaperoneSetup",
+	"methodname": "ExportLiveToBuffer",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "pBuffer" ,"out_string": " " ,"paramtype": "char *"},
+{	"paramname": "pnBufferLength" ,"paramtype": "uint32_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRChaperoneSetup",
+	"methodname": "ImportFromBufferToWorking",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "pBuffer" ,"paramtype": "const char *"},
+{	"paramname": "nImportFlags" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
 	"classname": "vr::IVRCompositor",
 	"methodname": "SetTrackingSpace",
 	"returntype": "void",
@@ -1936,6 +1985,14 @@
 	"classname": "vr::IVRCompositor",
 	"methodname": "ShouldAppRenderWithLowResources",
 	"returntype": "bool"
+}
+,{
+	"classname": "vr::IVRCompositor",
+	"methodname": "ForceInterleavedReprojectionOn",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "bOverride" ,"paramtype": "bool"}
+	 ]
 }
 ,{
 	"classname": "vr::IVROverlay",

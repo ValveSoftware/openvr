@@ -406,6 +406,7 @@ enum EVREventType
 	VREvent_ChaperoneUniverseHasChanged	= 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
+	VREvent_SeatedZeroPoseReset			= 804,
 
 	VREvent_BackgroundSettingHasChanged	= 850,
 	VREvent_CameraSettingsHaveChanged	= 851,
@@ -427,6 +428,8 @@ enum EVREventType
 
 	VREvent_Compositor_MirrorWindowShown	= 1400,
 	VREvent_Compositor_MirrorWindowHidden	= 1401,
+	VREvent_Compositor_ChaperoneBoundsShown = 1410,
+	VREvent_Compositor_ChaperoneBoundsHidden = 1411,
 
 	VREvent_TrackedCamera_StartVideoStream  = 1500,
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
@@ -592,6 +595,11 @@ struct VREvent_PerformanceTest_t
 	uint32_t m_nFidelityLevel;
 };
 
+struct VREvent_SeatedZeroPoseReset_t
+{
+	bool bResetBySystemMenu;
+};
+
 /** If you change this you must manually update openvr_interop.cs.py */
 typedef union
 {
@@ -608,6 +616,7 @@ typedef union
 	VREvent_Chaperone_t chaperone;
 	VREvent_PerformanceTest_t performanceTest;
 	VREvent_TouchPadMove_t touchPadMove;
+	VREvent_SeatedZeroPoseReset_t seatedZeroPoseReset;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -928,6 +937,8 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 	uint32_t m_nISPReferenceTimeStamp;
 	uint32_t m_nSyncCounter;
 
+	uint32_t m_nCamSyncEvents;
+
 	uint32_t m_nExposureTime;
 
 	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
@@ -994,6 +1005,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
 	static const char * const k_pch_SteamVR_ForcedHmdKey_String = "forcedHmd";
 	static const char * const k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
+	static const char * const k_pch_SteamVR_DebugProcessPipe_String = "debugProcessPipe";
 	static const char * const k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
 	static const char * const k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
 	static const char * const k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
@@ -1007,11 +1019,9 @@ namespace vr
 	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
 	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
 	static const char * const k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
-	static const char * const k_pch_SteamVR_AutomaticDirectModeEnabled_Bool = "automaticDirectModeEnabled";
-	static const char * const k_pch_SteamVR_RequestDirectModeEnabled_Bool = "requestDirectModeEnabled";
-	static const char * const k_pch_SteamVR_RequestDirectModeDisabled_Bool = "requestDirectModeDisabled";
-	static const char * const k_pch_SteamVR_RequestDirectModeEdidVid_Int32 = "requestDirectModeEdidVid";
-	static const char * const k_pch_SteamVR_RequestDirectModeEdidPid_Int32 = "requestDirectModeEdidPid";
+	static const char * const k_pch_SteamVR_DirectMode_Bool = "directMode";
+	static const char * const k_pch_SteamVR_DirectModeEdidVid_Int32 = "directModeEdidVid";
+	static const char * const k_pch_SteamVR_DirectModeEdidPid_Int32 = "directModeEdidPid";
 	static const char * const k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
 	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 
@@ -1082,6 +1092,14 @@ namespace vr
 
 	static const char * const IVRSettings_Version = "IVRSettings_001";
 
+	//-----------------------------------------------------------------------------
+	// audio keys
+	static const char * const k_pch_audio_Section = "audio";
+	static const char * const k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
+	static const char * const k_pch_audio_OnRecordDevice_String = "onRecordDevice";
+	static const char * const k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
+	static const char * const k_pch_audio_OffRecordDevice_String = "offRecordDevice";
+	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
 } // namespace vr
 
 // iservertrackeddevicedriver.h
@@ -1438,6 +1456,9 @@ public:
 
 	/** Sends a vendor specific event (VREvent_VendorSpecific_Reserved_Start..VREvent_VendorSpecific_Reserved_End */
 	virtual void VendorSpecificEvent( uint32_t unWhichDevice, vr::EVREventType eventType, const VREvent_Data_t & eventData, double eventTimeOffset ) = 0;
+
+	/** Returns true if SteamVR is exiting */
+	virtual bool IsExiting() = 0;
 };
 
 
