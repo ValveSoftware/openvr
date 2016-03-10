@@ -127,6 +127,7 @@
 	,{"name": "Prop_DisplayBootloaderVersion_Uint64","value": "2030"}
 	,{"name": "Prop_DisplayHardwareVersion_Uint64","value": "2031"}
 	,{"name": "Prop_AudioFirmwareVersion_Uint64","value": "2032"}
+	,{"name": "Prop_CameraCompatibilityMode_Int32","value": "2033"}
 	,{"name": "Prop_AttachedDeviceId_String","value": "3000"}
 	,{"name": "Prop_SupportedButtons_Uint64","value": "3001"}
 	,{"name": "Prop_Axis0Type_Int32","value": "3002"}
@@ -213,6 +214,7 @@
 	,{"name": "VREvent_HideKeyboard","value": "510"}
 	,{"name": "VREvent_OverlayGamepadFocusGained","value": "511"}
 	,{"name": "VREvent_OverlayGamepadFocusLost","value": "512"}
+	,{"name": "VREvent_OverlaySharedTextureChanged","value": "513"}
 	,{"name": "VREvent_Notification_Shown","value": "600"}
 	,{"name": "VREvent_Notification_Hidden","value": "601"}
 	,{"name": "VREvent_Notification_BeginInteraction","value": "602"}
@@ -416,6 +418,7 @@
 	,{"name": "VRApplicationError_LaunchInProgress","value": "111"}
 	,{"name": "VRApplicationError_OldApplicationQuitting","value": "112"}
 	,{"name": "VRApplicationError_TransitionAborted","value": "113"}
+	,{"name": "VRApplicationError_IsTemplate","value": "114"}
 	,{"name": "VRApplicationError_BufferTooSmall","value": "200"}
 	,{"name": "VRApplicationError_PropertyNotSet","value": "201"}
 	,{"name": "VRApplicationError_UnknownProperty","value": "202"}
@@ -432,6 +435,8 @@
 	,{"name": "VRApplicationProperty_ImagePath_String","value": "52"}
 	,{"name": "VRApplicationProperty_Source_String","value": "53"}
 	,{"name": "VRApplicationProperty_IsDashboardOverlay_Bool","value": "60"}
+	,{"name": "VRApplicationProperty_IsTemplate_Bool","value": "61"}
+	,{"name": "VRApplicationProperty_IsInstanced_Bool","value": "62"}
 	,{"name": "VRApplicationProperty_LastLaunchTime_Uint64","value": "70"}
 ]}
 ,	{"enumname": "vr::EVRApplicationTransitionState","values": [ 
@@ -543,13 +548,6 @@
 	,{"name": "VRSettingsError_WriteFailed","value": "2"}
 	,{"name": "VRSettingsError_ReadFailed","value": "3"}
 ]}
-,	{"enumname": "vr::ECameraVideoStreamFormat","values": [ 
-	{"name": "CVS_FORMAT_UNKNOWN","value": "0"}
-	,{"name": "CVS_FORMAT_RAW10","value": "1"}
-	,{"name": "CVS_FORMAT_NV12","value": "2"}
-	,{"name": "CVS_FORMAT_RGB24","value": "3"}
-	,{"name": "CVS_MAX_FORMATS","value": "4"}
-]}
 ],
 "consts":[{
 	"constname": "k_unTrackingStringSize","consttype": "const uint32_t", "constval": "32"}
@@ -568,13 +566,13 @@
 ,{
 	"constname": "k_ulOverlayHandleInvalid","consttype": "const VROverlayHandle_t", "constval": "0"}
 ,{
-	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_011"}
+	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_012"}
 ,{
 	"constname": "IVRExtendedDisplay_Version","consttype": "const char *const", "constval": "IVRExtendedDisplay_001"}
 ,{
 	"constname": "k_unMaxApplicationKeyLength","consttype": "const uint32_t", "constval": "128"}
 ,{
-	"constname": "IVRApplications_Version","consttype": "const char *const", "constval": "IVRApplications_004"}
+	"constname": "IVRApplications_Version","consttype": "const char *const", "constval": "IVRApplications_005"}
 ,{
 	"constname": "IVRChaperone_Version","consttype": "const char *const", "constval": "IVRChaperone_003"}
 ,{
@@ -588,7 +586,7 @@
 ,{
 	"constname": "k_unMaxOverlayCount","consttype": "const uint32_t", "constval": "32"}
 ,{
-	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_010"}
+	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_011"}
 ,{
 	"constname": "k_pch_Controller_Component_GDC2015","consttype": "const char *const", "constval": "gdc2015"}
 ,{
@@ -600,7 +598,7 @@
 ,{
 	"constname": "k_pch_Controller_Component_Status","consttype": "const char *const", "constval": "status"}
 ,{
-	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_004"}
+	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_005"}
 ,{
 	"constname": "k_unNotificationTextMaxSize","consttype": "const uint32_t", "constval": "256"}
 ,{
@@ -655,6 +653,10 @@
 	"constname": "k_pch_SteamVR_UsingSpeakers_Bool","consttype": "const char *const", "constval": "usingSpeakers"}
 ,{
 	"constname": "k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float","consttype": "const char *const", "constval": "speakersForwardYawOffsetDegrees"}
+,{
+	"constname": "k_pch_SteamVR_BaseStationPowerManagement_Bool","consttype": "const char *const", "constval": "basestationPowerManagement"}
+,{
+	"constname": "k_pch_SteamVR_NeverKillProcesses_Bool","consttype": "const char *const", "constval": "neverKillProcesses"}
 ,{
 	"constname": "k_pch_Lighthouse_Section","consttype": "const char *const", "constval": "driver_lighthouse"}
 ,{
@@ -747,8 +749,6 @@
 	"constname": "k_pch_audio_OffRecordDevice_String","consttype": "const char *const", "constval": "offRecordDevice"}
 ,{
 	"constname": "k_pch_audio_VIVEHDMIGain","consttype": "const char *const", "constval": "viveHDMIGain"}
-,{
-	"constname": "IVRTrackedCamera_Version","consttype": "const char *const", "constval": "IVRTrackedCamera_001"}
 ],
 "structs":[{"struct": "vr::HmdMatrix34_t","fields": [
 { "fieldname": "m", "fieldtype": "float [3][4]"}]}
@@ -886,6 +886,9 @@
 { "fieldname": "gridWidth", "fieldtype": "float"},
 { "fieldname": "gridScale", "fieldtype": "float"},
 { "fieldname": "transform", "fieldtype": "struct vr::HmdMatrix44_t"}]}
+,{"struct": "vr::AppOverrideKeys_t","fields": [
+{ "fieldname": "pchKey", "fieldtype": "const char *"},
+{ "fieldname": "pchValue", "fieldtype": "const char *"}]}
 ,{"struct": "vr::Compositor_FrameTiming","fields": [
 { "fieldname": "m_nSize", "fieldtype": "uint32_t"},
 { "fieldname": "m_nFrameIndex", "fieldtype": "uint32_t"},
@@ -943,26 +946,6 @@
 { "fieldname": "width", "fieldtype": "int32_t"},
 { "fieldname": "height", "fieldtype": "int32_t"},
 { "fieldname": "depth", "fieldtype": "int32_t"}]}
-,{"struct": "vr::CameraVideoStreamFrame_t","fields": [
-{ "fieldname": "m_nStreamFormat", "fieldtype": "enum vr::ECameraVideoStreamFormat"},
-{ "fieldname": "m_nWidth", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nHeight", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nImageDataSize", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nFrameSequence", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nISPFrameTimeStamp", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nISPReferenceTimeStamp", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nSyncCounter", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nCamSyncEvents", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nExposureTime", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nBufferIndex", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nBufferCount", "fieldtype": "uint32_t"},
-{ "fieldname": "m_flFrameElapsedTime", "fieldtype": "double"},
-{ "fieldname": "m_flFrameCaptureTime", "fieldtype": "double"},
-{ "fieldname": "m_nFrameCaptureTicks", "fieldtype": "uint64_t"},
-{ "fieldname": "m_bPoseIsValid", "fieldtype": "_Bool"},
-{ "fieldname": "m_matDeviceToAbsoluteTracking", "fieldtype": "vr::HmdMatrix34_t"},
-{ "fieldname": "m_Pad", "fieldtype": "float [4]"},
-{ "fieldname": "m_pImageData", "fieldtype": "void *"}]}
 ,{"struct": "vr::COpenVRContext","fields": [
 { "fieldname": "m_pVRSystem", "fieldtype": "class vr::IVRSystem *"},
 { "fieldname": "m_pVRChaperone", "fieldtype": "class vr::IVRChaperone *"},
@@ -1343,22 +1326,6 @@
 	"returntype": "void"
 }
 ,{
-	"classname": "vr::IVRSystem",
-	"methodname": "PerformanceTestEnableCapture",
-	"returntype": "void",
-	"params": [ 
-{	"paramname": "bEnable" ,"paramtype": "bool"}
-	 ]
-}
-,{
-	"classname": "vr::IVRSystem",
-	"methodname": "PerformanceTestReportFidelityLevelChange",
-	"returntype": "void",
-	"params": [ 
-{	"paramname": "nFidelityLevel" ,"paramtype": "int"}
-	 ]
-}
-,{
 	"classname": "vr::IVRExtendedDisplay",
 	"methodname": "GetWindowBounds",
 	"returntype": "void",
@@ -1446,6 +1413,17 @@
 	"returntype": "vr::EVRApplicationError",
 	"params": [ 
 {	"paramname": "pchAppKey" ,"paramtype": "const char *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRApplications",
+	"methodname": "LaunchTemplateApplication",
+	"returntype": "vr::EVRApplicationError",
+	"params": [ 
+{	"paramname": "pchTemplateAppKey" ,"paramtype": "const char *"},
+{	"paramname": "pchNewAppKey" ,"paramtype": "const char *"},
+{	"paramname": "pKeys" ,"array_count": "unKeys" ,"paramtype": "const struct vr::AppOverrideKeys_t *"},
+{	"paramname": "unKeys" ,"paramtype": "uint32_t"}
 	 ]
 }
 ,{
@@ -2078,6 +2056,23 @@
 }
 ,{
 	"classname": "vr::IVROverlay",
+	"methodname": "SetOverlayRenderingPid",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "unPID" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "GetOverlayRenderingPid",
+	"returntype": "uint32_t",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
 	"methodname": "SetOverlayFlag",
 	"returntype": "vr::EVROverlayError",
 	"params": [ 
@@ -2460,6 +2455,30 @@
 }
 ,{
 	"classname": "vr::IVROverlay",
+	"methodname": "GetOverlayTexture",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pNativeTextureHandle" ,"paramtype": "void **"},
+{	"paramname": "pNativeTextureRef" ,"paramtype": "void *"},
+{	"paramname": "pWidth" ,"paramtype": "uint32_t *"},
+{	"paramname": "pHeight" ,"paramtype": "uint32_t *"},
+{	"paramname": "pNativeFormat" ,"paramtype": "uint32_t *"},
+{	"paramname": "pAPI" ,"paramtype": "vr::EGraphicsAPIConvention *"},
+{	"paramname": "pColorSpace" ,"paramtype": "vr::EColorSpace *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "ReleaseNativeOverlayHandle",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pNativeTextureHandle" ,"paramtype": "void *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
 	"methodname": "CreateDashboardOverlay",
 	"returntype": "vr::EVROverlayError",
 	"params": [ 
@@ -2616,6 +2635,15 @@
 {	"paramname": "textureId" ,"paramtype": "vr::TextureID_t"},
 {	"paramname": "pD3D11Device" ,"paramtype": "void *"},
 {	"paramname": "ppD3D11Texture2D" ,"paramtype": "void **"}
+	 ]
+}
+,{
+	"classname": "vr::IVRRenderModels",
+	"methodname": "LoadIntoTextureD3D11_Async",
+	"returntype": "vr::EVRRenderModelError",
+	"params": [ 
+{	"paramname": "textureId" ,"paramtype": "vr::TextureID_t"},
+{	"paramname": "pDstTexture" ,"paramtype": "void *"}
 	 ]
 }
 ,{
@@ -2847,220 +2875,6 @@
 {	"paramname": "pchSection" ,"paramtype": "const char *"},
 {	"paramname": "pchSettingsKey" ,"paramtype": "const char *"},
 {	"paramname": "peError" ,"paramtype": "vr::EVRSettingsError *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "HasCamera",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetCameraFirmwareDescription",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "pBuffer" ,"paramtype": "char *"},
-{	"paramname": "nBufferLen" ,"paramtype": "uint32_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetCameraFrameDimensions",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "nVideoStreamFormat" ,"paramtype": "vr::ECameraVideoStreamFormat"},
-{	"paramname": "pWidth" ,"paramtype": "uint32_t *"},
-{	"paramname": "pHeight" ,"paramtype": "uint32_t *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "SetCameraVideoStreamFormat",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "nVideoStreamFormat" ,"paramtype": "vr::ECameraVideoStreamFormat"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetCameraVideoStreamFormat",
-	"returntype": "vr::ECameraVideoStreamFormat",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "EnableCameraForStreaming",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "bEnable" ,"paramtype": "bool"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "StartVideoStream",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "StopVideoStream",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "IsVideoStreamActive",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "pbPaused" ,"paramtype": "bool *"},
-{	"paramname": "pflElapsedTime" ,"paramtype": "float *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetVideoStreamFrame",
-	"returntype": "const vr::CameraVideoStreamFrame_t *",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "ReleaseVideoStreamFrame",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "pFrameImage" ,"paramtype": "const vr::CameraVideoStreamFrame_t *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "SetAutoExposure",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "bEnable" ,"paramtype": "bool"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "PauseVideoStream",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "ResumeVideoStream",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetCameraDistortion",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "flInputU" ,"paramtype": "float"},
-{	"paramname": "flInputV" ,"paramtype": "float"},
-{	"paramname": "pflOutputU" ,"paramtype": "float *"},
-{	"paramname": "pflOutputV" ,"paramtype": "float *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetCameraProjection",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "flWidthPixels" ,"paramtype": "float"},
-{	"paramname": "flHeightPixels" ,"paramtype": "float"},
-{	"paramname": "flZNear" ,"paramtype": "float"},
-{	"paramname": "flZFar" ,"paramtype": "float"},
-{	"paramname": "pProjection" ,"paramtype": "vr::HmdMatrix44_t *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetRecommendedCameraUndistortion",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "pUndistortionWidthPixels" ,"paramtype": "uint32_t *"},
-{	"paramname": "pUndistortionHeightPixels" ,"paramtype": "uint32_t *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "SetCameraUndistortion",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "nDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
-{	"paramname": "nUndistortionWidthPixels" ,"paramtype": "uint32_t"},
-{	"paramname": "nUndistortionHeightPixels" ,"paramtype": "uint32_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "RequestVideoServicesForTool",
-	"returntype": "void"
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "ReleaseVideoServicesForTool",
-	"returntype": "void"
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "GetVideoStreamFrameSharedTextureGL",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "bUndistorted" ,"paramtype": "bool"},
-{	"paramname": "pglTextureId" ,"paramtype": "vr::glUInt_t *"},
-{	"paramname": "pglSharedTextureHandle" ,"paramtype": "vr::glSharedTextureHandle_t *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "ReleaseVideoStreamFrameSharedTextureGL",
-	"returntype": "bool",
-	"params": [ 
-{	"paramname": "glTextureId" ,"paramtype": "vr::glUInt_t"},
-{	"paramname": "glSharedTextureHandle" ,"paramtype": "vr::glSharedTextureHandle_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "LockSharedTextureGL",
-	"returntype": "void",
-	"params": [ 
-{	"paramname": "glSharedTextureHandle" ,"paramtype": "vr::glSharedTextureHandle_t"},
-{	"paramname": "pFrameImage" ,"paramtype": "vr::CameraVideoStreamFrame_t *"}
-	 ]
-}
-,{
-	"classname": "vr::IVRTrackedCamera",
-	"methodname": "UnlockSharedTextureGL",
-	"returntype": "void",
-	"params": [ 
-{	"paramname": "glSharedTextureHandle" ,"paramtype": "vr::glSharedTextureHandle_t"}
 	 ]
 }
 ]

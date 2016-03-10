@@ -261,6 +261,7 @@ enum ETrackedDeviceProperty
 	Prop_DisplayBootloaderVersion_Uint64		= 2030,
 	Prop_DisplayHardwareVersion_Uint64			= 2031,
 	Prop_AudioFirmwareVersion_Uint64			= 2032,
+	Prop_CameraCompatibilityMode_Int32			= 2033,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -391,6 +392,7 @@ enum EVREventType
 	VREvent_HideKeyboard = 510, // Sent to keyboard renderer in the dashboard to hide it
 	VREvent_OverlayGamepadFocusGained		= 511, // Sent to an overlay when IVROverlay::SetFocusOverlay is called on it
 	VREvent_OverlayGamepadFocusLost = 512, // Send to an overlay when it previously had focus and IVROverlay::SetFocusOverlay is called on something else
+	VREvent_OverlaySharedTextureChanged = 513,
 
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
@@ -1174,20 +1176,9 @@ public:
 	* prompt the user to save and then exit afterward, otherwise the user will be left in a confusing state. */
 	virtual void AcknowledgeQuit_UserPrompt() = 0;
 
-	// ------------------------------------
-	// Performance Test methods
-	// ------------------------------------
-
-	/** Performance Testing applications can call this to enable/disable when frame timing data should be 
-	* captured for the Perf Test Report. */
-	virtual void PerformanceTestEnableCapture( bool bEnable ) = 0;
-
-	/** Performance Testing applications can call this to note on the Perf Test Report when they've shifted 
-	* their fidelity to a new mode. */
-	virtual void PerformanceTestReportFidelityLevelChange( int nFidelityLevel ) = 0;
 };
 
-static const char * const IVRSystem_Version = "IVRSystem_011";
+static const char * const IVRSystem_Version = "IVRSystem_012";
 
 }
 
@@ -1215,6 +1206,7 @@ namespace vr
 		VRApplicationError_LaunchInProgress = 111,		// The system was already starting a different application
 		VRApplicationError_OldApplicationQuitting = 112, 
 		VRApplicationError_TransitionAborted = 113,
+		VRApplicationError_IsTemplate = 114, // error when you try to call LaunchApplication() on a template type app (use LaunchTemplateApplication)
 
 		VRApplicationError_BufferTooSmall = 200,		// The provided buffer was too small to fit the requested data
 		VRApplicationError_PropertyNotSet = 201,		// The requested property was not set
@@ -1241,6 +1233,8 @@ namespace vr
 		VRApplicationProperty_Source_String				= 53,
 
 		VRApplicationProperty_IsDashboardOverlay_Bool	= 60,
+		VRApplicationProperty_IsTemplate_Bool			= 61,
+		VRApplicationProperty_IsInstanced_Bool			= 62,
 
 		VRApplicationProperty_LastLaunchTime_Uint64		= 70,
 	};
@@ -1256,6 +1250,11 @@ namespace vr
 		VRApplicationTransition_NewAppLaunched = 20,
 	};
 
+	struct AppOverrideKeys_t
+	{
+		const char *pchKey;
+		const char *pchValue;
+	};
 
 	class IVRApplications
 	{
@@ -1288,6 +1287,11 @@ namespace vr
 		/** Launches the application. The existing scene application will exit and then the new application will start.
 		* This call is not valid for dashboard overlay applications. */
 		virtual EVRApplicationError LaunchApplication( const char *pchAppKey ) = 0;
+
+		/** Launches an instance of an application of type template, with its app key being pchNewAppKey (which must be unique) and optionally override sections
+		* from the manifest file via AppOverrideKeys_t
+		*/
+		virtual EVRApplicationError LaunchTemplateApplication( const char *pchTemplateAppKey, const char *pchNewAppKey, VR_ARRAY_COUNT( unKeys ) const AppOverrideKeys_t *pKeys, uint32_t unKeys ) = 0;
 
 		/** Launches the dashboard overlay application if it is not already running. This call is only valid for 
 		* dashboard overlay applications. */
@@ -1358,7 +1362,7 @@ namespace vr
 		virtual EVRApplicationError LaunchInternalProcess( const char *pchBinaryPath, const char *pchArguments, const char *pchWorkingDirectory ) = 0;
 	};
 
-	static const char * const IVRApplications_Version = "IVRApplications_004";
+	static const char * const IVRApplications_Version = "IVRApplications_005";
 
 } // namespace vr
 
@@ -1424,6 +1428,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_DirectModeEdidPid_Int32 = "directModeEdidPid";
 	static const char * const k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
 	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
+	static const char * const k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
+	static const char * const k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -2089,6 +2095,13 @@ namespace vr
 		// Overlay rendering methods
 		// ---------------------------------------------
 
+		/** Sets the pid that is allowed to render to this overlay (the creator pid is always allow to render),
+		*	by default this is the pid of the process that made the overlay */
+		virtual EVROverlayError SetOverlayRenderingPid( VROverlayHandle_t ulOverlayHandle, uint32_t unPID ) = 0;
+
+		/** Gets the pid that is allowed to render to this overlay */
+		virtual uint32_t GetOverlayRenderingPid( VROverlayHandle_t ulOverlayHandle ) = 0;
+
 		/** Specify flag setting for a given overlay */
 		virtual EVROverlayError SetOverlayFlag( VROverlayHandle_t ulOverlayHandle, VROverlayFlags eOverlayFlag, bool bEnabled ) = 0;
 
@@ -2224,10 +2237,7 @@ namespace vr
 		// Overlay texture methods
 		// ---------------------------------------------
 
-		/** Texture to draw for the overlay. IVRCompositor::SetGraphicsDevice must be called before 
-		* this function. This function can only be called by the overlay's renderer process.
-		*
-		* If pBounds is NULL the entire texture will be used.
+		/** Texture to draw for the overlay. This function can only be called by the overlay's creator or renderer process (see SetOverlayRenderingPid) .
 		*
 		* OpenGL dirty state:
 		*	glBindTexture
@@ -2244,6 +2254,24 @@ namespace vr
 		/** Separate interface for providing the image through a filename: can be png or jpg, and should not be bigger than 1920x1080.
 		* This function can only be called by the overlay's renderer process */
 		virtual EVROverlayError SetOverlayFromFile( VROverlayHandle_t ulOverlayHandle, const char *pchFilePath ) = 0;
+
+		/** Get the native texture handle/device for an overlay you have created.
+		* On windows this handle will be a ID3D11ShaderResourceView with a ID3D11Texture2D bound.
+		*
+		* The texture will always be sized to match the backing texture you supplied in SetOverlayTexture above.
+		*
+		* You MUST call ReleaseNativeOverlayHandle() with pNativeTextureHandle once you are done with this texture.
+		*
+		* pNativeTextureHandle is an OUTPUT, it will be a pointer to a ID3D11ShaderResourceView *.
+		* pNativeTextureRef is an INPUT and should be a ID3D11Resource *. The device used by pNativeTextureRef will be used to bind pNativeTextureHandle.
+		*/
+		virtual EVROverlayError GetOverlayTexture( VROverlayHandle_t ulOverlayHandle, void **pNativeTextureHandle, void *pNativeTextureRef, uint32_t *pWidth, uint32_t *pHeight, uint32_t *pNativeFormat, EGraphicsAPIConvention *pAPI, EColorSpace *pColorSpace ) = 0;
+
+		/** Release the pNativeTextureHandle provided from the GetOverlayTexture call, this allows the system to free the underlying GPU resources for this object,
+		* so only do it once you stop rendering this texture.
+		*/
+		virtual EVROverlayError ReleaseNativeOverlayHandle( VROverlayHandle_t ulOverlayHandle, void *pNativeTextureHandle ) = 0;
+
 
 		// ----------------------------------------------
 		// Dashboard Overlay Methods
@@ -2290,9 +2318,10 @@ namespace vr
 
 		/** Set the position of the keyboard in overlay space by telling it to avoid a rectangle in the overlay. Rectangle coords have (0,0) in the bottom left **/
 		virtual void SetKeyboardPositionForOverlay( VROverlayHandle_t ulOverlayHandle, HmdRect2_t avoidRect ) = 0;
+
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_010";
+	static const char * const IVROverlay_Version = "IVROverlay_011";
 
 } // namespace vr
 
@@ -2416,6 +2445,9 @@ public:
 	/** Creates a D3D11 texture and loads data into it. */
 	virtual EVRRenderModelError LoadTextureD3D11_Async( TextureID_t textureId, void *pD3D11Device, void **ppD3D11Texture2D ) = 0;
 
+	/** Helper function to copy the bits into an existing texture. */
+	virtual EVRRenderModelError LoadIntoTextureD3D11_Async( TextureID_t textureId, void *pDstTexture ) = 0;
+
 	/** Use this to free textures created with LoadTextureD3D11_Async instead of calling Release on them. */
 	virtual void FreeTextureD3D11( void *pD3D11Texture2D ) = 0;
 
@@ -2467,7 +2499,7 @@ public:
 	virtual bool RenderModelHasComponent( const char *pchRenderModelName, const char *pchComponentName ) = 0;
 };
 
-static const char * const IVRRenderModels_Version = "IVRRenderModels_004";
+static const char * const IVRRenderModels_Version = "IVRRenderModels_005";
 
 }
 

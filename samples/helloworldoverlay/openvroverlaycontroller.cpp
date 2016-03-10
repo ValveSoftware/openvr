@@ -135,11 +135,6 @@ bool COpenVROverlayController::Init()
         vr::VROverlay()->SetOverlayWidthInMeters( m_ulOverlayHandle, 1.5f );
         vr::VROverlay()->SetOverlayInputMethod( m_ulOverlayHandle, vr::VROverlayInputMethod_Mouse );
 	
-        // flip V to account for GL vs. OpenVR texture origin
-        vr::VRTextureBounds_t overlayTextureBounds = { 0, 1.f, 1.f, 0.f };
-        vr::VROverlay()->SetOverlayTextureBounds( m_ulOverlayHandle, &overlayTextureBounds );
-        vr::VROverlay()->SetOverlayTextureBounds( m_ulOverlayThumbnailHandle, &overlayTextureBounds );
-
 		m_pPumpEventsTimer = new QTimer( this );
 		connect(m_pPumpEventsTimer, SIGNAL( timeout() ), this, SLOT( OnTimeoutPumpEvents() ) );
 		m_pPumpEventsTimer->setInterval( 20 );

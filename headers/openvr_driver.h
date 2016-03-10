@@ -261,6 +261,7 @@ enum ETrackedDeviceProperty
 	Prop_DisplayBootloaderVersion_Uint64		= 2030,
 	Prop_DisplayHardwareVersion_Uint64			= 2031,
 	Prop_AudioFirmwareVersion_Uint64			= 2032,
+	Prop_CameraCompatibilityMode_Int32			= 2033,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -391,6 +392,7 @@ enum EVREventType
 	VREvent_HideKeyboard = 510, // Sent to keyboard renderer in the dashboard to hide it
 	VREvent_OverlayGamepadFocusGained		= 511, // Sent to an overlay when IVROverlay::SetFocusOverlay is called on it
 	VREvent_OverlayGamepadFocusLost = 512, // Send to an overlay when it previously had focus and IVROverlay::SetFocusOverlay is called on something else
+	VREvent_OverlaySharedTextureChanged = 513,
 
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
@@ -916,6 +918,24 @@ enum ECameraVideoStreamFormat
 	CVS_MAX_FORMATS
 };
 
+enum ECameraCompatibilityMode
+{
+	CAMERA_COMPAT_MODE_BULK_DEFAULT = 0,
+	CAMERA_COMPAT_MODE_BULK_64K_DMA,
+	CAMERA_COMPAT_MODE_BULK_16K_DMA,
+	CAMERA_COMPAT_MODE_BULK_8K_DMA,
+	CAMERA_COMPAT_MODE_ISO_52FPS,
+	CAMERA_COMPAT_MODE_ISO_50FPS,
+	CAMERA_COMPAT_MODE_ISO_48FPS,
+	CAMERA_COMPAT_MODE_ISO_46FPS,
+	CAMERA_COMPAT_MODE_ISO_44FPS,
+	CAMERA_COMPAT_MODE_ISO_42FPS,
+	CAMERA_COMPAT_MODE_ISO_40FPS,
+	CAMERA_COMPAT_MODE_ISO_35FPS,
+	CAMERA_COMPAT_MODE_ISO_30FPS,
+	MAX_CAMERA_COMPAT_MODES
+};
+
 #ifdef _MSC_VER
 #define VR_CAMERA_DECL_ALIGN( x ) __declspec( align( x ) )
 #else
@@ -933,23 +953,27 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 
 	uint32_t m_nFrameSequence;			// Starts from 0 when stream starts.
 
+	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
+	uint32_t m_nBufferCount;			// Total number of configured buffers
+
+	uint32_t m_nExposureTime;
+
 	uint32_t m_nISPFrameTimeStamp;		// Driver provided time stamp per driver centric time base
 	uint32_t m_nISPReferenceTimeStamp;
 	uint32_t m_nSyncCounter;
 
 	uint32_t m_nCamSyncEvents;
+	double m_flReferenceCamSyncTime;
 
-	uint32_t m_nExposureTime;
+	double m_flFrameElapsedTime;			// Starts from 0 when stream starts. In seconds.
+	double m_flFrameDeliveryRate;
 
-	uint32_t m_nBufferIndex;			// Identifies which buffer the image data is hosted
-	uint32_t m_nBufferCount;			// Total number of configured buffers
+	double m_flFrameCaptureTime_DriverAbsolute;		// In USB time, via AuxEvent
+	double m_flFrameCaptureTime_ServerRelative;		// In System time within the server
+	uint64_t m_nFrameCaptureTicks_ServerAbsolute;	// In system ticks within the server
+	double m_flFrameCaptureTime_ClientRelative;		// At the client, relative to when the frame was exposed/captured.
 
-	double m_flFrameElapsedTime;		// Starts from 0 when stream starts. In seconds.
-
-	double m_flFrameCaptureTime;		// Relative to when the frame was exposed/captured.
-	uint64_t m_nFrameCaptureTicks;
-
-	bool m_bPoseIsValid;				// Supplied by HMD layer when used as a tracked camera
+	bool m_bPoseIsValid;					// Supplied by HMD layer when used as a tracked camera
 	vr::HmdMatrix34_t m_matDeviceToAbsoluteTracking;	
 
 	float m_Pad[4];
@@ -1024,6 +1048,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_DirectModeEdidPid_Int32 = "directModeEdidPid";
 	static const char * const k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
 	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
+	static const char * const k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
+	static const char * const k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1348,6 +1374,15 @@ namespace vr
 // ivrcameracomponent.h
 namespace vr
 {
+
+	//-----------------------------------------------------------------------------
+	//-----------------------------------------------------------------------------
+	class ICameraVideoSinkCallback
+	{
+	public:
+		virtual void OnCameraVideoSinkCallback() = 0;
+	};
+
 	// ----------------------------------------------------------------------------------------------
 	// Purpose: The camera on a single tracked device
 	// ----------------------------------------------------------------------------------------------
@@ -1380,14 +1415,12 @@ namespace vr
 		virtual bool SetCameraUndistortion( uint32_t nUndistortionWidthPixels, uint32_t nUndistortionHeightPixels ) = 0;
 		virtual bool GetCameraFirmwareVersion( uint64_t *pFirmwareVersion ) = 0;
 		virtual bool SetFrameRate( int nISPFrameRate, int nSensorFrameRate ) = 0;
-
-
+		virtual bool SetCameraVideoSinkCallback( vr::ICameraVideoSinkCallback *pCameraVideoSinkCallback ) = 0;
+		virtual bool GetCameraCompatibilityMode( vr::ECameraCompatibilityMode *pCameraCompatibilityMode ) = 0;
+		virtual bool SetCameraCompatibilityMode( vr::ECameraCompatibilityMode nCameraCompatibilityMode ) = 0;
 	};
 
-
-
 	static const char *IVRCameraComponent_Version = "IVRCameraComponent_001";
-
 }
 // itrackeddevicedriverprovider.h
 namespace vr
