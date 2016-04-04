@@ -1015,8 +1015,6 @@ void CMainApplication::SetupScene()
 	glBindBuffer( GL_ARRAY_BUFFER, m_glSceneVertBuffer );
 	glBufferData( GL_ARRAY_BUFFER, sizeof(float) * vertdataarray.size(), &vertdataarray[0], GL_STATIC_DRAW);
 
-	glBindBuffer( GL_ARRAY_BUFFER, m_glSceneVertBuffer );
-
 	GLsizei stride = sizeof(VertexDataScene);
 	uintptr_t offset = 0;
 
