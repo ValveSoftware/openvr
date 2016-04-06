@@ -28,7 +28,7 @@
 	#else
 	#define S_API extern "C" __declspec( dllimport ) 
 	#endif // OPENVR_API_EXPORTS
-#elif defined( GNUC )
+#elif defined(__GNUC__)
 	#if defined( OPENVR_API_EXPORTS )
 	#define S_API EXTERN_C __attribute__ ((visibility("default")))
 	#else
