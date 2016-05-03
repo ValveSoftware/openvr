@@ -226,6 +226,8 @@ enum ETrackedDeviceProperty
 	Prop_Firmware_ProgrammingTarget_String		= 1028,
 	Prop_DeviceClass_Int32						= 1029,
 	Prop_HasCamera_Bool							= 1030,
+	Prop_DriverVersion_String                   = 1031,
+	Prop_Firmware_ForceUpdateRequired_Bool      = 1032,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -339,6 +341,7 @@ enum EVRState
 	VRState_Ready = 3,
 	VRState_Ready_Alert = 4,
 	VRState_NotReady = 5,
+	VRState_Standby = 6,
 };
 
 /** The types of events that could be posted (and what the parameters mean for each event type) */
@@ -369,12 +372,13 @@ enum EVREventType
 	VREvent_Scroll						= 305, // data is mouse
 	VREvent_TouchPadMove				= 306, // data is mouse
 
-	VREvent_InputFocusCaptured			= 400, // data is process
-	VREvent_InputFocusReleased			= 401, // data is process
+	VREvent_InputFocusCaptured			= 400, // data is process DEPRECATED
+	VREvent_InputFocusReleased			= 401, // data is process DEPRECATED
 	VREvent_SceneFocusLost				= 402, // data is process
 	VREvent_SceneFocusGained			= 403, // data is process
 	VREvent_SceneApplicationChanged		= 404, // data is process - The App actually drawing the scene changed (usually to or from the compositor)
 	VREvent_SceneFocusChanged			= 405, // data is process - New app got access to draw the scene
+	VREvent_InputFocusChanged			= 406, // data is process
 
 	VREvent_HideRenderModels			= 410, // Sent to the scene application to request hiding render models temporarily
 	VREvent_ShowRenderModels			= 411, // Sent to the scene application to request restoring render model visibility
@@ -393,6 +397,8 @@ enum EVREventType
 	VREvent_OverlayGamepadFocusGained		= 511, // Sent to an overlay when IVROverlay::SetFocusOverlay is called on it
 	VREvent_OverlayGamepadFocusLost = 512, // Send to an overlay when it previously had focus and IVROverlay::SetFocusOverlay is called on something else
 	VREvent_OverlaySharedTextureChanged = 513,
+	VREvent_DashboardGuideButtonDown = 514,
+	VREvent_DashboardGuideButtonUp = 515,
 
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
@@ -403,6 +409,7 @@ enum EVREventType
 	VREvent_ProcessQuit					= 701, // data is process
 	VREvent_QuitAborted_UserPrompt		= 702, // data is process
 	VREvent_QuitAcknowledged			= 703, // data is process
+	VREvent_DriverRequestedQuit			= 704, // The driver has requested that SteamVR shut down
 
 	VREvent_ChaperoneDataHasChanged		= 800,
 	VREvent_ChaperoneUniverseHasChanged	= 801,
@@ -410,8 +417,11 @@ enum EVREventType
 	VREvent_ChaperoneSettingsHaveChanged = 803,
 	VREvent_SeatedZeroPoseReset			= 804,
 
+	VREvent_AudioSettingsHaveChanged	= 820,
+
 	VREvent_BackgroundSettingHasChanged	= 850,
 	VREvent_CameraSettingsHaveChanged	= 851,
+	VREvent_ReprojectionSettingHasChanged = 852,
 
 	VREvent_StatusUpdate				= 900,
 
@@ -761,6 +771,7 @@ enum EVRApplicationType
 									// keep it running if everything else quits.
 	VRApplication_Utility = 4,		// Init should not try to load any drivers. The application needs access to utility
 									// interfaces (like IVRSettings and IVRApplications) but not hardware.
+	VRApplication_VRMonitor = 5,	// Reserved for vrmonitor
 };
 
 
@@ -788,72 +799,73 @@ enum EVRNotificationError
 // Please add adequate error description to https://developer.valvesoftware.com/w/index.php?title=Category:SteamVRHelp
 enum EVRInitError
 {
-	VRInitError_None = 0,
+	VRInitError_None	= 0,
 	VRInitError_Unknown = 1,
 
-	VRInitError_Init_InstallationNotFound	= 100,
-	VRInitError_Init_InstallationCorrupt	= 101,
-	VRInitError_Init_VRClientDLLNotFound	= 102,
-	VRInitError_Init_FileNotFound			= 103,
-	VRInitError_Init_FactoryNotFound		= 104,
-	VRInitError_Init_InterfaceNotFound		= 105,
-	VRInitError_Init_InvalidInterface		= 106,
+	VRInitError_Init_InstallationNotFound		= 100,
+	VRInitError_Init_InstallationCorrupt		= 101,
+	VRInitError_Init_VRClientDLLNotFound		= 102,
+	VRInitError_Init_FileNotFound				= 103,
+	VRInitError_Init_FactoryNotFound			= 104,
+	VRInitError_Init_InterfaceNotFound			= 105,
+	VRInitError_Init_InvalidInterface			= 106,
 	VRInitError_Init_UserConfigDirectoryInvalid = 107,
-	VRInitError_Init_HmdNotFound			= 108,
-	VRInitError_Init_NotInitialized		= 109,
-	VRInitError_Init_PathRegistryNotFound	= 110,
-	VRInitError_Init_NoConfigPath			= 111,
-	VRInitError_Init_NoLogPath				= 112,
-	VRInitError_Init_PathRegistryNotWritable = 113,
-	VRInitError_Init_AppInfoInitFailed		= 114,
-	VRInitError_Init_Retry					= 115, // Used internally to cause retries to vrserver
-	VRInitError_Init_InitCanceledByUser	= 116, // The calling application should silently exit. The user canceled app startup
-	VRInitError_Init_AnotherAppLaunching	= 117, 
-	VRInitError_Init_SettingsInitFailed	= 118, 
-	VRInitError_Init_ShuttingDown			= 119,
-	VRInitError_Init_TooManyObjects		= 120,
-	VRInitError_Init_NoServerForBackgroundApp = 121,
-	VRInitError_Init_NotSupportedWithCompositor = 122,
-	VRInitError_Init_NotAvailableToUtilityApps = 123,
+	VRInitError_Init_HmdNotFound				= 108,
+	VRInitError_Init_NotInitialized				= 109,
+	VRInitError_Init_PathRegistryNotFound		= 110,
+	VRInitError_Init_NoConfigPath				= 111,
+	VRInitError_Init_NoLogPath					= 112,
+	VRInitError_Init_PathRegistryNotWritable	= 113,
+	VRInitError_Init_AppInfoInitFailed			= 114,
+	VRInitError_Init_Retry						= 115, // Used internally to cause retries to vrserver
+	VRInitError_Init_InitCanceledByUser			= 116, // The calling application should silently exit. The user canceled app startup
+	VRInitError_Init_AnotherAppLaunching		= 117, 
+	VRInitError_Init_SettingsInitFailed			= 118, 
+	VRInitError_Init_ShuttingDown				= 119,
+	VRInitError_Init_TooManyObjects				= 120,
+	VRInitError_Init_NoServerForBackgroundApp	= 121,
+	VRInitError_Init_NotSupportedWithCompositor	= 122,
+	VRInitError_Init_NotAvailableToUtilityApps	= 123,
+	VRInitError_Init_Internal				 	= 124,
 
 	VRInitError_Driver_Failed				= 200,
 	VRInitError_Driver_Unknown				= 201,
 	VRInitError_Driver_HmdUnknown			= 202,
 	VRInitError_Driver_NotLoaded			= 203,
-	VRInitError_Driver_RuntimeOutOfDate	= 204,
-	VRInitError_Driver_HmdInUse			= 205,
+	VRInitError_Driver_RuntimeOutOfDate		= 204,
+	VRInitError_Driver_HmdInUse				= 205,
 	VRInitError_Driver_NotCalibrated		= 206,
 	VRInitError_Driver_CalibrationInvalid	= 207,
-	VRInitError_Driver_HmdDisplayNotFound  = 208,
+	VRInitError_Driver_HmdDisplayNotFound	= 208,
 	
 	VRInitError_IPC_ServerInitFailed		= 300,
 	VRInitError_IPC_ConnectFailed			= 301,
 	VRInitError_IPC_SharedStateInitFailed	= 302,
 	VRInitError_IPC_CompositorInitFailed	= 303,
-	VRInitError_IPC_MutexInitFailed		= 304,
+	VRInitError_IPC_MutexInitFailed			= 304,
 	VRInitError_IPC_Failed					= 305,
 
-	VRInitError_Compositor_Failed		= 400,
-	VRInitError_Compositor_D3D11HardwareRequired = 401,
+	VRInitError_Compositor_Failed					= 400,
+	VRInitError_Compositor_D3D11HardwareRequired	= 401,
+	VRInitError_Compositor_FirmwareRequiresUpdate	= 402,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 
-	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 			= 1101,
-	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
-	VRInitError_VendorSpecific_HmdFound_NoStoredConfig 			= 1103,
+	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 				= 1101,
+	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart	= 1102,
+	VRInitError_VendorSpecific_HmdFound_NoStoredConfig 				= 1103,
 	VRInitError_VendorSpecific_HmdFound_ConfigTooBig 				= 1104,
-	VRInitError_VendorSpecific_HmdFound_ConfigTooSmall 			= 1105,
+	VRInitError_VendorSpecific_HmdFound_ConfigTooSmall 				= 1105,
 	VRInitError_VendorSpecific_HmdFound_UnableToInitZLib 			= 1106,
 	VRInitError_VendorSpecific_HmdFound_CantReadFirmwareVersion 	= 1107,
-	VRInitError_VendorSpecific_HmdFound_UnableToSendUserDataStart  = 1108,
-	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataStart   = 1109,
-	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext    = 1110,
-	VRInitError_VendorSpecific_HmdFound_UserDataAddressRange       = 1111,
-	VRInitError_VendorSpecific_HmdFound_UserDataError              = 1112,
-	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck    = 1113,
+	VRInitError_VendorSpecific_HmdFound_UnableToSendUserDataStart	= 1108,
+	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataStart	= 1109,
+	VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext		= 1110,
+	VRInitError_VendorSpecific_HmdFound_UserDataAddressRange		= 1111,
+	VRInitError_VendorSpecific_HmdFound_UserDataError				= 1112,
+	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck		= 1113,
 
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
-
 };
 
 #pragma pack( pop )
@@ -1211,6 +1223,7 @@ namespace vr
 		VRApplicationError_BufferTooSmall = 200,		// The provided buffer was too small to fit the requested data
 		VRApplicationError_PropertyNotSet = 201,		// The requested property was not set
 		VRApplicationError_UnknownProperty = 202,
+		VRApplicationError_InvalidParameter = 203,
 	};
 
 	/** The maximum length of an application key */
@@ -1402,6 +1415,9 @@ namespace vr
 	};
 
 	//-----------------------------------------------------------------------------
+	static const char * const IVRSettings_Version = "IVRSettings_001";
+
+	//-----------------------------------------------------------------------------
 	// steamvr keys
 
 	static const char * const k_pch_SteamVR_Section = "steamvr";
@@ -1430,6 +1446,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 	static const char * const k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
 	static const char * const k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
+	static const char * const k_pch_SteamVR_RenderTargetMultiplier_Float = "renderTargetMultiplier";
+	static const char * const k_pch_SteamVR_AllowReprojection_Bool = "allowReprojection";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1479,6 +1497,12 @@ namespace vr
 	// keyboard keys
 	static const char * const k_pch_Keyboard_Section = "keyboard";
 	static const char * const k_pch_Keyboard_TutorialCompletions = "TutorialCompletions";
+	static const char * const k_pch_Keyboard_ScaleX = "ScaleX";
+	static const char * const k_pch_Keyboard_ScaleY = "ScaleY";
+	static const char * const k_pch_Keyboard_OffsetLeftX = "OffsetLeftX";
+	static const char * const k_pch_Keyboard_OffsetRightX = "OffsetRightX";
+	static const char * const k_pch_Keyboard_OffsetY = "OffsetY";
+	static const char * const k_pch_Keyboard_Smoothing = "Smoothing";
 
 	//-----------------------------------------------------------------------------
 	// perf keys
@@ -1491,21 +1515,40 @@ namespace vr
 	static const char * const k_pch_Perf_TestData_Float = "perfTestData";
 
 	//-----------------------------------------------------------------------------
-	// camera keys
-	static const char * const k_pch_Camera_Section = "camera";
+	// collision bounds keys
+	static const char * const k_pch_CollisionBounds_Section = "collisionBounds";
+	static const char * const k_pch_CollisionBounds_Style_Int32 = "CollisionBoundsStyle";
+	static const char * const k_pch_CollisionBounds_GroundPerimeterOn_Bool = "CollisionBoundsGroundPerimeterOn";
+	static const char * const k_pch_CollisionBounds_CenterMarkerOn_Bool = "CollisionBoundsCenterMarkerOn";
+	static const char * const k_pch_CollisionBounds_PlaySpaceOn_Bool = "CollisionBoundsPlaySpaceOn";
+	static const char * const k_pch_CollisionBounds_FadeDistance_Float = "CollisionBoundsFadeDistance";
+	static const char * const k_pch_CollisionBounds_ColorGammaR_Int32 = "CollisionBoundsColorGammaR";
+	static const char * const k_pch_CollisionBounds_ColorGammaG_Int32 = "CollisionBoundsColorGammaG";
+	static const char * const k_pch_CollisionBounds_ColorGammaB_Int32 = "CollisionBoundsColorGammaB";
+	static const char * const k_pch_CollisionBounds_ColorGammaA_Int32 = "CollisionBoundsColorGammaA";
 
 	//-----------------------------------------------------------------------------
-
-	static const char * const IVRSettings_Version = "IVRSettings_001";
+	// camera keys
+	static const char * const k_pch_Camera_Section = "camera";
+	static const char * const k_pch_Camera_EnableCamera_Bool = "enableCamera";
+	static const char * const k_pch_Camera_EnableCameraInDashboard_Bool = "enableCameraInDashboard";
+	static const char * const k_pch_Camera_EnableCameraForCollisionBounds_Bool = "enableCameraForCollisionBounds";
+	static const char * const k_pch_Camera_EnableCameraForRoomView_Bool = "enableCameraForRoomView";
+	static const char * const k_pch_Camera_BoundsColorGammaR_Int32 = "cameraBoundsColorGammaR";
+	static const char * const k_pch_Camera_BoundsColorGammaG_Int32 = "cameraBoundsColorGammaG";
+	static const char * const k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
+	static const char * const k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 
 	//-----------------------------------------------------------------------------
 	// audio keys
 	static const char * const k_pch_audio_Section = "audio";
 	static const char * const k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
 	static const char * const k_pch_audio_OnRecordDevice_String = "onRecordDevice";
+	static const char * const k_pch_audio_OnPlaybackMirrorDevice_String = "onPlaybackMirrorDevice";
 	static const char * const k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
 	static const char * const k_pch_audio_OffRecordDevice_String = "offRecordDevice";
 	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
+
 } // namespace vr
 
 // ivrchaperone.h
@@ -1707,6 +1750,8 @@ enum EVRCompositorError
 	VRCompositorError_IndexOutOfRange			= 107,
 };
 
+const uint32_t VRCompositor_ReprojectionReason_Cpu = 0x01;
+const uint32_t VRCompositor_ReprojectionReason_Gpu = 0x02;
 
 /** Provides a single frame's timing information to the app */
 struct Compositor_FrameTiming
@@ -1745,6 +1790,8 @@ struct Compositor_FrameTiming
 
 	vr::TrackedDevicePose_t m_HmdPose; // pose used by app to render this frame
 	int32_t m_nFidelityLevel; // app reported value
+
+	uint32_t m_nReprojectionFlags;
 };
 
 
@@ -1858,9 +1905,15 @@ public:
 
 	/** Override interleaved reprojection logic to force on. */
 	virtual void ForceInterleavedReprojectionOn( bool bOverride ) = 0;
+
+	/** Force reconnecting to the compositor process. */
+	virtual void ForceReconnectProcess() = 0;
+
+	/** Temporarily suspends rendering (useful for finer control over scene transitions). */
+	virtual void SuspendRendering( bool bSuspend ) = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_013";
+static const char * const IVRCompositor_Version = "IVRCompositor_014";
 
 } // namespace vr
 
@@ -2003,6 +2056,10 @@ namespace vr
 		// If set this will render a vertical scroll wheel on the primary controller, 
 		//  only needed if not using VROverlayFlags_SendVRScrollEvents but you still want to represent a scroll wheel
 		VROverlayFlags_ShowTouchPadScrollWheel = 8,
+
+		// If this is set ownership and render access to the overlay are transferred 
+		// to the new scene process on a call to IVRApplications::LaunchInternalProcess
+		VROverlayFlags_TransferOwnershipToInternalProcess = 9,
 	};
 
 	struct VROverlayIntersectionParams_t
@@ -2067,7 +2124,8 @@ namespace vr
 		/** Specify which overlay to use the high quality render path.  This overlay will be composited in during the distortion pass which
 		* results in it drawing on top of everything else, but also at a higher quality as it samples the source texture directly rather than
 		* rasterizing into each eye's render texture first.  Because if this, only one of these is supported at any given time.  It is most useful
-		* for overlays that are expected to take up most of the user's view (e.g. streaming video). */
+		* for overlays that are expected to take up most of the user's view (e.g. streaming video).
+		* This mode does not support mouse input to your overlay. */
 		virtual EVROverlayError SetHighQualityOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
 
 		/** Returns the overlay handle of the current overlay being rendered using the single high quality overlay render path.
@@ -2200,7 +2258,7 @@ namespace vr
 		virtual EVROverlayError GetOverlayMouseScale( VROverlayHandle_t ulOverlayHandle, HmdVector2_t *pvecMouseScale ) = 0;
 
 		/** Sets the mouse scaling factor that is used for mouse events. The actual texture may be a different size, but this is
-		* typically the size of the underlying UI in pixels. */
+		* typically the size of the underlying UI in pixels (not in world space). */
 		virtual EVROverlayError SetOverlayMouseScale( VROverlayHandle_t ulOverlayHandle, const HmdVector2_t *pvecMouseScale ) = 0;
 
 		/** Computes the overlay-space pixel coordinates of where the ray intersects the overlay with the
@@ -2399,6 +2457,8 @@ struct RenderModel_TextureMap_t
 IDs <0 denote the texture is not present */
 
 typedef int32_t TextureID_t;
+
+const TextureID_t INVALID_TEXTURE_ID = -1;
 
 struct RenderModel_t
 {

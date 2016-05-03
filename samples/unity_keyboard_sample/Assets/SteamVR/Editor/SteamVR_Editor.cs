@@ -121,6 +121,7 @@ public class SteamVR_Editor : Editor
 			"Assets/Plugins/x86_64/openvr_api.dll",
 			"Assets/Plugins/x86_64/steam_api.dll",
 			"Assets/Plugins/x86_64/libsteam_api.so",
+			"Assets/Plugins/x86_64/libopenvr_api.so",
 		}, "steamvr.unitypackage", ExportPackageOptions.Recurse);
 		EditorApplication.Exit(0);
 	}

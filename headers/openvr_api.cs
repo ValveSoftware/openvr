@@ -670,6 +670,16 @@ public struct IVRCompositor
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _ForceInterleavedReprojectionOn ForceInterleavedReprojectionOn;
 
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate void _ForceReconnectProcess();
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _ForceReconnectProcess ForceReconnectProcess;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate void _SuspendRendering(bool bSuspend);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _SuspendRendering SuspendRendering;
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1859,6 +1869,14 @@ public class CVRCompositor
 	{
 		FnTable.ForceInterleavedReprojectionOn(bOverride);
 	}
+	public void ForceReconnectProcess()
+	{
+		FnTable.ForceReconnectProcess();
+	}
+	public void SuspendRendering(bool bSuspend)
+	{
+		FnTable.SuspendRendering(bSuspend);
+	}
 }
 
 
@@ -2487,6 +2505,8 @@ public enum ETrackedDeviceProperty
 	Prop_Firmware_ProgrammingTarget_String = 1028,
 	Prop_DeviceClass_Int32 = 1029,
 	Prop_HasCamera_Bool = 1030,
+	Prop_DriverVersion_String = 1031,
+	Prop_Firmware_ForceUpdateRequired_Bool = 1032,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -2566,6 +2586,7 @@ public enum EVRState
 	Ready = 3,
 	Ready_Alert = 4,
 	NotReady = 5,
+	Standby = 6,
 }
 public enum EVREventType
 {
@@ -2596,6 +2617,7 @@ public enum EVREventType
 	VREvent_SceneFocusGained = 403,
 	VREvent_SceneApplicationChanged = 404,
 	VREvent_SceneFocusChanged = 405,
+	VREvent_InputFocusChanged = 406,
 	VREvent_HideRenderModels = 410,
 	VREvent_ShowRenderModels = 411,
 	VREvent_OverlayShown = 500,
@@ -2612,6 +2634,8 @@ public enum EVREventType
 	VREvent_OverlayGamepadFocusGained = 511,
 	VREvent_OverlayGamepadFocusLost = 512,
 	VREvent_OverlaySharedTextureChanged = 513,
+	VREvent_DashboardGuideButtonDown = 514,
+	VREvent_DashboardGuideButtonUp = 515,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -2620,13 +2644,16 @@ public enum EVREventType
 	VREvent_ProcessQuit = 701,
 	VREvent_QuitAborted_UserPrompt = 702,
 	VREvent_QuitAcknowledged = 703,
+	VREvent_DriverRequestedQuit = 704,
 	VREvent_ChaperoneDataHasChanged = 800,
 	VREvent_ChaperoneUniverseHasChanged = 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
 	VREvent_ChaperoneSettingsHaveChanged = 803,
 	VREvent_SeatedZeroPoseReset = 804,
+	VREvent_AudioSettingsHaveChanged = 820,
 	VREvent_BackgroundSettingHasChanged = 850,
 	VREvent_CameraSettingsHaveChanged = 851,
+	VREvent_ReprojectionSettingHasChanged = 852,
 	VREvent_StatusUpdate = 900,
 	VREvent_MCImageUpdated = 1000,
 	VREvent_FirmwareUpdateStarted = 1100,
@@ -2735,6 +2762,7 @@ public enum EVRApplicationType
 	VRApplication_Overlay = 2,
 	VRApplication_Background = 3,
 	VRApplication_Utility = 4,
+	VRApplication_VRMonitor = 5,
 }
 public enum EVRFirmwareError
 {
@@ -2777,6 +2805,7 @@ public enum EVRInitError
 	Init_NoServerForBackgroundApp = 121,
 	Init_NotSupportedWithCompositor = 122,
 	Init_NotAvailableToUtilityApps = 123,
+	Init_Internal = 124,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -2794,6 +2823,7 @@ public enum EVRInitError
 	IPC_Failed = 305,
 	Compositor_Failed = 400,
 	Compositor_D3D11HardwareRequired = 401,
+	Compositor_FirmwareRequiresUpdate = 402,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	VendorSpecific_HmdFound_CantOpenDevice = 1101,
 	VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
@@ -2831,6 +2861,7 @@ public enum EVRApplicationError
 	BufferTooSmall = 200,
 	PropertyNotSet = 201,
 	UnknownProperty = 202,
+	InvalidParameter = 203,
 }
 public enum EVRApplicationProperty
 {
@@ -2913,6 +2944,7 @@ public enum VROverlayFlags
 	SendVRScrollEvents = 6,
 	SendVRTouchpadEvents = 7,
 	ShowTouchPadScrollWheel = 8,
+	TransferOwnershipToInternalProcess = 9,
 }
 public enum EGamepadTextInputMode
 {
@@ -3158,8 +3190,7 @@ public enum EVRSettingsError
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Keyboard_t
 {
-	[MarshalAs(UnmanagedType.ByValTStr, SizeConst = 8)]
-	public string cNewInput; //char[8]
+	public byte cNewInput0,cNewInput1,cNewInput2,cNewInput3,cNewInput4,cNewInput5,cNewInput6,cNewInput7;
 	public ulong uUserValue;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Ipd_t
@@ -3261,6 +3292,7 @@ public enum EVRSettingsError
 	public float m_flCompositorRenderStartMs;
 	public TrackedDevicePose_t m_HmdPose;
 	public int m_nFidelityLevel;
+	public uint m_nReprojectionFlags;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionParams_t
 {
@@ -3384,7 +3416,7 @@ public class OpenVR
 	public const string IVRApplications_Version = "IVRApplications_005";
 	public const string IVRChaperone_Version = "IVRChaperone_003";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_005";
-	public const string IVRCompositor_Version = "IVRCompositor_013";
+	public const string IVRCompositor_Version = "IVRCompositor_014";
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 32;
@@ -3398,6 +3430,7 @@ public class OpenVR
 	public const uint k_unNotificationTextMaxSize = 256;
 	public const string IVRNotifications_Version = "IVRNotifications_002";
 	public const uint k_unMaxSettingsKeyLength = 128;
+	public const string IVRSettings_Version = "IVRSettings_001";
 	public const string k_pch_SteamVR_Section = "steamvr";
 	public const string k_pch_SteamVR_RequireHmd_String = "requireHmd";
 	public const string k_pch_SteamVR_ForcedDriverKey_String = "forcedDriver";
@@ -3424,6 +3457,8 @@ public class OpenVR
 	public const string k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 	public const string k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
 	public const string k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
+	public const string k_pch_SteamVR_RenderTargetMultiplier_Float = "renderTargetMultiplier";
+	public const string k_pch_SteamVR_AllowReprojection_Bool = "allowReprojection";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -3455,6 +3490,12 @@ public class OpenVR
 	public const string k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
 	public const string k_pch_Keyboard_Section = "keyboard";
 	public const string k_pch_Keyboard_TutorialCompletions = "TutorialCompletions";
+	public const string k_pch_Keyboard_ScaleX = "ScaleX";
+	public const string k_pch_Keyboard_ScaleY = "ScaleY";
+	public const string k_pch_Keyboard_OffsetLeftX = "OffsetLeftX";
+	public const string k_pch_Keyboard_OffsetRightX = "OffsetRightX";
+	public const string k_pch_Keyboard_OffsetY = "OffsetY";
+	public const string k_pch_Keyboard_Smoothing = "Smoothing";
 	public const string k_pch_Perf_Section = "perfcheck";
 	public const string k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
 	public const string k_pch_Perf_NotifyInHMD_Bool = "warnInHMD";
@@ -3462,11 +3503,29 @@ public class OpenVR
 	public const string k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	public const string k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 	public const string k_pch_Perf_TestData_Float = "perfTestData";
+	public const string k_pch_CollisionBounds_Section = "collisionBounds";
+	public const string k_pch_CollisionBounds_Style_Int32 = "CollisionBoundsStyle";
+	public const string k_pch_CollisionBounds_GroundPerimeterOn_Bool = "CollisionBoundsGroundPerimeterOn";
+	public const string k_pch_CollisionBounds_CenterMarkerOn_Bool = "CollisionBoundsCenterMarkerOn";
+	public const string k_pch_CollisionBounds_PlaySpaceOn_Bool = "CollisionBoundsPlaySpaceOn";
+	public const string k_pch_CollisionBounds_FadeDistance_Float = "CollisionBoundsFadeDistance";
+	public const string k_pch_CollisionBounds_ColorGammaR_Int32 = "CollisionBoundsColorGammaR";
+	public const string k_pch_CollisionBounds_ColorGammaG_Int32 = "CollisionBoundsColorGammaG";
+	public const string k_pch_CollisionBounds_ColorGammaB_Int32 = "CollisionBoundsColorGammaB";
+	public const string k_pch_CollisionBounds_ColorGammaA_Int32 = "CollisionBoundsColorGammaA";
 	public const string k_pch_Camera_Section = "camera";
-	public const string IVRSettings_Version = "IVRSettings_001";
+	public const string k_pch_Camera_EnableCamera_Bool = "enableCamera";
+	public const string k_pch_Camera_EnableCameraInDashboard_Bool = "enableCameraInDashboard";
+	public const string k_pch_Camera_EnableCameraForCollisionBounds_Bool = "enableCameraForCollisionBounds";
+	public const string k_pch_Camera_EnableCameraForRoomView_Bool = "enableCameraForRoomView";
+	public const string k_pch_Camera_BoundsColorGammaR_Int32 = "cameraBoundsColorGammaR";
+	public const string k_pch_Camera_BoundsColorGammaG_Int32 = "cameraBoundsColorGammaG";
+	public const string k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
+	public const string k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 	public const string k_pch_audio_Section = "audio";
 	public const string k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
 	public const string k_pch_audio_OnRecordDevice_String = "onRecordDevice";
+	public const string k_pch_audio_OnPlaybackMirrorDevice_String = "onPlaybackMirrorDevice";
 	public const string k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
 	public const string k_pch_audio_OffRecordDevice_String = "offRecordDevice";
 	public const string k_pch_audio_VIVEHDMIGain = "viveHDMIGain";

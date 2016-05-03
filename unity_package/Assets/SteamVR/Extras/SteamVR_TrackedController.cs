@@ -40,14 +40,27 @@ public class SteamVR_TrackedController : MonoBehaviour
         {
             gameObject.AddComponent<SteamVR_TrackedObject>();
         }
-        this.GetComponent<SteamVR_TrackedObject>().index = (SteamVR_TrackedObject.EIndex)controllerIndex;
-        if (this.GetComponent<SteamVR_RenderModel>() != null)
-        {
-            this.GetComponent<SteamVR_RenderModel>().index = (SteamVR_TrackedObject.EIndex)controllerIndex;
+
+		if (controllerIndex != 0)
+		{
+			this.GetComponent<SteamVR_TrackedObject>().index = (SteamVR_TrackedObject.EIndex)controllerIndex;
+			if (this.GetComponent<SteamVR_RenderModel>() != null)
+			{
+				this.GetComponent<SteamVR_RenderModel>().index = (SteamVR_TrackedObject.EIndex)controllerIndex;
+			}
+		}
+		else
+		{
+			controllerIndex = (uint) this.GetComponent<SteamVR_TrackedObject>().index;
         }
     }
 
-    public virtual void OnTriggerClicked(ClickedEventArgs e)
+	public void SetDeviceIndex(int index)
+	{
+			this.controllerIndex = (uint) index;
+	}
+
+	public virtual void OnTriggerClicked(ClickedEventArgs e)
     {
         if (TriggerClicked != null)
             TriggerClicked(this, e);

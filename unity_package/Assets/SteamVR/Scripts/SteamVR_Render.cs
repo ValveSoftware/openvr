@@ -10,10 +10,6 @@ using Valve.VR;
 
 public class SteamVR_Render : MonoBehaviour
 {
-	public float helpSeconds = 10.0f;
-	public string helpText = "You may now put on your headset.";
-	public GUIStyle helpStyle;
-
 	public bool pauseGameWhenDashboardIsVisible = true;
 	public bool lockPhysicsUpdateRateToRenderFrequency = true;
 
@@ -96,6 +92,10 @@ public class SteamVR_Render : MonoBehaviour
 			sorted[insert] = vrcam;
 
 		cameras = sorted;
+
+#if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
+		enabled = true;
+#endif
 	}
 
 	void RemoveInternal(SteamVR_Camera vrcam)
@@ -134,7 +134,20 @@ public class SteamVR_Render : MonoBehaviour
 	public TrackedDevicePose_t[] poses = new TrackedDevicePose_t[OpenVR.k_unMaxTrackedDeviceCount];
 	public TrackedDevicePose_t[] gamePoses = new TrackedDevicePose_t[0];
 
-	static public bool pauseRendering = false;
+	static private bool _pauseRendering;
+	static public bool pauseRendering
+	{
+		get { return _pauseRendering; }
+		set
+		{
+			_pauseRendering = value;
+#if !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
+			var compositor = OpenVR.Compositor;
+			if (compositor != null)
+				compositor.SuspendRendering(value);
+#endif
+		}
+	}
 
 	private IEnumerator RenderLoop()
 	{
@@ -368,10 +381,16 @@ public class SteamVR_Render : MonoBehaviour
 				switch ((EVREventType)vrEvent.eventType)
 				{
 					case EVREventType.VREvent_InputFocusCaptured: // another app has taken focus (likely dashboard)
-						SteamVR_Utils.Event.Send("input_focus", false);
+						if (vrEvent.data.process.oldPid == 0)
+						{
+							SteamVR_Utils.Event.Send("input_focus", false);
+						}
 						break;
 					case EVREventType.VREvent_InputFocusReleased: // that app has released input focus
-						SteamVR_Utils.Event.Send("input_focus", true);
+						if (vrEvent.data.process.pid == 0)
+						{
+							SteamVR_Utils.Event.Send("input_focus", true);
+						}
 						break;
 					case EVREventType.VREvent_ShowRenderModels:
 						SteamVR_Utils.Event.Send("hide_render_models", false);
@@ -394,7 +413,7 @@ public class SteamVR_Render : MonoBehaviour
 		QualitySettings.maxQueuedFrames = -1;
 		QualitySettings.vSyncCount = 0; // this applies to the companion window
 
-		if (lockPhysicsUpdateRateToRenderFrequency)
+		if (lockPhysicsUpdateRateToRenderFrequency && Time.timeScale > 0.0f)
 		{
 			var vr = SteamVR.instance;
 			if (vr != null)
@@ -403,44 +422,9 @@ public class SteamVR_Render : MonoBehaviour
 				timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Compositor_FrameTiming));
 				vr.compositor.GetFrameTiming(ref timing, 0);
 
-				Time.fixedDeltaTime = Time.timeScale * timing.m_nNumFramePresents / SteamVR.instance.hmd_DisplayFrequency;
+				Time.fixedDeltaTime = Time.timeScale / vr.hmd_DisplayFrequency;
+				Time.maximumDeltaTime = Time.fixedDeltaTime * timing.m_nNumFramePresents;
 			}
-		}
-	}
-
-	void OnGUI()
-	{
-		var t = Time.timeSinceLevelLoad;
-		if (t < helpSeconds)
-		{
-			if (helpStyle == null)
-			{
-				helpStyle = new GUIStyle(GUI.skin.label);
-				helpStyle.fontSize = 32;
-			}
-
-			if (t > helpSeconds - 1.0f)
-			{
-				var color = helpStyle.normal.textColor;
-				color.a = helpSeconds - t;
-				helpStyle.normal.textColor = color;
-			}
-
-			GUILayout.BeginArea(new Rect(0, 0, Screen.width, Screen.height));
-			GUILayout.BeginVertical();
-			GUILayout.FlexibleSpace();
-			GUILayout.Label(helpText, helpStyle);
-			GUILayout.EndVertical();
-			GUILayout.EndArea();
-		}
-	}
-
-	static public void ShowHelpText(string text, float seconds)
-	{
-		if (_instance != null)
-		{
-			_instance.helpText = text;
-			_instance.helpSeconds = Time.timeSinceLevelLoad + seconds;
 		}
 	}
 }

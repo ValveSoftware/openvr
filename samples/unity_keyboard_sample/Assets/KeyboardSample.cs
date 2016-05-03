@@ -26,18 +26,23 @@ public class KeyboardSample : MonoBehaviour
 	{
 		if (activeKeyboard != this)
 			return;
-		Valve.VR.VREvent_t ev = (Valve.VR.VREvent_t) args[0];
+		Valve.VR.VREvent_t ev = (Valve.VR.VREvent_t)args[0];
+		VREvent_Keyboard_t keyboard = ev.data.keyboard;
+		byte[] inputBytes = new byte[] { keyboard.cNewInput0, keyboard.cNewInput1, keyboard.cNewInput2, keyboard.cNewInput3, keyboard.cNewInput4, keyboard.cNewInput5, keyboard.cNewInput6, keyboard.cNewInput7 };
+		int len = 0;
+		for (; inputBytes[len] != 0 && len < 7; len++) ;
+		string input = System.Text.Encoding.UTF8.GetString(inputBytes, 0, len);
+
 		if (minimalMode)
 		{
-			VREvent_t evt = (VREvent_t)args[0];
-			if (evt.data.keyboard.cNewInput == "\b")
+			if (input == "\b")
 			{
 				if (text.Length > 0)
 				{
 					text = text.Substring(0, text.Length - 1);
 				}
 			}
-			else if (evt.data.keyboard.cNewInput == "\x1b")
+			else if (input == "\x1b")
 			{
 				// Close the keyboard
 				var vr = SteamVR.instance;
@@ -46,7 +51,7 @@ public class KeyboardSample : MonoBehaviour
 			}
 			else
 			{
-				text += evt.data.keyboard.cNewInput;
+				text += input;
 			}
 			textEntry.text = text;
 		}

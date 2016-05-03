@@ -33,7 +33,13 @@ public class SteamVR_Settings : EditorWindow
 #if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1)
 	const string virtualRealitySupported = "Virtual Reality Support";
 #endif
+#if UNITY_STANDALONE_WIN
 	const BuildTarget recommended_BuildTarget = BuildTarget.StandaloneWindows64;
+#elif UNITY_STANDALONE_OSX
+	const BuildTarget recommended_BuildTarget = BuildTarget.StandaloneOSXIntel;
+#elif UNITY_STANDALONE_LINUX
+	const BuildTarget recommended_BuildTarget = BuildTarget.StandaloneLinux64;
+#endif
 	const bool recommended_ShowUnitySplashScreen = false;
 	const bool recommended_DefaultIsFullScreen = false;
 	const int recommended_DefaultScreenWidth = 1024;
@@ -101,8 +107,6 @@ public class SteamVR_Settings : EditorWindow
 #if !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 		// Switch to native OpenVR support.
 		var updated = false;
-
-		UnityEditorInternal.VR.VREditor.InitializeVRPlayerSettingsForBuildTarget(BuildTargetGroup.Standalone);
 
 		if (!PlayerSettings.virtualRealitySupported)
 		{

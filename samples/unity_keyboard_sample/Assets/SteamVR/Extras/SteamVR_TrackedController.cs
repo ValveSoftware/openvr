@@ -36,7 +36,7 @@ public class SteamVR_TrackedController : MonoBehaviour
     // Use this for initialization
     void Start()
     {
-		/*if (this.GetComponent<SteamVR_TrackedObject>() == null)
+        if (this.GetComponent<SteamVR_TrackedObject>() == null)
         {
             gameObject.AddComponent<SteamVR_TrackedObject>();
         }
@@ -44,8 +44,8 @@ public class SteamVR_TrackedController : MonoBehaviour
         if (this.GetComponent<SteamVR_RenderModel>() != null)
         {
             this.GetComponent<SteamVR_RenderModel>().index = (SteamVR_TrackedObject.EIndex)controllerIndex;
-        }*/
-	}
+        }
+    }
 
     public virtual void OnTriggerClicked(ClickedEventArgs e)
     {
@@ -116,7 +116,6 @@ public class SteamVR_TrackedController : MonoBehaviour
     // Update is called once per frame
     void Update()
     {
-		controllerIndex = (uint) this.GetComponent<SteamVR_TrackedObject>().index;
 		var system = OpenVR.System;
 		if (system != null && system.GetControllerState(controllerIndex, ref controllerState))
 		{
