@@ -35,6 +35,7 @@ uint32_t	g_uWidth		= 0;
 uint32_t	g_uHeight		= 0;
 GLuint		g_uTextureID	= 0;
 cv::VideoCapture	g_cvVideo;
+cv::Mat				g_imgFrame;
 
 void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 {
@@ -93,18 +94,16 @@ void idle()
 
 void timer(int iVal)
 {
-	cv::Mat imgFrame;
-	g_cvVideo >> imgFrame;
+	g_cvVideo >> g_imgFrame;
 
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgFrame.cols, imgFrame.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, imgFrame.data);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imgFrame.cols, imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, imgFrame.data);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_imgFrame.cols, g_imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
 
 	glutPostRedisplay();
 	glutTimerFunc(1000 / 30, timer, 1);
 }
 
-void DrawOneEye(vr::Hmd_Eye eEye)
+void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection)
 {
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -112,6 +111,14 @@ void DrawOneEye(vr::Hmd_Eye eEye)
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
 	glClearColor(0.5f, 0.5f, 0.5f, 1);
+
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	glMultMatrixf(&(matProjection[0][0]));
+
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	glMultMatrixf(&(matModelView[0][0]));
 
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 
@@ -131,17 +138,7 @@ void DrawOneEye(vr::Hmd_Eye eEye)
 void display()
 {
 	g_pOpenVRGL->Render(DrawOneEye);
-
-	//glBindFramebuffer(GL_READ_FRAMEBUFFER, g_pOpenVRGL->m_aEyeData[0].m_nRenderFramebufferId);
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, g_pOpenVRGL->m_aEyeData[0].m_nResolveFramebufferId);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-	glBlitFramebuffer(0, 0, g_pOpenVRGL->m_uWidth, g_pOpenVRGL->m_uHeight, 0, 0, g_pOpenVRGL->m_uWidth, g_pOpenVRGL->m_uHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
-
-	glFinish();
+	g_pOpenVRGL->DrawOnBuffer(vr::Eye_Left);
 
 	// swap buffer
 	glutSwapBuffers();
@@ -161,12 +158,12 @@ int main(int argc, char** argv)
 	// initial glew
 	glewInit();
 
-	BuildBall(20, 31, 31);
+	BuildBall(50, 51, 51);
 
 	// register glut callback functions
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
-	glutTimerFunc(1000/30,timer,1);
+	glutTimerFunc(1000/25,timer,1);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(specialKey);
 	#pragma endregion
@@ -174,10 +171,10 @@ int main(int argc, char** argv)
 	#pragma region The texture of ball
 	g_cvVideo.open("D:\\VR360A\\Out\\20150708_171511.mp4");
 
-	cv::Mat imgImage = cv::imread("D:\\VR360A\\Out\\05.tif");
+	g_imgFrame = cv::imread("D:\\VR360A\\Out\\05.tif");
 	glGenTextures(1, &g_uTextureID);
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgImage.cols, imgImage.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, imgImage.data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_imgFrame.cols, g_imgFrame.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	#pragma endregion

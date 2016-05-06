@@ -90,6 +90,23 @@ bool COpenVRGL::Initial(float fNear, float fFar)
 	return true;
 }
 
+void COpenVRGL::Release()
+{
+	vr::VR_Shutdown();
+}
+
+void COpenVRGL::DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId)
+{
+	// copy left eye frame to frame buffer for display
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, GetEyeData(eEye)->m_nResolveFramebufferId);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, uBufferId);
+
+	glBlitFramebuffer(0, 0, m_uWidth, m_uHeight, 0, 0, m_uWidth, m_uHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+}
+
 void COpenVRGL::InitialEyeData(SEyeData &mEyeData, float fNear, float fFar)
 {
 	{
