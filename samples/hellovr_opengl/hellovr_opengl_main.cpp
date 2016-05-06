@@ -1668,14 +1668,14 @@ CGLRenderModel *CMainApplication::FindOrLoadRenderModel( const char *pchRenderMo
 	if( !pRenderModel )
 	{
 		vr::RenderModel_t *pModel = NULL;
-		if ( !vr::VRRenderModels()->LoadRenderModel( pchRenderModelName, &pModel ) || pModel == NULL )
+		if ( !vr::VRRenderModels()->LoadRenderModel_Async( pchRenderModelName, &pModel ) || pModel == NULL )
 		{
 			dprintf( "Unable to load render model %s\n", pchRenderModelName );
 			return NULL; // move on to the next tracked device
 		}
 
 		vr::RenderModel_TextureMap_t *pTexture = NULL;
-		if ( !vr::VRRenderModels( )->LoadTexture( pModel->diffuseTextureId, &pTexture ) || pTexture == NULL )
+		if ( !vr::VRRenderModels( )->LoadTexture_Async( pModel->diffuseTextureId, &pTexture ) || pTexture == NULL )
 		{
 			dprintf( "Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName );
 			vr::VRRenderModels()->FreeRenderModel( pModel );
