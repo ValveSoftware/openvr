@@ -1,32 +1,42 @@
 // STD Headers
 #define _USE_MATH_DEFINES
+#include <array>
 #include <cmath>
 #include <iostream>
 
-// OpenVR
-#include <openvr.h>
-#pragma comment(lib,"openvr_api.lib") 
-
 // freeglut
+#include <GL/glew.h>
 #include <GL/freeglut.h>
 
 // OpenCV
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+
+#pragma comment(lib,"glew32.lib") 
 #ifdef _DEBUG
 #pragma comment(lib,"opencv_world310d.lib") 
+#pragma comment(lib,"freeglutd.lib") 
 #else
 #pragma comment(lib,"opencv_world310.lib") 
+#pragma comment(lib,"freeglut.lib") 
 #endif
+
+#include "OpenVRGL.h"
+
+COpenVRGL* g_pOpenVRGL = nullptr;
 
 float*			g_aVertexArray	= nullptr;
 float*			g_aTextureArray	= nullptr;
 unsigned int*	g_aIndexArray	= nullptr;
 unsigned int	g_uIndexNum		= 0;
+uint32_t	g_uWidth		= 0;
+uint32_t	g_uHeight		= 0;
+GLuint		g_uTextureID	= 0;
 
 void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 {
+	// TODO: this is a trivial way, the top and bottom should be simplified
 	unsigned int uSize = uNumW * uNumH;
 	g_aVertexArray = new float[3 * uSize];
 	g_aTextureArray = new float[2 * uSize];
@@ -79,42 +89,44 @@ void idle()
 	glutPostRedisplay();
 }
 
-// glut display function(draw)
-void display()
+void DrawOneEye(vr::Hmd_Eye eEye)
 {
-	// clear previous screen
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_TEXTURE_2D);
+	glDisable(GL_LIGHTING);
+	glClearColor(0.5f, 0.5f, 0.5f, 1);
+
+	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glVertexPointer(3, GL_FLOAT, 0, g_aVertexArray);
-	
+
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glTexCoordPointer(2, GL_FLOAT, 0, g_aTextureArray);
-	
+
 	glDrawElements(GL_TRIANGLES, g_uIndexNum, GL_UNSIGNED_INT, g_aIndexArray);
-	
+
 	glDisableClientState(GL_VERTEX_ARRAY);
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+}
 
-	if (false)
-	{
-		// Coordinate
-		glLineWidth(10.0f);
-		glBegin(GL_LINES);
-		glColor3ub(255, 0, 0);
-		glVertex3f(0, 0, 0);
-		glVertex3f(50, 0, 0);
+// glut display function(draw)
+void display()
+{
+	g_pOpenVRGL->Render(DrawOneEye);
 
-		glColor3ub(0, 255, 0);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, 50, 0);
+	//glBindFramebuffer(GL_READ_FRAMEBUFFER, g_pOpenVRGL->m_aEyeData[0].m_nRenderFramebufferId);
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, g_pOpenVRGL->m_aEyeData[0].m_nResolveFramebufferId);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 
-		glColor3ub(0, 0, 255);
-		glVertex3f(0, 0, 0);
-		glVertex3f(0, 0, 50);
-		glEnd();
-		glLineWidth(1.0f);
-	}
+	glBlitFramebuffer(0, 0, g_pOpenVRGL->m_uWidth, g_pOpenVRGL->m_uHeight, 0, 0, g_pOpenVRGL->m_uWidth, g_pOpenVRGL->m_uHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+
+	glFinish();
 
 	// swap buffer
 	glutSwapBuffers();
@@ -122,15 +134,6 @@ void display()
 
 int main(int argc, char** argv)
 {
-	// Initial VR System
-	//vr::EVRInitError eError = vr::VRInitError_None;
-	//vr::IVRSystem* pVRSystem = vr::VR_Init(&eError, vr::VRApplication_Scene);
-	//if (eError != vr::VRInitError_None)
-	//{
-	//	std::cerr << vr::VR_GetVRInitErrorAsEnglishDescription(eError) << std::endl;
-	//	return 1;
-	//}
-
 	#pragma region OpenGL Initialize
 	// initial glut
 	glutInit(&argc, argv);
@@ -140,12 +143,8 @@ int main(int argc, char** argv)
 	glutInitWindowSize(640, 640);
 	glutCreateWindow("OpenVR Ball");
 
-	// set OpenGL environment
-	glEnable(GL_DEPTH_TEST);
-	glEnable(GL_TEXTURE_2D);
-	glDisable(GL_LIGHTING);
-	glClearColor(0.5f, 0.5f, 0.5f, 1);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+	// initial glew
+	glewInit();
 
 	// OpenGL projection
 	glMatrixMode(GL_PROJECTION);
@@ -166,16 +165,20 @@ int main(int argc, char** argv)
 	//glutSpecialFunc(specialKey);
 	#pragma endregion
 
-
+	#pragma region The texture of ball
 	cv::Mat imgImage = cv::imread("D:\\VR360A\\Out\\05.tif");
+	cv::cvtColor(imgImage, imgImage, CV_BGR2RGB);
 
-	GLuint uTextureID;
-	glGenTextures(1, &uTextureID);
-	glBindTexture(GL_TEXTURE_2D, uTextureID);
+	glGenTextures(1, &g_uTextureID);
+	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgImage.cols, imgImage.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, imgImage.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	#pragma endregion
+
+	g_pOpenVRGL = new COpenVRGL();
+	g_pOpenVRGL->Initial(100, 5000);
 
 	glutMainLoop();
 }

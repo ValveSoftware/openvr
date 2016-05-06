@@ -18,5 +18,13 @@
     <ClCompile Include="Source.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
+    <ClCompile Include="OpenVRGL.cpp">
+      <Filter>原始程式檔</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="OpenVRGL.h">
+      <Filter>標頭檔</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

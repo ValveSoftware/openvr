@@ -103,12 +103,12 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\Heresy\openvr\headers;D:\Heresy\OpenCV\opencv3\build\include;D:\Heresy\OpenGL</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Heresy\openvr\headers;D:\Heresy\OpenGL;D:\Heresy\OpenCV\opencv3\build\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\Heresy\openvr\lib\win64;D:\Heresy\OpenCV\opencv3\build\x64\vc14\lib;D:\Heresy\OpenGL\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Heresy\openvr\lib\win64;D:\Heresy\OpenGL\x64;D:\Heresy\OpenCV\opencv3\build\x64\vc14\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -139,18 +139,22 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\Heresy\openvr\headers;D:\Heresy\OpenCV\opencv3\build\include;D:\Heresy\OpenGL</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>D:\Heresy\openvr\headers;D:\Heresy\OpenGL;D:\Heresy\OpenCV\opencv3\build\include</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>D:\Heresy\openvr\lib\win64;D:\Heresy\OpenCV\opencv3\build\x64\vc14\lib;D:\Heresy\OpenGL\x64</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>D:\Heresy\openvr\lib\win64;D:\Heresy\OpenGL\x64;D:\Heresy\OpenCV\opencv3\build\x64\vc14\lib</AdditionalLibraryDirectories>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="OpenVRGL.cpp" />
     <ClCompile Include="Source.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="OpenVRGL.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
