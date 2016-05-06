@@ -12,6 +12,7 @@
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/videoio.hpp>
 
 #pragma comment(lib,"glew32.lib") 
 #ifdef _DEBUG
@@ -33,6 +34,7 @@ unsigned int	g_uIndexNum		= 0;
 uint32_t	g_uWidth		= 0;
 uint32_t	g_uHeight		= 0;
 GLuint		g_uTextureID	= 0;
+cv::VideoCapture	g_cvVideo;
 
 void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 {
@@ -87,6 +89,19 @@ void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 void idle()
 {
 	glutPostRedisplay();
+}
+
+void timer(int iVal)
+{
+	cv::Mat imgFrame;
+	g_cvVideo >> imgFrame;
+
+	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
+	//glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgFrame.cols, imgFrame.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, imgFrame.data);
+	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, imgFrame.cols, imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, imgFrame.data);
+
+	glutPostRedisplay();
+	glutTimerFunc(1000 / 30, timer, 1);
 }
 
 void DrawOneEye(vr::Hmd_Eye eEye)
@@ -146,39 +161,29 @@ int main(int argc, char** argv)
 	// initial glew
 	glewInit();
 
-	// OpenGL projection
-	glMatrixMode(GL_PROJECTION);
-	gluPerspective(40.0, 1.0, 100.0, 2000.0);
-
-	glMatrixMode(GL_MODELVIEW);
-	glLoadIdentity();
-	gluLookAt(	0, 0, 0, 
-				0, 0, 1, 
-				0, 1, 0);
-
-	BuildBall(300, 31, 31);
+	BuildBall(20, 31, 31);
 
 	// register glut callback functions
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
+	glutTimerFunc(1000/30,timer,1);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(specialKey);
 	#pragma endregion
 
 	#pragma region The texture of ball
-	cv::Mat imgImage = cv::imread("D:\\VR360A\\Out\\05.tif");
-	cv::cvtColor(imgImage, imgImage, CV_BGR2RGB);
+	g_cvVideo.open("D:\\VR360A\\Out\\20150708_171511.mp4");
 
+	cv::Mat imgImage = cv::imread("D:\\VR360A\\Out\\05.tif");
 	glGenTextures(1, &g_uTextureID);
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgImage.cols, imgImage.rows, 0, GL_RGB, GL_UNSIGNED_BYTE, imgImage.data);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, imgImage.cols, imgImage.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, imgImage.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
 	#pragma endregion
 
 	g_pOpenVRGL = new COpenVRGL();
-	g_pOpenVRGL->Initial(100, 5000);
+	g_pOpenVRGL->Initial(1, 1000);
 
 	glutMainLoop();
 }
