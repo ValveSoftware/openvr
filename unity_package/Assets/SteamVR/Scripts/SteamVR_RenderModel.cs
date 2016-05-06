@@ -378,20 +378,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 			{
 				var diffuseTexture = (RenderModel_TextureMap_t)Marshal.PtrToStructure(pDiffuseTexture, typeof(RenderModel_TextureMap_t));
 				var texture = new Texture2D(diffuseTexture.unWidth, diffuseTexture.unHeight, TextureFormat.ARGB32, false);
-				if (SteamVR.instance.graphicsAPI == EGraphicsAPIConvention.API_DirectX)
-				{
-					texture.Apply();
-
-					while (true)
-					{
-						error = renderModels.LoadIntoTextureD3D11_Async(renderModel.diffuseTextureId, texture.GetNativeTexturePtr());
-						if (error != EVRRenderModelError.Loading)
-							break;
-
-						System.Threading.Thread.Sleep(1);
-					}
-				}
-				else
+				if (SystemInfo.graphicsDeviceVersion.StartsWith("OpenGL"))
 				{
 					var textureMapData = new byte[diffuseTexture.unWidth * diffuseTexture.unHeight * 4]; // RGBA
 					Marshal.Copy(diffuseTexture.rubTextureMapData, textureMapData, 0, textureMapData.Length);
@@ -412,6 +399,19 @@ public class SteamVR_RenderModel : MonoBehaviour
 
 					texture.SetPixels32(colors);
 					texture.Apply();
+				}
+				else
+				{
+					texture.Apply();
+
+					while (true)
+					{
+						error = renderModels.LoadIntoTextureD3D11_Async(renderModel.diffuseTextureId, texture.GetNativeTexturePtr());
+						if (error != EVRRenderModelError.Loading)
+							break;
+
+						System.Threading.Thread.Sleep(1);
+					}
 				}
 
 				material = new Material(shader != null ? shader : Shader.Find("Standard"));

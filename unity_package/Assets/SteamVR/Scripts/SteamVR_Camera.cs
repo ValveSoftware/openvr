@@ -101,7 +101,15 @@ public class SteamVR_Camera : MonoBehaviour
 
 			while (head.childCount > 0)
 				head.GetChild(0).parent = t;
-			DestroyImmediate(head.gameObject);
+
+			// Keep the head around, but parent to the camera now since it moves with the hmd
+			// but existing content may still have references to this object.
+			head.parent = t;
+			head.localPosition = Vector3.zero;
+			head.localRotation = Quaternion.identity;
+			head.localScale = Vector3.one;
+			head.gameObject.SetActive(false);
+
 			_head = t;
 		}
 
@@ -164,7 +172,16 @@ public class SteamVR_Camera : MonoBehaviour
 			headCam.renderingPath = camera.renderingPath;
 		}
 #endif
-		ears.GetComponent<SteamVR_Ears>().vrcam = this;
+		if (ears == null)
+		{
+			var e = transform.GetComponentInChildren<SteamVR_Ears>();
+			if (e != null)
+				_ears = e.transform;
+        }
+
+		if (ears != null)
+			ears.GetComponent<SteamVR_Ears>().vrcam = this;
+
 		SteamVR_Render.Add(this);
 	}
 

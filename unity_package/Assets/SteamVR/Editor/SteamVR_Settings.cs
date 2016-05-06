@@ -102,8 +102,6 @@ public class SteamVR_Settings : EditorWindow
 		// Switch to native OpenVR support.
 		var updated = false;
 
-		UnityEditorInternal.VR.VREditor.InitializeVRPlayerSettingsForBuildTarget(BuildTargetGroup.Standalone);
-
 		if (!PlayerSettings.virtualRealitySupported)
 		{
 			PlayerSettings.virtualRealitySupported = true;
@@ -565,9 +563,7 @@ public class SteamVR_Settings : EditorWindow
 						EditorPrefs.SetBool(ignore + defaultIsFullScreen, true);
 					if (PlayerSettings.defaultScreenWidth != recommended_DefaultScreenWidth ||
 						PlayerSettings.defaultScreenHeight != recommended_DefaultScreenHeight)
-					{
 						EditorPrefs.SetBool(ignore + defaultScreenSize, true);
-					}
 					if (PlayerSettings.runInBackground != recommended_RunInBackground)
 						EditorPrefs.SetBool(ignore + runInBackground, true);
 					if (PlayerSettings.displayResolutionDialog != recommended_DisplayResolutionDialog)
