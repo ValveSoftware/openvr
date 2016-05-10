@@ -118,7 +118,15 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
-	glMultMatrixf(&(matModelView[0][0]));
+	glMultMatrixf(&(glm::inverse(matModelView)[0][0]));
+
+	//glm::vec3	vPos = COpenVRGL::GetCameraPos(matModelView);
+	//glm::vec3	vCen = COpenVRGL::GetCameraDir( matModelView ) + vPos;
+	//glm::vec3	vUp = COpenVRGL::GetCameraUpper( matModelView );
+	//gluLookAt(
+	//	vPos[0], vPos[1], vPos[2],
+	//	vCen[0], vCen[1], vCen[2],
+	//	vUp[0], vUp[1], vUp[2]);
 
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 

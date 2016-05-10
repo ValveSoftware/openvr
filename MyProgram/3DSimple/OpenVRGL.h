@@ -15,15 +15,15 @@
 #pragma endregion
 
 /**
- * A helper class for OpenVR with OpenGL
- * Most code is copy from https://github.com/ValveSoftware/openvr/blob/master/samples/hellovr_opengl/hellovr_opengl_main.cpp
- **/
+* A helper class for OpenVR with OpenGL
+* Most code is copy from https://github.com/ValveSoftware/openvr/blob/master/samples/hellovr_opengl/hellovr_opengl_main.cpp
+**/
 class COpenVRGL
 {
 protected:
 	/**
-	 * Store the data for left and right eye
-	 **/
+	* Store the data for left and right eye
+	**/
 	struct SEyeData
 	{
 		vr::Hmd_Eye m_eEye; // Eye iindex
@@ -61,7 +61,28 @@ public:
 	}
 
 	// Draw the frame buffer of one eye to another frame buffer
-	void DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId = 0 );
+	void DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId = 0);
+
+public:
+	static glm::vec3 GetCameraPos(const glm::mat4& mMatrix)
+	{
+		return{ mMatrix[3][0],mMatrix[3][1], mMatrix[3][2] };
+	}
+
+	static glm::vec3 GetCameraUpper(const glm::mat4& mMatrix)
+	{
+		return{ mMatrix[1][0], mMatrix[1][1], mMatrix[1][2] };
+	}
+
+	static glm::vec3 GetCameraDir(const glm::mat4& mMatrix)
+	{
+		return{ -mMatrix[2][0], -mMatrix[2][1], -mMatrix[2][2] };
+	}
+
+	static glm::vec3 GetCameraSide(const glm::mat4& mMatrix)
+	{
+		return{ mMatrix[0][0], mMatrix[0][1], mMatrix[0][2] };
+	}
 
 protected:
 	void InitialEyeData(SEyeData &mEyeData, float fNear, float fFar);
@@ -80,16 +101,16 @@ protected:
 		glBindFramebuffer(GL_FRAMEBUFFER, pFBD->m_nRenderFramebufferId);
 		glViewport(0, 0, m_uWidth, m_uHeight);
 
-		funcDraw(eEye, pFBD->m_matEyePos * m_matHMDPose, pFBD->m_matProjection);
+		funcDraw(eEye, m_matHMDPose * pFBD->m_matEyePos, pFBD->m_matProjection);
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 		glDisable(GL_MULTISAMPLE);
 
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, pFBD->m_nRenderFramebufferId);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, pFBD->m_nResolveFramebufferId);
-		
+
 		glBlitFramebuffer(0, 0, m_uWidth, m_uHeight, 0, 0, m_uWidth, m_uHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-		
+
 		glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 		glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 	}

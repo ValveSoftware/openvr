@@ -5,10 +5,10 @@
 
 struct VertexDataLens
 {
-	std::array<float,2> position;
-	std::array<float,2> texCoordRed;
-	std::array<float,2> texCoordGreen;
-	std::array<float,2> texCoordBlue;
+	std::array<float, 2> position;
+	std::array<float, 2> texCoordRed;
+	std::array<float, 2> texCoordGreen;
+	std::array<float, 2> texCoordBlue;
 };
 
 GLuint CompileGLShader(const char * pchShaderName, const char * pchVertexShader, const char * pchFragmentShader)
@@ -81,8 +81,8 @@ bool COpenVRGL::Initial(float fNear, float fFar)
 	// Initial OpenGl objects
 	m_aEyeData[0].m_eEye = vr::Eye_Left;
 	m_aEyeData[1].m_eEye = vr::Eye_Right;
-	InitialEyeData(m_aEyeData[0],fNear,fFar);
-	InitialEyeData(m_aEyeData[1],fNear,fFar);
+	InitialEyeData(m_aEyeData[0], fNear, fFar);
+	InitialEyeData(m_aEyeData[1], fNear, fFar);
 	CreateShader();
 
 	SetupDistortion();
@@ -111,12 +111,12 @@ void COpenVRGL::InitialEyeData(SEyeData &mEyeData, float fNear, float fFar)
 {
 	{
 		vr::HmdMatrix34_t mat = m_pVRSystem->GetEyeToHeadTransform(mEyeData.m_eEye);
-		mEyeData.m_matEyePos = glm::inverse( glm::mat4(
+		mEyeData.m_matEyePos = glm::mat4(
 			mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
 			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
 			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
 			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
-		) );
+		);
 	}
 	{
 		vr::HmdMatrix44_t mat = m_pVRSystem->GetProjectionMatrix(mEyeData.m_eEye, fNear, fFar, vr::API_OpenGL);
@@ -368,6 +368,8 @@ void COpenVRGL::RenderDistortionAndSubmit()
 	vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture);
 	vr::Texture_t rightEyeTexture = { (void*)m_aEyeData[1].m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture);
+
+	glFlush();
 }
 
 void COpenVRGL::UpdateHeadPose()
@@ -376,11 +378,11 @@ void COpenVRGL::UpdateHeadPose()
 	if (m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
 	{
 		vr::HmdMatrix34_t& mat = m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
-		m_matHMDPose = glm::inverse(glm::mat4(
+		m_matHMDPose = glm::mat4(
 			mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
 			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
 			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
 			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
-		));
+		);
 	}
 }
