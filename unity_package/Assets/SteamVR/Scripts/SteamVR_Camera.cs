@@ -282,7 +282,7 @@ public class SteamVR_Camera : MonoBehaviour
 			head.localScale = Vector3.one;
 			head.tag = tag;
 
-			var camera = head.GetComponent<Camera>();
+			var camera = _head.AddComponent<Camera>();
 			camera.clearFlags = CameraClearFlags.Nothing;
 			camera.cullingMask = 0;
 			camera.eventMask = 0;
