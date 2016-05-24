@@ -1,4 +1,4 @@
-SteamVR plugin for Unity - v1.0.9
+SteamVR plugin for Unity - v1.1.0
 Copyright 2014-2016, Valve Corporation, All rights reserved.
 
 
@@ -13,6 +13,13 @@ Requirements:
 The SteamVR runtime must be installed.  This can be found in Steam under Tools.
 
 The plugin currently only supports Windows / DX11.
+
+
+Changes for v1.1.0:
+
+* Fix for error building standalone in SteamVR_LoadLevel.
+
+* Set SteamVR_TrackedObject.isValid to false when disabled.
 
 
 Changes for v1.0.9:

@@ -143,6 +143,7 @@ static const uint32_t k_unMaxDriverDebugResponseSize = 32768;
 typedef uint32_t TrackedDeviceIndex_t;
 static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
 static const uint32_t k_unMaxTrackedDeviceCount = 16;
+static const uint32_t k_unTrackedDeviceIndexOther = 0xFFFFFFFE;
 static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
 /** Describes what kind of object is being tracked at a given ID */
@@ -264,6 +265,8 @@ enum ETrackedDeviceProperty
 	Prop_DisplayHardwareVersion_Uint64			= 2031,
 	Prop_AudioFirmwareVersion_Uint64			= 2032,
 	Prop_CameraCompatibilityMode_Int32			= 2033,
+	Prop_ScreenshotHorizontalFieldOfViewDegrees_Float = 2034,
+	Prop_ScreenshotVerticalFieldOfViewDegrees_Float = 2035,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -327,7 +330,11 @@ enum EVRSubmitFlags
 	Submit_LensDistortionAlreadyApplied = 0x01,
 
 	// If the texture pointer passed in is actually a renderbuffer (e.g. for MSAA in OpenGL) then set this flag.
-	Submit_GlRenderBuffer = 0x02
+	Submit_GlRenderBuffer = 0x02,
+
+	// If you application receives a screenshot request, submit with this flag to let the compositor this submission
+	// is in the response to the screenshot
+	Submit_Screenshot = 0x04
 };
 
 
@@ -399,6 +406,12 @@ enum EVREventType
 	VREvent_OverlaySharedTextureChanged = 513,
 	VREvent_DashboardGuideButtonDown = 514,
 	VREvent_DashboardGuideButtonUp = 515,
+	VREvent_ScreenshotTriggered	= 516, // Screenshot button combo was pressed, Dashboard should request a screenshot
+
+	// Screenshot API
+	VREvent_RequestScreenshot = 520, // Sent by vrclient application to compositor to take a screenshot
+	VREvent_ScreenshotTaken = 521, // Sent by compositor to the application that the screenshot has been taken
+	VREvent_ScreenshotFailed = 522, // Sent by compositor to the application that the screenshot failed to be taken
 
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
@@ -422,6 +435,8 @@ enum EVREventType
 	VREvent_BackgroundSettingHasChanged	= 850,
 	VREvent_CameraSettingsHaveChanged	= 851,
 	VREvent_ReprojectionSettingHasChanged = 852,
+	VREvent_ModelSkinSettingsHaveChanged = 853,
+	VREvent_EnvironmentSettingsHaveChanged = 854,
 
 	VREvent_StatusUpdate				= 900,
 
@@ -437,6 +452,7 @@ enum EVREventType
 	VREvent_ApplicationTransitionStarted	= 1300,
 	VREvent_ApplicationTransitionAborted	= 1301,
 	VREvent_ApplicationTransitionNewAppStarted = 1302,
+	VREvent_ApplicationListUpdated			= 1303,
 
 	VREvent_Compositor_MirrorWindowShown	= 1400,
 	VREvent_Compositor_MirrorWindowHidden	= 1401,
@@ -791,6 +807,7 @@ enum EVRNotificationError
 	VRNotificationError_InvalidNotificationId = 100,
 	VRNotificationError_NotificationQueueFull = 101,
 	VRNotificationError_InvalidOverlayHandle = 102,
+	VRNotificationError_SystemWithUserValueAlreadyExists = 103,
 };
 
 
@@ -868,6 +885,60 @@ enum EVRInitError
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
 };
 
+enum EVRScreenshotType
+{
+	VRScreenshotType_None = 0,
+	VRScreenshotType_Mono = 1, // left eye only
+	VRScreenshotType_Stereo = 2,
+	VRScreenshotType_Cubemap = 3,
+	VRScreenshotType_StereoPanorama = 4
+};
+
+enum EVRTrackedCameraError
+{
+	VRTrackedCameraError_None                       = 0,
+	VRTrackedCameraError_OperationFailed            = 100,
+	VRTrackedCameraError_InvalidHandle              = 101,	
+	VRTrackedCameraError_InvalidFrameHeaderVersion  = 102,
+	VRTrackedCameraError_OutOfHandles               = 103,
+	VRTrackedCameraError_IPCFailure                 = 104,
+	VRTrackedCameraError_NotSupportedForThisDevice  = 105,
+	VRTrackedCameraError_SharedMemoryFailure        = 106,
+	VRTrackedCameraError_FrameBufferingFailure      = 107,
+	VRTrackedCameraError_StreamSetupFailure         = 108,
+	VRTrackedCameraError_InvalidGLTextureId         = 109,
+	VRTrackedCameraError_InvalidSharedTextureHandle = 110,
+	VRTrackedCameraError_FailedToGetGLTextureId     = 111,
+	VRTrackedCameraError_SharedTextureFailure       = 112,
+	VRTrackedCameraError_NoFrameAvailable           = 113,
+	VRTrackedCameraError_InvalidArgument            = 114,
+	VRTrackedCameraError_InvalidFrameBufferSize     = 115,
+};
+
+enum EVRTrackedCameraFrameType
+{
+	VRTrackedCameraFrameType_Distorted = 0,			// This is the camera video frame size in pixels, still distorted.
+	VRTrackedCameraFrameType_Undistorted,			// In pixels, an undistorted inscribed rectangle region without invalid regions. This size is subject to changes shortly.
+	VRTrackedCameraFrameType_MaximumUndistorted,	// In pixels, maximum undistorted with invalid regions. Non zero alpha component identifies valid regions.
+	MAX_CAMERA_FRAME_TYPES
+};
+
+typedef void* TrackedCameraHandle_t;
+#define INVALID_TRACKED_CAMERA_HANDLE	((vr::TrackedCameraHandle_t)0)
+
+struct CameraVideoStreamFrameHeader_t
+{
+	EVRTrackedCameraFrameType eFrameType;
+
+	uint32_t nWidth;
+	uint32_t nHeight;
+	uint32_t nBytesPerPixel;
+
+	uint32_t nFrameSequence;
+
+	TrackedDevicePose_t standingTrackedDevicePose;
+};
+
 #pragma pack( pop )
 
 // figure out how to import from the VR API dll
@@ -898,7 +969,7 @@ enum EVRInitError
 #define VR_CALLTYPE 
 #endif
 
-}
+} // namespace vr
 
 #endif // _INCLUDE_VRTYPES_H
 
@@ -954,6 +1025,8 @@ enum ECameraCompatibilityMode
 #define VR_CAMERA_DECL_ALIGN( x ) //
 #endif
 
+#define MAX_CAMERA_FRAME_SHARED_HANDLES	4
+
 VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 {
 	ECameraVideoStreamFormat m_nStreamFormat;
@@ -987,8 +1060,7 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 
 	double m_flSyncMarkerError;
 
-	bool m_bPoseIsValid;							// Supplied by HMD layer when used as a tracked camera
-	vr::HmdMatrix34_t m_matDeviceToAbsoluteTracking;	
+	TrackedDevicePose_t m_StandingTrackedDevicePose;	// Supplied by HMD layer when used as a tracked camera
 
 	void *m_pImageData;
 };
@@ -1052,8 +1124,12 @@ namespace vr
 	static const char * const k_pch_SteamVR_LogLevel_Int32 = "loglevel";
 	static const char * const k_pch_SteamVR_IPD_Float = "ipd";
 	static const char * const k_pch_SteamVR_Background_String = "background";
+	static const char * const k_pch_SteamVR_BackgroundCameraHeight_Float = "backgroundCameraHeight";
+	static const char * const k_pch_SteamVR_BackgroundDomeRadius_Float = "backgroundDomeRadius";
+	static const char * const k_pch_SteamVR_Environment_String = "environment";
 	static const char * const k_pch_SteamVR_GridColor_String = "gridColor";
 	static const char * const k_pch_SteamVR_PlayAreaColor_String = "playAreaColor";
+	static const char * const k_pch_SteamVR_ShowStage_Bool = "showStage";
 	static const char * const k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
 	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
 	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
@@ -1081,10 +1157,6 @@ namespace vr
 	static const char * const k_pch_Lighthouse_MaxIncidenceAngleDegrees_Float = "maxincidenceangledegrees";
 	static const char * const k_pch_Lighthouse_UseLighthouseDirect_Bool = "uselighthousedirect";
 	static const char * const k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
-	static const char * const k_pch_Lighthouse_OriginOffsetX_Float = "originoffsetx";
-	static const char * const k_pch_Lighthouse_OriginOffsetY_Float = "originoffsety";
-	static const char * const k_pch_Lighthouse_OriginOffsetZ_Float = "originoffsetz";
-	static const char * const k_pch_Lighthouse_HeadingOffset_Float = "headingoffset";
 
 	//-----------------------------------------------------------------------------
 	// null keys
@@ -1106,6 +1178,7 @@ namespace vr
 	// user interface keys
 	static const char * const k_pch_UserInterface_Section = "userinterface";
 	static const char * const k_pch_UserInterface_StatusAlwaysOnTop_Bool = "StatusAlwaysOnTop";
+	static const char * const k_pch_UserInterface_EnableScreenshots_Bool = "EnableScreenshots";
 
 	//-----------------------------------------------------------------------------
 	// notification keys
@@ -1167,6 +1240,10 @@ namespace vr
 	static const char * const k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
 	static const char * const k_pch_audio_OffRecordDevice_String = "offRecordDevice";
 	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
+
+	//-----------------------------------------------------------------------------
+	// model skin keys
+	static const char * const k_pch_modelskin_Section = "modelskins";
 
 } // namespace vr
 
@@ -1463,6 +1540,8 @@ namespace vr
 		virtual bool SetCameraVideoSinkCallback( vr::ICameraVideoSinkCallback *pCameraVideoSinkCallback ) = 0;
 		virtual bool GetCameraCompatibilityMode( vr::ECameraCompatibilityMode *pCameraCompatibilityMode ) = 0;
 		virtual bool SetCameraCompatibilityMode( vr::ECameraCompatibilityMode nCameraCompatibilityMode ) = 0;
+		virtual bool GetCameraFrameBounds( vr::EVRTrackedCameraFrameType eFrameType, uint32_t *pLeft, uint32_t *pTop, uint32_t *pWidth, uint32_t *pHeight ) = 0;
+		virtual bool GetCameraIntrinsics( vr::EVRTrackedCameraFrameType eFrameType, HmdVector2_t *pFocalLength, HmdVector2_t *pCenter ) = 0;
 	};
 
 	static const char *IVRCameraComponent_Version = "IVRCameraComponent_001";
@@ -1558,14 +1637,17 @@ public:
 	/** cleans up the driver right before it is unloaded */
 	virtual void Cleanup() = 0;
 
+	/** Returns the version of the ITrackedDeviceServerDriver interface used by this driver */
+	virtual const char * const *GetInterfaceVersions() = 0;
+
 	/** returns the number of HMDs that this driver manages that are physically connected. */
 	virtual uint32_t GetTrackedDeviceCount() = 0;
 
 	/** returns a single HMD */
-	virtual ITrackedDeviceServerDriver *GetTrackedDeviceDriver( uint32_t unWhich, const char *pchInterfaceVersion ) = 0;
+	virtual ITrackedDeviceServerDriver *GetTrackedDeviceDriver( uint32_t unWhich ) = 0;
 
 	/** returns a single HMD by ID */
-	virtual ITrackedDeviceServerDriver* FindTrackedDeviceDriver( const char *pchId, const char *pchInterfaceVersion ) = 0;
+	virtual ITrackedDeviceServerDriver* FindTrackedDeviceDriver( const char *pchId ) = 0;
 
 	/** Allows the driver do to some work in the main loop of the server. */
 	virtual void RunFrame() = 0;
@@ -1587,7 +1669,7 @@ public:
 };
 
 
-static const char *IServerTrackedDeviceProvider_Version = "IServerTrackedDeviceProvider_002";
+static const char *IServerTrackedDeviceProvider_Version = "IServerTrackedDeviceProvider_003";
 
 
 /** This interface is provided by vrclient to allow the driver call back and query various information */
@@ -1673,7 +1755,26 @@ public:
 
 static const char *IClientTrackedDeviceProvider_Version = "IClientTrackedDeviceProvider_003";
 
-}// End
+}
+
+
+
+
+namespace vr
+{
+	static const char * const k_InterfaceVersions[] =
+	{
+		IVRSettings_Version,
+		ITrackedDeviceServerDriver_Version,
+		IVRDisplayComponent_Version,
+		IVRControllerComponent_Version,
+		IVRCameraComponent_Version,
+		IServerTrackedDeviceProvider_Version,
+		IClientTrackedDeviceProvider_Version,
+		nullptr
+	};
+}
+// End
 
 #endif // _OPENVR_DRIVER_API
 
