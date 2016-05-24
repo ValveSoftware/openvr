@@ -1436,7 +1436,7 @@ public class CVRSystem
 	public string GetPropErrorNameFromEnum(ETrackedPropertyError error)
 	{
 		IntPtr result = FnTable.GetPropErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool PollNextEvent(ref VREvent_t pEvent,uint uncbVREvent)
 	{
@@ -1451,7 +1451,7 @@ public class CVRSystem
 	public string GetEventTypeNameFromEnum(EVREventType eType)
 	{
 		IntPtr result = FnTable.GetEventTypeNameFromEnum(eType);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public HiddenAreaMesh_t GetHiddenAreaMesh(EVREye eEye)
 	{
@@ -1475,12 +1475,12 @@ public class CVRSystem
 	public string GetButtonIdNameFromEnum(EVRButtonId eButtonId)
 	{
 		IntPtr result = FnTable.GetButtonIdNameFromEnum(eButtonId);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public string GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType)
 	{
 		IntPtr result = FnTable.GetControllerAxisTypeNameFromEnum(eAxisType);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool CaptureInputFocus()
 	{
@@ -1559,7 +1559,7 @@ public class CVRTrackedCamera
 	public string GetCameraErrorNameFromEnum(EVRTrackedCameraError eCameraError)
 	{
 		IntPtr result = FnTable.GetCameraErrorNameFromEnum(eCameraError);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public EVRTrackedCameraError HasCamera(uint nDeviceIndex,ref bool pHasCamera)
 	{
@@ -1673,7 +1673,7 @@ public class CVRApplications
 	public string GetApplicationsErrorNameFromEnum(EVRApplicationError error)
 	{
 		IntPtr result = FnTable.GetApplicationsErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public uint GetApplicationPropertyString(string pchAppKey,EVRApplicationProperty eProperty,string pchPropertyValueBuffer,uint unPropertyValueBufferLen,ref EVRApplicationError peError)
 	{
@@ -1718,7 +1718,7 @@ public class CVRApplications
 	public string GetApplicationsTransitionStateNameFromEnum(EVRApplicationTransitionState state)
 	{
 		IntPtr result = FnTable.GetApplicationsTransitionStateNameFromEnum(state);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool IsQuitUserPromptRequested()
 	{
@@ -2131,7 +2131,7 @@ public class CVROverlay
 	public string GetOverlayErrorNameFromEnum(EVROverlayError error)
 	{
 		IntPtr result = FnTable.GetOverlayErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public EVROverlayError SetOverlayRenderingPid(ulong ulOverlayHandle,uint unPID)
 	{
@@ -2537,7 +2537,7 @@ public class CVRRenderModels
 	public string GetRenderModelErrorNameFromEnum(EVRRenderModelError error)
 	{
 		IntPtr result = FnTable.GetRenderModelErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 }
 
@@ -2573,7 +2573,7 @@ public class CVRSettings
 	public string GetSettingsErrorNameFromEnum(EVRSettingsError eError)
 	{
 		IntPtr result = FnTable.GetSettingsErrorNameFromEnum(eError);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool Sync(bool bForce,ref EVRSettingsError peError)
 	{
