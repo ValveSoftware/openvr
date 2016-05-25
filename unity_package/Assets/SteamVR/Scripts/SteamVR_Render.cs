@@ -16,10 +16,11 @@ public class SteamVR_Render : MonoBehaviour
 	public SteamVR_ExternalCamera externalCamera;
 	public string externalCameraConfigPath = "externalcamera.cfg";
 
+#if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 	public LayerMask leftMask, rightMask;
 
 	SteamVR_CameraMask cameraMask;
-
+#endif
 	public ETrackingUniverseOrigin trackingSpace = ETrackingUniverseOrigin.TrackingUniverseStanding;
 
 	static public EVREye eye { get; private set; }
@@ -204,6 +205,7 @@ public class SteamVR_Render : MonoBehaviour
 		}
 	}
 
+#if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 	void RenderEye(SteamVR vr, EVREye eye)
 	{
 		int i = (int)eye;
@@ -237,6 +239,7 @@ public class SteamVR_Render : MonoBehaviour
 			camera.cullingMask = cullingMask;
 		}
 	}
+#endif
 
 	void RenderExternalCamera()
 	{
@@ -317,10 +320,11 @@ public class SteamVR_Render : MonoBehaviour
 
 	void Awake()
 	{
+#if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 		var go = new GameObject("cameraMask");
 		go.transform.parent = transform;
 		cameraMask = go.AddComponent<SteamVR_CameraMask>();
-
+#endif
 		if (externalCamera == null && System.IO.File.Exists(externalCameraConfigPath))
 		{
 			var prefab = Resources.Load<GameObject>("SteamVR_ExternalCamera");

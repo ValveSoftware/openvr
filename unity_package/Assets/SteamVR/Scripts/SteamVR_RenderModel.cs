@@ -27,6 +27,9 @@ public class SteamVR_RenderModel : MonoBehaviour
 	// Update transforms of components at runtime to reflect user action.
 	public bool updateDynamically = true;
 
+	// Additional controller settings for showing scrollwheel, etc.
+	public RenderModel_ControllerMode_State_t controllerModeState;
+
 	// Name of the sub-object which represents the "local" coordinate space for each component.
 	public const string k_localTransformName = "attach";
 
@@ -91,6 +94,15 @@ public class SteamVR_RenderModel : MonoBehaviour
 		}
 	}
 
+	private void OnModelSkinSettingsHaveChanged(params object[] args)
+	{
+		if (!string.IsNullOrEmpty(renderModelName))
+		{
+			renderModelName = "";
+			UpdateModel();
+		}
+	}
+
 	private void OnHideRenderModels(params object[] args)
 	{
 		bool hidden = (bool)args[0];
@@ -111,10 +123,6 @@ public class SteamVR_RenderModel : MonoBehaviour
 		if (connected)
 		{
 			UpdateModel();
-		}
-		else
-		{
-			StripMesh(gameObject);
 		}
 	}
 
@@ -584,6 +592,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 
 		SteamVR_Utils.Event.Listen("device_connected", OnDeviceConnected);
 		SteamVR_Utils.Event.Listen("hide_render_models", OnHideRenderModels);
+		SteamVR_Utils.Event.Listen("ModelSkinSettingsHaveChanged", OnModelSkinSettingsHaveChanged);
 	}
 
 	void OnDisable()
@@ -594,6 +603,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 #endif
 		SteamVR_Utils.Event.Remove("device_connected", OnDeviceConnected);
 		SteamVR_Utils.Event.Remove("hide_render_models", OnHideRenderModels);
+		SteamVR_Utils.Event.Remove("ModelSkinSettingsHaveChanged", OnModelSkinSettingsHaveChanged);
 	}
 
 #if UNITY_EDITOR
@@ -682,8 +692,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 					break;
 
 				var componentState = new RenderModel_ComponentState_t();
-				var componentModeState = new RenderModel_ControllerMode_State_t();
-                if (!renderModels.GetComponentState(renderModelName, child.name, ref controllerState, ref componentModeState, ref componentState))
+                if (!renderModels.GetComponentState(renderModelName, child.name, ref controllerState, ref controllerModeState, ref componentState))
 					continue;
 
 				var componentTransform = new SteamVR_Utils.RigidTransform(componentState.mTrackingToComponentRenderModel);

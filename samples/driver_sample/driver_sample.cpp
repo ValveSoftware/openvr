@@ -230,6 +230,10 @@ public:
 		return NULL;
 	}
 
+	virtual void PowerOff() 
+	{
+	}
+
 	/** debug request from a client */
 	virtual void DebugRequest( const char *pchRequest, char *pchResponseBuffer, uint32_t unResponseBufferSize ) 
 	{
@@ -489,9 +493,10 @@ public:
 
 	virtual EVRInitError Init( IDriverLog *pDriverLog, 	vr::IServerDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) ;
 	virtual void Cleanup() ;
-	virtual uint32_t GetTrackedDeviceCount() ;
-	virtual ITrackedDeviceServerDriver *GetTrackedDeviceDriver( uint32_t unWhich, const char *pchInterfaceVersion ) ;
-	virtual ITrackedDeviceServerDriver* FindTrackedDeviceDriver( const char *pchId, const char *pchInterfaceVersion ) ;
+	virtual const char * const *GetInterfaceVersions() { return vr::k_InterfaceVersions; }
+	virtual uint32_t GetTrackedDeviceCount();
+	virtual ITrackedDeviceServerDriver *GetTrackedDeviceDriver( uint32_t unWhich ) ;
+	virtual ITrackedDeviceServerDriver* FindTrackedDeviceDriver( const char *pchId ) ;
 	virtual void RunFrame() ;
 	virtual bool ShouldBlockStandbyMode()  { return false; }
 	virtual void EnterStandby()  {}
@@ -538,22 +543,14 @@ uint32_t CServerDriver_Sample::GetTrackedDeviceCount()
 }
 
 
-ITrackedDeviceServerDriver *CServerDriver_Sample::GetTrackedDeviceDriver( uint32_t unWhich, const char *pchInterfaceVersion )
+ITrackedDeviceServerDriver *CServerDriver_Sample::GetTrackedDeviceDriver( uint32_t unWhich )
 {
-	// don't return anything if that's not the interface version we have
-	if ( 0 != _stricmp( pchInterfaceVersion, ITrackedDeviceServerDriver_Version ) )
-		return NULL;
-
 	return m_pNullHmdLatest;
 }
 
 
-ITrackedDeviceServerDriver* CServerDriver_Sample::FindTrackedDeviceDriver( const char *pchId, const char *pchInterfaceVersion )
+ITrackedDeviceServerDriver* CServerDriver_Sample::FindTrackedDeviceDriver( const char *pchId )
 {
-	// don't return anything if that's not the interface version we have
-	if ( 0 != _stricmp( pchInterfaceVersion, ITrackedDeviceServerDriver_Version ) )
-		return NULL;
-
 	return m_pNullHmdLatest;
 }
 

@@ -36,6 +36,7 @@ public class SteamVR_Camera : MonoBehaviour
 
 	static public Material blitMaterial;
 
+#if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 	// Using a single shared offscreen buffer to render the scene.  This needs to be larger
 	// than the backbuffer to account for distortion correction.  The default resolution
 	// gives us 1:1 sized pixels in the center of view, but quality can be adjusted up or
@@ -69,15 +70,20 @@ public class SteamVR_Camera : MonoBehaviour
 			_sceneTexture = new RenderTexture(w, h, 0, format);
 			_sceneTexture.antiAliasing = aa;
 
-#if (UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 			// OpenVR assumes floating point render targets are linear unless otherwise specified.
 			var colorSpace = (hdr && QualitySettings.activeColorSpace == ColorSpace.Gamma) ? EColorSpace.Gamma : EColorSpace.Auto;
 			SteamVR.Unity.SetColorSpace(colorSpace);
-#endif
 		}
 
 		return _sceneTexture;
 	}
+#else
+	static public float sceneResolutionScale
+	{
+		get { return UnityEngine.VR.VRSettings.renderScale; }
+		set { UnityEngine.VR.VRSettings.renderScale = value; }
+	}
+#endif
 
 	#endregion
 
@@ -90,6 +96,22 @@ public class SteamVR_Camera : MonoBehaviour
 
 	void OnEnable()
 	{
+		// Bail if no hmd is connected
+		var vr = SteamVR.instance;
+		if (vr == null)
+		{
+			if (head != null)
+			{
+				head.GetComponent<SteamVR_GameView>().enabled = false;
+				head.GetComponent<SteamVR_TrackedObject>().enabled = false;
+			}
+
+			if (flip != null)
+				flip.enabled = false;
+
+			enabled = false;
+			return;
+		}
 #if !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
 		// Convert camera rig for native OpenVR integration.
 		var t = transform;
@@ -118,30 +140,7 @@ public class SteamVR_Camera : MonoBehaviour
 			DestroyImmediate(flip);
 			flip = null;
 		}
-
-		if (!SteamVR.usingNativeSupport)
-		{
-			enabled = false;
-			return;
-		}
 #else
-		// Bail if no hmd is connected
-		var vr = SteamVR.instance;
-		if (vr == null)
-		{
-			if (head != null)
-			{
-				head.GetComponent<SteamVR_GameView>().enabled = false;
-				head.GetComponent<SteamVR_TrackedObject>().enabled = false;
-			}
-
-			if (flip != null)
-				flip.enabled = false;
-
-			enabled = false;
-			return;
-		}
-
 		// Ensure rig is properly set up
 		Expand();
 
