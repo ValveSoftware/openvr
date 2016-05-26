@@ -1875,7 +1875,7 @@ void CGLRenderModel::Cleanup()
 	if( m_glVertBuffer )
 	{
 		glDeleteBuffers(1, &m_glIndexBuffer);
-		glDeleteBuffers(1, &m_glVertArray);
+		glDeleteVertexArrays( 1, &m_glVertArray );
 		glDeleteBuffers(1, &m_glVertBuffer);
 		m_glIndexBuffer = 0;
 		m_glVertArray = 0;
