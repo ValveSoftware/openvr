@@ -1,4 +1,4 @@
-﻿//========= Copyright 2015, Valve Corporation, All rights reserved. ===========
+﻿//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose: Wrapper for working with SteamVR controller input
 //

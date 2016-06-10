@@ -1,4 +1,5 @@
-﻿using UnityEngine;
+﻿//======= Copyright (c) Valve Corporation, All rights reserved. ===============
+using UnityEngine;
 using System.Collections;
 
 public struct GazeEventArgs

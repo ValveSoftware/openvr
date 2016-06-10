@@ -1,4 +1,4 @@
-﻿//========= Copyright 2016, Valve Corporation, All rights reserved. ===========
+﻿//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose: Helper to update poses when using native OpenVR integration.
 //
