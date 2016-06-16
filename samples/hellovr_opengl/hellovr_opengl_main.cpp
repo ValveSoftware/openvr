@@ -14,6 +14,19 @@
 #include "shared/Matrices.h"
 #include "shared/pathtools.h"
 
+#if defined(POSIX)
+#include "unistd.h"
+#endif
+
+void ThreadSleep( unsigned long nMilliseconds )
+{
+#if defined(_WIN32)
+	::Sleep( nMilliseconds );
+#elif defined(POSIX)
+	usleep( nMilliseconds * 1000 );
+#endif
+}
+
 class CGLRenderModel
 {
 public:
@@ -451,7 +464,7 @@ bool CMainApplication::BInitGL()
 {
 	if( m_bDebugOpenGL )
 	{
-		glDebugMessageCallback(DebugCallback, nullptr);
+		glDebugMessageCallback( (GLDEBUGPROC)DebugCallback, nullptr);
 		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_TRUE );
 		glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
 	}
@@ -1667,15 +1680,34 @@ CGLRenderModel *CMainApplication::FindOrLoadRenderModel( const char *pchRenderMo
 	// load the model if we didn't find one
 	if( !pRenderModel )
 	{
-		vr::RenderModel_t *pModel = NULL;
-		if ( !vr::VRRenderModels()->LoadRenderModel( pchRenderModelName, &pModel ) || pModel == NULL )
+		vr::RenderModel_t *pModel;
+		vr::EVRRenderModelError error;
+		while ( 1 )
 		{
-			dprintf( "Unable to load render model %s\n", pchRenderModelName );
+			error = vr::VRRenderModels()->LoadRenderModel_Async( pchRenderModelName, &pModel );
+			if ( error != vr::VRRenderModelError_Loading )
+				break;
+
+			ThreadSleep( 1 );
+		}
+
+		if ( error != vr::VRRenderModelError_None )
+		{
+			dprintf( "Unable to load render model %s - %s\n", pchRenderModelName, vr::VRRenderModels()->GetRenderModelErrorNameFromEnum( error ) );
 			return NULL; // move on to the next tracked device
 		}
 
-		vr::RenderModel_TextureMap_t *pTexture = NULL;
-		if ( !vr::VRRenderModels( )->LoadTexture( pModel->diffuseTextureId, &pTexture ) || pTexture == NULL )
+		vr::RenderModel_TextureMap_t *pTexture;
+		while ( 1 )
+		{
+			error = vr::VRRenderModels()->LoadTexture_Async( pModel->diffuseTextureId, &pTexture );
+			if ( error != vr::VRRenderModelError_Loading )
+				break;
+
+			ThreadSleep( 1 );
+		}
+
+		if ( error != vr::VRRenderModelError_None )
 		{
 			dprintf( "Unable to load render texture id:%d for render model %s\n", pModel->diffuseTextureId, pchRenderModelName );
 			vr::VRRenderModels()->FreeRenderModel( pModel );
@@ -1843,7 +1875,7 @@ void CGLRenderModel::Cleanup()
 	if( m_glVertBuffer )
 	{
 		glDeleteBuffers(1, &m_glIndexBuffer);
-		glDeleteBuffers(1, &m_glVertArray);
+		glDeleteVertexArrays( 1, &m_glVertArray );
 		glDeleteBuffers(1, &m_glVertBuffer);
 		m_glIndexBuffer = 0;
 		m_glVertArray = 0;
