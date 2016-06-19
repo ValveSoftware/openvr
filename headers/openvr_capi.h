@@ -1,4 +1,4 @@
-//======= Copyright 1996-2016, Valve Corporation, All rights reserved. ========
+//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose: Header for flatted SteamAPI. Use this for binding to other languages.
 // This file is auto-generated, do not edit it.
@@ -60,9 +60,10 @@ static const unsigned int k_unTrackedDeviceIndexInvalid = 4294967295;
 static const unsigned int k_unMaxPropertyStringSize = 32768;
 static const unsigned int k_unControllerStateAxisCount = 5;
 static const unsigned long k_ulOverlayHandleInvalid = 0;
+static const unsigned int k_unScreenshotHandleInvalid = 0;
 static const char * IVRSystem_Version = "IVRSystem_012";
 static const char * IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
-static const char * IVRTrackedCamera_Version = "IVRTrackedCamera_002";
+static const char * IVRTrackedCamera_Version = "IVRTrackedCamera_003";
 static const unsigned int k_unMaxApplicationKeyLength = 128;
 static const char * IVRApplications_Version = "IVRApplications_005";
 static const char * IVRChaperone_Version = "IVRChaperone_003";
@@ -114,6 +115,10 @@ static const char * k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestation
 static const char * k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 static const char * k_pch_SteamVR_RenderTargetMultiplier_Float = "renderTargetMultiplier";
 static const char * k_pch_SteamVR_AllowReprojection_Bool = "allowReprojection";
+static const char * k_pch_SteamVR_ForceReprojection_Bool = "forceReprojection";
+static const char * k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
+static const char * k_pch_SteamVR_DefaultMirrorView_Int32 = "defaultMirrorView";
+static const char * k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
 static const char * k_pch_Lighthouse_Section = "driver_lighthouse";
 static const char * k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 static const char * k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -182,6 +187,7 @@ static const char * k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
 static const char * k_pch_audio_OffRecordDevice_String = "offRecordDevice";
 static const char * k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
 static const char * k_pch_modelskin_Section = "modelskins";
+static const char * IVRScreenshots_Version = "IVRScreenshots_001";
 
 // OpenVR Enums
 
@@ -307,6 +313,7 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_CameraCompatibilityMode_Int32 = 2033,
 	ETrackedDeviceProperty_Prop_ScreenshotHorizontalFieldOfViewDegrees_Float = 2034,
 	ETrackedDeviceProperty_Prop_ScreenshotVerticalFieldOfViewDegrees_Float = 2035,
+	ETrackedDeviceProperty_Prop_DisplaySuppressed_Bool = 2036,
 	ETrackedDeviceProperty_Prop_AttachedDeviceId_String = 3000,
 	ETrackedDeviceProperty_Prop_SupportedButtons_Uint64 = 3001,
 	ETrackedDeviceProperty_Prop_Axis0Type_Int32 = 3002,
@@ -344,7 +351,6 @@ typedef enum EVRSubmitFlags
 	EVRSubmitFlags_Submit_Default = 0,
 	EVRSubmitFlags_Submit_LensDistortionAlreadyApplied = 1,
 	EVRSubmitFlags_Submit_GlRenderBuffer = 2,
-	EVRSubmitFlags_Submit_Screenshot = 4,
 } EVRSubmitFlags;
 
 typedef enum EVRState
@@ -389,6 +395,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_SceneApplicationChanged = 404,
 	EVREventType_VREvent_SceneFocusChanged = 405,
 	EVREventType_VREvent_InputFocusChanged = 406,
+	EVREventType_VREvent_SceneApplicationSecondaryRenderingStarted = 407,
 	EVREventType_VREvent_HideRenderModels = 410,
 	EVREventType_VREvent_ShowRenderModels = 411,
 	EVREventType_VREvent_OverlayShown = 500,
@@ -408,9 +415,11 @@ typedef enum EVREventType
 	EVREventType_VREvent_DashboardGuideButtonDown = 514,
 	EVREventType_VREvent_DashboardGuideButtonUp = 515,
 	EVREventType_VREvent_ScreenshotTriggered = 516,
+	EVREventType_VREvent_ImageFailed = 517,
 	EVREventType_VREvent_RequestScreenshot = 520,
 	EVREventType_VREvent_ScreenshotTaken = 521,
 	EVREventType_VREvent_ScreenshotFailed = 522,
+	EVREventType_VREvent_SubmitScreenshotToDashboard = 523,
 	EVREventType_VREvent_Notification_Shown = 600,
 	EVREventType_VREvent_Notification_Hidden = 601,
 	EVREventType_VREvent_Notification_BeginInteraction = 602,
@@ -614,6 +623,8 @@ typedef enum EVRInitError
 	EVRInitError_VRInitError_Compositor_Failed = 400,
 	EVRInitError_VRInitError_Compositor_D3D11HardwareRequired = 401,
 	EVRInitError_VRInitError_Compositor_FirmwareRequiresUpdate = 402,
+	EVRInitError_VRInitError_Compositor_OverlayInitFailed = 403,
+	EVRInitError_VRInitError_Compositor_ScreenshotsInitFailed = 404,
 	EVRInitError_VRInitError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	EVRInitError_VRInitError_VendorSpecific_HmdFound_CantOpenDevice = 1101,
 	EVRInitError_VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
@@ -637,8 +648,15 @@ typedef enum EVRScreenshotType
 	EVRScreenshotType_VRScreenshotType_Mono = 1,
 	EVRScreenshotType_VRScreenshotType_Stereo = 2,
 	EVRScreenshotType_VRScreenshotType_Cubemap = 3,
-	EVRScreenshotType_VRScreenshotType_StereoPanorama = 4,
+	EVRScreenshotType_VRScreenshotType_MonoPanorama = 4,
+	EVRScreenshotType_VRScreenshotType_StereoPanorama = 5,
 } EVRScreenshotType;
+
+typedef enum EVRScreenshotPropertyFilenames
+{
+	EVRScreenshotPropertyFilenames_VRScreenshotPropertyFilenames_Preview = 0,
+	EVRScreenshotPropertyFilenames_VRScreenshotPropertyFilenames_VR = 1,
+} EVRScreenshotPropertyFilenames;
 
 typedef enum EVRTrackedCameraError
 {
@@ -756,7 +774,6 @@ typedef enum EVRCompositorError
 	EVRCompositorError_VRCompositorError_TextureUsesUnsupportedFormat = 105,
 	EVRCompositorError_VRCompositorError_SharedTexturesNotSupported = 106,
 	EVRCompositorError_VRCompositorError_IndexOutOfRange = 107,
-	EVRCompositorError_VRCompositorError_ScreenshotAlreadyInProgress = 108,
 } EVRCompositorError;
 
 typedef enum VROverlayInputMethod
@@ -863,6 +880,16 @@ typedef enum EVRSettingsError
 	EVRSettingsError_VRSettingsError_ReadFailed = 3,
 } EVRSettingsError;
 
+typedef enum EVRScreenshotError
+{
+	EVRScreenshotError_VRScreenshotError_None = 0,
+	EVRScreenshotError_VRScreenshotError_RequestFailed = 1,
+	EVRScreenshotError_VRScreenshotError_IncompatibleVersion = 100,
+	EVRScreenshotError_VRScreenshotError_NotFound = 101,
+	EVRScreenshotError_VRScreenshotError_BufferTooSmall = 102,
+	EVRScreenshotError_VRScreenshotError_ScreenshotAlreadyInProgress = 108,
+} EVRScreenshotError;
+
 
 // OpenVR typedefs
 
@@ -874,7 +901,8 @@ typedef int32_t glInt_t;
 typedef uint32_t glUInt_t;
 typedef uint32_t TrackedDeviceIndex_t;
 typedef uint64_t VROverlayHandle_t;
-typedef void * TrackedCameraHandle_t;
+typedef uint64_t TrackedCameraHandle_t;
+typedef uint32_t ScreenshotHandle_t;
 typedef uint32_t VRComponentProperties;
 typedef int32_t TextureID_t;
 typedef uint32_t VRNotificationId;
@@ -893,6 +921,7 @@ typedef ECollisionBoundsStyle CollisionBoundsStyle_t;
 typedef EVROverlayError VROverlayError;
 typedef EVRFirmwareError VRFirmwareError;
 typedef EVRCompositorError VRCompositorError;
+typedef EVRScreenshotError VRScreenshotsError;
 
 // OpenVR Structs
 
@@ -1070,6 +1099,12 @@ typedef struct VREvent_SeatedZeroPoseReset_t
 	bool bResetBySystemMenu;
 } VREvent_SeatedZeroPoseReset_t;
 
+typedef struct VREvent_Screenshot_t
+{
+	uint32_t handle;
+	uint32_t type;
+} VREvent_Screenshot_t;
+
 typedef struct HiddenAreaMesh_t
 {
 	struct HmdVector2_t * pVertexData; // const struct vr::HmdVector2_t *
@@ -1240,6 +1275,7 @@ typedef struct COpenVRContext
 	intptr_t m_pVRSettings; // class vr::IVRSettings *
 	intptr_t m_pVRApplications; // class vr::IVRApplications *
 	intptr_t m_pVRTrackedCamera; // class vr::IVRTrackedCamera *
+	intptr_t m_pVRScreenshots; // class vr::IVRScreenshots *
 } COpenVRContext;
 
 
@@ -1560,6 +1596,17 @@ struct VR_IVRSettings_FnTable
 	void (OPENVR_FNTABLE_CALLTYPE *SetString)(char * pchSection, char * pchSettingsKey, char * pchValue, EVRSettingsError * peError);
 	void (OPENVR_FNTABLE_CALLTYPE *RemoveSection)(char * pchSection, EVRSettingsError * peError);
 	void (OPENVR_FNTABLE_CALLTYPE *RemoveKeyInSection)(char * pchSection, char * pchSettingsKey, EVRSettingsError * peError);
+};
+
+struct VR_IVRScreenshots_FnTable
+{
+	EVRScreenshotError (OPENVR_FNTABLE_CALLTYPE *RequestScreenshot)(ScreenshotHandle_t * pOutScreenshotHandle, EVRScreenshotType type, char * pchPreviewFilename, char * pchVRFilename);
+	EVRScreenshotError (OPENVR_FNTABLE_CALLTYPE *HookScreenshot)(EVRScreenshotType * pSupportedTypes, int numTypes);
+	EVRScreenshotType (OPENVR_FNTABLE_CALLTYPE *GetScreenshotPropertyType)(ScreenshotHandle_t screenshotHandle, EVRScreenshotError * pError);
+	uint32_t (OPENVR_FNTABLE_CALLTYPE *GetScreenshotPropertyFilename)(ScreenshotHandle_t screenshotHandle, EVRScreenshotPropertyFilenames filenameType, char * pchFilename, uint32_t cchFilename, EVRScreenshotError * pError);
+	EVRScreenshotError (OPENVR_FNTABLE_CALLTYPE *UpdateScreenshotProgress)(ScreenshotHandle_t screenshotHandle, float flProgress);
+	EVRScreenshotError (OPENVR_FNTABLE_CALLTYPE *TakeStereoScreenshot)(ScreenshotHandle_t * pOutScreenshotHandle, char * pchPreviewFilename, char * pchVRFilename);
+	EVRScreenshotError (OPENVR_FNTABLE_CALLTYPE *SubmitScreenshot)(ScreenshotHandle_t screenshotHandle, EVRScreenshotType type, char * pchSourcePreviewFilename, char * pchSourceVRFilename);
 };
 
 

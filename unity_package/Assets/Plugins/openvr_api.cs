@@ -1,4 +1,4 @@
-//======= Copyright 1996-2014, Valve Corporation, All rights reserved. ========
+//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose: This file contains C#/managed code bindings for the OpenVR interfaces
 // This file is auto-generated, do not edit it.
@@ -286,17 +286,17 @@ public struct IVRTrackedCamera
 	internal _GetCameraProjection GetCameraProjection;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate EVRTrackedCameraError _AcquireVideoStreamingService(uint nDeviceIndex, IntPtr pHandle);
+	internal delegate EVRTrackedCameraError _AcquireVideoStreamingService(uint nDeviceIndex, ref ulong pHandle);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _AcquireVideoStreamingService AcquireVideoStreamingService;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate EVRTrackedCameraError _ReleaseVideoStreamingService(IntPtr hTrackedCamera);
+	internal delegate EVRTrackedCameraError _ReleaseVideoStreamingService(ulong hTrackedCamera);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _ReleaseVideoStreamingService ReleaseVideoStreamingService;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate EVRTrackedCameraError _GetVideoStreamFrameBuffer(IntPtr hTrackedCamera, EVRTrackedCameraFrameType eFrameType, IntPtr pFrameBuffer, uint nFrameBufferSize, ref CameraVideoStreamFrameHeader_t pFrameHeader, uint nFrameHeaderSize);
+	internal delegate EVRTrackedCameraError _GetVideoStreamFrameBuffer(ulong hTrackedCamera, EVRTrackedCameraFrameType eFrameType, IntPtr pFrameBuffer, uint nFrameBufferSize, ref CameraVideoStreamFrameHeader_t pFrameHeader, uint nFrameHeaderSize);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _GetVideoStreamFrameBuffer GetVideoStreamFrameBuffer;
 
@@ -1287,6 +1287,46 @@ public struct IVRSettings
 
 }
 
+[StructLayout(LayoutKind.Sequential)]
+public struct IVRScreenshots
+{
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRScreenshotError _RequestScreenshot(ref uint pOutScreenshotHandle, EVRScreenshotType type, string pchPreviewFilename, string pchVRFilename);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _RequestScreenshot RequestScreenshot;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRScreenshotError _HookScreenshot([In, Out] EVRScreenshotType[] pSupportedTypes, int numTypes);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _HookScreenshot HookScreenshot;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRScreenshotType _GetScreenshotPropertyType(uint screenshotHandle, ref EVRScreenshotError pError);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetScreenshotPropertyType GetScreenshotPropertyType;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate uint _GetScreenshotPropertyFilename(uint screenshotHandle, EVRScreenshotPropertyFilenames filenameType, System.Text.StringBuilder pchFilename, uint cchFilename, ref EVRScreenshotError pError);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetScreenshotPropertyFilename GetScreenshotPropertyFilename;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRScreenshotError _UpdateScreenshotProgress(uint screenshotHandle, float flProgress);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _UpdateScreenshotProgress UpdateScreenshotProgress;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRScreenshotError _TakeStereoScreenshot(ref uint pOutScreenshotHandle, string pchPreviewFilename, string pchVRFilename);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _TakeStereoScreenshot TakeStereoScreenshot;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRScreenshotError _SubmitScreenshot(uint screenshotHandle, EVRScreenshotType type, string pchSourcePreviewFilename, string pchSourceVRFilename);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _SubmitScreenshot SubmitScreenshot;
+
+}
+
 
 public class CVRSystem
 {
@@ -1585,17 +1625,18 @@ public class CVRTrackedCamera
 		EVRTrackedCameraError result = FnTable.GetCameraProjection(nDeviceIndex,eFrameType,flZNear,flZFar,ref pProjection);
 		return result;
 	}
-	public EVRTrackedCameraError AcquireVideoStreamingService(uint nDeviceIndex,IntPtr pHandle)
+	public EVRTrackedCameraError AcquireVideoStreamingService(uint nDeviceIndex,ref ulong pHandle)
 	{
-		EVRTrackedCameraError result = FnTable.AcquireVideoStreamingService(nDeviceIndex,pHandle);
+		pHandle = 0;
+		EVRTrackedCameraError result = FnTable.AcquireVideoStreamingService(nDeviceIndex,ref pHandle);
 		return result;
 	}
-	public EVRTrackedCameraError ReleaseVideoStreamingService(IntPtr hTrackedCamera)
+	public EVRTrackedCameraError ReleaseVideoStreamingService(ulong hTrackedCamera)
 	{
 		EVRTrackedCameraError result = FnTable.ReleaseVideoStreamingService(hTrackedCamera);
 		return result;
 	}
-	public EVRTrackedCameraError GetVideoStreamFrameBuffer(IntPtr hTrackedCamera,EVRTrackedCameraFrameType eFrameType,IntPtr pFrameBuffer,uint nFrameBufferSize,ref CameraVideoStreamFrameHeader_t pFrameHeader,uint nFrameHeaderSize)
+	public EVRTrackedCameraError GetVideoStreamFrameBuffer(ulong hTrackedCamera,EVRTrackedCameraFrameType eFrameType,IntPtr pFrameBuffer,uint nFrameBufferSize,ref CameraVideoStreamFrameHeader_t pFrameHeader,uint nFrameHeaderSize)
 	{
 		EVRTrackedCameraError result = FnTable.GetVideoStreamFrameBuffer(hTrackedCamera,eFrameType,pFrameBuffer,nFrameBufferSize,ref pFrameHeader,nFrameHeaderSize);
 		return result;
@@ -2626,6 +2667,53 @@ public class CVRSettings
 }
 
 
+public class CVRScreenshots
+{
+	IVRScreenshots FnTable;
+	internal CVRScreenshots(IntPtr pInterface)
+	{
+		FnTable = (IVRScreenshots)Marshal.PtrToStructure(pInterface, typeof(IVRScreenshots));
+	}
+	public EVRScreenshotError RequestScreenshot(ref uint pOutScreenshotHandle,EVRScreenshotType type,string pchPreviewFilename,string pchVRFilename)
+	{
+		pOutScreenshotHandle = 0;
+		EVRScreenshotError result = FnTable.RequestScreenshot(ref pOutScreenshotHandle,type,pchPreviewFilename,pchVRFilename);
+		return result;
+	}
+	public EVRScreenshotError HookScreenshot(EVRScreenshotType [] pSupportedTypes)
+	{
+		EVRScreenshotError result = FnTable.HookScreenshot(pSupportedTypes,(int) pSupportedTypes.Length);
+		return result;
+	}
+	public EVRScreenshotType GetScreenshotPropertyType(uint screenshotHandle,ref EVRScreenshotError pError)
+	{
+		EVRScreenshotType result = FnTable.GetScreenshotPropertyType(screenshotHandle,ref pError);
+		return result;
+	}
+	public uint GetScreenshotPropertyFilename(uint screenshotHandle,EVRScreenshotPropertyFilenames filenameType,System.Text.StringBuilder pchFilename,uint cchFilename,ref EVRScreenshotError pError)
+	{
+		uint result = FnTable.GetScreenshotPropertyFilename(screenshotHandle,filenameType,pchFilename,cchFilename,ref pError);
+		return result;
+	}
+	public EVRScreenshotError UpdateScreenshotProgress(uint screenshotHandle,float flProgress)
+	{
+		EVRScreenshotError result = FnTable.UpdateScreenshotProgress(screenshotHandle,flProgress);
+		return result;
+	}
+	public EVRScreenshotError TakeStereoScreenshot(ref uint pOutScreenshotHandle,string pchPreviewFilename,string pchVRFilename)
+	{
+		pOutScreenshotHandle = 0;
+		EVRScreenshotError result = FnTable.TakeStereoScreenshot(ref pOutScreenshotHandle,pchPreviewFilename,pchVRFilename);
+		return result;
+	}
+	public EVRScreenshotError SubmitScreenshot(uint screenshotHandle,EVRScreenshotType type,string pchSourcePreviewFilename,string pchSourceVRFilename)
+	{
+		EVRScreenshotError result = FnTable.SubmitScreenshot(screenshotHandle,type,pchSourcePreviewFilename,pchSourceVRFilename);
+		return result;
+	}
+}
+
+
 public class OpenVRInterop
 {
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_InitInternal")]
@@ -2762,6 +2850,7 @@ public enum ETrackedDeviceProperty
 	Prop_CameraCompatibilityMode_Int32 = 2033,
 	Prop_ScreenshotHorizontalFieldOfViewDegrees_Float = 2034,
 	Prop_ScreenshotVerticalFieldOfViewDegrees_Float = 2035,
+	Prop_DisplaySuppressed_Bool = 2036,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -2797,7 +2886,6 @@ public enum EVRSubmitFlags
 	Submit_Default = 0,
 	Submit_LensDistortionAlreadyApplied = 1,
 	Submit_GlRenderBuffer = 2,
-	Submit_Screenshot = 4,
 }
 public enum EVRState
 {
@@ -2840,6 +2928,7 @@ public enum EVREventType
 	VREvent_SceneApplicationChanged = 404,
 	VREvent_SceneFocusChanged = 405,
 	VREvent_InputFocusChanged = 406,
+	VREvent_SceneApplicationSecondaryRenderingStarted = 407,
 	VREvent_HideRenderModels = 410,
 	VREvent_ShowRenderModels = 411,
 	VREvent_OverlayShown = 500,
@@ -2859,9 +2948,11 @@ public enum EVREventType
 	VREvent_DashboardGuideButtonDown = 514,
 	VREvent_DashboardGuideButtonUp = 515,
 	VREvent_ScreenshotTriggered = 516,
+	VREvent_ImageFailed = 517,
 	VREvent_RequestScreenshot = 520,
 	VREvent_ScreenshotTaken = 521,
 	VREvent_ScreenshotFailed = 522,
+	VREvent_SubmitScreenshotToDashboard = 523,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -3054,6 +3145,8 @@ public enum EVRInitError
 	Compositor_Failed = 400,
 	Compositor_D3D11HardwareRequired = 401,
 	Compositor_FirmwareRequiresUpdate = 402,
+	Compositor_OverlayInitFailed = 403,
+	Compositor_ScreenshotsInitFailed = 404,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	VendorSpecific_HmdFound_CantOpenDevice = 1101,
 	VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
@@ -3076,7 +3169,13 @@ public enum EVRScreenshotType
 	Mono = 1,
 	Stereo = 2,
 	Cubemap = 3,
-	StereoPanorama = 4,
+	MonoPanorama = 4,
+	StereoPanorama = 5,
+}
+public enum EVRScreenshotPropertyFilenames
+{
+	Preview = 0,
+	VR = 1,
 }
 public enum EVRTrackedCameraError
 {
@@ -3186,7 +3285,6 @@ public enum EVRCompositorError
 	TextureUsesUnsupportedFormat = 105,
 	SharedTexturesNotSupported = 106,
 	IndexOutOfRange = 107,
-	ScreenshotAlreadyInProgress = 108,
 }
 public enum VROverlayInputMethod
 {
@@ -3281,6 +3379,15 @@ public enum EVRSettingsError
 	WriteFailed = 2,
 	ReadFailed = 3,
 }
+public enum EVRScreenshotError
+{
+	None = 0,
+	RequestFailed = 1,
+	IncompatibleVersion = 100,
+	NotFound = 101,
+	BufferTooSmall = 102,
+	ScreenshotAlreadyInProgress = 108,
+}
 
 [StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
 {
@@ -3297,6 +3404,7 @@ public enum EVRSettingsError
 	[FieldOffset(0)] public VREvent_PerformanceTest_t performanceTest;
 	[FieldOffset(0)] public VREvent_TouchPadMove_t touchPadMove;
 	[FieldOffset(0)] public VREvent_SeatedZeroPoseReset_t seatedZeroPoseReset;
+	[FieldOffset(0)] public VREvent_Screenshot_t screenshot;
 	[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 }
 
@@ -3491,6 +3599,11 @@ public enum EVRSettingsError
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bResetBySystemMenu;
 }
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_Screenshot_t
+{
+	public uint handle;
+	public uint type;
+}
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_t
 {
 	public uint eventType;
@@ -3660,6 +3773,7 @@ public enum EVRSettingsError
 	public IntPtr m_pVRSettings; // class vr::IVRSettings *
 	public IntPtr m_pVRApplications; // class vr::IVRApplications *
 	public IntPtr m_pVRTrackedCamera; // class vr::IVRTrackedCamera *
+	public IntPtr m_pVRScreenshots; // class vr::IVRScreenshots *
 }
 
 public class OpenVR
@@ -3714,9 +3828,10 @@ public class OpenVR
 	public const uint k_unMaxPropertyStringSize = 32768;
 	public const uint k_unControllerStateAxisCount = 5;
 	public const ulong k_ulOverlayHandleInvalid = 0;
+	public const uint k_unScreenshotHandleInvalid = 0;
 	public const string IVRSystem_Version = "IVRSystem_012";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
-	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_002";
+	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_003";
 	public const uint k_unMaxApplicationKeyLength = 128;
 	public const string IVRApplications_Version = "IVRApplications_005";
 	public const string IVRChaperone_Version = "IVRChaperone_003";
@@ -3768,6 +3883,10 @@ public class OpenVR
 	public const string k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 	public const string k_pch_SteamVR_RenderTargetMultiplier_Float = "renderTargetMultiplier";
 	public const string k_pch_SteamVR_AllowReprojection_Bool = "allowReprojection";
+	public const string k_pch_SteamVR_ForceReprojection_Bool = "forceReprojection";
+	public const string k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
+	public const string k_pch_SteamVR_DefaultMirrorView_Int32 = "defaultMirrorView";
+	public const string k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
@@ -3836,6 +3955,7 @@ public class OpenVR
 	public const string k_pch_audio_OffRecordDevice_String = "offRecordDevice";
 	public const string k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
 	public const string k_pch_modelskin_Section = "modelskins";
+	public const string IVRScreenshots_Version = "IVRScreenshots_001";
 
 	static uint VRToken { get; set; }
 
@@ -3856,6 +3976,7 @@ public class OpenVR
 			m_pVRExtendedDisplay = null;
 			m_pVRSettings = null;
 			m_pVRApplications = null;
+			m_pVRScreenshots = null;
 		}
 
 		void CheckClear()
@@ -3984,6 +4105,19 @@ public class OpenVR
 			return m_pVRApplications;
 		}
 
+		public CVRScreenshots VRScreenshots()
+		{
+			CheckClear();
+			if (m_pVRScreenshots == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = OpenVRInterop.GetGenericInterface(FnTable_Prefix+IVRScreenshots_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRScreenshots = new CVRScreenshots(pInterface);
+			}
+			return m_pVRScreenshots;
+		}
+
 		private CVRSystem m_pVRSystem;
 		private CVRChaperone m_pVRChaperone;
 		private CVRChaperoneSetup m_pVRChaperoneSetup;
@@ -3993,6 +4127,7 @@ public class OpenVR
 		private CVRExtendedDisplay m_pVRExtendedDisplay;
 		private CVRSettings m_pVRSettings;
 		private CVRApplications m_pVRApplications;
+		private CVRScreenshots m_pVRScreenshots;
 	};
 
 	private static COpenVRContext _OpenVRInternal_ModuleContext = null;
@@ -4015,6 +4150,7 @@ public class OpenVR
 	public static CVRApplications Applications { get { return OpenVRInternal_ModuleContext.VRApplications(); } }
 	public static CVRSettings Settings { get { return OpenVRInternal_ModuleContext.VRSettings(); } }
 	public static CVRExtendedDisplay ExtendedDisplay { get { return OpenVRInternal_ModuleContext.VRExtendedDisplay(); } }
+	public static CVRScreenshots Screenshots { get { return OpenVRInternal_ModuleContext.VRScreenshots(); } }
 
 	/** Finds the active installation of vrclient.dll and initializes it */
 	public static CVRSystem Init(ref EVRInitError peError, EVRApplicationType eApplicationType = EVRApplicationType.VRApplication_Scene)

@@ -1,5 +1,5 @@
 SteamVR plugin for Unity - v1.1.0
-Copyright 2014-2016, Valve Corporation, All rights reserved.
+Copyright (c) Valve Corporation, All rights reserved.
 
 
 Quickstart:

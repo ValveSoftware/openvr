@@ -1,5 +1,5 @@
 //#define TEST_FADE_VIEW
-//========= Copyright 2014, Valve Corporation, All rights reserved. ===========
+//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose:	CameraFade script adapted to work with SteamVR.
 //
