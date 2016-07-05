@@ -27,19 +27,18 @@ public class SteamVR_GameView : MonoBehaviour
 		// Use OpenVR's mirror texture if available.
 		if (mirrorTexture == null)
 		{
-			var compositor = OpenVR.Compositor;
-			if (compositor != null)
-			{
-				//!! need to handle GL case as well
+			var vr = SteamVR.instance;
+			if (vr != null && vr.graphicsAPI == EGraphicsAPIConvention.API_DirectX)
+            {
 				var tex = new Texture2D(2, 2);
 				var nativeTex = System.IntPtr.Zero;
-				if (compositor.GetMirrorTextureD3D11(EVREye.Eye_Right, tex.GetNativeTexturePtr(), ref nativeTex) == EVRCompositorError.None)
+				if (vr.compositor.GetMirrorTextureD3D11(EVREye.Eye_Right, tex.GetNativeTexturePtr(), ref nativeTex) == EVRCompositorError.None)
 				{
 					uint width = 0, height = 0;
 					OpenVR.System.GetRecommendedRenderTargetSize(ref width, ref height);
 					mirrorTexture = Texture2D.CreateExternalTexture((int)width, (int)height, TextureFormat.RGBA32, false, false, nativeTex);
 				}
-            }
+			}
 		}
 	}
 

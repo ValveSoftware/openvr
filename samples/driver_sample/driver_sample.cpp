@@ -4,6 +4,12 @@
 #include "driverlog.h"
 
 #include <vector>
+#include <thread>
+#include <chrono>
+
+#if defined( _WINDOWS )
+#include <Windows.h>
+#endif
 
 using namespace vr;
 
@@ -70,33 +76,61 @@ public:
 		: m_bEnableNullDriver( false )
 		, m_bInit( false )
 	{
+		m_eDriverMode = ClientDriverMode_Normal;
+		m_pWatchdogThread = nullptr;
 	}
 
-	virtual EVRInitError Init( vr::IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) ;
+	virtual EVRInitError Init( vr::EClientDriverMode eDriverMode, vr::IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) ;
 	virtual void Cleanup() ;
 	virtual bool BIsHmdPresent( const char *pchUserDriverConfigDir ) ;
 	virtual EVRInitError SetDisplayId( const char *pchDisplayId )  { return VRInitError_None; } // Null doesn't care
 	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye ) ;
 	virtual uint32_t GetMCImage( uint32_t *pImgWidth, uint32_t *pImgHeight, uint32_t *pChannels, void *pDataBuffer, uint32_t unBufferLen )  { return 0; }
 
+	void WatchdogWakeUp();
 private:
 	vr::IClientDriverHost *m_pClientDriverHost;
 
 	bool m_bEnableNullDriver;
 	bool m_bInit;
+	vr::EClientDriverMode m_eDriverMode;
+	std::thread *m_pWatchdogThread;
 };
 
 CClientDriver_Sample g_clientDriverNull;
 
 
-EVRInitError CClientDriver_Sample::Init( vr::IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) 
+bool g_bExiting = false;
+
+void WatchdogThreadFunction(  )
+{
+	while ( !g_bExiting )
+	{
+#if defined( _WINDOWS )
+		// on windows send the event when the Y key is pressed.
+		if ( (0x01 & GetAsyncKeyState( 'Y' )) != 0 )
+		{
+			// Y key was pressed. 
+			g_clientDriverNull.WatchdogWakeUp();
+		}
+		std::this_thread::sleep_for( std::chrono::microseconds( 500 ) );
+#else
+		// for the other platforms, just send one every five seconds
+		std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
+		g_clientDriverNull.WatchdogWakeUp();
+#endif
+	}
+}
+
+EVRInitError CClientDriver_Sample::Init( vr::EClientDriverMode eDriverMode, vr::IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir )
 {
 	m_pClientDriverHost = pDriverHost;
 	InitDriverLog( pDriverLog );
 
+	m_eDriverMode = eDriverMode;
+
 	if ( !m_bInit )
 	{
-
 		if ( m_pClientDriverHost )
 		{
 			IVRSettings *pSettings = m_pClientDriverHost->GetSettings( vr::IVRSettings_Version );
@@ -109,12 +143,46 @@ EVRInitError CClientDriver_Sample::Init( vr::IDriverLog *pDriverLog, vr::IClient
 		m_bInit = true;
 	}
 
+	if ( eDriverMode == ClientDriverMode_Watchdog )
+	{
+		if ( !m_bEnableNullDriver )
+		{
+			return VRInitError_Init_LowPowerWatchdogNotSupported;
+		}
+
+		// Watchdog mode on Windows starts a thread that listens for the 'Y' key on the keyboard to 
+		// be pressed. A real driver should wait for a system button event or something else from the 
+		// the hardware that signals that the VR system should start up.
+		g_bExiting = false;
+		m_pWatchdogThread = new std::thread( WatchdogThreadFunction );
+		if ( !m_pWatchdogThread )
+		{
+			DriverLog( "Unable to create watchdog thread\n");
+			return VRInitError_Driver_Failed;
+		}
+	}
+
 	return VRInitError_None;
+}
+
+
+void CClientDriver_Sample::WatchdogWakeUp()
+{
+	if ( m_pClientDriverHost )
+		m_pClientDriverHost->WatchdogWakeUp();
 }
 
 
 void CClientDriver_Sample::Cleanup() 
 {
+	g_bExiting = true;
+	if ( m_pWatchdogThread )
+	{
+		m_pWatchdogThread->join();
+		delete m_pWatchdogThread;
+		m_pWatchdogThread = nullptr;
+	}
+
 	CleanupDriverLog();
 }
 

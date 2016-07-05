@@ -341,7 +341,7 @@ public class SteamVR_Render : MonoBehaviour
             screenshotPosition.transform.position = SteamVR_Render.Top().transform.position;
             screenshotPosition.transform.rotation = SteamVR_Render.Top().transform.rotation;
             screenshotPosition.transform.localScale = SteamVR_Render.Top().transform.lossyScale;
-            SteamVR_Utils.TakeStereoScreenshot(screenshotPosition, 32, 0.064f, ref previewFilename, ref VRFilename);
+            SteamVR_Utils.TakeStereoScreenshot(screenshotHandle, screenshotPosition, 32, 0.064f, ref previewFilename, ref VRFilename);
 
             // and submit it
             OpenVR.Screenshots.SubmitScreenshot(screenshotHandle, screenshotType, previewFilename, VRFilename);
@@ -482,7 +482,6 @@ public class SteamVR_Render : MonoBehaviour
 				vr.compositor.GetFrameTiming(ref timing, 0);
 
 				Time.fixedDeltaTime = Time.timeScale / vr.hmd_DisplayFrequency;
-				Time.maximumDeltaTime = Time.fixedDeltaTime * timing.m_nNumFramePresents;
 			}
 		}
 	}

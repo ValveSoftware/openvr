@@ -489,7 +489,7 @@ public static class SteamVR_Utils
 #endif
     }
 
-    public static void TakeStereoScreenshot(GameObject target, int cellSize, float ipd, ref string previewFilename, ref string VRFilename)
+    public static void TakeStereoScreenshot(uint screenshotHandle, GameObject target, int cellSize, float ipd, ref string previewFilename, ref string VRFilename)
     {
         const int width = 4096;
         const int height = width / 2;
@@ -658,11 +658,18 @@ public static class SteamVR_Utils
 
                         RenderTexture.active = targetTexture;
                         texture.ReadPixels(new Rect(0, 0, targetTexture.width, targetTexture.height), uTarget, vTarget + ~j * height);
-                        RenderTexture.active = null;
+                        RenderTexture.active = null;                 
                     }
+
+                    // Update progress
+                    var progress = (float)( v * ( uTotal * 2.0f ) + u + i*uTotal) / (float)(vTotal * ( uTotal * 2.0f ) );
+                    OpenVR.Screenshots.UpdateScreenshotProgress(screenshotHandle, progress);
                 }
             }
         }
+
+        // 100% flush
+        OpenVR.Screenshots.UpdateScreenshotProgress(screenshotHandle, 1.0f);
 
         // Save textures to disk.
         // Add extensions

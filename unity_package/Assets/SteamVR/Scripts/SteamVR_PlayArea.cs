@@ -125,14 +125,14 @@ public class SteamVR_PlayArea : MonoBehaviour
 
 		var triangles = new int[]
 		{
-			0, 1, 4,
-			1, 5, 4,
-			1, 2, 5,
-			2, 6, 5,
-			2, 3, 6,
-			3, 7, 6,
-			3, 0, 7,
-			0, 4, 7
+			0, 4, 1,
+			1, 4, 5,
+			1, 5, 2,
+			2, 5, 6,
+			2, 6, 3,
+			3, 6, 7,
+			3, 7, 0,
+			0, 7, 4
 		};
 
 		var uv = new Vector2[]
@@ -167,11 +167,7 @@ public class SteamVR_PlayArea : MonoBehaviour
 		mesh.triangles = triangles;
 
 		var renderer = GetComponent<MeshRenderer>();
-#if UNITY_EDITOR && !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
-		renderer.material = UnityEditor.AssetDatabase.GetBuiltinExtraResource<Material>("Sprites-Default.mat");
-#else
-		renderer.material = Resources.GetBuiltinResource<Material>("Sprites-Default.mat");
-#endif
+		renderer.material = new Material(Shader.Find("Sprites/Default"));
 		renderer.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
 		renderer.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
 		renderer.receiveShadows = false;
