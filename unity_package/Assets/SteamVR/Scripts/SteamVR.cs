@@ -69,21 +69,23 @@ public class SteamVR : System.IDisposable
 		try
 		{
 			var error = EVRInitError.None;
-			if (!SteamVR.usingNativeSupport)
-			{
-#if !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
-				Debug.Log("OpenVR initialization failed.  Ensure 'Virtual Reality Supported' is checked in Player Settings, and OpenVR is added to the list of Virtual Reality SDKs.");
-				return null;
-#else
-				OpenVR.Init(ref error);
-				if (error != EVRInitError.None)
-				{
-					ReportError(error);
-					ShutdownSystems();
-					return null;
-				}
-#endif
-			}
+            //PLUTO CUSTOM
+            //Commenting this out stops background dashboards from breaking.
+			//if (!SteamVR.usingNativeSupport)
+//			{
+//#if !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
+//				Debug.Log("OpenVR initialization failed.  Ensure 'Virtual Reality Supported' is checked in Player Settings, and OpenVR is added to the list of Virtual Reality SDKs.");
+//				return null;
+//#else
+//				OpenVR.Init(ref error);
+//				if (error != EVRInitError.None)
+//				{
+//					ReportError(error);
+//					ShutdownSystems();
+//					return null;
+//				}
+//#endif
+//			}
 
 			// Verify common interfaces are valid.
 

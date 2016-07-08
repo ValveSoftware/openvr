@@ -289,18 +289,21 @@ public class SteamVR_Render : MonoBehaviour
 
 	void OnQuit(params object[] args)
 	{
+		Debug.LogWarning("OnQuit was called from SteamVR, we should respond appropriately...");
 #if UNITY_EDITOR
-		foreach (System.Reflection.Assembly a in System.AppDomain.CurrentDomain.GetAssemblies())
-		{
-			var t = a.GetType("UnityEditor.EditorApplication");
-			if (t != null)
-			{
-				t.GetProperty("isPlaying").SetValue(null, false, null);
-				break;
-			}
-		}
+		//PLUTO CUSTOM
+		//This code stops unity editor play mode at times we don't want it to, commenting out.
+		// foreach (System.Reflection.Assembly a in System.AppDomain.CurrentDomain.GetAssemblies())
+		// {
+		// 	var t = a.GetType("UnityEditor.EditorApplication");
+		// 	if (t != null)
+		// 	{
+		// 		t.GetProperty("isPlaying").SetValue(null, false, null);
+		// 		break;
+		// 	}
+		// }
 #else
-		Application.Quit();
+		// Application.Quit();
 #endif
 	}
 
