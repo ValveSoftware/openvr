@@ -210,7 +210,8 @@ private: // OpenGL bookkeeping
 };
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Outputs a set of optional arguments to debugging output, using
+//          the printf format setting specified in fmt*.
 //-----------------------------------------------------------------------------
 void dprintf( const char *fmt, ... )
 {
@@ -449,7 +450,9 @@ bool CMainApplication::BInit()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Outputs the string in message to debugging output.
+//          All other parameters are ignored.
+//          Does not return any meaningful value or reference.
 //-----------------------------------------------------------------------------
 void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const void* userParam)
 {
@@ -458,7 +461,10 @@ void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Initialize OpenGL. Returns true if OpenGL has been successfully
+//          initialized, false if shaders could not be created.
+//          If failure occurred in a module other than shaders, the function
+//          may return true or throw an error. 
 //-----------------------------------------------------------------------------
 bool CMainApplication::BInitGL()
 {
@@ -485,7 +491,8 @@ bool CMainApplication::BInitGL()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Initialize Compositor. Returns true if the compositor was
+//          successfully initialized, false otherwise.
 //-----------------------------------------------------------------------------
 bool CMainApplication::BInitCompositor()
 {
@@ -1236,7 +1243,8 @@ void CMainApplication::SetupCameras()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Creates a frame buffer. Returns true if the buffer was set up.
+//          Returns false if the setup failed.
 //-----------------------------------------------------------------------------
 bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDesc &framebufferDesc )
 {
@@ -1476,7 +1484,7 @@ void CMainApplication::RenderStereoTargets()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Renders a scene with respect to nEye.
 //-----------------------------------------------------------------------------
 void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 {
@@ -1564,7 +1572,7 @@ void CMainApplication::RenderDistortion()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Gets a Matrix Projection Eye with respect to nEye.
 //-----------------------------------------------------------------------------
 Matrix4 CMainApplication::GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye )
 {
@@ -1583,7 +1591,7 @@ Matrix4 CMainApplication::GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye )
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Gets an HMDMatrixPoseEye with respect to nEye.
 //-----------------------------------------------------------------------------
 Matrix4 CMainApplication::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 {
@@ -1603,7 +1611,8 @@ Matrix4 CMainApplication::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Gets a Current View Projection Matrix with respect to nEye,
+//          which may be an Eye_Left or an Eye_Right.
 //-----------------------------------------------------------------------------
 Matrix4 CMainApplication::GetCurrentViewProjectionMatrix( vr::Hmd_Eye nEye )
 {
