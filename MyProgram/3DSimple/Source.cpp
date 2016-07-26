@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <iostream>
+#include <chrono>
 
 // freeglut
 #include <GL/glew.h>
@@ -36,6 +37,7 @@ uint32_t	g_uHeight		= 0;
 GLuint		g_uTextureID	= 0;
 cv::VideoCapture	g_cvVideo;
 cv::Mat				g_imgFrame;
+unsigned int		g_uUpdateTimeInterval = 10;
 
 void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 {
@@ -94,13 +96,20 @@ void idle()
 
 void timer(int iVal)
 {
-	g_cvVideo >> g_imgFrame;
+	static std::chrono::system_clock::time_point tpNow, tpLUpdate = std::chrono::system_clock::now();
+	tpNow = std::chrono::system_clock::now();
+	if ((tpNow - tpLUpdate) >= std::chrono::milliseconds(40))
+	{
+		g_cvVideo >> g_imgFrame;
 
-	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_imgFrame.cols, g_imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
+		glBindTexture(GL_TEXTURE_2D, g_uTextureID);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_imgFrame.cols, g_imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
+
+		tpLUpdate = tpNow;
+	}
 
 	glutPostRedisplay();
-	glutTimerFunc(1000 / 30, timer, 1);
+	glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
 }
 
 void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection)
@@ -154,6 +163,17 @@ void display()
 
 int main(int argc, char** argv)
 {
+	std::string sVideoFile;
+	if (argc >= 2)
+	{
+		sVideoFile = argv[1];
+	}
+	else
+	{
+		std::cerr << "No video file" << std::endl;
+		return -1;
+	}
+
 	#pragma region OpenGL Initialize
 	// initial glut
 	glutInit(&argc, argv);
@@ -171,15 +191,15 @@ int main(int argc, char** argv)
 	// register glut callback functions
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
-	glutTimerFunc(1000/25,timer,1);
+	glutTimerFunc(g_uUpdateTimeInterval,timer,1);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(specialKey);
 	#pragma endregion
 
 	#pragma region The texture of ball
-	g_cvVideo.open("D:\\VR360A\\Out\\20150708_171511.mp4");
+	g_cvVideo.open(sVideoFile);
+	g_cvVideo >> g_imgFrame;
 
-	g_imgFrame = cv::imread("D:\\VR360A\\Out\\05.tif");
 	glGenTextures(1, &g_uTextureID);
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_imgFrame.cols, g_imgFrame.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
