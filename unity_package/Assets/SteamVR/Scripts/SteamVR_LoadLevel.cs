@@ -25,14 +25,11 @@ public class SteamVR_LoadLevel : MonoBehaviour
 	// Name of level to load.
 	public string levelName;
 
-	// If loading an external application
-	public bool loadExternalApp;
+	// Name of internal process to launch (instead of levelName).
+	public string internalProcessPath;
 
-	// Name of external application to load
-	public string externalAppPath;
-
-	// The command-line args for the external application to load
-	public string externalAppArgs;
+	// The command-line args for the internal process to launch.
+	public string internalProcessArgs;
 
 	// If true, call LoadLevelAdditiveAsync instead of LoadLevelAsync.
 	public bool loadAdditive;
@@ -332,7 +329,7 @@ public class SteamVR_LoadLevel : MonoBehaviour
 		transform.parent = null;
 		DontDestroyOnLoad(gameObject);
 
-		if (loadExternalApp)
+		if (!string.IsNullOrEmpty(internalProcessPath))
 		{
 			Debug.Log("Launching external application...");
 			var applications = OpenVR.Applications;
@@ -343,13 +340,13 @@ public class SteamVR_LoadLevel : MonoBehaviour
 			else
 			{
 				var workingDirectory = Directory.GetCurrentDirectory();
-				var fullPath = Path.Combine( workingDirectory, externalAppPath );
+				var fullPath = Path.Combine(workingDirectory, internalProcessPath);
 				Debug.Log("LaunchingInternalProcess");
-				Debug.Log("ExternalAppPath = " + externalAppPath);
+				Debug.Log("ExternalAppPath = " + internalProcessPath);
 				Debug.Log("FullPath = " + fullPath);
-				Debug.Log("ExternalAppArgs = " + externalAppArgs);
+				Debug.Log("ExternalAppArgs = " + internalProcessArgs);
 				Debug.Log("WorkingDirectory = " + workingDirectory);
-				var error = applications.LaunchInternalProcess(fullPath, externalAppArgs, workingDirectory);
+				var error = applications.LaunchInternalProcess(fullPath, internalProcessArgs, workingDirectory);
 				Debug.Log("LaunchInternalProcessError: " + error);
 #if UNITY_EDITOR
 				UnityEditor.EditorApplication.isPlaying = false;

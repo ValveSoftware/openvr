@@ -72,12 +72,14 @@ public class SteamVR_Fade : MonoBehaviour
 	}
 
 	static Material fadeMaterial = null;
+	static int fadeMaterialColorID = -1;
 
 	void OnEnable()
 	{
 		if (fadeMaterial == null)
 		{
 			fadeMaterial = new Material(Shader.Find("Custom/SteamVR_Fade"));
+			fadeMaterialColorID = Shader.PropertyToID("fadeColor");
 		}
 
 		SteamVR_Utils.Event.Listen("fade", OnStartFade);
@@ -116,17 +118,15 @@ public class SteamVR_Fade : MonoBehaviour
 
 		if (currentColor.a > 0 && fadeMaterial)
 		{
-			GL.PushMatrix();
-			GL.LoadOrtho();
+			fadeMaterial.SetColor(fadeMaterialColorID, currentColor);
 			fadeMaterial.SetPass(0);
 			GL.Begin(GL.QUADS);
-			GL.Color(currentColor);
-			GL.Vertex3(0, 0, 0);
-			GL.Vertex3(1, 0, 0);
+
+			GL.Vertex3(-1, -1, 0);
+			GL.Vertex3( 1, -1, 0);
 			GL.Vertex3(1, 1, 0);
-			GL.Vertex3(0, 1, 0);
+			GL.Vertex3(-1, 1, 0);
 			GL.End();
-			GL.PopMatrix();
 		}
 	}
 }
