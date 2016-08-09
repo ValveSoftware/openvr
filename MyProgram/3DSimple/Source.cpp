@@ -4,6 +4,7 @@
 #include <cmath>
 #include <iostream>
 #include <chrono>
+#include <thread>
 
 // freeglut
 #include <GL/glew.h>
@@ -38,6 +39,8 @@ GLuint		g_uTextureID	= 0;
 cv::VideoCapture	g_cvVideo;
 cv::Mat				g_imgFrame;
 unsigned int		g_uUpdateTimeInterval = 10;
+std::thread			g_threadLoadFrame;
+bool				g_bUpdated = false;
 
 void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 {
@@ -96,18 +99,13 @@ void idle()
 
 void timer(int iVal)
 {
-	static std::chrono::system_clock::time_point tpNow, tpLUpdate = std::chrono::system_clock::now();
-	tpNow = std::chrono::system_clock::now();
-	if ((tpNow - tpLUpdate) >= std::chrono::milliseconds(40))
+	if (g_bUpdated)
 	{
-		g_cvVideo >> g_imgFrame;
-
 		glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_imgFrame.cols, g_imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
 
-		tpLUpdate = tpNow;
+		g_bUpdated = false;
 	}
-
 	glutPostRedisplay();
 	glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
 }
@@ -209,6 +207,20 @@ int main(int argc, char** argv)
 
 	g_pOpenVRGL = new COpenVRGL();
 	g_pOpenVRGL->Initial(1, 1000);
+
+	g_threadLoadFrame = std::thread([]() {
+		while (true)
+		{
+			static std::chrono::system_clock::time_point tpNow, tpLUpdate = std::chrono::system_clock::now();
+			tpNow = std::chrono::system_clock::now();
+			if ((tpNow - tpLUpdate) >= std::chrono::milliseconds(40))
+			{
+				g_cvVideo >> g_imgFrame;
+				g_bUpdated = true;
+				tpLUpdate = tpNow;
+			}
+		}
+	});
 
 	glutMainLoop();
 }
