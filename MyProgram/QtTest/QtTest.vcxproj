@@ -103,11 +103,13 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\Qt\5.7\msvc2015_64\include\;D:\Qt\5.7\msvc2015_64\include\QtCore;D:\Qt\5.7\msvc2015_64\include\QtGui;D:\Qt\5.7\msvc2015_64\include\QtWidgets;..\..\headers</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\QtGenerated\;D:\Qt\5.7\msvc2015_64\include\;D:\Qt\5.7\msvc2015_64\include\QtCore;D:\Qt\5.7\msvc2015_64\include\QtGui;D:\Qt\5.7\msvc2015_64\include\QtWidgets;..\..\headers</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\Qt\5.7\msvc2015_64\lib;..\..\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>openvr_api.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
@@ -138,18 +140,30 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
-      <AdditionalIncludeDirectories>D:\Qt\5.7\msvc2015_64\include\;D:\Qt\5.7\msvc2015_64\include\QtCore;D:\Qt\5.7\msvc2015_64\include\QtGui;D:\Qt\5.7\msvc2015_64\include\QtWidgets;..\..\headers</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\QtGenerated\;D:\Qt\5.7\msvc2015_64\include\;D:\Qt\5.7\msvc2015_64\include\QtCore;D:\Qt\5.7\msvc2015_64\include\QtGui;D:\Qt\5.7\msvc2015_64\include\QtWidgets;..\..\headers</AdditionalIncludeDirectories>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
+      <AdditionalLibraryDirectories>D:\Qt\5.7\msvc2015_64\lib;..\..\lib\win64</AdditionalLibraryDirectories>
+      <AdditionalDependencies>openvr_api.lib;Qt5Core.lib;Qt5Gui.lib;Qt5Widgets.lib</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="openvroverlaycontroller.h" />
-    <ClInclude Include="overlaywidget.h" />
+    <CustomBuild Include="openvroverlaycontroller.hpp">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Qt\5.7\msvc2015_64\bin\moc.exe openvroverlaycontroller.hpp   -o "QtGenerated\moc_openvroverlaycontroller.h"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Qt\5.7\msvc2015_64\bin\moc.exe openvroverlaycontroller.hpp   -o "QtGenerated\moc_openvroverlaycontroller.h"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">QtGenerated\moc_openvroverlaycontroller.h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">QtGenerated\moc_openvroverlaycontroller.h</Outputs>
+    </CustomBuild>
+    <CustomBuild Include="overlaywidget.hpp">
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Qt\5.7\msvc2015_64\bin\moc.exe overlaywidget.hpp   -o "QtGenerated\moc_overlaywidget.h"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">QtGenerated\moc_overlaywidget.h</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Qt\5.7\msvc2015_64\bin\moc.exe overlaywidget.hpp   -o "QtGenerated\moc_overlaywidget.h"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">QtGenerated\moc_overlaywidget.h</Outputs>
+    </CustomBuild>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="main.cpp" />
@@ -159,10 +173,10 @@
   <ItemGroup>
     <CustomBuild Include="overlaywidget.ui">
       <FileType>Document</FileType>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Qt\5.7\msvc2015_64\bin\uic.exe overlaywidget.ui   -o "ui_overlaywidget.h"</Command>
-      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Qt\5.7\msvc2015_64\bin\uic.exe overlaywidget.ui   -o "ui_overlaywidget.h"</Command>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">ui_overlaywidget.h</Outputs>
-      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">ui_overlaywidget.h</Outputs>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\Qt\5.7\msvc2015_64\bin\uic.exe overlaywidget.ui   -o "QtGenerated\ui_overlaywidget.h"</Command>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\Qt\5.7\msvc2015_64\bin\uic.exe overlaywidget.ui   -o "QtGenerated\ui_overlaywidget.h"</Command>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">QtGenerated\ui_overlaywidget.h</Outputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">QtGenerated\ui_overlaywidget.h</Outputs>
     </CustomBuild>
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

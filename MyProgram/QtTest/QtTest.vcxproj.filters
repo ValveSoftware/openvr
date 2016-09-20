@@ -18,14 +18,6 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="openvroverlaycontroller.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-    <ClInclude Include="overlaywidget.h">
-      <Filter>標頭檔</Filter>
-    </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
     <ClCompile Include="overlaywidget.cpp">
       <Filter>原始程式檔</Filter>
     </ClCompile>
@@ -37,8 +29,12 @@
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <None Include="overlaywidget.ui">
-      <Filter>Qt Form</Filter>
-    </None>
+    <CustomBuild Include="overlaywidget.ui" />
+    <CustomBuild Include="openvroverlaycontroller.hpp">
+      <Filter>標頭檔</Filter>
+    </CustomBuild>
+    <CustomBuild Include="overlaywidget.hpp">
+      <Filter>標頭檔</Filter>
+    </CustomBuild>
   </ItemGroup>
 </Project>
