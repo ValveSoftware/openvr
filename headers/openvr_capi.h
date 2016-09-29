@@ -46,6 +46,8 @@
 
 #if defined( __WIN32 )
 typedef char bool;
+#else
+#include <stdbool.h>
 #endif
 
 
