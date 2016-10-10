@@ -1,4 +1,4 @@
-SteamVR plugin for Unity - v1.1.0
+SteamVR plugin for Unity - v1.1.1
 Copyright (c) Valve Corporation, All rights reserved.
 
 
@@ -13,6 +13,29 @@ Requirements:
 The SteamVR runtime must be installed.  This can be found in Steam under Tools.
 
 The plugin currently only supports Windows / DX11.
+
+
+Changes for v1.1.1:
+
+* Updated to SteamVR runtime v1467410709 and SDK version 1.0.2.
+
+* Updated Copyright notice.
+
+* Added SteamVR_TrackedCamera for accessing tracked camera video stream and poses.
+
+* Added SteamVR_TestTrackedCamera scene and associated script to demonstrate how to use SteamVR_TrackedCamera.
+
+* Fix for SteamVR_Fade shader to account for changes in Unity 5.4.
+
+* SteamVR_GameView will now use the compositor's mirror texture to render the companion window (pre-Unity 5.4 only).
+
+* Renamed SteamVR_LoadLevel 'externalApp' to 'internalProcess' to reflect actual functionality.
+
+* Fixed issue with SteamVR_PlayArea material loading due to changes in Unity 5.4.
+
+* Added Screenshot support handling for stereo panoramas generation.
+
+* Removed code that was setting Time.maximumDeltaTime as this was causing issues.
 
 
 Changes for v1.1.0:

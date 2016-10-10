@@ -30,11 +30,11 @@ public class SteamVR_Ears : MonoBehaviour
 		if (settings != null)
 		{
 			var error = EVRSettingsError.None;
-			if (settings.GetBool(OpenVR.k_pch_SteamVR_Section, OpenVR.k_pch_SteamVR_UsingSpeakers_Bool, false, ref error))
+			if (settings.GetBool(OpenVR.k_pch_SteamVR_Section, OpenVR.k_pch_SteamVR_UsingSpeakers_Bool, ref error))
 			{
 				usingSpeakers = true;
 
-				var yawOffset = settings.GetFloat(OpenVR.k_pch_SteamVR_Section, OpenVR.k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float, 0.0f, ref error);
+				var yawOffset = settings.GetFloat(OpenVR.k_pch_SteamVR_Section, OpenVR.k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float, ref error);
 				offset = Quaternion.Euler(0.0f, yawOffset, 0.0f);
 			}
 		}

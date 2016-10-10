@@ -18,7 +18,14 @@ public class SteamVR : System.IDisposable
 	private static bool _enabled = true;
 	public static bool enabled
 	{
-		get { return _enabled; }
+		get
+		{
+#if !(UNITY_5_3 || UNITY_5_2 || UNITY_5_1 || UNITY_5_0)
+			if (!UnityEngine.VR.VRSettings.enabled)
+				enabled = false;
+#endif
+			return _enabled;
+		}
 		set
 		{
 			_enabled = value;
