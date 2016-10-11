@@ -41,6 +41,7 @@ cv::Mat				g_imgFrame;
 unsigned int		g_uUpdateTimeInterval = 10;
 std::thread			g_threadLoadFrame;
 bool				g_bUpdated = false;
+bool				g_bRunning = true;
 
 void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 {
@@ -89,6 +90,12 @@ void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 			g_aIndexArray[iIIdx + 5]	= iVIdx + 1;
 		}
 	}
+}
+
+void onExit()
+{
+	g_bRunning = false;
+	g_threadLoadFrame.join();
 }
 
 // glut idle function
@@ -209,7 +216,7 @@ int main(int argc, char** argv)
 	g_pOpenVRGL->Initial(1, 1000);
 
 	g_threadLoadFrame = std::thread([]() {
-		while (true)
+		while (g_bRunning)
 		{
 			static std::chrono::system_clock::time_point tpNow, tpLUpdate = std::chrono::system_clock::now();
 			tpNow = std::chrono::system_clock::now();
@@ -222,5 +229,6 @@ int main(int argc, char** argv)
 		}
 	});
 
+	std::atexit(onExit);
 	glutMainLoop();
 }
