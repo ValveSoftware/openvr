@@ -13,7 +13,13 @@
 
 // vrtypes.h
 #ifndef _INCLUDE_VRTYPES_H
-#define _INCLUDE_VRTYPES_H 
+#define _INCLUDE_VRTYPES_H
+
+// Forward declarations to avoid requiring vulkan.h
+struct VkDevice_T;
+struct VkPhysicalDevice_T;
+struct VkInstance_T;
+struct VkQueue_T;
 
 namespace vr
 {
@@ -125,6 +131,10 @@ struct Texture_t
 	EColorSpace eColorSpace;
 };
 
+// Handle to a shared texture (HANDLE on Windows obtained using OpenSharedResource).
+typedef uint64_t SharedTextureHandle_t;
+#define INVALID_SHARED_TEXTURE_HANDLE	((vr::SharedTextureHandle_t)0)
+
 enum ETrackingResult
 {
 	TrackingResult_Uninitialized			= 1,
@@ -153,6 +163,8 @@ enum ETrackedDeviceClass
 	TrackedDeviceClass_HMD = 1,					// Head-Mounted Displays
 	TrackedDeviceClass_Controller = 2,			// Tracked controllers
 	TrackedDeviceClass_TrackingReference = 4,	// Camera and base stations that serve as tracking reference points
+
+	TrackedDeviceClass_Count,					// This isn't a class that will ever be returned. It is used for allocating arrays and such
 
 	TrackedDeviceClass_Other = 1000,
 };
@@ -288,6 +300,17 @@ enum ETrackedDeviceProperty
 	Prop_TrackingRangeMaximumMeters_Float		= 4005,
 	Prop_ModeLabel_String						= 4006,
 
+	// Properties that are used for user interface like icons names
+	Prop_IconPathName_String						= 5000, // usually a directory named "icons"
+	Prop_NamedIconPathDeviceOff_String				= 5001, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceSearching_String		= 5002, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceSearchingAlert_String	= 5003, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceReady_String			= 5004, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceReadyAlert_String		= 5005, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceNotReady_String			= 5006, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceStandby_String			= 5007, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceAlertLow_String			= 5008, // PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+
 	// Vendors are free to expose private debug data in this reserved region
 	Prop_VendorSpecific_Reserved_Start			= 10000,
 	Prop_VendorSpecific_Reserved_End			= 10999,
@@ -333,6 +356,22 @@ enum EVRSubmitFlags
 
 	// If the texture pointer passed in is actually a renderbuffer (e.g. for MSAA in OpenGL) then set this flag.
 	Submit_GlRenderBuffer = 0x02,
+
+	// Handle is pointer to VulkanData_t
+	Submit_VulkanTexture = 0x04,
+};
+
+/** Data required for passing Vulkan textures to IVRCompositor::Submit.
+* Be sure to call OpenVR_Shutdown before destroying these resources. */
+struct VulkanData_t
+{
+	uint64_t m_nImage; // VkImage
+	VkDevice_T *m_pDevice;
+	VkPhysicalDevice_T *m_pPhysicalDevice;
+	VkInstance_T *m_pInstance;
+	VkQueue_T *m_pQueue;
+	uint32_t m_nQueueFamilyIndex;
+	uint32_t m_nWidth, m_nHeight, m_nFormat, m_nSampleCount;
 };
 
 
@@ -365,6 +404,7 @@ enum EVREventType
 	VREvent_LeaveStandbyMode			= 107,
 	VREvent_TrackedDeviceRoleChanged	= 108,
 	VREvent_WatchdogWakeUpRequested		= 109,
+	VREvent_LensDistortionChanged		= 110,
 
 	VREvent_ButtonPress					= 200, // data is controller
 	VREvent_ButtonUnpress				= 201, // data is controller
@@ -410,6 +450,7 @@ enum EVREventType
 	VREvent_DashboardGuideButtonUp = 515,
 	VREvent_ScreenshotTriggered	= 516, // Screenshot button combo was pressed, Dashboard should request a screenshot
 	VREvent_ImageFailed				= 517, // Sent to overlays when a SetOverlayRaw or SetOverlayfromFail fails to load
+	VREvent_DashboardOverlayCreated = 518,
 
 	// Screenshot API
 	VREvent_RequestScreenshot = 520, // Sent by vrclient application to compositor to take a screenshot
@@ -442,6 +483,7 @@ enum EVREventType
 	VREvent_ReprojectionSettingHasChanged = 852,
 	VREvent_ModelSkinSettingsHaveChanged = 853,
 	VREvent_EnvironmentSettingsHaveChanged = 854,
+	VREvent_PowerSettingsHaveChanged = 855,
 
 	VREvent_StatusUpdate				= 900,
 
@@ -469,6 +511,7 @@ enum EVREventType
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
 	VREvent_TrackedCamera_PauseVideoStream  = 1502,
 	VREvent_TrackedCamera_ResumeVideoStream = 1503,
+	VREvent_TrackedCamera_EditingSurface    = 1550,
 
 	VREvent_PerformanceTest_EnableCapture = 1600,
 	VREvent_PerformanceTest_DisableCapture = 1601,
@@ -502,6 +545,8 @@ enum EVRButtonId
 	k_EButton_DPad_Right		= 5,
 	k_EButton_DPad_Down			= 6,
 	k_EButton_A					= 7,
+	
+	k_EButton_ProximitySensor   = 31,
 
 	k_EButton_Axis0				= 32,
 	k_EButton_Axis1				= 33,
@@ -651,6 +696,12 @@ struct VREvent_ApplicationLaunch_t
 	uint32_t unArgsHandle;
 };
 
+struct VREvent_EditingCameraSurface_t
+{
+	uint64_t overlayHandle;
+	uint32_t nVisualMode;
+};
+
 /** If you change this you must manually update openvr_interop.cs.py */
 typedef union
 {
@@ -671,6 +722,7 @@ typedef union
 	VREvent_Screenshot_t screenshot;
 	VREvent_ScreenshotProgress_t screenshotProgress;
 	VREvent_ApplicationLaunch_t applicationLaunch;
+	VREvent_EditingCameraSurface_t cameraSurface;
 } VREvent_Data_t;
 
 /** An event posted by the server to all running applications */
@@ -798,7 +850,7 @@ enum EVROverlayError
 	VROverlayError_RequestFailed		= 23,
 	VROverlayError_InvalidTexture		= 24,
 	VROverlayError_UnableToLoadFile		= 25,
-	VROVerlayError_KeyboardAlreadyInUse = 26,
+	VROverlayError_KeyboardAlreadyInUse = 26,
 	VROverlayError_NoNeighbor			= 27,
 };
 
@@ -1075,7 +1127,8 @@ public:
 	virtual void GetProjectionRaw( EVREye eEye, float *pfLeft, float *pfRight, float *pfTop, float *pfBottom ) = 0;
 
 	/** Returns the result of the distortion function for the specified eye and input UVs. UVs go from 0,0 in 
-	* the upper left of that eye's viewport and 1,1 in the lower right of that eye's viewport. */
+	* the upper left of that eye's viewport and 1,1 in the lower right of that eye's viewport.
+	* Values may be NAN to indicate an error has occurred. */
 	virtual DistortionCoordinates_t ComputeDistortion( EVREye eEye, float fU, float fV ) = 0;
 
 	/** Returns the transform from eye space to the head space. Eye space is the per-eye flavor of head
@@ -1097,8 +1150,10 @@ public:
 	virtual int32_t GetD3D9AdapterIndex() = 0;
 
 	/** [D3D10/11 Only]
-	* Returns the adapter index and output index that the user should pass into EnumAdapters and EnumOutputs 
-	* to create the device and swap chain in DX10 and DX11. If an error occurs both indices will be set to -1.
+	* Returns the adapter index that the user should pass into EnumAdapters to create the device 
+	* and swap chain in DX10 and DX11. If an error occurs the index will be set to -1. The index will 
+	* also be -1 if the headset is in direct mode on the driver side instead of using the compositor's
+	* builtin direct mode support.
 	*/
 	virtual void GetDXGIOutputInfo( int32_t *pnAdapterIndex ) = 0;
 
@@ -1398,6 +1453,10 @@ namespace vr
 		const char *pchValue;
 	};
 
+	/** Currently recognized mime types */
+	static const char * const k_pch_MimeType_HomeApp		= "vr/home";
+	static const char * const k_pch_MimeType_GameTheater	= "vr/game_theater";
+
 	class IVRApplications
 	{
 	public:
@@ -1420,7 +1479,7 @@ namespace vr
 		/** Returns the key of the specified application. The index is at least 0 and is less than the return 
 		* value of GetApplicationCount(). The buffer should be at least k_unMaxApplicationKeyLength in order to 
 		* fit the key. */
-		virtual EVRApplicationError GetApplicationKeyByIndex( uint32_t unApplicationIndex, char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
+		virtual EVRApplicationError GetApplicationKeyByIndex( uint32_t unApplicationIndex, VR_OUT_STRING() char *pchAppKeyBuffer, uint32_t unAppKeyBufferLen ) = 0;
 
 		/** Returns the key of the application for the specified Process Id. The buffer should be at least 
 		* k_unMaxApplicationKeyLength in order to fit the key. */
@@ -1460,7 +1519,7 @@ namespace vr
 		// ---------------  Application properties  --------------- //
 
 		/** Returns a value for an application property. The required buffer size to fit this value will be returned. */
-		virtual uint32_t GetApplicationPropertyString( const char *pchAppKey, EVRApplicationProperty eProperty, char *pchPropertyValueBuffer, uint32_t unPropertyValueBufferLen, EVRApplicationError *peError = nullptr ) = 0;
+		virtual uint32_t GetApplicationPropertyString( const char *pchAppKey, EVRApplicationProperty eProperty, VR_OUT_STRING() char *pchPropertyValueBuffer, uint32_t unPropertyValueBufferLen, EVRApplicationError *peError = nullptr ) = 0;
 
 		/** Returns a bool value for an application property. Returns false in all error cases. */
 		virtual bool GetApplicationPropertyBool( const char *pchAppKey, EVRApplicationProperty eProperty, EVRApplicationError *peError = nullptr ) = 0;
@@ -1535,6 +1594,8 @@ namespace vr
 		VRSettingsError_IPCFailed = 1,
 		VRSettingsError_WriteFailed = 2,
 		VRSettingsError_ReadFailed = 3,
+		VRSettingsError_JsonParseFailed = 4,
+		VRSettingsError_UnsetSettingHasNoDefault = 5, // This will be returned if the setting does not appear in the appropriate default file and has not been set
 	};
 
 	// The maximum length of a settings key
@@ -1548,21 +1609,24 @@ namespace vr
 		// Returns true if file sync occurred (force or settings dirty)
 		virtual bool Sync( bool bForce = false, EVRSettingsError *peError = nullptr ) = 0;
 
-		virtual bool GetBool( const char *pchSection, const char *pchSettingsKey, bool bDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetBool( const char *pchSection, const char *pchSettingsKey, bool bValue, EVRSettingsError *peError = nullptr ) = 0;
-		virtual int32_t GetInt32( const char *pchSection, const char *pchSettingsKey, int32_t nDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetInt32( const char *pchSection, const char *pchSettingsKey, int32_t nValue, EVRSettingsError *peError = nullptr ) = 0;
-		virtual float GetFloat( const char *pchSection, const char *pchSettingsKey, float flDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetFloat( const char *pchSection, const char *pchSettingsKey, float flValue, EVRSettingsError *peError = nullptr ) = 0;
-		virtual void GetString( const char *pchSection, const char *pchSettingsKey, VR_OUT_STRING() char *pchValue, uint32_t unValueLen, const char *pchDefaultValue, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void SetString( const char *pchSection, const char *pchSettingsKey, const char *pchValue, EVRSettingsError *peError = nullptr ) = 0;
-		
+
+		// Users of the system need to provide a proper default in default.vrsettings in the resources/settings/ directory
+		// of either the runtime or the driver_xxx directory. Otherwise the default will be false, 0, 0.0 or ""
+		virtual bool GetBool( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr ) = 0;
+		virtual int32_t GetInt32( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr ) = 0;
+		virtual float GetFloat( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr ) = 0;
+		virtual void GetString( const char *pchSection, const char *pchSettingsKey, VR_OUT_STRING() char *pchValue, uint32_t unValueLen, EVRSettingsError *peError = nullptr ) = 0;
+
 		virtual void RemoveSection( const char *pchSection, EVRSettingsError *peError = nullptr ) = 0;
 		virtual void RemoveKeyInSection( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr ) = 0;
 	};
 
 	//-----------------------------------------------------------------------------
-	static const char * const IVRSettings_Version = "IVRSettings_001";
+	static const char * const IVRSettings_Version = "IVRSettings_002";
 
 	//-----------------------------------------------------------------------------
 	// steamvr keys
@@ -1587,9 +1651,6 @@ namespace vr
 	static const char * const k_pch_SteamVR_PlayAreaColor_String = "playAreaColor";
 	static const char * const k_pch_SteamVR_ShowStage_Bool = "showStage";
 	static const char * const k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
-	static const char * const k_pch_SteamVR_PowerOffOnExit_Bool = "powerOffOnExit";
-	static const char * const k_pch_SteamVR_StandbyAppRunningTimeout_Float = "standbyAppRunningTimeout";
-	static const char * const k_pch_SteamVR_StandbyNoAppTimeout_Float = "standbyNoAppTimeout";
 	static const char * const k_pch_SteamVR_DirectMode_Bool = "directMode";
 	static const char * const k_pch_SteamVR_DirectModeEdidVid_Int32 = "directModeEdidVid";
 	static const char * const k_pch_SteamVR_DirectModeEdidPid_Int32 = "directModeEdidPid";
@@ -1603,9 +1664,12 @@ namespace vr
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "defaultMirrorView";
 	static const char * const k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
+	static const char * const k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
 	static const char * const k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
-	static const char * const k_pch_SteamVR_AutoLaunchSteamVROnButtonPress = "autoLaunchSteamVROnButtonPress";
-	static const char * const k_pch_SteamVR_UseGenericGraphcisDevice_Bool = "useGenericGraphicsDevice";
+	static const char * const k_pch_SteamVR_EnableHomeApp = "enableHomeApp";
+	static const char * const k_pch_SteamVR_SetInitialDefaultHomeApp = "setInitialDefaultHomeApp";
+	static const char * const k_pch_SteamVR_CycleBackgroundImageTimeSec_Int32 = "CycleBackgroundImageTimeSec";
+	static const char * const k_pch_SteamVR_RetailDemo_Bool = "retailDemo";
 
 
 	//-----------------------------------------------------------------------------
@@ -1617,9 +1681,6 @@ namespace vr
 	static const char * const k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
 
 	static const char * const k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
-	static const char * const k_pch_Lighthouse_LighthouseName_String = "lighthousename";
-	static const char * const k_pch_Lighthouse_MaxIncidenceAngleDegrees_Float = "maxincidenceangledegrees";
-	static const char * const k_pch_Lighthouse_UseLighthouseDirect_Bool = "uselighthousedirect";
 	static const char * const k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
 
 	//-----------------------------------------------------------------------------
@@ -1695,6 +1756,7 @@ namespace vr
 	static const char * const k_pch_Camera_BoundsColorGammaG_Int32 = "cameraBoundsColorGammaG";
 	static const char * const k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
 	static const char * const k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
+	static const char * const k_pch_Camera_BoundsStrength_Int32 = "cameraBoundsStrength";
 
 	//-----------------------------------------------------------------------------
 	// audio keys
@@ -1705,6 +1767,21 @@ namespace vr
 	static const char * const k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
 	static const char * const k_pch_audio_OffRecordDevice_String = "offRecordDevice";
 	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
+
+	//-----------------------------------------------------------------------------
+	// power management keys
+	static const char * const k_pch_Power_Section = "power";
+	static const char * const k_pch_Power_PowerOffOnExit_Bool = "powerOffOnExit";
+	static const char * const k_pch_Power_TurnOffScreensTimeout_Float = "turnOffScreensTimeout";
+	static const char * const k_pch_Power_TurnOffControllersTimeout_Float = "turnOffControllersTimeout";
+	static const char * const k_pch_Power_ReturnToWatchdogTimeout_Float = "returnToWatchdogTimeout";
+	static const char * const k_pch_Power_AutoLaunchSteamVROnButtonPress = "autoLaunchSteamVROnButtonPress";
+
+	//-----------------------------------------------------------------------------
+	// dashboard keys
+	static const char * const k_pch_Dashboard_Section = "dashboard";
+	static const char * const k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
+	static const char * const k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
