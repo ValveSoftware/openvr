@@ -50,6 +50,7 @@ void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 	g_aVertexArray = new float[3 * uSize];
 	g_aTextureArray = new float[2 * uSize];
 
+
 	for (unsigned int iH = 0; iH < uNumH; ++iH)
 	{
 		float fY = float(iH) / (uNumH - 1);
@@ -168,10 +169,10 @@ void display()
 
 int main(int argc, char** argv)
 {
-	std::string sVideoFile;
+	std::string sSourceFile;
 	if (argc >= 2)
 	{
-		sVideoFile = argv[1];
+		sSourceFile = argv[1];
 	}
 	else
 	{
@@ -179,7 +180,7 @@ int main(int argc, char** argv)
 		return -1;
 	}
 
-	#pragma region OpenGL Initialize
+#pragma region OpenGL Initialize
 	// initial glut
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
@@ -196,39 +197,57 @@ int main(int argc, char** argv)
 	// register glut callback functions
 	glutDisplayFunc(display);
 	glutIdleFunc(idle);
-	glutTimerFunc(g_uUpdateTimeInterval,timer,1);
+	glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(specialKey);
 	#pragma endregion
 
-	#pragma region The texture of ball
-	g_cvVideo.open(sVideoFile);
-	g_cvVideo >> g_imgFrame;
+	#pragma region Check Source file
+	bool bVideo = true;
+	std::string sExtName = sSourceFile.substr(sSourceFile.size() - 3);
+	if (sExtName == "jpg" || sExtName == "png")
+	{
+		g_imgFrame = cv::imread(sSourceFile);
+		bVideo = false;
+	}
+	else
+	{
+		g_cvVideo.open(sSourceFile);
+		g_cvVideo >> g_imgFrame;
+	}
+	#pragma endregion
 
+	#pragma region The texture of ball
 	glGenTextures(1, &g_uTextureID);
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_imgFrame.cols, g_imgFrame.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	#pragma endregion
 
 	g_pOpenVRGL = new COpenVRGL();
 	g_pOpenVRGL->Initial(1, 1000);
 
-	g_threadLoadFrame = std::thread([]() {
-		while (g_bRunning)
-		{
-			static std::chrono::system_clock::time_point tpNow, tpLUpdate = std::chrono::system_clock::now();
-			tpNow = std::chrono::system_clock::now();
-			if ((tpNow - tpLUpdate) >= std::chrono::milliseconds(40))
+	if (bVideo == true)
+	{
+		g_threadLoadFrame = std::thread([]() {
+			while (g_bRunning)
 			{
-				g_cvVideo >> g_imgFrame;
-				g_bUpdated = true;
-				tpLUpdate = tpNow;
+				static std::chrono::system_clock::time_point tpNow, tpLUpdate = std::chrono::system_clock::now();
+				tpNow = std::chrono::system_clock::now();
+				if ((tpNow - tpLUpdate) >= std::chrono::milliseconds(40))
+				{
+					g_cvVideo >> g_imgFrame;
+					g_bUpdated = true;
+					tpLUpdate = tpNow;
+				}
 			}
-		}
-	});
+		});
 
-	std::atexit(onExit);
+		std::atexit(onExit);
+	}
+
 	glutMainLoop();
 }
