@@ -2,27 +2,30 @@
 
 ## Support
 
-                            32           64
-GNU/Linux   gcc 4.8+    |   OK      |    OK
-Windows     msvc 12     |   OK      |    OK
-OSX         clang       |   ~       |    ~
+|      Configuration      |    32     |    64     |
+| ----------------------- |:---------:|----------:|
+| GNU/Linux   (gcc 4.8+)  |   OK      |    OK     |
+| Windows     (msvc 12)   |   OK      |    OK     |
+| OSX         (clang)     |   ~       |    ~      |
 
 
 ## Dependencies
 
 * Qt 5.x
 * GLEW 1.11+
-* SDL 2.x
+* SDL 2
 * OpenVR
 
 The only general external dependency is Qt5.
+
 On GNU/Linux, you will need GLEW 1.11 (available on most package manager).
+
 On Windows x64, you will need the SDL2 runtime library.
 
 ## Build
 
-Important:
-you might need to specify Qt5 cmake module path manually when generating the cache for the first time using the CMAKE_PREFIX_PATH macro (see examples below).
+**Important:**
+*you might need to specify Qt5 cmake module path manually when generating the cache for the first time using the __CMAKE_PREFIX_PATH__ macro (see examples below).*
 
 We will use the command-line on Unix and [Git Bash](https://git-for-windows.github.io/) on Windows.
 
@@ -64,4 +67,6 @@ To build, simply type:
 cmake --build . --target all --config Release
 ```
 
-Note : with CMake, the build configuration type (ie. Debug, Release) is set at build time on Windows and at cache generation time on Unix.
+*Note : with CMake, the build configuration type (ie. Debug, Release) is set at build time on Windows and at cache generation time on Unix.*
+
+---
