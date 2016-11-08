@@ -3,7 +3,7 @@
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
-#include <gl/glu.h>
+#include <GL/glu.h>
 #include <stdio.h>
 #include <string>
 #include <cstdlib>
@@ -16,6 +16,10 @@
 
 #if defined(POSIX)
 #include "unistd.h"
+#endif
+
+#ifndef _WIN32
+#define APIENTRY
 #endif
 
 void ThreadSleep( unsigned long nMilliseconds )
