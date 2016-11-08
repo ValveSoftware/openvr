@@ -65,6 +65,6 @@ To build, simply type:
 cmake --build . --target all --config Release
 ```
 
-*Note : with CMake, the build configuration type (ie. Debug, Release) is set at build time on Windows and at cache generation time on Unix.*
+*Note : using CMake, the build configuration type (ie. Debug, Release) is set at Build Time with MSVC and at Cache Generation Time with Makefile.*
 
 ---
