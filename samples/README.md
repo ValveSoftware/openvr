@@ -23,7 +23,7 @@ On Windows x64, you will need the SDL2 runtime library.
 ## Build
 
 **Important:**<br/>
-you might need to specify Qt5 cmake module path manually when generating the cache for the first time using the __CMAKE_PREFIX_PATH__ macro (see examples below).
+*you might need to specify Qt5 cmake module path manually when generating the cache for the first time using the __CMAKE_PREFIX_PATH__ macro (see examples below).*
 
 We will use the command-line on Unix and [Git Bash](https://git-for-windows.github.io/) on Windows.
 
