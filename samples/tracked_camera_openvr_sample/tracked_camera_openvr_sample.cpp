@@ -292,6 +292,8 @@ void CQTrackedCameraOpenVRTest::LogMessage( ELogLevel nLogLevel, const char *pMe
         m_pMessageText->insertPlainText( formattedMessage );
         m_pMessageText->moveCursor( QTextCursor::End, QTextCursor::MoveAnchor );
     }
+
+    fprintf(stderr, "%s", formattedMessage);
 }
 
 //-----------------------------------------------------------------------------

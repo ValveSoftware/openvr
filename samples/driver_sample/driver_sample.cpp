@@ -17,7 +17,7 @@ using namespace vr;
 #if defined(_WIN32)
 #define HMD_DLL_EXPORT extern "C" __declspec( dllexport )
 #define HMD_DLL_IMPORT extern "C" __declspec( dllimport )
-#elif defined(GNUC) || defined(COMPILER_GCC)
+#elif defined(__GNUC__) || defined(COMPILER_GCC) || defined(__APPLE__)
 #define HMD_DLL_EXPORT extern "C" __attribute__((visibility("default")))
 #define HMD_DLL_IMPORT extern "C" 
 #else
@@ -84,7 +84,7 @@ public:
 	virtual void Cleanup() ;
 	virtual bool BIsHmdPresent( const char *pchUserDriverConfigDir ) ;
 	virtual EVRInitError SetDisplayId( const char *pchDisplayId )  { return VRInitError_None; } // Null doesn't care
-	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye ) ;
+	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye, EHiddenAreaMeshType type );
 	virtual uint32_t GetMCImage( uint32_t *pImgWidth, uint32_t *pImgHeight, uint32_t *pChannels, void *pDataBuffer, uint32_t unBufferLen )  { return 0; }
 
 	void WatchdogWakeUp();
@@ -133,11 +133,11 @@ EVRInitError CClientDriver_Sample::Init( vr::EClientDriverMode eDriverMode, vr::
 	{
 		if ( m_pClientDriverHost )
 		{
-			IVRSettings *pSettings = m_pClientDriverHost->GetSettings( vr::IVRSettings_Version );
+			IVRSettings *pSettings = (IVRSettings *) m_pClientDriverHost->GetGenericInterface( IVRSettings_Version );
 
 			if ( !m_bEnableNullDriver && pSettings )
 			{
-				m_bEnableNullDriver = pSettings->GetBool( k_pch_Sample_Section, k_pch_Sample_EnableSampleDriver_Bool, false );
+				m_bEnableNullDriver = pSettings->GetBool( k_pch_Sample_Section, k_pch_Sample_EnableSampleDriver_Bool);
 			}
 		}
 		m_bInit = true;
@@ -199,7 +199,7 @@ bool CClientDriver_Sample::BIsHmdPresent( const char *pchUserDriverConfigDir )
 // ------------------------------------------------------------------------------------------
 // Purpose: Return a mesh that contains the hidden area for the current HMD
 // ------------------------------------------------------------------------------------------
-HiddenAreaMesh_t CClientDriver_Sample::GetHiddenAreaMesh( EVREye eEye )
+HiddenAreaMesh_t CClientDriver_Sample::GetHiddenAreaMesh( EVREye eEye, EHiddenAreaMeshType type )
 {
 	// Null doesn't do visible area meshes
 	vr::HiddenAreaMesh_t mesh;
@@ -224,23 +224,23 @@ public:
 		if ( pSettings )
 		{
 			DriverLog( "Using settings values\n" );
-			m_flIPD = pSettings->GetFloat( k_pch_SteamVR_Section, k_pch_SteamVR_IPD_Float, 0.063f );
+			m_flIPD = pSettings->GetFloat( k_pch_SteamVR_Section, k_pch_SteamVR_IPD_Float );
 
 			char buf[1024];
-			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_SerialNumber_String, buf, sizeof(buf), "SAMPLE1234" );
+			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_SerialNumber_String, buf, sizeof(buf));
 			m_sSerialNumber = buf;
 
-			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_ModelNumber_String, buf, sizeof(buf), "ED209" );
+			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_ModelNumber_String, buf, sizeof(buf));
 			m_sSerialNumber = buf;
 
-			m_nWindowX = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowX_Int32, 0 );
-			m_nWindowY = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowY_Int32, 0 );
-			m_nWindowWidth = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowWidth_Int32, 1920 );
-			m_nWindowHeight = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowHeight_Int32, 1080 );
-			m_nRenderWidth = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderWidth_Int32, 1344 );
-			m_nRenderHeight = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderHeight_Int32, 1512 );
-			m_flSecondsFromVsyncToPhotons = pSettings->GetFloat( k_pch_Sample_Section, k_pch_Sample_SecondsFromVsyncToPhotons_Float, 0.0 );
-			m_flDisplayFrequency = pSettings->GetFloat( k_pch_Sample_Section, k_pch_Sample_DisplayFrequency_Float, 0.0 );
+			m_nWindowX = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowX_Int32);
+			m_nWindowY = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowY_Int32);
+			m_nWindowWidth = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowWidth_Int32);
+			m_nWindowHeight = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowHeight_Int32);
+			m_nRenderWidth = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderWidth_Int32);
+			m_nRenderHeight = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderHeight_Int32);
+			m_flSecondsFromVsyncToPhotons = pSettings->GetFloat( k_pch_Sample_Section, k_pch_Sample_SecondsFromVsyncToPhotons_Float);
+			m_flDisplayFrequency = pSettings->GetFloat( k_pch_Sample_Section, k_pch_Sample_DisplayFrequency_Float);
 		}
 		else
 		{
@@ -285,6 +285,10 @@ public:
 	virtual void Deactivate() 
 	{
 		m_unObjectId = vr::k_unTrackedDeviceIndexInvalid;
+	}
+
+	virtual void EnterStandby()
+	{
 	}
 
 	void *GetComponent( const char *pchComponentNameAndVersion )
@@ -585,7 +589,7 @@ EVRInitError CServerDriver_Sample::Init( IDriverLog *pDriverLog, vr::IServerDriv
 
 	IVRSettings *pSettings = pDriverHost ? pDriverHost->GetSettings( vr::IVRSettings_Version ) : NULL;
 
-	m_bEnableNullDriver = pSettings && pSettings->GetBool( k_pch_Sample_Section, k_pch_Sample_EnableSampleDriver_Bool, false );
+	m_bEnableNullDriver = pSettings && pSettings->GetBool( k_pch_Sample_Section, k_pch_Sample_EnableSampleDriver_Bool );
 
 	if ( !m_bEnableNullDriver )
 		return VRInitError_Init_HmdNotFound;
