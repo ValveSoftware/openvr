@@ -184,7 +184,8 @@ void COpenVRGL::SetupDistortion()
 			u = x*w; v = 1 - y*h;
 			vert.position = { Xoffset + u, -1 + 2 * y*h };
 
-			vr::DistortionCoordinates_t dc0 = m_pVRSystem->ComputeDistortion(vr::Eye_Left, u, v);
+			vr::DistortionCoordinates_t dc0;
+			m_pVRSystem->ComputeDistortion(vr::Eye_Left, u, v, &dc0);
 
 			vert.texCoordRed = { dc0.rfRed[0], 1 - dc0.rfRed[1] };
 			vert.texCoordGreen = { dc0.rfGreen[0], 1 - dc0.rfGreen[1] };
@@ -203,7 +204,8 @@ void COpenVRGL::SetupDistortion()
 			u = x*w; v = 1 - y*h;
 			vert.position = { Xoffset + u, -1 + 2 * y*h };
 
-			vr::DistortionCoordinates_t dc0 = m_pVRSystem->ComputeDistortion(vr::Eye_Right, u, v);
+			vr::DistortionCoordinates_t dc0;
+			m_pVRSystem->ComputeDistortion(vr::Eye_Right, u, v, &dc0);
 
 			vert.texCoordRed = { dc0.rfRed[0], 1 - dc0.rfRed[1] };
 			vert.texCoordGreen = { dc0.rfGreen[0], 1 - dc0.rfGreen[1] };
