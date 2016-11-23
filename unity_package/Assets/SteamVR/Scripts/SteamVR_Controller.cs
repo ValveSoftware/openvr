@@ -65,7 +65,7 @@ public class SteamVR_Controller
 				var system = OpenVR.System;
 				if (system != null)
 				{
-					valid = system.GetControllerStateWithPose(SteamVR_Render.instance.trackingSpace, index, ref state, ref pose);
+					valid = system.GetControllerStateWithPose(SteamVR_Render.instance.trackingSpace, index, ref state, (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VRControllerState_t)), ref pose);
 					UpdateHairTrigger();
 				}
 			}

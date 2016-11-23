@@ -19,6 +19,7 @@
 #include <QtGui/QOpenGLContext>
 #include <QtWidgets/QGraphicsScene>
 #include <QOffscreenSurface>
+class QOpenGLFramebufferObject;
 
 class COpenVROverlayController : public QObject
 {
