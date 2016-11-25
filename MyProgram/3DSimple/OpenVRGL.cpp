@@ -76,16 +76,9 @@ bool COpenVRGL::Initial(float fNear, float fFar)
 
 	// Get render size
 	m_pVRSystem = pVRSystem;
-	pVRSystem->GetRecommendedRenderTargetSize(&m_uWidth, &m_uHeight);
 
-	// Initial OpenGl objects
-	m_aEyeData[0].m_eEye = vr::Eye_Left;
-	m_aEyeData[1].m_eEye = vr::Eye_Right;
-	InitialEyeData(m_aEyeData[0], fNear, fFar);
-	InitialEyeData(m_aEyeData[1], fNear, fFar);
-	CreateShader();
-
-	SetupDistortion();
+	m_pDisplayModule = new CVRDisplay(m_pVRSystem);
+	m_pDisplayModule->Initial(fNear, fFar);
 
 	return true;
 }
@@ -93,21 +86,27 @@ bool COpenVRGL::Initial(float fNear, float fFar)
 void COpenVRGL::Release()
 {
 	vr::VR_Shutdown();
+
+	delete m_pVRSystem;
+	delete m_pDisplayModule;
 }
 
-void COpenVRGL::DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId)
+void COpenVRGL::UpdateHeadPose()
 {
-	// copy left eye frame to frame buffer for display
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, GetEyeData(eEye)->m_nResolveFramebufferId);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, uBufferId);
-
-	glBlitFramebuffer(0, 0, m_uWidth, m_uHeight, 0, 0, m_uWidth, m_uHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
+	vr::VRCompositor()->WaitGetPoses(m_aTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0);
+	if (m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
+	{
+		vr::HmdMatrix34_t& mat = m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
+		m_pDisplayModule->SetHMDPose(glm::mat4(
+			mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
+			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
+			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
+			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
+		));
+	}
 }
 
-void COpenVRGL::InitialEyeData(SEyeData &mEyeData, float fNear, float fFar)
+void COpenVRGL::CVRDisplay::InitialEyeData(SEyeData & mEyeData, float fNear, float fFar)
 {
 	{
 		vr::HmdMatrix34_t mat = m_pVRSystem->GetEyeToHeadTransform(mEyeData.m_eEye);
@@ -162,7 +161,7 @@ void COpenVRGL::InitialEyeData(SEyeData &mEyeData, float fNear, float fFar)
 	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
-void COpenVRGL::SetupDistortion()
+void COpenVRGL::CVRDisplay::SetupDistortion()
 {
 	GLushort m_iLensGridSegmentCountH = 43;
 	GLushort m_iLensGridSegmentCountV = 43;
@@ -291,7 +290,7 @@ void COpenVRGL::SetupDistortion()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
 
-void COpenVRGL::CreateShader()
+void COpenVRGL::CVRDisplay::CreateShader()
 {
 	m_uDistortionShaderProgramId = CompileGLShader(
 		"Distortion",
@@ -338,7 +337,7 @@ void COpenVRGL::CreateShader()
 	);
 }
 
-void COpenVRGL::RenderDistortionAndSubmit()
+void COpenVRGL::CVRDisplay::RenderDistortionAndSubmit()
 {
 	glDisable(GL_DEPTH_TEST);
 	glViewport(0, 0, m_uWidth, m_uHeight);
@@ -374,17 +373,14 @@ void COpenVRGL::RenderDistortionAndSubmit()
 	glFlush();
 }
 
-void COpenVRGL::UpdateHeadPose()
+void COpenVRGL::CVRDisplay::DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId)
 {
-	vr::VRCompositor()->WaitGetPoses(m_aTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0);
-	if (m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
-	{
-		vr::HmdMatrix34_t& mat = m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
-		m_matHMDPose = glm::mat4(
-			mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
-			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
-			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
-			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
-		);
-	}
+	// copy left eye frame to frame buffer for display
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, GetEyeData(eEye)->m_nResolveFramebufferId);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, uBufferId);
+
+	glBlitFramebuffer(0, 0, m_uWidth, m_uHeight, 0, 0, m_uWidth, m_uHeight, GL_COLOR_BUFFER_BIT, GL_LINEAR);
+
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
