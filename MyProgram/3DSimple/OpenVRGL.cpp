@@ -3,14 +3,7 @@
 #include <vector>
 #include <glm/matrix.hpp>
 
-struct VertexDataLens
-{
-	std::array<float, 2> position;
-	std::array<float, 2> texCoordRed;
-	std::array<float, 2> texCoordGreen;
-	std::array<float, 2> texCoordBlue;
-};
-
+#pragma region Internal Functions
 GLuint CompileGLShader(const char * pchShaderName, const char * pchVertexShader, const char * pchFragmentShader)
 {
 	GLuint unProgramID = glCreateProgram();
@@ -65,7 +58,28 @@ GLuint CompileGLShader(const char * pchShaderName, const char * pchVertexShader,
 	return unProgramID;
 }
 
+glm::mat4 ConvertMatrix( const vr::HmdMatrix34_t& mat )
+{
+	return  glm::mat4(
+		mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
+		mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
+		mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
+		mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
+	);
+}
 
+glm::mat4 ConvertMatrix(const vr::HmdMatrix44_t& mat)
+{
+	return  glm::mat4(
+		mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0],
+		mat.m[0][1], mat.m[1][1], mat.m[2][1], mat.m[3][1],
+		mat.m[0][2], mat.m[1][2], mat.m[2][2], mat.m[3][2],
+		mat.m[0][3], mat.m[1][3], mat.m[2][3], mat.m[3][3]
+	);
+}
+#pragma endregion
+
+#pragma region Functions of COpenVRGL
 bool COpenVRGL::Initial(float fNear, float fFar)
 {
 	// Initial VR System
@@ -86,9 +100,14 @@ bool COpenVRGL::Initial(float fNear, float fFar)
 void COpenVRGL::Release()
 {
 	vr::VR_Shutdown();
+	m_pVRSystem = nullptr;
 
-	delete m_pVRSystem;
-	delete m_pDisplayModule;
+	if (m_pDisplayModule != nullptr)
+	{
+		m_pDisplayModule->Release();
+		delete m_pDisplayModule;
+		m_pDisplayModule = nullptr;
+	}
 }
 
 void COpenVRGL::UpdateHeadPose()
@@ -96,35 +115,24 @@ void COpenVRGL::UpdateHeadPose()
 	vr::VRCompositor()->WaitGetPoses(m_aTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0);
 	if (m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
 	{
-		vr::HmdMatrix34_t& mat = m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking;
-		m_pDisplayModule->SetHMDPose(glm::mat4(
-			mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
-			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
-			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
-			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
-		));
+		m_pDisplayModule->SetHMDPose(ConvertMatrix(m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].mDeviceToAbsoluteTracking));
 	}
 }
+#pragma endregion
+
+#pragma region Functions of COpenVRGL::CVRDispla
+struct VertexDataLens
+{
+	std::array<float, 2> position;
+	std::array<float, 2> texCoordRed;
+	std::array<float, 2> texCoordGreen;
+	std::array<float, 2> texCoordBlue;
+};
 
 void COpenVRGL::CVRDisplay::InitialEyeData(SEyeData & mEyeData, float fNear, float fFar)
 {
-	{
-		vr::HmdMatrix34_t mat = m_pVRSystem->GetEyeToHeadTransform(mEyeData.m_eEye);
-		mEyeData.m_matEyePos = glm::mat4(
-			mat.m[0][0], mat.m[1][0], mat.m[2][0], 0.0,
-			mat.m[0][1], mat.m[1][1], mat.m[2][1], 0.0,
-			mat.m[0][2], mat.m[1][2], mat.m[2][2], 0.0,
-			mat.m[0][3], mat.m[1][3], mat.m[2][3], 1.0f
-		);
-	}
-	{
-		vr::HmdMatrix44_t mat = m_pVRSystem->GetProjectionMatrix(mEyeData.m_eEye, fNear, fFar, vr::API_OpenGL);
-		mEyeData.m_matProjection = glm::mat4(
-			mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0],
-			mat.m[0][1], mat.m[1][1], mat.m[2][1], mat.m[3][1],
-			mat.m[0][2], mat.m[1][2], mat.m[2][2], mat.m[3][2],
-			mat.m[0][3], mat.m[1][3], mat.m[2][3], mat.m[3][3]);
-	}
+	mEyeData.m_matEyePos = ConvertMatrix(m_pVRSystem->GetEyeToHeadTransform(mEyeData.m_eEye));
+	mEyeData.m_matProjection = ConvertMatrix(m_pVRSystem->GetProjectionMatrix(mEyeData.m_eEye, fNear, fFar, vr::API_OpenGL));
 
 	{
 		// Frame Buffer
@@ -337,6 +345,28 @@ void COpenVRGL::CVRDisplay::CreateShader()
 	);
 }
 
+void COpenVRGL::CVRDisplay::Release()
+{
+	// TODO release OpenGL resource
+	if(m_uDistortionShaderProgramId!=0)
+		glDeleteProgram(m_uDistortionShaderProgramId);
+	if(m_unLensVAO != 0)
+		glDeleteVertexArrays(1, &m_unLensVAO);
+	if(m_glIDVertBuffer!=0)
+		glDeleteBuffers(1,&m_glIDVertBuffer);
+	if (m_glIDIndexBuffer != 0)
+		glDeleteBuffers(1, &m_glIDIndexBuffer);
+
+	for (auto& rEyeData : m_aEyeData)
+	{
+		glDeleteRenderbuffers(1, &rEyeData.m_nDepthBufferId);
+		glDeleteTextures(1, &rEyeData.m_nRenderTextureId);
+		glDeleteFramebuffers(1, &rEyeData.m_nRenderFramebufferId);
+		glDeleteTextures(1, &rEyeData.m_nResolveTextureId);
+		glDeleteFramebuffers(1, &rEyeData.m_nResolveFramebufferId);
+	}
+}
+
 void COpenVRGL::CVRDisplay::RenderDistortionAndSubmit()
 {
 	glDisable(GL_DEPTH_TEST);
@@ -384,3 +414,4 @@ void COpenVRGL::CVRDisplay::DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId)
 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
 	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0);
 }
+#pragma endregion
