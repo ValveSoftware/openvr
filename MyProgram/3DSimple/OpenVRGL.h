@@ -176,10 +176,10 @@ protected:
 		void Initial();
 		void Release();
 		void Draw(vr::Hmd_Eye eEye, const glm::mat4& matModelView, const glm::mat4& matProjection, const std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount>& aMatrix);
+		void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t uDeviceIndex);
 
 	protected:
 		CGLRenderModel* GetRenderModel(const std::string& sModelName);
-		void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t uDeviceIndex);
 		void SetupRenderModels();
 
 	protected:
@@ -236,6 +236,8 @@ public:
 	{
 		m_pDisplayModule->DrawOnBuffer(eEye, uBufferId);
 	}
+
+	void ProcessEvent();
 
 public:
 	static glm::vec3 GetCameraPos(const glm::mat4& mMatrix)
