@@ -3,6 +3,8 @@
 #pragma region Header Files
 // STD Header
 #include <array>
+#include <map>
+#include <vector>
 
 // OpenGL related header
 #include <GL/glew.h>
@@ -22,7 +24,7 @@ class COpenVRGL
 {
 protected:
 	// Class for display content
-	class CVRDisplay
+	class CDisplay
 	{
 	protected:
 		// Store the data for left and right eye
@@ -42,7 +44,7 @@ protected:
 		};
 
 	public:
-		CVRDisplay(vr::IVRSystem* pVRSystem)
+		CDisplay(vr::IVRSystem* pVRSystem)
 		{
 			m_pVRSystem = pVRSystem;
 			pVRSystem->GetRecommendedRenderTargetSize(&m_uWidth, &m_uHeight);
@@ -57,7 +59,7 @@ protected:
 			m_uiIndexSize = 0;
 		}
 
-		~CVRDisplay()
+		~CDisplay()
 		{
 			Release();
 		}
@@ -86,6 +88,7 @@ protected:
 			glViewport(0, 0, m_uWidth, m_uHeight);
 
 			funcDraw(eEye, m_matHMDPose * pFBD->m_matEyePos, pFBD->m_matProjection);
+
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
 			glDisable(GL_MULTISAMPLE);
@@ -134,11 +137,67 @@ protected:
 		std::array<SEyeData, 2> m_aEyeData;	// data for left and right eye (L/R)
 	};
 
+	// class for device model
+	class CDeviceModel
+	{
+	protected:
+		class CGLRenderModel
+		{
+		public:
+			CGLRenderModel(const std::string& sModelName);
+			~CGLRenderModel();
+			bool Initial(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
+			void Release();
+			void Draw()
+			{
+				glBindVertexArray(m_glVertArray);
+
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, m_glTexture);
+				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_glIndexBuffer);
+				glDrawElements(GL_TRIANGLES, m_unVertexCount, GL_UNSIGNED_SHORT, 0);
+
+				glBindVertexArray(0);
+			}
+
+		protected:
+			GLuint		m_glVertBuffer;
+			GLuint		m_glIndexBuffer;
+			GLuint		m_glVertArray;
+			GLuint		m_glTexture;
+			GLsizei		m_unVertexCount;
+
+			std::string	m_sModelName;
+		};
+
+	public:
+		CDeviceModel(vr::IVRSystem* pVRSystem);
+		~CDeviceModel();
+		void Initial();
+		void Release();
+		void Draw(vr::Hmd_Eye eEye, const glm::mat4& matModelView, const glm::mat4& matProjection, const std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount>& aMatrix);
+
+	protected:
+		CGLRenderModel* GetRenderModel(const std::string& sModelName);
+		void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t uDeviceIndex);
+		void SetupRenderModels();
+
+	protected:
+		vr::IVRSystem*	m_pVRSystem;
+		std::map<std::string, CGLRenderModel*> m_mapRenderModel;
+		std::array<CGLRenderModel*, vr::k_unMaxTrackedDeviceCount>	m_aDeviceModel;
+		std::array<bool, vr::k_unMaxTrackedDeviceCount>				m_aShowDevice;
+
+		GLuint m_unRenderModelProgramID;
+		GLint m_nRenderModelMatrixLocation;
+	};
+
 public:
 	COpenVRGL()
 	{
 		m_pVRSystem = nullptr;
 		m_pDisplayModule = nullptr;
+		m_pDeviceModel = nullptr;
 	}
 
 	~COpenVRGL()
@@ -158,9 +217,15 @@ public:
 		// Update HMD data
 		UpdateHeadPose();
 
+		COpenVRGL* pThis = this;
+		auto funcExtDraw = [funcDraw, pThis](vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection) {
+			funcDraw(eEye, matModelView, matProjection);
+			pThis->m_pDeviceModel->Draw(eEye, matModelView, matProjection, pThis->m_aTrackedDeviceMatrix);
+		};
+
 		// draw left eye and right eye scene
-		m_pDisplayModule->RenderToTarget(funcDraw, vr::Eye_Left);
-		m_pDisplayModule->RenderToTarget(funcDraw, vr::Eye_Right);
+		m_pDisplayModule->RenderToTarget(funcExtDraw, vr::Eye_Left);
+		m_pDisplayModule->RenderToTarget(funcExtDraw, vr::Eye_Right);
 
 		// 2nd pass render, compute distortion
 		m_pDisplayModule->RenderDistortionAndSubmit();
@@ -198,6 +263,8 @@ protected:
 
 protected:
 	vr::IVRSystem*	m_pVRSystem;	// root object of OpenVR HMD
-	CVRDisplay*		m_pDisplayModule;
+	CDisplay*		m_pDisplayModule;
+	CDeviceModel*	m_pDeviceModel;
 	vr::TrackedDevicePose_t m_aTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];	// Matrix array to save transform matrix for all device
+	std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount>	m_aTrackedDeviceMatrix;
 };
