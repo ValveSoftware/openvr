@@ -29,13 +29,13 @@
 
 COpenVRGL* g_pOpenVRGL = nullptr;
 
+bool			g_bVRVideoMode = false;
+
 float*			g_aVertexArray	= nullptr;
 float*			g_aTextureArray	= nullptr;
 unsigned int*	g_aIndexArray	= nullptr;
 unsigned int	g_uIndexNum		= 0;
-uint32_t	g_uWidth		= 0;
-uint32_t	g_uHeight		= 0;
-GLuint		g_uTextureID	= 0;
+GLuint			g_uTextureID	= 0;
 cv::VideoCapture	g_cvVideo;
 cv::Mat				g_imgFrame;
 unsigned int		g_uUpdateTimeInterval = 10;
@@ -95,6 +95,9 @@ void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
 
 void onExit()
 {
+	g_pOpenVRGL->Release();
+	delete g_pOpenVRGL;
+
 	g_bRunning = false;
 	g_threadLoadFrame.join();
 }
@@ -115,7 +118,13 @@ void timer(int iVal)
 		g_bUpdated = false;
 	}
 	glutPostRedisplay();
-	glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
+	glutTimerFunc(g_uUpdateTimeInterval, timer, iVal);
+}
+
+void timer_disp(int iVal)
+{
+	glutPostRedisplay();
+	glutTimerFunc(g_uUpdateTimeInterval, timer_disp, iVal);
 }
 
 void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection)
@@ -125,7 +134,7 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 	glEnable(GL_DEPTH_TEST);
 	glEnable(GL_TEXTURE_2D);
 	glDisable(GL_LIGHTING);
-	glClearColor(0.5f, 0.5f, 0.5f, 1);
+	glClearColor(0.05f, 0.05f, 0.05f, 1);
 
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
@@ -135,13 +144,8 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 	glLoadIdentity();
 	glMultMatrixf(&(glm::inverse(matModelView)[0][0]));
 
-	//glm::vec3	vPos = COpenVRGL::GetCameraPos(matModelView);
-	//glm::vec3	vCen = COpenVRGL::GetCameraDir( matModelView ) + vPos;
-	//glm::vec3	vUp = COpenVRGL::GetCameraUpper( matModelView );
-	//gluLookAt(
-	//	vPos[0], vPos[1], vPos[2],
-	//	vCen[0], vCen[1], vCen[2],
-	//	vUp[0], vUp[1], vUp[2]);
+	if(!g_bVRVideoMode)
+		glTranslatef(0,1.2,0);
 
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
 
@@ -160,11 +164,18 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 // glut display function(draw)
 void display()
 {
+	static std::chrono::high_resolution_clock::time_point tpLast = std::chrono::high_resolution_clock::now(), tpNow;
+
+	g_pOpenVRGL->ProcessEvent();
 	g_pOpenVRGL->Render(DrawOneEye);
 	g_pOpenVRGL->DrawOnBuffer(vr::Eye_Left);
 
 	// swap buffer
 	glutSwapBuffers();
+	
+	tpNow = std::chrono::high_resolution_clock::now();
+	//std::cout << "FPS :" << 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(tpNow - tpLast).count() << "\n";
+	tpLast = tpNow;
 }
 
 int main(int argc, char** argv)
@@ -179,28 +190,6 @@ int main(int argc, char** argv)
 		std::cerr << "No video file" << std::endl;
 		return -1;
 	}
-
-#pragma region OpenGL Initialize
-	// initial glut
-	glutInit(&argc, argv);
-	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
-
-	// create glut window
-	glutInitWindowSize(640, 640);
-	glutCreateWindow("OpenVR Ball");
-
-	// initial glew
-	glewInit();
-
-	BuildBall(50, 51, 51);
-
-	// register glut callback functions
-	glutDisplayFunc(display);
-	glutIdleFunc(idle);
-	glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
-	//glutKeyboardFunc(keyboard);
-	//glutSpecialFunc(specialKey);
-	#pragma endregion
 
 	#pragma region Check Source file
 	bool bVideo = true;
@@ -217,6 +206,34 @@ int main(int argc, char** argv)
 	}
 	#pragma endregion
 
+	#pragma region OpenGL Initialize
+	// initial glut
+	glutInit(&argc, argv);
+	glutInitDisplayMode(GLUT_DOUBLE | GLUT_DEPTH | GLUT_RGB);
+
+	// create glut window
+	glutInitWindowSize(640, 640);
+	glutCreateWindow("OpenVR Ball");
+
+	// initial glew
+	glewInit();
+
+	if(g_bVRVideoMode)
+		BuildBall(10, 51, 51);
+	else
+		BuildBall(0.5, 51, 51);
+
+	// register glut callback functions
+	glutDisplayFunc(display);
+	//glutIdleFunc(idle);
+	if(bVideo)
+		glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
+	else
+		glutTimerFunc(g_uUpdateTimeInterval, timer_disp, 1);
+	//glutKeyboardFunc(keyboard);
+	//glutSpecialFunc(specialKey);
+	#pragma endregion
+
 	#pragma region The texture of ball
 	glGenTextures(1, &g_uTextureID);
 	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
@@ -228,7 +245,7 @@ int main(int argc, char** argv)
 	#pragma endregion
 
 	g_pOpenVRGL = new COpenVRGL();
-	g_pOpenVRGL->Initial(1, 1000);
+	g_pOpenVRGL->Initial(0.1f, 30);
 
 	if (bVideo == true)
 	{
@@ -245,9 +262,8 @@ int main(int argc, char** argv)
 				}
 			}
 		});
-
-		std::atexit(onExit);
 	}
 
+	std::atexit(onExit);
 	glutMainLoop();
 }
