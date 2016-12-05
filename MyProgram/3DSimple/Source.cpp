@@ -27,15 +27,113 @@
 
 #include "OpenVRGL.h"
 
-COpenVRGL* g_pOpenVRGL = nullptr;
+class CBall
+{
+public:
+	void BuildBall(float fSize, unsigned int uNumW, unsigned int uNumH)
+	{
+		// TODO: this is a trivial way, the top and bottom should be simplified
+		unsigned int uSize = uNumW * uNumH;
+		m_aVertexArray = new float[3 * uSize];
+		m_aTextureArray = new float[2 * uSize];
+
+
+		for (unsigned int iH = 0; iH < uNumH; ++iH)
+		{
+			float fY = float(iH) / (uNumH - 1);
+			// pre-compute vertex position
+			float fTmp = fabs(fSize * sin(M_PI * fY));
+			float fVY = fSize * cos(M_PI * fY);
+
+			for (unsigned int iW = 0; iW < uNumW; ++iW)
+			{
+				float fX = float(iW) / (uNumW - 1);
+				unsigned int iIdx = (iH * uNumW + iW);
+
+				// vertex
+				m_aVertexArray[3 * iIdx] = fTmp * cos(2 * M_PI * fX);
+				m_aVertexArray[3 * iIdx + 1] = fVY;
+				m_aVertexArray[3 * iIdx + 2] = fTmp * sin(2 * M_PI * fX);
+
+				// texture
+				m_aTextureArray[2 * iIdx] = fX;
+				m_aTextureArray[2 * iIdx + 1] = fY;
+			}
+		}
+
+		m_uIndexNum = 6 * (uNumW - 1) * (uNumH - 1);
+		m_aIndexArray = new unsigned int[m_uIndexNum];
+		for (unsigned int iH = 0; iH < uNumH - 1; ++iH)
+		{
+			for (unsigned int iW = 0; iW < uNumW - 1; ++iW)
+			{
+				unsigned int iVIdx = (iH * uNumW + iW);
+				unsigned int iIIdx = 6 * (iH * (uNumW - 1) + iW);
+
+				m_aIndexArray[iIIdx] = iVIdx;
+				m_aIndexArray[iIIdx + 1] = iVIdx + uNumW;
+				m_aIndexArray[iIIdx + 2] = iVIdx + uNumW + 1;
+				m_aIndexArray[iIIdx + 3] = iVIdx;
+				m_aIndexArray[iIIdx + 4] = iVIdx + uNumW + 1;
+				m_aIndexArray[iIIdx + 5] = iVIdx + 1;
+			}
+		}
+	}
+
+	void Initial(const cv::Mat& rImg)
+	{
+		glGenTextures(1, &m_uTextureID);
+		glBindTexture(GL_TEXTURE_2D, m_uTextureID);
+		glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, rImg.cols, rImg.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, rImg.data);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+		glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+	}
+
+	void Release()
+	{
+		glDeleteTextures(1, &m_uTextureID);
+	}
+
+	void Draw()
+	{
+		glBindTexture(GL_TEXTURE_2D, m_uTextureID);
+
+		glEnableClientState(GL_VERTEX_ARRAY);
+		glVertexPointer(3, GL_FLOAT, 0, m_aVertexArray);
+
+		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+		glTexCoordPointer(2, GL_FLOAT, 0, m_aTextureArray);
+
+		glDrawElements(GL_TRIANGLES, m_uIndexNum, GL_UNSIGNED_INT, m_aIndexArray);
+
+		glDisableClientState(GL_VERTEX_ARRAY);
+		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+
+	}
+
+	void UpdateTexture(const cv::Mat& rImg )
+	{
+		glBindTexture(GL_TEXTURE_2D, m_uTextureID);
+		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, rImg.cols, rImg.rows, GL_BGR, GL_UNSIGNED_BYTE, rImg.data);
+
+	}
+
+protected:
+	float*			m_aVertexArray = nullptr;
+	float*			m_aTextureArray = nullptr;
+	unsigned int*	m_aIndexArray = nullptr;
+	unsigned int	m_uIndexNum = 0;
+	GLuint			m_uTextureID = 0;
+};
+
+COpenVRGL*	g_pOpenVRGL = nullptr;
+CBall		g_Ball;
 
 bool			g_bVRVideoMode = false;
 
-float*			g_aVertexArray	= nullptr;
-float*			g_aTextureArray	= nullptr;
-unsigned int*	g_aIndexArray	= nullptr;
-unsigned int	g_uIndexNum		= 0;
-GLuint			g_uTextureID	= 0;
 cv::VideoCapture	g_cvVideo;
 cv::Mat				g_imgFrame;
 unsigned int		g_uUpdateTimeInterval = 10;
@@ -43,55 +141,7 @@ std::thread			g_threadLoadFrame;
 bool				g_bUpdated = false;
 bool				g_bRunning = true;
 
-void BuildBall( float fSize, unsigned int uNumW, unsigned int uNumH)
-{
-	// TODO: this is a trivial way, the top and bottom should be simplified
-	unsigned int uSize = uNumW * uNumH;
-	g_aVertexArray = new float[3 * uSize];
-	g_aTextureArray = new float[2 * uSize];
 
-
-	for (unsigned int iH = 0; iH < uNumH; ++iH)
-	{
-		float fY = float(iH) / (uNumH - 1);
-		// pre-compute vertex position
-		float fTmp	= fabs( fSize * sin(M_PI * fY) );
-		float fVY	= fSize * cos(M_PI * fY);
-
-		for (unsigned int iW = 0; iW < uNumW; ++iW)
-		{
-			float fX = float(iW) / (uNumW - 1);
-			unsigned int iIdx = ( iH * uNumW + iW );
-
-			// vertex
-			g_aVertexArray[3 * iIdx]		= fTmp * cos( 2 * M_PI * fX);
-			g_aVertexArray[3 * iIdx + 1]	= fVY;
-			g_aVertexArray[3 * iIdx + 2]	= fTmp * sin(2 * M_PI * fX);
-
-			// texture
-			g_aTextureArray[2 * iIdx]		= fX;
-			g_aTextureArray[2 * iIdx + 1]	= fY;
-		}
-	}
-
-	g_uIndexNum = 6 * ( uNumW - 1 ) * ( uNumH - 1 );
-	g_aIndexArray = new unsigned int[g_uIndexNum];
-	for (unsigned int iH = 0; iH < uNumH - 1; ++iH)
-	{
-		for (unsigned int iW = 0; iW < uNumW - 1; ++iW)
-		{
-			unsigned int iVIdx = (iH * uNumW + iW);
-			unsigned int iIIdx = 6 * (iH * ( uNumW - 1 ) + iW);
-
-			g_aIndexArray[iIIdx]		= iVIdx;
-			g_aIndexArray[iIIdx + 1]	= iVIdx + uNumW;
-			g_aIndexArray[iIIdx + 2]	= iVIdx + uNumW + 1;
-			g_aIndexArray[iIIdx + 3]	= iVIdx;
-			g_aIndexArray[iIIdx + 4]	= iVIdx + uNumW + 1;
-			g_aIndexArray[iIIdx + 5]	= iVIdx + 1;
-		}
-	}
-}
 
 void onExit()
 {
@@ -102,19 +152,11 @@ void onExit()
 	g_threadLoadFrame.join();
 }
 
-// glut idle function
-void idle()
-{
-	glutPostRedisplay();
-}
-
 void timer(int iVal)
 {
 	if (g_bUpdated)
 	{
-		glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, g_imgFrame.cols, g_imgFrame.rows, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
-
+		g_Ball.UpdateTexture(g_imgFrame);
 		g_bUpdated = false;
 	}
 	glutPostRedisplay();
@@ -147,18 +189,7 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 	if(!g_bVRVideoMode)
 		glTranslatef(0,1.2,0);
 
-	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-
-	glEnableClientState(GL_VERTEX_ARRAY);
-	glVertexPointer(3, GL_FLOAT, 0, g_aVertexArray);
-
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glTexCoordPointer(2, GL_FLOAT, 0, g_aTextureArray);
-
-	glDrawElements(GL_TRIANGLES, g_uIndexNum, GL_UNSIGNED_INT, g_aIndexArray);
-
-	glDisableClientState(GL_VERTEX_ARRAY);
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	g_Ball.Draw();
 }
 
 // glut display function(draw)
@@ -168,13 +199,13 @@ void display()
 
 	g_pOpenVRGL->ProcessEvent();
 	g_pOpenVRGL->Render(DrawOneEye);
-	g_pOpenVRGL->DrawOnBuffer(vr::Eye_Left);
+	//g_pOpenVRGL->DrawOnBuffer(vr::Eye_Left);
 
 	// swap buffer
 	glutSwapBuffers();
 	
 	tpNow = std::chrono::high_resolution_clock::now();
-	//std::cout << "FPS :" << 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(tpNow - tpLast).count() << "\n";
+	std::cout << "FPS :" << 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(tpNow - tpLast).count() << "\n";
 	tpLast = tpNow;
 }
 
@@ -219,9 +250,10 @@ int main(int argc, char** argv)
 	glewInit();
 
 	if(g_bVRVideoMode)
-		BuildBall(10, 51, 51);
+		g_Ball.BuildBall(10, 51, 51);
 	else
-		BuildBall(0.5, 51, 51);
+		g_Ball.BuildBall(0.5, 51, 51);
+	g_Ball.Initial(g_imgFrame);
 
 	// register glut callback functions
 	glutDisplayFunc(display);
@@ -232,16 +264,6 @@ int main(int argc, char** argv)
 		glutTimerFunc(g_uUpdateTimeInterval, timer_disp, 1);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(specialKey);
-	#pragma endregion
-
-	#pragma region The texture of ball
-	glGenTextures(1, &g_uTextureID);
-	glBindTexture(GL_TEXTURE_2D, g_uTextureID);
-	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, g_imgFrame.cols, g_imgFrame.rows, 0, GL_BGR, GL_UNSIGNED_BYTE, g_imgFrame.data);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
-	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 	#pragma endregion
 
 	g_pOpenVRGL = new COpenVRGL();
