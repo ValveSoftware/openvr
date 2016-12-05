@@ -86,7 +86,7 @@ public class SteamVR_RenderModelEditor : Editor
 
 		GUILayout.BeginHorizontal();
 		GUILayout.Label("Model Override");
-		var selected = EditorGUILayout.Popup(renderModelIndex, renderModelNames);
+		var selected = EditorGUILayout.Popup(renderModelIndex, renderModelNames ?? new string[0]);
 		if (selected != renderModelIndex)
 		{
 			renderModelIndex = selected;
