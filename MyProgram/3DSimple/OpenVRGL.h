@@ -51,12 +51,6 @@ protected:
 
 			m_aEyeData[0].m_eEye = vr::Eye_Left;
 			m_aEyeData[1].m_eEye = vr::Eye_Right;
-
-			m_uDistortionShaderProgramId = 0;
-			m_unLensVAO = 0;
-			m_glIDVertBuffer = 0;
-			m_glIDIndexBuffer = 0;
-			m_uiIndexSize = 0;
 		}
 
 		~CDisplay()
@@ -68,14 +62,11 @@ protected:
 		{
 			InitialEyeData(m_aEyeData[0], fNear, fFar);
 			InitialEyeData(m_aEyeData[1], fNear, fFar);
-			CreateShader();
-
-			SetupDistortion();
 		}
 
 		void Release();
 
-		void RenderDistortionAndSubmit();
+		void Submit();
 
 		template<typename RENDER_FUNC>
 		void RenderToTarget(RENDER_FUNC funcDraw, vr::Hmd_Eye eEye)
@@ -112,8 +103,6 @@ protected:
 
 	protected:
 		void InitialEyeData(SEyeData &mEyeData, float fNear, float fFar);
-		void SetupDistortion();
-		void CreateShader();
 		SEyeData* GetEyeData(vr::Hmd_Eye eEye)
 		{
 			if (eEye == vr::Eye_Right)
@@ -126,12 +115,6 @@ protected:
 		vr::IVRSystem*	m_pVRSystem;
 		uint32_t		m_uWidth;			// Width of frame buffer
 		uint32_t		m_uHeight;			// Height of frame buffer
-
-		GLuint			m_uDistortionShaderProgramId;	// Shader program id for 2nd-pass render for distortion
-		GLuint			m_unLensVAO;					// Vertex Array Object of the grid mesh of distortion
-		GLuint			m_glIDVertBuffer;				// Vertex buffer of m_unLensVAO
-		GLuint			m_glIDIndexBuffer;				// Index Buffer of m_unLensVAO
-		unsigned int	m_uiIndexSize;					// length of m_glIDIndexBuffer
 
 		glm::mat4		m_matHMDPose;	// transform matrix of HMD
 		std::array<SEyeData, 2> m_aEyeData;	// data for left and right eye (L/R)
@@ -228,7 +211,7 @@ public:
 		m_pDisplayModule->RenderToTarget(funcExtDraw, vr::Eye_Right);
 
 		// 2nd pass render, compute distortion
-		m_pDisplayModule->RenderDistortionAndSubmit();
+		m_pDisplayModule->Submit();
 	}
 
 	// Draw the frame buffer of one eye to another frame buffer
