@@ -80,7 +80,7 @@ public class SteamVR_Overlay : MonoBehaviour
 
 			var tex = new Texture_t();
 			tex.handle = texture.GetNativeTexturePtr();
-			tex.eType = SteamVR.instance.graphicsAPI;
+			tex.eType = SteamVR.instance.textureType;
 			tex.eColorSpace = EColorSpace.Auto;
             overlay.SetOverlayTexture(handle, ref tex);
 

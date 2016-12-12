@@ -163,7 +163,7 @@ public class SteamVR_LoadLevel : MonoBehaviour
 				{
 					var texture = new Texture_t();
 					texture.handle = renderTexture.GetNativeTexturePtr();
-					texture.eType = SteamVR.instance.graphicsAPI;
+					texture.eType = SteamVR.instance.textureType;
 					texture.eColorSpace = EColorSpace.Auto;
 					overlay.SetOverlayTexture(progressBarOverlayHandle, ref texture);
 				}
@@ -274,7 +274,7 @@ public class SteamVR_LoadLevel : MonoBehaviour
 			{
 				var texture = new Texture_t();
 				texture.handle = loadingScreen.GetNativeTexturePtr();
-				texture.eType = SteamVR.instance.graphicsAPI;
+				texture.eType = SteamVR.instance.textureType;
 				texture.eColorSpace = EColorSpace.Auto;
 				overlay.SetOverlayTexture(loadingScreenOverlayHandle, ref texture);
 			}
@@ -487,7 +487,7 @@ public class SteamVR_LoadLevel : MonoBehaviour
 			overlay.SetOverlayWidthInMeters(handle, widthInMeters);
 
 			// D3D textures are upside-down in Unity to match OpenGL.
-			if (SteamVR.instance.graphicsAPI == EGraphicsAPIConvention.API_DirectX)
+			if (SteamVR.instance.textureType == ETextureType.DirectX)
 			{
 				var textureBounds = new VRTextureBounds_t();
 				textureBounds.uMin = 0;

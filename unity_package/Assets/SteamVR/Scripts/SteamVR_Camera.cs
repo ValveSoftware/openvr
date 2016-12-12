@@ -386,7 +386,7 @@ public class SteamVR_Camera : MonoBehaviour
 	void OnPreRender()
 	{
 		if (flip)
-			flip.enabled = (SteamVR_Render.Top() == this && SteamVR.instance.graphicsAPI == EGraphicsAPIConvention.API_DirectX);
+			flip.enabled = (SteamVR_Render.Top() == this && SteamVR.instance.textureType == ETextureType.DirectX);
 
 		var headCam = head.GetComponent<Camera>();
 		if (headCam != null)
