@@ -34,11 +34,13 @@ public class SteamVR_LaserPointer : MonoBehaviour
         holder = new GameObject();
         holder.transform.parent = this.transform;
         holder.transform.localPosition = Vector3.zero;
+        holder.transform.localRotation = Quaternion.identity;
 
         pointer = GameObject.CreatePrimitive(PrimitiveType.Cube);
         pointer.transform.parent = holder.transform;
         pointer.transform.localScale = new Vector3(thickness, thickness, 100f);
         pointer.transform.localPosition = new Vector3(0f, 0f, 50f);
+        pointer.transform.localRotation = Quaternion.identity;
         BoxCollider collider = pointer.GetComponent<BoxCollider>();
         if (addRigidBody)
         {
