@@ -188,7 +188,7 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 	GLuint unTexture = m_pFbo->texture();
 	if( unTexture != 0 )
 	{
-        vr::Texture_t texture = {(void*)unTexture, vr::API_OpenGL, vr::ColorSpace_Auto };
+        vr::Texture_t texture = {(void*)unTexture, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
         vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, &texture );
 	}
 }
