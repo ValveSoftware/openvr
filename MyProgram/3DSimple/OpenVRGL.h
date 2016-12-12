@@ -120,6 +120,22 @@ protected:
 		std::array<SEyeData, 2> m_aEyeData;	// data for left and right eye (L/R)
 	};
 
+	// Controller of HTC Vive
+	class CController
+	{
+	public:
+		CController(vr::IVRSystem*	pVRSystem, vr::TrackedDeviceIndex_t	uIdx);
+		bool ProcessEvent(vr::ETrackingUniverseOrigin eOrigin);
+
+	protected:
+		vr::TrackedDeviceIndex_t	m_uIdx;
+		vr::ETrackedControllerRole	m_eRole;
+		vr::IVRSystem*				m_pVRSystem;
+
+		vr::TrackedDevicePose_t		m_Pose;
+		vr::VRControllerState_t		m_eState;
+	};
+
 	// class for device model
 	class CDeviceModel
 	{
@@ -163,7 +179,6 @@ protected:
 
 	protected:
 		CGLRenderModel* GetRenderModel(const std::string& sModelName);
-		void SetupRenderModels();
 
 	protected:
 		vr::IVRSystem*	m_pVRSystem;
@@ -197,9 +212,6 @@ public:
 	template<typename RENDER_FUNC>
 	void Render(RENDER_FUNC funcDraw)
 	{
-		// Update HMD data
-		UpdateHeadPose();
-
 		COpenVRGL* pThis = this;
 		auto funcExtDraw = [funcDraw, pThis](vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection) {
 			funcDraw(eEye, matModelView, matProjection);
@@ -212,6 +224,9 @@ public:
 
 		// 2nd pass render, compute distortion
 		m_pDisplayModule->Submit();
+
+		// Update HMD data
+		UpdateHeadPose();
 	}
 
 	// Draw the frame buffer of one eye to another frame buffer
@@ -246,10 +261,15 @@ public:
 protected:
 	void UpdateHeadPose();
 
+	void InitializeDevice();
+	void AddNewDevice(vr::TrackedDeviceIndex_t uIdx);
+	void RemoveDevice(vr::TrackedDeviceIndex_t uIdx);
+
 protected:
 	vr::IVRSystem*	m_pVRSystem;	// root object of OpenVR HMD
 	CDisplay*		m_pDisplayModule;
 	CDeviceModel*	m_pDeviceModel;
 	vr::TrackedDevicePose_t m_aTrackedDevicePose[vr::k_unMaxTrackedDeviceCount];	// Matrix array to save transform matrix for all device
 	std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount>	m_aTrackedDeviceMatrix;
+	std::map<vr::TrackedDeviceIndex_t,CController>	m_vController;
 };

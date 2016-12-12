@@ -114,6 +114,7 @@ bool COpenVRGL::Initial(float fNear, float fFar)
 	m_pDeviceModel = new CDeviceModel(m_pVRSystem);
 	m_pDeviceModel->Initial();
 
+	InitializeDevice();
 	return true;
 }
 
@@ -139,10 +140,11 @@ void COpenVRGL::ProcessEvent()
 		switch (evtDevice.eventType)
 		{
 		case vr::VREvent_TrackedDeviceActivated:
-			m_pDeviceModel->SetupRenderModelForTrackedDevice(evtDevice.trackedDeviceIndex);
+			AddNewDevice(evtDevice.trackedDeviceIndex);
 			break;
 
 		case vr::VREvent_TrackedDeviceDeactivated:
+			RemoveDevice(evtDevice.trackedDeviceIndex);
 			break;
 
 		case vr::VREvent_TrackedDeviceUpdated:
@@ -153,39 +155,9 @@ void COpenVRGL::ProcessEvent()
 		}
 	}
 
-	// Process SteamVR controller state
-	vr::VRControllerState_t eState;
-	for (vr::TrackedDeviceIndex_t unDevice = 0; unDevice < vr::k_unMaxTrackedDeviceCount; unDevice++)
+	for (auto& rController : m_vController)
 	{
-		if (m_pVRSystem->GetControllerState(unDevice, &eState, sizeof(eState)))
-		{
-			if (eState.ulButtonTouched != 0)
-			{
-				if (eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu))
-				{
-					std::cout << "[App]";
-				}
-				if (eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip))
-				{
-					std::cout << "[Grip]";
-				}
-				if (eState.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger))
-				{
-					std::cout << "[Trigger:";
-					if (eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger))
-						std::cout << "down";
-					std::cout << "](" << eState.rAxis[1].x << ")";
-				}
-				if (eState.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad))
-				{
-					std::cout << "[Touch:";
-					if (eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad))
-						std::cout << "down";
-					std::cout << "](" << eState.rAxis[0].x << "/" << eState.rAxis[0].y << ")";
-				}
-				std::cout << std::endl;
-			}
-		}
+		rController.second.ProcessEvent(vr::TrackingUniverseStanding);
 	}
 }
 
@@ -202,6 +174,42 @@ void COpenVRGL::UpdateHeadPose()
 	if (m_aTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid)
 	{
 		m_pDisplayModule->SetHMDPose(m_aTrackedDeviceMatrix[vr::k_unTrackedDeviceIndex_Hmd]);
+	}
+
+}
+
+void COpenVRGL::InitializeDevice()
+{
+	for (uint32_t uDeviceIndex = vr::k_unTrackedDeviceIndex_Hmd + 1; uDeviceIndex < vr::k_unMaxTrackedDeviceCount; ++uDeviceIndex)
+	{
+		if (m_pVRSystem->IsTrackedDeviceConnected(uDeviceIndex))
+			AddNewDevice(uDeviceIndex);
+	}
+}
+
+void COpenVRGL::AddNewDevice(vr::TrackedDeviceIndex_t uIdx)
+{
+	vr::ETrackedDeviceClass eDeviceType = m_pVRSystem->GetTrackedDeviceClass(uIdx);
+	if (eDeviceType == vr::TrackedDeviceClass_Controller)
+	{
+		if (m_vController.find(uIdx) == m_vController.end())
+		{
+			m_vController.emplace(uIdx, CController(m_pVRSystem, uIdx));
+		}
+	}
+
+	m_pDeviceModel->SetupRenderModelForTrackedDevice(uIdx);
+}
+
+void COpenVRGL::RemoveDevice(vr::TrackedDeviceIndex_t uIdx)
+{
+	vr::ETrackedDeviceClass eDeviceType = m_pVRSystem->GetTrackedDeviceClass(uIdx);
+	if (eDeviceType == vr::TrackedDeviceClass_Controller)
+	{
+		if (m_vController.find(uIdx) != m_vController.end())
+		{
+			m_vController.erase(uIdx);
+		}
 	}
 
 }
@@ -276,7 +284,7 @@ void COpenVRGL::CDisplay::Submit()
 	vr::Texture_t rightEyeTexture = { (void*)m_aEyeData[1].m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture);
 
-	glFlush();
+	//glFinish();
 }
 
 void COpenVRGL::CDisplay::DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId)
@@ -423,8 +431,6 @@ void COpenVRGL::CDeviceModel::Initial()
 
 	);
 	m_nRenderModelMatrixLocation = glGetUniformLocation(m_unRenderModelProgramID, "matrix");
-
-	SetupRenderModels();
 }
 
 void COpenVRGL::CDeviceModel::Release()
@@ -533,17 +539,45 @@ void COpenVRGL::CDeviceModel::SetupRenderModelForTrackedDevice(vr::TrackedDevice
 	}
 }
 
-void COpenVRGL::CDeviceModel::SetupRenderModels()
-{
-	if (m_pVRSystem == nullptr)
-		return;
-
-	for (uint32_t uDeviceIndex = vr::k_unTrackedDeviceIndex_Hmd + 1; uDeviceIndex < vr::k_unMaxTrackedDeviceCount; ++uDeviceIndex)
-	{
-		if (!m_pVRSystem->IsTrackedDeviceConnected(uDeviceIndex))
-			continue;
-
-		SetupRenderModelForTrackedDevice(uDeviceIndex);
-	}
-}
 #pragma endregion
+
+COpenVRGL::CController::CController(vr::IVRSystem * pVRSystem, vr::TrackedDeviceIndex_t uIdx)
+{
+	m_pVRSystem = pVRSystem;
+	m_uIdx = uIdx;
+	m_eRole = m_pVRSystem->GetControllerRoleForTrackedDeviceIndex(uIdx);
+}
+
+bool COpenVRGL::CController::ProcessEvent(vr::ETrackingUniverseOrigin eOrigin)
+{
+	if (m_pVRSystem->GetControllerStateWithPose(eOrigin, m_uIdx, &m_eState, sizeof(m_eState), &m_Pose))
+	{
+		if (m_eState.ulButtonTouched != 0)
+		{
+			if (m_eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_ApplicationMenu))
+			{
+				std::cout << "[App]";
+			}
+			if (m_eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip))
+			{
+				std::cout << "[Grip]";
+			}
+			if (m_eState.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger))
+			{
+				std::cout << "[Trigger:";
+				if (m_eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Trigger))
+					std::cout << "down";
+				std::cout << "](" << m_eState.rAxis[1].x << ")";
+			}
+			if (m_eState.ulButtonTouched & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad))
+			{
+				std::cout << "[Touch:";
+				if (m_eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad))
+					std::cout << "down";
+				std::cout << "](" << m_eState.rAxis[0].x << "/" << m_eState.rAxis[0].y << ")";
+			}
+			std::cout << std::endl;
+		}
+	}
+	return false;
+}
