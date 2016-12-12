@@ -191,15 +191,17 @@ public class SteamVR_ControllerManager : MonoBehaviour
 			rightIndex = system.GetTrackedDeviceIndexForControllerRole(ETrackedControllerRole.RightHand);
 		}
 
-		// If neither role has been assigned yet, try hooking up at least the right controller.
+		// If neither role has been assigned yet, try hooking up all available controllers in arbitrary order.
 		if (leftIndex == OpenVR.k_unTrackedDeviceIndexInvalid && rightIndex == OpenVR.k_unTrackedDeviceIndexInvalid)
 		{
 			for (uint deviceIndex = 0; deviceIndex < connected.Length; deviceIndex++)
 			{
+				if (objectIndex >= objects.Length)
+					break;
+
 				if (connected[deviceIndex])
 				{
 					SetTrackedDeviceIndex(objectIndex++, deviceIndex);
-					break;
 				}
 			}
 		}
