@@ -10,6 +10,8 @@
 #include <GL/glew.h>
 #include <GL/freeglut.h>
 
+#include <glm/gtx/transform.hpp>
+
 // OpenCV
 #include <opencv2/core.hpp>
 #include <opencv2/imgcodecs.hpp>
@@ -131,6 +133,7 @@ protected:
 
 COpenVRGL*	g_pOpenVRGL = nullptr;
 CBall		g_Ball;
+glm::mat4	g_matBall;
 
 bool			g_bVRVideoMode = false;
 
@@ -140,8 +143,6 @@ unsigned int		g_uUpdateTimeInterval = 10;
 std::thread			g_threadLoadFrame;
 bool				g_bUpdated = false;
 bool				g_bRunning = true;
-
-
 
 void onExit()
 {
@@ -154,19 +155,34 @@ void onExit()
 
 void timer(int iVal)
 {
+	glutPostRedisplay();
+
 	if (g_bUpdated)
 	{
 		g_Ball.UpdateTexture(g_imgFrame);
 		g_bUpdated = false;
 	}
-	glutPostRedisplay();
-	glutTimerFunc(g_uUpdateTimeInterval, timer, iVal);
-}
 
-void timer_disp(int iVal)
-{
-	glutPostRedisplay();
-	glutTimerFunc(g_uUpdateTimeInterval, timer_disp, iVal);
+	auto* pController = g_pOpenVRGL->GetController(vr::TrackedControllerRole_Invalid);
+	if (pController != nullptr)
+	{
+		if (pController->m_eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_SteamVR_Touchpad))
+		{
+			glm::mat4 matHMD = g_pOpenVRGL->GetHMDPose();
+			glm::vec3 vecSide = COpenVRGL::GetCameraSide(matHMD);
+			glm::vec3 vecUp = COpenVRGL::GetCameraUpper(matHMD);
+
+			glm::vec2 vTP(pController->m_eState.rAxis[0].x, pController->m_eState.rAxis[0].y);
+
+			g_matBall = glm::rotate(0.05f * vTP.x, vecUp) * glm::rotate(-0.05f * vTP.y, vecSide) * g_matBall;
+		}
+		if (pController->m_eState.ulButtonPressed & vr::ButtonMaskFromId(vr::k_EButton_Grip))
+		{
+			g_matBall = glm::mat4();
+		}
+	}
+
+	glutTimerFunc(g_uUpdateTimeInterval, timer, iVal);
 }
 
 void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection)
@@ -189,6 +205,8 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 	if(!g_bVRVideoMode)
 		glTranslatef(0,1.2,0);
 
+	glMultMatrixf(&g_matBall[0][0]);
+
 	g_Ball.Draw();
 }
 
@@ -199,13 +217,13 @@ void display()
 
 	g_pOpenVRGL->ProcessEvent();
 	g_pOpenVRGL->Render(DrawOneEye);
-	//g_pOpenVRGL->DrawOnBuffer(vr::Eye_Left);
+	g_pOpenVRGL->DrawOnBuffer(vr::Eye_Left);
 
 	// swap buffer
 	glutSwapBuffers();
 	
 	tpNow = std::chrono::high_resolution_clock::now();
-	std::cout << "FPS :" << 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(tpNow - tpLast).count() << "\n";
+	//std::cout << "FPS :" << 1000.0f / std::chrono::duration_cast<std::chrono::milliseconds>(tpNow - tpLast).count() << "\n";
 	tpLast = tpNow;
 }
 
@@ -258,10 +276,7 @@ int main(int argc, char** argv)
 	// register glut callback functions
 	glutDisplayFunc(display);
 	//glutIdleFunc(idle);
-	if(bVideo)
-		glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
-	else
-		glutTimerFunc(g_uUpdateTimeInterval, timer_disp, 1);
+	glutTimerFunc(g_uUpdateTimeInterval, timer, 1);
 	//glutKeyboardFunc(keyboard);
 	//glutSpecialFunc(specialKey);
 	#pragma endregion

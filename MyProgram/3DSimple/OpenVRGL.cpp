@@ -161,6 +161,23 @@ void COpenVRGL::ProcessEvent()
 	}
 }
 
+COpenVRGL::CController* COpenVRGL::GetController(vr::ETrackedControllerRole eRole)
+{
+	if (m_vController.size() > 0)
+	{
+		if (eRole == vr::TrackedControllerRole_Invalid)
+			return &(m_vController.begin()->second);
+
+		for (auto it : m_vController)
+		{
+			if (it.second.m_eRole == eRole)
+				return &(it.second);
+		}
+	}
+
+	return nullptr;
+}
+
 void COpenVRGL::UpdateHeadPose()
 {
 	vr::VRCompositor()->WaitGetPoses(m_aTrackedDevicePose, vr::k_unMaxTrackedDeviceCount, NULL, 0);
@@ -211,7 +228,6 @@ void COpenVRGL::RemoveDevice(vr::TrackedDeviceIndex_t uIdx)
 			m_vController.erase(uIdx);
 		}
 	}
-
 }
 #pragma endregion
 

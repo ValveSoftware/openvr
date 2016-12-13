@@ -126,12 +126,17 @@ protected:
 	public:
 		CController(vr::IVRSystem*	pVRSystem, vr::TrackedDeviceIndex_t	uIdx);
 		bool ProcessEvent(vr::ETrackingUniverseOrigin eOrigin);
+		vr::TrackedDeviceIndex_t id() const
+		{
+			return m_uIdx;
+		}
 
 	protected:
 		vr::TrackedDeviceIndex_t	m_uIdx;
-		vr::ETrackedControllerRole	m_eRole;
 		vr::IVRSystem*				m_pVRSystem;
 
+	public:
+		vr::ETrackedControllerRole	m_eRole;
 		vr::TrackedDevicePose_t		m_Pose;
 		vr::VRControllerState_t		m_eState;
 	};
@@ -236,6 +241,12 @@ public:
 	}
 
 	void ProcessEvent();
+
+	CController* GetController(vr::ETrackedControllerRole eRole);
+	glm::mat4 GetHMDPose() const
+	{
+		return m_aTrackedDeviceMatrix[vr::k_unTrackedDeviceIndex_Hmd];
+	}
 
 public:
 	static glm::vec3 GetCameraPos(const glm::mat4& mMatrix)
