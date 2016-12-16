@@ -58,10 +58,13 @@ public class SteamVR_TrackedObject : MonoBehaviour
 
 		if (origin != null)
 		{
-			pose = new SteamVR_Utils.RigidTransform(origin) * pose;
+			// Scale pose based on desired (origin) scale
 			pose.pos.x *= origin.localScale.x;
 			pose.pos.y *= origin.localScale.y;
 			pose.pos.z *= origin.localScale.z;
+			// Determine new pose, relative to desired origin
+			pose = new SteamVR_Utils.RigidTransform(origin) * pose;
+			// Set our position & rotation
 			transform.position = pose.pos;
 			transform.rotation = pose.rot;
 		}
