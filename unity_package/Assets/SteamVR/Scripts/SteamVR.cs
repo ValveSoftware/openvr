@@ -160,7 +160,7 @@ public class SteamVR : System.IDisposable
 	public Vector2 tanHalfFov { get; private set; }
 	public VRTextureBounds_t[] textureBounds { get; private set; }
 	public SteamVR_Utils.RigidTransform[] eyes { get; private set; }
-	public EGraphicsAPIConvention graphicsAPI;
+	public ETextureType textureType;
 
 	// hmd properties
 	public string hmd_TrackingSystemName { get { return GetStringProperty(ETrackedDeviceProperty.Prop_TrackingSystemName_String); } }
@@ -323,9 +323,9 @@ public class SteamVR : System.IDisposable
 			new SteamVR_Utils.RigidTransform(hmd.GetEyeToHeadTransform(EVREye.Eye_Right)) };
 
 		if (SystemInfo.graphicsDeviceVersion.StartsWith("OpenGL"))
-			graphicsAPI = EGraphicsAPIConvention.API_OpenGL;
+			textureType = ETextureType.OpenGL;
 		else
-			graphicsAPI = EGraphicsAPIConvention.API_DirectX;
+			textureType = ETextureType.DirectX;
 
 		SteamVR_Utils.Event.Listen("initializing", OnInitializing);
 		SteamVR_Utils.Event.Listen("calibrating", OnCalibrating);
