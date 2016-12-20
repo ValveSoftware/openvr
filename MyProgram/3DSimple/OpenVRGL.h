@@ -5,6 +5,7 @@
 #include <array>
 #include <map>
 #include <vector>
+#include <set>
 
 // OpenGL related header
 #include <GL/glew.h>
@@ -58,16 +59,22 @@ protected:
 			Release();
 		}
 
+		// Initialize data for 2 eyes.
+		// Must call after OpenGL initialized.
 		void Initial( float fNear, float fFar)
 		{
 			InitialEyeData(m_aEyeData[0], fNear, fFar);
 			InitialEyeData(m_aEyeData[1], fNear, fFar);
 		}
 
+		// Release related resource
 		void Release();
 
+		// Submit data to show in VR
 		void Submit();
 
+		// Render one-eye scene to texture
+		// The draw call: void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjection)
 		template<typename RENDER_FUNC>
 		void RenderToTarget(RENDER_FUNC funcDraw, vr::Hmd_Eye eEye)
 		{
@@ -96,6 +103,7 @@ protected:
 		// Draw the frame buffer of one eye to another frame buffer
 		void DrawOnBuffer(vr::Hmd_Eye eEye, GLuint uBufferId = 0);
 
+		// Set HMD position
 		void SetHMDPose(glm::mat4 matPose)
 		{
 			m_matHMDPose = matPose;
@@ -116,7 +124,7 @@ protected:
 		uint32_t		m_uWidth;			// Width of frame buffer
 		uint32_t		m_uHeight;			// Height of frame buffer
 
-		glm::mat4		m_matHMDPose;	// transform matrix of HMD
+		glm::mat4		m_matHMDPose;		// transform matrix of HMD
 		std::array<SEyeData, 2> m_aEyeData;	// data for left and right eye (L/R)
 	};
 
@@ -125,7 +133,10 @@ protected:
 	{
 	public:
 		CController(vr::IVRSystem*	pVRSystem, vr::TrackedDeviceIndex_t	uIdx);
+
+		// Process controller event
 		bool ProcessEvent(vr::ETrackingUniverseOrigin eOrigin);
+
 		vr::TrackedDeviceIndex_t id() const
 		{
 			return m_uIdx;
@@ -144,14 +155,21 @@ protected:
 	// class for device model
 	class CDeviceModel
 	{
-	protected:
+	public:
+		// The Device render model
 		class CGLRenderModel
 		{
 		public:
 			CGLRenderModel(const std::string& sModelName);
 			~CGLRenderModel();
+
+			// Initialize model to render
 			bool Initial(const vr::RenderModel_t & vrModel, const vr::RenderModel_TextureMap_t & vrDiffuseTexture);
+
+			// release resource
 			void Release();
+
+			// draw call
 			void Draw()
 			{
 				glBindVertexArray(m_glVertArray);
@@ -177,22 +195,29 @@ protected:
 	public:
 		CDeviceModel(vr::IVRSystem* pVRSystem);
 		~CDeviceModel();
+
+		// Initialize
 		void Initial();
+
+		// Release resource
 		void Release();
+
+		// Draw all device models
 		void Draw(vr::Hmd_Eye eEye, const glm::mat4& matModelView, const glm::mat4& matProjection, const std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount>& aMatrix);
+
+		// setup a device model
 		void SetupRenderModelForTrackedDevice(vr::TrackedDeviceIndex_t uDeviceIndex);
 
-	protected:
 		CGLRenderModel* GetRenderModel(const std::string& sModelName);
 
 	protected:
 		vr::IVRSystem*	m_pVRSystem;
-		std::map<std::string, CGLRenderModel*> m_mapRenderModel;
+		std::map<std::string, CGLRenderModel*>						m_mapRenderModel;
 		std::array<CGLRenderModel*, vr::k_unMaxTrackedDeviceCount>	m_aDeviceModel;
 		std::array<bool, vr::k_unMaxTrackedDeviceCount>				m_aShowDevice;
 
-		GLuint m_unRenderModelProgramID;
-		GLint m_nRenderModelMatrixLocation;
+		GLuint	m_unRenderModelProgramID;
+		GLint	m_nRenderModelMatrixLocation;
 	};
 
 public:
@@ -201,6 +226,7 @@ public:
 		m_pVRSystem = nullptr;
 		m_pDisplayModule = nullptr;
 		m_pDeviceModel = nullptr;
+		m_setShowDevice = {vr::TrackedDeviceClass_Controller};
 	}
 
 	~COpenVRGL()
@@ -211,6 +237,7 @@ public:
 	// Initialize.
 	bool Initial(float fNear, float fFar);
 
+	// Release
 	void Release();
 
 	// Render frame
@@ -240,9 +267,11 @@ public:
 		m_pDisplayModule->DrawOnBuffer(eEye, uBufferId);
 	}
 
+	// Process Event
 	void ProcessEvent();
 
 	CController* GetController(vr::ETrackedControllerRole eRole);
+
 	glm::mat4 GetHMDPose() const
 	{
 		return m_aTrackedDeviceMatrix[vr::k_unTrackedDeviceIndex_Hmd];
@@ -271,10 +300,12 @@ public:
 
 protected:
 	void UpdateHeadPose();
-
 	void InitializeDevice();
 	void AddNewDevice(vr::TrackedDeviceIndex_t uIdx);
 	void RemoveDevice(vr::TrackedDeviceIndex_t uIdx);
+
+public:
+	std::set<vr::ETrackedDeviceClass> m_setShowDevice;
 
 protected:
 	vr::IVRSystem*	m_pVRSystem;	// root object of OpenVR HMD

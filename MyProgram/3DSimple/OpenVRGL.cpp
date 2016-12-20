@@ -215,7 +215,8 @@ void COpenVRGL::AddNewDevice(vr::TrackedDeviceIndex_t uIdx)
 		}
 	}
 
-	m_pDeviceModel->SetupRenderModelForTrackedDevice(uIdx);
+	if(m_setShowDevice.find(eDeviceType) != m_setShowDevice.end())
+		m_pDeviceModel->SetupRenderModelForTrackedDevice(uIdx);
 }
 
 void COpenVRGL::RemoveDevice(vr::TrackedDeviceIndex_t uIdx)
@@ -456,7 +457,11 @@ void COpenVRGL::CDeviceModel::Release()
 
 	for (auto& pModel : m_mapRenderModel)
 		delete pModel.second;
+
 	m_mapRenderModel.clear();
+
+	for (auto& rModel : m_aDeviceModel)
+		rModel = nullptr;
 }
 
 void COpenVRGL::CDeviceModel::Draw(vr::Hmd_Eye eEye, const glm::mat4& matModelView, const glm::mat4& matProjection, const std::array<glm::mat4, vr::k_unMaxTrackedDeviceCount>& aMatrix)
@@ -547,7 +552,7 @@ void COpenVRGL::CDeviceModel::SetupRenderModelForTrackedDevice(vr::TrackedDevice
 	// try to find a model we've already set up
 	std::string sRenderModelName = GetTrackedDeviceString(m_pVRSystem, uDeviceIndex, vr::Prop_RenderModelName_String);
 	CGLRenderModel *pRenderModel = GetRenderModel(sRenderModelName);
-	std::cout << " > Device << " << uDeviceIndex << " : " << sRenderModelName << std::endl;
+	std::cout << " > Device " << uDeviceIndex << " : " << sRenderModelName << std::endl;
 	if (pRenderModel != nullptr)
 	{
 		m_aDeviceModel[uDeviceIndex] = pRenderModel;
@@ -557,6 +562,7 @@ void COpenVRGL::CDeviceModel::SetupRenderModelForTrackedDevice(vr::TrackedDevice
 
 #pragma endregion
 
+#pragma region Functions of COpenVRGL::CController
 COpenVRGL::CController::CController(vr::IVRSystem * pVRSystem, vr::TrackedDeviceIndex_t uIdx)
 {
 	m_pVRSystem = pVRSystem;
@@ -597,3 +603,4 @@ bool COpenVRGL::CController::ProcessEvent(vr::ETrackingUniverseOrigin eOrigin)
 	}
 	return false;
 }
+#pragma endregion
