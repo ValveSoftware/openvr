@@ -244,7 +244,7 @@ struct VertexDataLens
 void COpenVRGL::CDisplay::InitialEyeData(SEyeData & mEyeData, float fNear, float fFar)
 {
 	mEyeData.m_matEyePos = ConvertMatrix(m_pVRSystem->GetEyeToHeadTransform(mEyeData.m_eEye));
-	mEyeData.m_matProjection = ConvertMatrix(m_pVRSystem->GetProjectionMatrix(mEyeData.m_eEye, fNear, fFar, vr::API_OpenGL));
+	mEyeData.m_matProjection = ConvertMatrix(m_pVRSystem->GetProjectionMatrix(mEyeData.m_eEye, fNear, fFar));
 
 	{
 		// Frame Buffer
@@ -296,9 +296,9 @@ void COpenVRGL::CDisplay::Release()
 void COpenVRGL::CDisplay::Submit()
 {
 	// submit
-	vr::Texture_t leftEyeTexture = { (void*)m_aEyeData[0].m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	vr::Texture_t leftEyeTexture = { (void*)m_aEyeData[0].m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture);
-	vr::Texture_t rightEyeTexture = { (void*)m_aEyeData[1].m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+	vr::Texture_t rightEyeTexture = { (void*)m_aEyeData[1].m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 	vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture);
 
 	//glFinish();
