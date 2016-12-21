@@ -231,7 +231,7 @@ public:
 			m_sSerialNumber = buf;
 
 			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_ModelNumber_String, buf, sizeof(buf));
-			m_sSerialNumber = buf;
+			m_sModelNumber = buf;
 
 			m_nWindowX = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowX_Int32);
 			m_nWindowY = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowY_Int32);
