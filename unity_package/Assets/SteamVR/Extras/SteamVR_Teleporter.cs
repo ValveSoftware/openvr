@@ -67,7 +67,7 @@ public class SteamVR_Teleporter : MonoBehaviour
             else if (teleportType == TeleportType.TeleportTypeUseCollider)
             {
                 RaycastHit hitInfo;
-                Physics.Raycast(ray, out hitInfo);
+                hasGroundTarget = Physics.Raycast(ray, out hitInfo);
                 dist = hitInfo.distance;
             }
             else
