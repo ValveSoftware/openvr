@@ -1,4 +1,4 @@
-﻿//======= Copyright (c) Valve Corporation, All rights reserved. ===============
+//======= Copyright (c) Valve Corporation, All rights reserved. ===============
 //
 // Purpose: Handles rendering of all SteamVR_Cameras
 //
@@ -149,17 +149,25 @@ public class SteamVR_Render : MonoBehaviour
 #endif
 		}
 	}
-
+	
+	private WaitForEndOfFrame waitingForEndOfFrame = new WaitForEndOfFrame();
+	
 	private IEnumerator RenderLoop()
 	{
-		while (true)
+		
+		var overlay = SteamVR_Overlay.instance;
+        	var compositor = OpenVR.Compositor;
+		
+		while (Application.isPlaying)
 		{
-			yield return new WaitForEndOfFrame();
+			yield return waitingForEndOfFrame;
 
 			if (pauseRendering)
 				continue;
 
-			var compositor = OpenVR.Compositor;
+			if (compositor == null)
+                		compositor = OpenVR.Compositor;
+				
 			if (compositor != null)
 			{
 				if (!compositor.CanRenderScene())
@@ -181,7 +189,9 @@ public class SteamVR_Render : MonoBehaviour
 #endif
 			}
 
-			var overlay = SteamVR_Overlay.instance;
+			if (overlay == null)
+                		overlay = SteamVR_Overlay.instance;
+				
 			if (overlay != null)
 				overlay.UpdateOverlay();
 
