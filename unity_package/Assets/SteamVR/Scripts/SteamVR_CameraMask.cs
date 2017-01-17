@@ -5,8 +5,8 @@
 //=============================================================================
 
 using UnityEngine;
-using System.Collections;
 using UnityEngine.Rendering;
+using Valve.VR;
 
 [RequireComponent(typeof(MeshFilter), typeof(MeshRenderer))]
 public class SteamVR_CameraMask : MonoBehaviour
@@ -39,7 +39,7 @@ public class SteamVR_CameraMask : MonoBehaviour
 	{
 		int i = (int)eye;
 		if (hiddenAreaMeshes[i] == null)
-			hiddenAreaMeshes[i] = SteamVR_Utils.CreateHiddenAreaMesh(vr.hmd.GetHiddenAreaMesh(eye), vr.textureBounds[i]);
+			hiddenAreaMeshes[i] = SteamVR_Utils.CreateHiddenAreaMesh(vr.hmd.GetHiddenAreaMesh(eye, EHiddenAreaMeshType.k_eHiddenAreaMesh_Standard), vr.textureBounds[i]);
 		meshFilter.mesh = hiddenAreaMeshes[i];
 	}
 

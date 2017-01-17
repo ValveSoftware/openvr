@@ -28,7 +28,7 @@ public class SteamVR_GameView : MonoBehaviour
 		if (mirrorTexture == null)
 		{
 			var vr = SteamVR.instance;
-			if (vr != null && vr.graphicsAPI == EGraphicsAPIConvention.API_DirectX)
+			if (vr != null && vr.textureType == ETextureType.DirectX)
             {
 				var tex = new Texture2D(2, 2);
 				var nativeTex = System.IntPtr.Zero;

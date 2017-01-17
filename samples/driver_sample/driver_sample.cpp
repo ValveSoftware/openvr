@@ -17,7 +17,7 @@ using namespace vr;
 #if defined(_WIN32)
 #define HMD_DLL_EXPORT extern "C" __declspec( dllexport )
 #define HMD_DLL_IMPORT extern "C" __declspec( dllimport )
-#elif defined(GNUC) || defined(COMPILER_GCC)
+#elif defined(__GNUC__) || defined(COMPILER_GCC) || defined(__APPLE__)
 #define HMD_DLL_EXPORT extern "C" __attribute__((visibility("default")))
 #define HMD_DLL_IMPORT extern "C" 
 #else
@@ -84,7 +84,7 @@ public:
 	virtual void Cleanup() ;
 	virtual bool BIsHmdPresent( const char *pchUserDriverConfigDir ) ;
 	virtual EVRInitError SetDisplayId( const char *pchDisplayId )  { return VRInitError_None; } // Null doesn't care
-	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye ) ;
+	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye, EHiddenAreaMeshType type );
 	virtual uint32_t GetMCImage( uint32_t *pImgWidth, uint32_t *pImgHeight, uint32_t *pChannels, void *pDataBuffer, uint32_t unBufferLen )  { return 0; }
 
 	void WatchdogWakeUp();
@@ -133,7 +133,7 @@ EVRInitError CClientDriver_Sample::Init( vr::EClientDriverMode eDriverMode, vr::
 	{
 		if ( m_pClientDriverHost )
 		{
-			IVRSettings *pSettings = m_pClientDriverHost->GetSettings( vr::IVRSettings_Version );
+			IVRSettings *pSettings = (IVRSettings *) m_pClientDriverHost->GetGenericInterface( IVRSettings_Version );
 
 			if ( !m_bEnableNullDriver && pSettings )
 			{
@@ -199,7 +199,7 @@ bool CClientDriver_Sample::BIsHmdPresent( const char *pchUserDriverConfigDir )
 // ------------------------------------------------------------------------------------------
 // Purpose: Return a mesh that contains the hidden area for the current HMD
 // ------------------------------------------------------------------------------------------
-HiddenAreaMesh_t CClientDriver_Sample::GetHiddenAreaMesh( EVREye eEye )
+HiddenAreaMesh_t CClientDriver_Sample::GetHiddenAreaMesh( EVREye eEye, EHiddenAreaMeshType type )
 {
 	// Null doesn't do visible area meshes
 	vr::HiddenAreaMesh_t mesh;

@@ -81,14 +81,14 @@ public:
 	void AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata );
 	void AddCubeVertex( float fl0, float fl1, float fl2, float fl3, float fl4, std::vector<float> &vertdata );
 
-	void DrawControllers();
+	void RenderControllerAxes();
 
 	bool SetupStereoRenderTargets();
-	void SetupDistortion();
+	void SetupCompanionWindow();
 	void SetupCameras();
 
 	void RenderStereoTargets();
-	void RenderDistortion();
+	void RenderCompanionWindow();
 	void RenderScene( vr::Hmd_Eye nEye );
 
 	Matrix4 GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye );
@@ -120,9 +120,9 @@ private:
 	bool m_rbShowTrackedDevice[ vr::k_unMaxTrackedDeviceCount ];
 
 private: // SDL bookkeeping
-	SDL_Window *m_pWindow;
-	uint32_t m_nWindowWidth;
-	uint32_t m_nWindowHeight;
+	SDL_Window *m_pCompanionWindow;
+	uint32_t m_nCompanionWindowWidth;
+	uint32_t m_nCompanionWindowHeight;
 
 	SDL_GLContext m_pContext;
 
@@ -153,10 +153,10 @@ private: // OpenGL bookkeeping
 
 	GLuint m_glSceneVertBuffer;
 	GLuint m_unSceneVAO;
-	GLuint m_unLensVAO;
-	GLuint m_glIDVertBuffer;
-	GLuint m_glIDIndexBuffer;
-	unsigned int m_uiIndexSize;
+	GLuint m_unCompanionWindowVAO;
+	GLuint m_glCompanionWindowIDVertBuffer;
+	GLuint m_glCompanionWindowIDIndexBuffer;
+	unsigned int m_uiCompanionWindowIndexSize;
 
 	GLuint m_glControllerVertBuffer;
 	GLuint m_unControllerVAO;
@@ -176,16 +176,16 @@ private: // OpenGL bookkeeping
 		Vector2 texCoord;
 	};
 
-	struct VertexDataLens
+	struct VertexDataWindow
 	{
 		Vector2 position;
-		Vector2 texCoordRed;
-		Vector2 texCoordGreen;
-		Vector2 texCoordBlue;
+		Vector2 texCoord;
+
+		VertexDataWindow( const Vector2 & pos, const Vector2 tex ) :  position(pos), texCoord(tex) {	}
 	};
 
 	GLuint m_unSceneProgramID;
-	GLuint m_unLensProgramID;
+	GLuint m_unCompanionWindowProgramID;
 	GLuint m_unControllerTransformProgramID;
 	GLuint m_unRenderModelProgramID;
 
@@ -214,7 +214,8 @@ private: // OpenGL bookkeeping
 };
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Outputs a set of optional arguments to debugging output, using
+//          the printf format setting specified in fmt*.
 //-----------------------------------------------------------------------------
 void dprintf( const char *fmt, ... )
 {
@@ -235,12 +236,12 @@ void dprintf( const char *fmt, ... )
 // Purpose: Constructor
 //-----------------------------------------------------------------------------
 CMainApplication::CMainApplication( int argc, char *argv[] )
-	: m_pWindow(NULL)
+	: m_pCompanionWindow(NULL)
 	, m_pContext(NULL)
-	, m_nWindowWidth( 1280 )
-	, m_nWindowHeight( 720 )
+	, m_nCompanionWindowWidth( 640 )
+	, m_nCompanionWindowHeight( 320 )
 	, m_unSceneProgramID( 0 )
-	, m_unLensProgramID( 0 )
+	, m_unCompanionWindowProgramID( 0 )
 	, m_unControllerTransformProgramID( 0 )
 	, m_unRenderModelProgramID( 0 )
 	, m_pHMD( NULL )
@@ -252,7 +253,6 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 	, m_bGlFinishHack( true )
 	, m_glControllerVertBuffer( 0 )
 	, m_unControllerVAO( 0 )
-	, m_unLensVAO( 0 )
 	, m_unSceneVAO( 0 )
 	, m_nSceneMatrixLocation( -1 )
 	, m_nControllerMatrixLocation( -1 )
@@ -366,8 +366,6 @@ bool CMainApplication::BInit()
 
 	int nWindowPosX = 700;
 	int nWindowPosY = 100;
-	m_nWindowWidth = 1280;
-	m_nWindowHeight = 720;
 	Uint32 unWindowFlags = SDL_WINDOW_OPENGL | SDL_WINDOW_SHOWN;
 
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
@@ -380,14 +378,14 @@ bool CMainApplication::BInit()
 	if( m_bDebugOpenGL )
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG );
 
-	m_pWindow = SDL_CreateWindow( "hellovr_sdl", nWindowPosX, nWindowPosY, m_nWindowWidth, m_nWindowHeight, unWindowFlags );
-	if (m_pWindow == NULL)
+	m_pCompanionWindow = SDL_CreateWindow( "hellovr", nWindowPosX, nWindowPosY, m_nCompanionWindowWidth, m_nCompanionWindowHeight, unWindowFlags );
+	if (m_pCompanionWindow == NULL)
 	{
 		printf( "%s - Window could not be created! SDL Error: %s\n", __FUNCTION__, SDL_GetError() );
 		return false;
 	}
 
-	m_pContext = SDL_GL_CreateContext(m_pWindow);
+	m_pContext = SDL_GL_CreateContext(m_pCompanionWindow);
 	if (m_pContext == NULL)
 	{
 		printf( "%s - OpenGL context could not be created! SDL Error: %s\n", __FUNCTION__, SDL_GetError() );
@@ -416,8 +414,8 @@ bool CMainApplication::BInit()
 	m_strDriver = GetTrackedDeviceString( m_pHMD, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_TrackingSystemName_String );
 	m_strDisplay = GetTrackedDeviceString( m_pHMD, vr::k_unTrackedDeviceIndex_Hmd, vr::Prop_SerialNumber_String );
 
-	std::string strWindowTitle = "hellovr_sdl - " + m_strDriver + " " + m_strDisplay;
-	SDL_SetWindowTitle( m_pWindow, strWindowTitle.c_str() );
+	std::string strWindowTitle = "hellovr - " + m_strDriver + " " + m_strDisplay;
+	SDL_SetWindowTitle( m_pCompanionWindow, strWindowTitle.c_str() );
 	
 	// cube array
  	m_iSceneVolumeWidth = m_iSceneVolumeInit;
@@ -453,7 +451,9 @@ bool CMainApplication::BInit()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Outputs the string in message to debugging output.
+//          All other parameters are ignored.
+//          Does not return any meaningful value or reference.
 //-----------------------------------------------------------------------------
 void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const char* message, const void* userParam)
 {
@@ -462,7 +462,10 @@ void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Initialize OpenGL. Returns true if OpenGL has been successfully
+//          initialized, false if shaders could not be created.
+//          If failure occurred in a module other than shaders, the function
+//          may return true or throw an error. 
 //-----------------------------------------------------------------------------
 bool CMainApplication::BInitGL()
 {
@@ -480,8 +483,7 @@ bool CMainApplication::BInitGL()
 	SetupScene();
 	SetupCameras();
 	SetupStereoRenderTargets();
-	SetupDistortion();
-
+	SetupCompanionWindow();
 	SetupRenderModels();
 
 	return true;
@@ -489,7 +491,8 @@ bool CMainApplication::BInitGL()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Initialize Compositor. Returns true if the compositor was
+//          successfully initialized, false otherwise.
 //-----------------------------------------------------------------------------
 bool CMainApplication::BInitCompositor()
 {
@@ -527,8 +530,6 @@ void CMainApplication::Shutdown()
 		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
 		glDebugMessageCallback(nullptr, nullptr);
 		glDeleteBuffers(1, &m_glSceneVertBuffer);
-		glDeleteBuffers(1, &m_glIDVertBuffer);
-		glDeleteBuffers(1, &m_glIDIndexBuffer);
 
 		if ( m_unSceneProgramID )
 		{
@@ -542,9 +543,9 @@ void CMainApplication::Shutdown()
 		{
 			glDeleteProgram( m_unRenderModelProgramID );
 		}
-		if ( m_unLensProgramID )
+		if ( m_unCompanionWindowProgramID )
 		{
-			glDeleteProgram( m_unLensProgramID );
+			glDeleteProgram( m_unCompanionWindowProgramID );
 		}
 
 		glDeleteRenderbuffers( 1, &leftEyeDesc.m_nDepthBufferId );
@@ -559,9 +560,9 @@ void CMainApplication::Shutdown()
 		glDeleteTextures( 1, &rightEyeDesc.m_nResolveTextureId );
 		glDeleteFramebuffers( 1, &rightEyeDesc.m_nResolveFramebufferId );
 
-		if( m_unLensVAO != 0 )
+		if( m_unCompanionWindowVAO != 0 )
 		{
-			glDeleteVertexArrays( 1, &m_unLensVAO );
+			glDeleteVertexArrays( 1, &m_unCompanionWindowVAO );
 		}
 		if( m_unSceneVAO != 0 )
 		{
@@ -573,10 +574,10 @@ void CMainApplication::Shutdown()
 		}
 	}
 
-	if( m_pWindow )
+	if( m_pCompanionWindow )
 	{
-		SDL_DestroyWindow(m_pWindow);
-		m_pWindow = NULL;
+		SDL_DestroyWindow(m_pCompanionWindow);
+		m_pCompanionWindow = NULL;
 	}
 
 	SDL_Quit();
@@ -621,7 +622,7 @@ bool CMainApplication::HandleInput()
 	for( vr::TrackedDeviceIndex_t unDevice = 0; unDevice < vr::k_unMaxTrackedDeviceCount; unDevice++ )
 	{
 		vr::VRControllerState_t state;
-		if( m_pHMD->GetControllerState( unDevice, &state ) )
+		if( m_pHMD->GetControllerState( unDevice, &state, sizeof(state) ) )
 		{
 			m_rbShowTrackedDevice[ unDevice ] = state.ulButtonPressed == 0;
 		}
@@ -686,13 +687,13 @@ void CMainApplication::RenderFrame()
 	// for now as fast as possible
 	if ( m_pHMD )
 	{
-		DrawControllers();
+		RenderControllerAxes();
 		RenderStereoTargets();
-		RenderDistortion();
+		RenderCompanionWindow();
 
-		vr::Texture_t leftEyeTexture = {(void*)leftEyeDesc.m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+		vr::Texture_t leftEyeTexture = {(void*)leftEyeDesc.m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture );
-		vr::Texture_t rightEyeTexture = {(void*)rightEyeDesc.m_nResolveTextureId, vr::API_OpenGL, vr::ColorSpace_Gamma };
+		vr::Texture_t rightEyeTexture = {(void*)rightEyeDesc.m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
 	}
 
@@ -707,7 +708,7 @@ void CMainApplication::RenderFrame()
 
 	// SwapWindow
 	{
-		SDL_GL_SwapWindow( m_pWindow );
+		SDL_GL_SwapWindow( m_pCompanionWindow );
 	}
 
 	// Clear
@@ -900,55 +901,35 @@ bool CMainApplication::CreateAllShaders()
 		return false;
 	}
 
-	m_unLensProgramID = CompileGLShader(
-		"Distortion",
+	m_unCompanionWindowProgramID = CompileGLShader(
+		"CompanionWindow",
 
 		// vertex shader
 		"#version 410 core\n"
 		"layout(location = 0) in vec4 position;\n"
-		"layout(location = 1) in vec2 v2UVredIn;\n"
-		"layout(location = 2) in vec2 v2UVGreenIn;\n"
-		"layout(location = 3) in vec2 v2UVblueIn;\n"
-		"noperspective  out vec2 v2UVred;\n"
-		"noperspective  out vec2 v2UVgreen;\n"
-		"noperspective  out vec2 v2UVblue;\n"
+		"layout(location = 1) in vec2 v2UVIn;\n"
+		"noperspective out vec2 v2UV;\n"
 		"void main()\n"
 		"{\n"
-		"	v2UVred = v2UVredIn;\n"
-		"	v2UVgreen = v2UVGreenIn;\n"
-		"	v2UVblue = v2UVblueIn;\n"
+		"	v2UV = v2UVIn;\n"
 		"	gl_Position = position;\n"
 		"}\n",
 
 		// fragment shader
 		"#version 410 core\n"
 		"uniform sampler2D mytexture;\n"
-
-		"noperspective  in vec2 v2UVred;\n"
-		"noperspective  in vec2 v2UVgreen;\n"
-		"noperspective  in vec2 v2UVblue;\n"
-
+		"noperspective in vec2 v2UV;\n"
 		"out vec4 outputColor;\n"
-
 		"void main()\n"
 		"{\n"
-		"	float fBoundsCheck = ( (dot( vec2( lessThan( v2UVgreen.xy, vec2(0.05, 0.05)) ), vec2(1.0, 1.0))+dot( vec2( greaterThan( v2UVgreen.xy, vec2( 0.95, 0.95)) ), vec2(1.0, 1.0))) );\n"
-		"	if( fBoundsCheck > 1.0 )\n"
-		"	{ outputColor = vec4( 0, 0, 0, 1.0 ); }\n"
-		"	else\n"
-		"	{\n"
-		"		float red = texture(mytexture, v2UVred).x;\n"
-		"		float green = texture(mytexture, v2UVgreen).y;\n"
-		"		float blue = texture(mytexture, v2UVblue).z;\n"
-		"		outputColor = vec4( red, green, blue, 1.0  ); }\n"
+		"		outputColor = texture(mytexture, v2UV);\n"
 		"}\n"
 		);
-
 
 	return m_unSceneProgramID != 0 
 		&& m_unControllerTransformProgramID != 0
 		&& m_unRenderModelProgramID != 0
-		&& m_unLensProgramID != 0;
+		&& m_unCompanionWindowProgramID != 0;
 }
 
 
@@ -1031,8 +1012,6 @@ void CMainApplication::SetupScene()
 	glGenBuffers( 1, &m_glSceneVertBuffer );
 	glBindBuffer( GL_ARRAY_BUFFER, m_glSceneVertBuffer );
 	glBufferData( GL_ARRAY_BUFFER, sizeof(float) * vertdataarray.size(), &vertdataarray[0], GL_STATIC_DRAW);
-
-	glBindBuffer( GL_ARRAY_BUFFER, m_glSceneVertBuffer );
 
 	GLsizei stride = sizeof(VertexDataScene);
 	uintptr_t offset = 0;
@@ -1128,7 +1107,7 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 //-----------------------------------------------------------------------------
 // Purpose: Draw all of the controllers as X/Y/Z lines
 //-----------------------------------------------------------------------------
-void CMainApplication::DrawControllers()
+void CMainApplication::RenderControllerAxes()
 {
 	// don't draw controllers if somebody else has input focus
 	if( m_pHMD->IsInputFocusCapturedByAnotherProcess() )
@@ -1240,7 +1219,8 @@ void CMainApplication::SetupCameras()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Creates a frame buffer. Returns true if the buffer was set up.
+//          Returns false if the setup failed.
 //-----------------------------------------------------------------------------
 bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDesc &framebufferDesc )
 {
@@ -1300,131 +1280,49 @@ bool CMainApplication::SetupStereoRenderTargets()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CMainApplication::SetupDistortion()
+void CMainApplication::SetupCompanionWindow()
 {
 	if ( !m_pHMD )
 		return;
 
-	GLushort m_iLensGridSegmentCountH = 43;
-	GLushort m_iLensGridSegmentCountV = 43;
+	std::vector<VertexDataWindow> vVerts;
 
-	float w = (float)( 1.0/float(m_iLensGridSegmentCountH-1));
-	float h = (float)( 1.0/float(m_iLensGridSegmentCountV-1));
+	// left eye verts
+	vVerts.push_back( VertexDataWindow( Vector2(-1, -1), Vector2(0, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(1, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(-1, 1), Vector2(0, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(1, 0)) );
 
-	float u, v = 0;
+	// right eye verts
+	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(0, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(1, -1), Vector2(1, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(0, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(1, 1), Vector2(1, 0)) );
 
-	std::vector<VertexDataLens> vVerts(0);
-	VertexDataLens vert;
+	GLushort vIndices[] = { 0, 1, 3,   0, 3, 2,   4, 5, 7,   4, 7, 6};
+	m_uiCompanionWindowIndexSize = _countof(vIndices);
 
-	//left eye distortion verts
-	float Xoffset = -1;
-	for( int y=0; y<m_iLensGridSegmentCountV; y++ )
-	{
-		for( int x=0; x<m_iLensGridSegmentCountH; x++ )
-		{
-			u = x*w; v = 1-y*h;
-			vert.position = Vector2( Xoffset+u, -1+2*y*h );
+	glGenVertexArrays( 1, &m_unCompanionWindowVAO );
+	glBindVertexArray( m_unCompanionWindowVAO );
 
-			vr::DistortionCoordinates_t dc0 = m_pHMD->ComputeDistortion(vr::Eye_Left, u, v);
+	glGenBuffers( 1, &m_glCompanionWindowIDVertBuffer );
+	glBindBuffer( GL_ARRAY_BUFFER, m_glCompanionWindowIDVertBuffer );
+	glBufferData( GL_ARRAY_BUFFER, vVerts.size()*sizeof(VertexDataWindow), &vVerts[0], GL_STATIC_DRAW );
 
-			vert.texCoordRed = Vector2(dc0.rfRed[0], 1 - dc0.rfRed[1]);
-			vert.texCoordGreen =  Vector2(dc0.rfGreen[0], 1 - dc0.rfGreen[1]);
-			vert.texCoordBlue = Vector2(dc0.rfBlue[0], 1 - dc0.rfBlue[1]);
-
-			vVerts.push_back( vert );
-		}
-	}
-
-	//right eye distortion verts
-	Xoffset = 0;
-	for( int y=0; y<m_iLensGridSegmentCountV; y++ )
-	{
-		for( int x=0; x<m_iLensGridSegmentCountH; x++ )
-		{
-			u = x*w; v = 1-y*h;
-			vert.position = Vector2( Xoffset+u, -1+2*y*h );
-
-			vr::DistortionCoordinates_t dc0 = m_pHMD->ComputeDistortion( vr::Eye_Right, u, v );
-
-			vert.texCoordRed = Vector2(dc0.rfRed[0], 1 - dc0.rfRed[1]);
-			vert.texCoordGreen = Vector2(dc0.rfGreen[0], 1 - dc0.rfGreen[1]);
-			vert.texCoordBlue = Vector2(dc0.rfBlue[0], 1 - dc0.rfBlue[1]);
-
-			vVerts.push_back( vert );
-		}
-	}
-
-	std::vector<GLushort> vIndices;
-	GLushort a,b,c,d;
-
-	GLushort offset = 0;
-	for( GLushort y=0; y<m_iLensGridSegmentCountV-1; y++ )
-	{
-		for( GLushort x=0; x<m_iLensGridSegmentCountH-1; x++ )
-		{
-			a = m_iLensGridSegmentCountH*y+x +offset;
-			b = m_iLensGridSegmentCountH*y+x+1 +offset;
-			c = (y+1)*m_iLensGridSegmentCountH+x+1 +offset;
-			d = (y+1)*m_iLensGridSegmentCountH+x +offset;
-			vIndices.push_back( a );
-			vIndices.push_back( b );
-			vIndices.push_back( c );
-
-			vIndices.push_back( a );
-			vIndices.push_back( c );
-			vIndices.push_back( d );
-		}
-	}
-
-	offset = (m_iLensGridSegmentCountH)*(m_iLensGridSegmentCountV);
-	for( GLushort y=0; y<m_iLensGridSegmentCountV-1; y++ )
-	{
-		for( GLushort x=0; x<m_iLensGridSegmentCountH-1; x++ )
-		{
-			a = m_iLensGridSegmentCountH*y+x +offset;
-			b = m_iLensGridSegmentCountH*y+x+1 +offset;
-			c = (y+1)*m_iLensGridSegmentCountH+x+1 +offset;
-			d = (y+1)*m_iLensGridSegmentCountH+x +offset;
-			vIndices.push_back( a );
-			vIndices.push_back( b );
-			vIndices.push_back( c );
-
-			vIndices.push_back( a );
-			vIndices.push_back( c );
-			vIndices.push_back( d );
-		}
-	}
-	m_uiIndexSize = vIndices.size();
-
-	glGenVertexArrays( 1, &m_unLensVAO );
-	glBindVertexArray( m_unLensVAO );
-
-	glGenBuffers( 1, &m_glIDVertBuffer );
-	glBindBuffer( GL_ARRAY_BUFFER, m_glIDVertBuffer );
-	glBufferData( GL_ARRAY_BUFFER, vVerts.size()*sizeof(VertexDataLens), &vVerts[0], GL_STATIC_DRAW );
-
-	glGenBuffers( 1, &m_glIDIndexBuffer );
-	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_glIDIndexBuffer );
-	glBufferData( GL_ELEMENT_ARRAY_BUFFER, vIndices.size()*sizeof(GLushort), &vIndices[0], GL_STATIC_DRAW );
+	glGenBuffers( 1, &m_glCompanionWindowIDIndexBuffer );
+	glBindBuffer( GL_ELEMENT_ARRAY_BUFFER, m_glCompanionWindowIDIndexBuffer );
+	glBufferData( GL_ELEMENT_ARRAY_BUFFER, m_uiCompanionWindowIndexSize*sizeof(GLushort), &vIndices[0], GL_STATIC_DRAW );
 
 	glEnableVertexAttribArray( 0 );
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof( VertexDataLens, position ) );
+	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataWindow), (void *)offsetof( VertexDataWindow, position ) );
 
 	glEnableVertexAttribArray( 1 );
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof( VertexDataLens, texCoordRed ) );
-
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof( VertexDataLens, texCoordGreen ) );
-
-	glEnableVertexAttribArray(3);
-	glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataLens), (void *)offsetof( VertexDataLens, texCoordBlue ) );
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataWindow), (void *)offsetof( VertexDataWindow, texCoord ) );
 
 	glBindVertexArray( 0 );
 
 	glDisableVertexAttribArray(0);
 	glDisableVertexAttribArray(1);
-	glDisableVertexAttribArray(2);
-	glDisableVertexAttribArray(3);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
@@ -1436,7 +1334,7 @@ void CMainApplication::SetupDistortion()
 //-----------------------------------------------------------------------------
 void CMainApplication::RenderStereoTargets()
 {
-	glClearColor( 0.15f, 0.15f, 0.18f, 1.0f ); // nice background color, but not black
+	glClearColor( 0.0f, 0.0f, 0.0f, 1.0f );
 	glEnable( GL_MULTISAMPLE );
 
 	// Left Eye
@@ -1480,7 +1378,7 @@ void CMainApplication::RenderStereoTargets()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Renders a scene with respect to nEye.
 //-----------------------------------------------------------------------------
 void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 {
@@ -1538,29 +1436,29 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-void CMainApplication::RenderDistortion()
+void CMainApplication::RenderCompanionWindow()
 {
 	glDisable(GL_DEPTH_TEST);
-	glViewport( 0, 0, m_nWindowWidth, m_nWindowHeight );
+	glViewport( 0, 0, m_nCompanionWindowWidth, m_nCompanionWindowHeight );
 
-	glBindVertexArray( m_unLensVAO );
-	glUseProgram( m_unLensProgramID );
+	glBindVertexArray( m_unCompanionWindowVAO );
+	glUseProgram( m_unCompanionWindowProgramID );
 
-	//render left lens (first half of index array )
+	// render left eye (first half of index array )
 	glBindTexture(GL_TEXTURE_2D, leftEyeDesc.m_nResolveTextureId );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	glDrawElements( GL_TRIANGLES, m_uiIndexSize/2, GL_UNSIGNED_SHORT, 0 );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glDrawElements( GL_TRIANGLES, m_uiCompanionWindowIndexSize/2, GL_UNSIGNED_SHORT, 0 );
 
-	//render right lens (second half of index array )
+	// render right eye (second half of index array )
 	glBindTexture(GL_TEXTURE_2D, rightEyeDesc.m_nResolveTextureId  );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
-	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR );
-	glDrawElements( GL_TRIANGLES, m_uiIndexSize/2, GL_UNSIGNED_SHORT, (const void *)(m_uiIndexSize) );
+	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
+	glDrawElements( GL_TRIANGLES, m_uiCompanionWindowIndexSize/2, GL_UNSIGNED_SHORT, (const void *)(m_uiCompanionWindowIndexSize) );
 
 	glBindVertexArray( 0 );
 	glUseProgram( 0 );
@@ -1568,14 +1466,14 @@ void CMainApplication::RenderDistortion()
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Gets a Matrix Projection Eye with respect to nEye.
 //-----------------------------------------------------------------------------
 Matrix4 CMainApplication::GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye )
 {
 	if ( !m_pHMD )
 		return Matrix4();
 
-	vr::HmdMatrix44_t mat = m_pHMD->GetProjectionMatrix( nEye, m_fNearClip, m_fFarClip, vr::API_OpenGL);
+	vr::HmdMatrix44_t mat = m_pHMD->GetProjectionMatrix( nEye, m_fNearClip, m_fFarClip );
 
 	return Matrix4(
 		mat.m[0][0], mat.m[1][0], mat.m[2][0], mat.m[3][0],
@@ -1587,7 +1485,7 @@ Matrix4 CMainApplication::GetHMDMatrixProjectionEye( vr::Hmd_Eye nEye )
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Gets an HMDMatrixPoseEye with respect to nEye.
 //-----------------------------------------------------------------------------
 Matrix4 CMainApplication::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 {
@@ -1607,7 +1505,8 @@ Matrix4 CMainApplication::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 
 
 //-----------------------------------------------------------------------------
-// Purpose:
+// Purpose: Gets a Current View Projection Matrix with respect to nEye,
+//          which may be an Eye_Left or an Eye_Right.
 //-----------------------------------------------------------------------------
 Matrix4 CMainApplication::GetCurrentViewProjectionMatrix( vr::Hmd_Eye nEye )
 {
@@ -1650,7 +1549,7 @@ void CMainApplication::UpdateHMDMatrixPose()
 				case vr::TrackedDeviceClass_Controller:        m_rDevClassChar[nDevice] = 'C'; break;
 				case vr::TrackedDeviceClass_HMD:               m_rDevClassChar[nDevice] = 'H'; break;
 				case vr::TrackedDeviceClass_Invalid:           m_rDevClassChar[nDevice] = 'I'; break;
-				case vr::TrackedDeviceClass_Other:             m_rDevClassChar[nDevice] = 'O'; break;
+				case vr::TrackedDeviceClass_GenericTracker:    m_rDevClassChar[nDevice] = 'G'; break;
 				case vr::TrackedDeviceClass_TrackingReference: m_rDevClassChar[nDevice] = 'T'; break;
 				default:                                       m_rDevClassChar[nDevice] = '?'; break;
 				}
@@ -1661,7 +1560,8 @@ void CMainApplication::UpdateHMDMatrixPose()
 
 	if ( m_rTrackedDevicePose[vr::k_unTrackedDeviceIndex_Hmd].bPoseIsValid )
 	{
-		m_mat4HMDPose = m_rmat4DevicePose[vr::k_unTrackedDeviceIndex_Hmd].invert();
+		m_mat4HMDPose = m_rmat4DevicePose[vr::k_unTrackedDeviceIndex_Hmd];
+		m_mat4HMDPose.invert();
 	}
 }
 

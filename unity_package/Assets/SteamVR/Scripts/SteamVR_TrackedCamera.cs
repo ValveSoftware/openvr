@@ -89,7 +89,7 @@ public class SteamVR_TrackedCamera
 			var deviceTexture = (_texture != null) ? _texture : new Texture2D(2, 2);
 			var headerSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(header.GetType());
 
-			if (vr.graphicsAPI == EGraphicsAPIConvention.API_OpenGL)
+			if (vr.textureType == ETextureType.OpenGL)
 			{
 				if (glTextureId != 0)
 					trackedCamera.ReleaseVideoStreamTextureGL(videostream.handle, glTextureId);
@@ -99,7 +99,7 @@ public class SteamVR_TrackedCamera
 
 				nativeTex = (System.IntPtr)glTextureId;
             }
-			else
+			else if (vr.textureType == ETextureType.DirectX)
 			{
 				if (trackedCamera.GetVideoStreamTextureD3D11(videostream.handle, frameType, deviceTexture.GetNativeTexturePtr(), ref nativeTex, ref header, headerSize) != EVRTrackedCameraError.None)
 					return;
