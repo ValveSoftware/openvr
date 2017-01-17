@@ -15,21 +15,21 @@ if(NOT PLATFORM)
 endif()
 message(STATUS "Compilation set for ${PLATFORM}bits architectures.")
 
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   add_definitions(-DLINUX)
   set(ARCH_TARGET linux64)
 
   if(${PLATFORM} EQUAL 32)
     message(WARNING "OpenVR x86 binaries not provided on GNU/Linux.")
   endif()
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Darwin")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   add_definitions(-DOSX)
   set(ARCH_TARGET osx32)
 
   if(${PLATFORM} EQUAL 64)
     message(WARNING "OpenVR x64 binaries not provided on OSX.")
   endif()
-elseif("${CMAKE_SYSTEM_NAME}" STREQUAL "Windows")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   add_definitions(-D_WIN32)
   set(ARCH_TARGET win${PLATFORM})
 
@@ -75,8 +75,8 @@ endfunction()
 # -----------------------------------------------------------------------------
 ## COMPILER DETECTION ##
 
-if(   ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-   OR ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "Clang"))
+if(   (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
   # Better to use the prebuilt GNU preprocessor define __GNUC__,
   # kept for legacy reason with the sample code.
   add_definitions(-DGNUC)
@@ -90,7 +90,7 @@ if(   ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
     set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -m32")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
   endif()
-elseif("${CMAKE_CXX_COMPILER_ID}" STREQUAL "MSVC")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
   set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} /Za")
   set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /w2 /DEBUG")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP /INCREMENTAL:NO")
@@ -105,7 +105,7 @@ endif()
 find_package(OpenGL REQUIRED)
 
 ## GLEW 1.11
-if("${CMAKE_SYSTEM_NAME}" STREQUAL "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # On GNU/Linux, glew can be found on the package manager. 
   find_package(GLEW 1.11 REQUIRED)
 else()
