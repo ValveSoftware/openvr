@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0.2)
+cmake_minimum_required(VERSION 3.2)
 
 project(openvr_samples)
 
@@ -7,7 +7,7 @@ project(openvr_samples)
 
 # If not set, determines the running platform architecture.
 if(NOT PLATFORM)
-  if(CMAKE_SIZEOF_VOID_P MATCHES 8)
+  if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     set(PLATFORM 64)
   else()
     set(PLATFORM 32)
@@ -15,28 +15,28 @@ if(NOT PLATFORM)
 endif()
 message(STATUS "Compilation set for ${PLATFORM}bits architectures.")
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   add_definitions(-DLINUX)
   set(ARCH_TARGET linux64)
 
-  if(${PLATFORM} MATCHES 32)
+  if(${PLATFORM} EQUAL 32)
     message(WARNING "OpenVR x86 binaries not provided on GNU/Linux.")
   endif()
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin")
   add_definitions(-DOSX)
   set(ARCH_TARGET osx32)
 
-  if(${PLATFORM} MATCHES 64)
+  if(${PLATFORM} EQUAL 64)
     message(WARNING "OpenVR x64 binaries not provided on OSX.")
   endif()
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Windows")
   add_definitions(-D_WIN32)
   set(ARCH_TARGET win${PLATFORM})
 
   # Binaries path for thirdparties are not generics so we try to guess their suffixes.
   set(WINDOWS_PATH_SUFFIXES win${PLATFORM} Win${PLATFORM} x${PLATFORM})
 
-  if(${PLATFORM} MATCHES 64)
+  if(${PLATFORM} EQUAL 64)
     message(WARNING "SDL x64 runtime binaries not provided on Windows.")
   endif()
 endif()
@@ -51,7 +51,7 @@ set(SHARED_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 # (needed to prevent a segfault in OpenVR).
 if(CMAKE_HOST_UNIX)
   find_file(OPENVRPATHS openvrpaths.vrpath PATHS $ENV{HOME}/.config/openvr)
-  if(${OPENVRPATHS} MATCHES OPENVRPATHS-NOTFOUND)
+  if(${OPENVRPATHS} EQUAL OPENVRPATHS-NOTFOUND)
     message(FATAL_ERROR "${OPENVRPATHS} Please install SteamVR SDK to continue..")
   endif()
 endif()
@@ -75,8 +75,8 @@ endfunction()
 # -----------------------------------------------------------------------------
 ## COMPILER DETECTION ##
 
-if(   (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
-   OR (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
+if(   (CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+   OR (CMAKE_CXX_COMPILER_ID STREQUAL "Clang"))
   # Better to use the prebuilt GNU preprocessor define __GNUC__,
   # kept for legacy reason with the sample code.
   add_definitions(-DGNUC)
@@ -86,26 +86,26 @@ if(   (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O2")
 
   # Handles x86 compilation support on x64 arch.
-  if(${PLATFORM} MATCHES 32)
+  if(${PLATFORM} EQUAL 32)
     set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -m32")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
   endif()
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
-  set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} /Za")
-  set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /w2 /DEBUG")
+elseif(CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+  set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS}")
+  set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /W2 /DEBUG")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP /INCREMENTAL:NO")
 else()
-  message(FATAL_ERROR "Unsupported compiler.")
+  message(FATAL_ERROR "Unsupported compiler: \"${CMAKE_CXX_COMPILER_ID}\".")
 endif()
 
 # -----------------------------------------------------------------------------
-## LIBRARIES ##
+## LIBRARIES ##
 
 ## OpenGL / GLU
 find_package(OpenGL REQUIRED)
 
 ## GLEW 1.11
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
+if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
   # On GNU/Linux, glew can be found on the package manager. 
   find_package(GLEW 1.11 REQUIRED)
 else()
@@ -146,9 +146,9 @@ set(SDL2_INCLUDE_DIR ${THIRDPARTY_DIR}/sdl2-2.0.3/include)
 # if(CMAKE_HOST_UNIX)
 #   list(APPEND CMAKE_PREFIX_PATH "/opt/Qt/5.6/gcc_64/lib/cmake")
 # else()
-#     if(${PLATFORM} MATCHES 64)
+#     if(${PLATFORM} EQUAL 64)
 #       set(suffix "_64")
-#     endif
+#     endif()
 #   list(APPEND CMAKE_PREFIX_PATH "C:/Qt/5.6/msvc2013${suffix}/lib/cmake")
 # endif()
 

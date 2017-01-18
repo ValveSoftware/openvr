@@ -20,6 +20,8 @@
 #define _vsnprintf_s(buffer, size, fmt, ap)  vsnprintf(buffer, size, fmt, ap)
 #define OutputDebugStringA(x) fprintf(stderr, "%s\n", x)
 
+#define _countof(x)   (sizeof((x)) / sizeof((x)[0]))
+
 typedef int errno_t;
 
 #endif  // _WIN32
