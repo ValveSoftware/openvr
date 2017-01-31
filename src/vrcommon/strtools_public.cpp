@@ -1,5 +1,5 @@
 //========= Copyright Valve Corporation ============//
-#include "strtools.h"
+#include "strtools_public.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>

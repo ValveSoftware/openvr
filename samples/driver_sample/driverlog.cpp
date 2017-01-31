@@ -5,10 +5,10 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-static vr::IDriverLog * s_pLogFile = NULL;
+static vr::IVRDriverLog * s_pLogFile = NULL;
 
 
-bool InitDriverLog( vr::IDriverLog *pDriverLog )
+bool InitDriverLog( vr::IVRDriverLog *pDriverLog )
 {
 	if( s_pLogFile )
 		return false;
@@ -56,24 +56,6 @@ void DebugDriverLog( const char *pMsgFormat, ... )
 
 	va_end(args);
 #endif
-}
-
-
-//-----------------------------------------------------------------------------
-// Purpose: Helper to get a string from a tracked device property and turn it
-//			into a std::string
-//-----------------------------------------------------------------------------
-std::string GetTrackedDeviceString( vr::IClientDriverHost *pClientHost, vr::TrackedDeviceIndex_t unDevice, vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *peError )
-{
-	uint32_t unRequiredBufferLen = pClientHost->GetStringTrackedDeviceProperty( unDevice, prop, NULL, 0, peError );
-	if( unRequiredBufferLen == 0 )
-		return "";
-
-	char *pchBuffer = new char[ unRequiredBufferLen ];
-	unRequiredBufferLen = pClientHost->GetStringTrackedDeviceProperty( unDevice, prop, pchBuffer, unRequiredBufferLen, peError );
-	std::string sResult = pchBuffer;
-	delete [] pchBuffer;
-	return sResult;
 }
 
 

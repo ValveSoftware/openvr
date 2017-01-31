@@ -3,7 +3,15 @@
 #include <SDL.h>
 #include <GL/glew.h>
 #include <SDL_opengl.h>
+#if defined( OSX )
+#include <Foundation/Foundation.h>
+#include <AppKit/AppKit.h>
+#include <OpenGL/glu.h>
+// Apple's version of glut.h #undef's APIENTRY, redefine it
+#define APIENTRY
+#else
 #include <GL/glu.h>
+#endif
 #include <stdio.h>
 #include <string>
 #include <cstdlib>
@@ -20,6 +28,10 @@
 
 #ifndef _WIN32
 #define APIENTRY
+#endif
+
+#ifndef _countof
+#define _countof(x) (sizeof(x)/sizeof((x)[0]))
 #endif
 
 void ThreadSleep( unsigned long nMilliseconds )
@@ -691,9 +703,9 @@ void CMainApplication::RenderFrame()
 		RenderStereoTargets();
 		RenderCompanionWindow();
 
-		vr::Texture_t leftEyeTexture = {(void*)leftEyeDesc.m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+		vr::Texture_t leftEyeTexture = {(void*)(uintptr_t)leftEyeDesc.m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(vr::Eye_Left, &leftEyeTexture );
-		vr::Texture_t rightEyeTexture = {(void*)rightEyeDesc.m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
+		vr::Texture_t rightEyeTexture = {(void*)(uintptr_t)rightEyeDesc.m_nResolveTextureId, vr::TextureType_OpenGL, vr::ColorSpace_Gamma };
 		vr::VRCompositor()->Submit(vr::Eye_Right, &rightEyeTexture );
 	}
 
@@ -1183,7 +1195,7 @@ void CMainApplication::RenderControllerAxes()
 		glBindBuffer( GL_ARRAY_BUFFER, m_glControllerVertBuffer );
 
 		GLuint stride = 2 * 3 * sizeof( float );
-		GLuint offset = 0;
+		uintptr_t offset = 0;
 
 		glEnableVertexAttribArray( 0 );
 		glVertexAttribPointer( 0, 3, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
@@ -1458,7 +1470,7 @@ void CMainApplication::RenderCompanionWindow()
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR );
 	glTexParameteri( GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR );
-	glDrawElements( GL_TRIANGLES, m_uiCompanionWindowIndexSize/2, GL_UNSIGNED_SHORT, (const void *)(m_uiCompanionWindowIndexSize) );
+	glDrawElements( GL_TRIANGLES, m_uiCompanionWindowIndexSize/2, GL_UNSIGNED_SHORT, (const void *)(uintptr_t)(m_uiCompanionWindowIndexSize) );
 
 	glBindVertexArray( 0 );
 	glUseProgram( 0 );

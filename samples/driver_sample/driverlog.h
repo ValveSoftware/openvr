@@ -17,12 +17,8 @@ extern void DriverLog( const char *pchFormat, ... );
 extern void DebugDriverLog( const char *pchFormat, ... );
 
 
-extern bool InitDriverLog( vr::IDriverLog *pDriverLog );
+extern bool InitDriverLog( vr::IVRDriverLog *pDriverLog );
 extern void CleanupDriverLog();
-
-
-/** Retrieves a string property from the IClientHost interface */
-std::string GetTrackedDeviceString( vr::IClientDriverHost *pClientHost, vr::TrackedDeviceIndex_t unDevice, vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *peError = NULL );
 
 
 

@@ -53,7 +53,6 @@ inline void HmdMatrix_SetIdentity( HmdMatrix34_t *pMatrix )
 
 // keys for use with the settings API
 static const char * const k_pch_Sample_Section = "driver_sample";
-static const char * const k_pch_Sample_EnableSampleDriver_Bool = "enable";
 static const char * const k_pch_Sample_SerialNumber_String = "serialNumber";
 static const char * const k_pch_Sample_ModelNumber_String = "modelNumber";
 static const char * const k_pch_Sample_WindowX_Int32 = "windowX";
@@ -69,35 +68,22 @@ static const char * const k_pch_Sample_DisplayFrequency_Float = "displayFrequenc
 // Purpose:
 //-----------------------------------------------------------------------------
 
-class CClientDriver_Sample : public IClientTrackedDeviceProvider
+class CWatchdogDriver_Sample : public IVRWatchdogProvider
 {
 public:
-	CClientDriver_Sample()
-		: m_bEnableNullDriver( false )
-		, m_bInit( false )
+	CWatchdogDriver_Sample()
 	{
-		m_eDriverMode = ClientDriverMode_Normal;
 		m_pWatchdogThread = nullptr;
 	}
 
-	virtual EVRInitError Init( vr::EClientDriverMode eDriverMode, vr::IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) ;
+	virtual EVRInitError Init( vr::IVRDriverContext *pDriverContext ) ;
 	virtual void Cleanup() ;
-	virtual bool BIsHmdPresent( const char *pchUserDriverConfigDir ) ;
-	virtual EVRInitError SetDisplayId( const char *pchDisplayId )  { return VRInitError_None; } // Null doesn't care
-	virtual HiddenAreaMesh_t GetHiddenAreaMesh( EVREye eEye, EHiddenAreaMeshType type );
-	virtual uint32_t GetMCImage( uint32_t *pImgWidth, uint32_t *pImgHeight, uint32_t *pChannels, void *pDataBuffer, uint32_t unBufferLen )  { return 0; }
 
-	void WatchdogWakeUp();
 private:
-	vr::IClientDriverHost *m_pClientDriverHost;
-
-	bool m_bEnableNullDriver;
-	bool m_bInit;
-	vr::EClientDriverMode m_eDriverMode;
 	std::thread *m_pWatchdogThread;
 };
 
-CClientDriver_Sample g_clientDriverNull;
+CWatchdogDriver_Sample g_watchdogDriverNull;
 
 
 bool g_bExiting = false;
@@ -111,69 +97,38 @@ void WatchdogThreadFunction(  )
 		if ( (0x01 & GetAsyncKeyState( 'Y' )) != 0 )
 		{
 			// Y key was pressed. 
-			g_clientDriverNull.WatchdogWakeUp();
+			vr::VRWatchdogHost()->WatchdogWakeUp();
 		}
 		std::this_thread::sleep_for( std::chrono::microseconds( 500 ) );
 #else
 		// for the other platforms, just send one every five seconds
 		std::this_thread::sleep_for( std::chrono::seconds( 5 ) );
-		g_clientDriverNull.WatchdogWakeUp();
+		vr::VRWatchdogHost()->WatchdogWakeUp();
 #endif
 	}
 }
 
-EVRInitError CClientDriver_Sample::Init( vr::EClientDriverMode eDriverMode, vr::IDriverLog *pDriverLog, vr::IClientDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir )
+EVRInitError CWatchdogDriver_Sample::Init( vr::IVRDriverContext *pDriverContext )
 {
-	m_pClientDriverHost = pDriverHost;
-	InitDriverLog( pDriverLog );
+	VR_INIT_WATCHDOG_DRIVER_CONTEXT( pDriverContext );
+	InitDriverLog( vr::VRDriverLog() );
 
-	m_eDriverMode = eDriverMode;
-
-	if ( !m_bInit )
+	// Watchdog mode on Windows starts a thread that listens for the 'Y' key on the keyboard to 
+	// be pressed. A real driver should wait for a system button event or something else from the 
+	// the hardware that signals that the VR system should start up.
+	g_bExiting = false;
+	m_pWatchdogThread = new std::thread( WatchdogThreadFunction );
+	if ( !m_pWatchdogThread )
 	{
-		if ( m_pClientDriverHost )
-		{
-			IVRSettings *pSettings = (IVRSettings *) m_pClientDriverHost->GetGenericInterface( IVRSettings_Version );
-
-			if ( !m_bEnableNullDriver && pSettings )
-			{
-				m_bEnableNullDriver = pSettings->GetBool( k_pch_Sample_Section, k_pch_Sample_EnableSampleDriver_Bool);
-			}
-		}
-		m_bInit = true;
-	}
-
-	if ( eDriverMode == ClientDriverMode_Watchdog )
-	{
-		if ( !m_bEnableNullDriver )
-		{
-			return VRInitError_Init_LowPowerWatchdogNotSupported;
-		}
-
-		// Watchdog mode on Windows starts a thread that listens for the 'Y' key on the keyboard to 
-		// be pressed. A real driver should wait for a system button event or something else from the 
-		// the hardware that signals that the VR system should start up.
-		g_bExiting = false;
-		m_pWatchdogThread = new std::thread( WatchdogThreadFunction );
-		if ( !m_pWatchdogThread )
-		{
-			DriverLog( "Unable to create watchdog thread\n");
-			return VRInitError_Driver_Failed;
-		}
+		DriverLog( "Unable to create watchdog thread\n");
+		return VRInitError_Driver_Failed;
 	}
 
 	return VRInitError_None;
 }
 
 
-void CClientDriver_Sample::WatchdogWakeUp()
-{
-	if ( m_pClientDriverHost )
-		m_pClientDriverHost->WatchdogWakeUp();
-}
-
-
-void CClientDriver_Sample::Cleanup() 
+void CWatchdogDriver_Sample::Cleanup()
 {
 	g_bExiting = true;
 	if ( m_pWatchdogThread )
@@ -187,79 +142,35 @@ void CClientDriver_Sample::Cleanup()
 }
 
 
-bool CClientDriver_Sample::BIsHmdPresent( const char *pchUserDriverConfigDir ) 
-{
-	// optimistically return true. We'll have a chance to say whether there's actually an HMD later.
-	// This should do something quick like look for a USB VID/PID combination that makes it likely
-	// there's an HMD attached.
-	return true;
-}
-
-
-// ------------------------------------------------------------------------------------------
-// Purpose: Return a mesh that contains the hidden area for the current HMD
-// ------------------------------------------------------------------------------------------
-HiddenAreaMesh_t CClientDriver_Sample::GetHiddenAreaMesh( EVREye eEye, EHiddenAreaMeshType type )
-{
-	// Null doesn't do visible area meshes
-	vr::HiddenAreaMesh_t mesh;
-	mesh.pVertexData = NULL;
-	mesh.unTriangleCount = 0;
-	return mesh;
-}
-
-
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
 class CSampleDeviceDriver : public vr::ITrackedDeviceServerDriver, public vr::IVRDisplayComponent
 {
 public:
-	CSampleDeviceDriver( vr::IServerDriverHost *pDriverHost )
-		: m_pServerDriverHost( pDriverHost )
-		, m_unObjectId( vr::k_unTrackedDeviceIndexInvalid )
+	CSampleDeviceDriver(  )
 	{
-		IVRSettings *pSettings = m_pServerDriverHost ? m_pServerDriverHost->GetSettings( vr::IVRSettings_Version ) : NULL;
+		m_unObjectId = vr::k_unTrackedDeviceIndexInvalid;
+		m_ulPropertyContainer = vr::k_ulInvalidPropertyContainer;
 
-		if ( pSettings )
-		{
-			DriverLog( "Using settings values\n" );
-			m_flIPD = pSettings->GetFloat( k_pch_SteamVR_Section, k_pch_SteamVR_IPD_Float );
+		DriverLog( "Using settings values\n" );
+		m_flIPD = vr::VRSettings()->GetFloat( k_pch_SteamVR_Section, k_pch_SteamVR_IPD_Float );
 
-			char buf[1024];
-			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_SerialNumber_String, buf, sizeof(buf));
-			m_sSerialNumber = buf;
+		char buf[1024];
+		vr::VRSettings()->GetString( k_pch_Sample_Section, k_pch_Sample_SerialNumber_String, buf, sizeof( buf ) );
+		m_sSerialNumber = buf;
 
-			pSettings->GetString( k_pch_Sample_Section, k_pch_Sample_ModelNumber_String, buf, sizeof(buf));
-			m_sSerialNumber = buf;
+		vr::VRSettings()->GetString( k_pch_Sample_Section, k_pch_Sample_ModelNumber_String, buf, sizeof( buf ) );
+		m_sSerialNumber = buf;
 
-			m_nWindowX = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowX_Int32);
-			m_nWindowY = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowY_Int32);
-			m_nWindowWidth = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowWidth_Int32);
-			m_nWindowHeight = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowHeight_Int32);
-			m_nRenderWidth = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderWidth_Int32);
-			m_nRenderHeight = pSettings->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderHeight_Int32);
-			m_flSecondsFromVsyncToPhotons = pSettings->GetFloat( k_pch_Sample_Section, k_pch_Sample_SecondsFromVsyncToPhotons_Float);
-			m_flDisplayFrequency = pSettings->GetFloat( k_pch_Sample_Section, k_pch_Sample_DisplayFrequency_Float);
-		}
-		else
-		{
-
-			DriverLog( "Could not get settings API. Using default values\n" );
-			m_flIPD = 0.065f;
-
-			m_sSerialNumber = "SAMPLE1234";
-			m_sModelNumber = "ED209";
-
-			m_nWindowX = 0;
-			m_nWindowY = 0;
-			m_nWindowWidth = 1920;
-			m_nWindowHeight = 1080;
-			m_nRenderWidth = 1344;
-			m_nRenderHeight = 1512;
-			m_flSecondsFromVsyncToPhotons = 0.0;
-			m_flDisplayFrequency = 0.0;
-		}
+		m_nWindowX = vr::VRSettings()->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowX_Int32 );
+		m_nWindowY = vr::VRSettings()->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowY_Int32 );
+		m_nWindowWidth = vr::VRSettings()->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowWidth_Int32 );
+		m_nWindowHeight = vr::VRSettings()->GetInt32( k_pch_Sample_Section, k_pch_Sample_WindowHeight_Int32 );
+		m_nRenderWidth = vr::VRSettings()->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderWidth_Int32 );
+		m_nRenderHeight = vr::VRSettings()->GetInt32( k_pch_Sample_Section, k_pch_Sample_RenderHeight_Int32 );
+		m_flSecondsFromVsyncToPhotons = vr::VRSettings()->GetFloat( k_pch_Sample_Section, k_pch_Sample_SecondsFromVsyncToPhotons_Float );
+		m_flDisplayFrequency = vr::VRSettings()->GetFloat( k_pch_Sample_Section, k_pch_Sample_DisplayFrequency_Float );
 
 		DriverLog( "driver_null: Serial Number: %s\n", m_sSerialNumber.c_str() );
 		DriverLog( "driver_null: Model Number: %s\n", m_sModelNumber.c_str() );
@@ -272,13 +183,39 @@ public:
 
 	virtual ~CSampleDeviceDriver()
 	{
-		m_pServerDriverHost = NULL;
 	}
 
 
-	virtual EVRInitError Activate( uint32_t unObjectId ) 
+	virtual EVRInitError Activate( vr::TrackedDeviceIndex_t unObjectId ) 
 	{
 		m_unObjectId = unObjectId;
+		m_ulPropertyContainer = vr::VRProperties()->TrackedDeviceToPropertyContainer( m_unObjectId );
+
+
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, Prop_ModelNumber_String, m_sModelNumber.c_str() );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, Prop_RenderModelName_String, m_sModelNumber.c_str() );
+		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_UserIpdMeters_Float, m_flIPD );
+		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_UserHeadToEyeDepthMeters_Float, 0.f );
+		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_DisplayFrequency_Float, m_flDisplayFrequency );
+		vr::VRProperties()->SetFloatProperty( m_ulPropertyContainer, Prop_SecondsFromVsyncToPhotons_Float, m_flSecondsFromVsyncToPhotons );
+
+		// return a constant that's not 0 (invalid) or 1 (reserved for Oculus)
+		vr::VRProperties()->SetUint64Property( m_ulPropertyContainer, Prop_CurrentUniverseId_Uint64, 2 );
+
+		// avoid "not fullscreen" warnings from vrmonitor
+		vr::VRProperties()->SetBoolProperty( m_ulPropertyContainer, Prop_IsOnDesktop_Bool, false );
+
+		// Set icons for the HMD we're going to show
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, Prop_IconPathName_String, "icons" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceOff_String,				"{sample}headset_sample_status_off.png" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearching_String,			"{sample}headset_sample_status_searching.gif" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceSearchingAlert_String,	"{sample}headset_sample_status_searching_alert.gif" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReady_String,				"{sample}headset_sample_status_ready.png" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceReadyAlert_String,		"{sample}headset_sample_status_ready_alert.png" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceNotReady_String,			"{sample}headset_sample_status_error.png" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceStandby_String,			"{sample}headset_sample_status_standby.png" );
+		vr::VRProperties()->SetStringProperty( m_ulPropertyContainer, vr::Prop_NamedIconPathDeviceAlertLow_String,			"{sample}headset_sample_status_ready_low.png" );
+
 		return VRInitError_None;
 	}
 
@@ -387,140 +324,6 @@ public:
 		return pose;
 	}
 	
-	virtual bool GetBoolTrackedDeviceProperty( vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pError ) 
-	{
-		*pError = vr::TrackedProp_Success;
-
-		switch ( prop )
-		{
-		case vr::Prop_IsOnDesktop_Bool:
-			// avoid "not fullscreen" warnings from vrmonitor
-			return false;
-		}
-
-		*pError = vr::TrackedProp_ValueNotProvidedByDevice;
-		return false;
-	}
-
-	virtual float GetFloatTrackedDeviceProperty( vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pError ) 
-	{
-		vr::ETrackedPropertyError error = vr::TrackedProp_ValueNotProvidedByDevice;
-		float fRetVal = 0;
-		switch ( prop )
-		{
-		case vr::Prop_UserIpdMeters_Float:
-			fRetVal = m_flIPD;
-			error = TrackedProp_Success;
-			break;
-
-		case vr::Prop_UserHeadToEyeDepthMeters_Float:
-			error = vr::TrackedProp_Success;
-			fRetVal = 0.f;
-			break;
-
-		case vr::Prop_DisplayFrequency_Float:
-			error = vr::TrackedProp_Success;
-			fRetVal = m_flDisplayFrequency;
-			break;
-
-		case vr::Prop_SecondsFromVsyncToPhotons_Float:
-			error = vr::TrackedProp_Success;
-			fRetVal = m_flSecondsFromVsyncToPhotons;
-			break;
-
-		}
-
-		if ( pError )
-		{
-			*pError = error;
-		}
-
-		return fRetVal;
-	}
-
-	int32_t GetInt32TrackedDeviceProperty( vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pError )
-	{
-		int32_t nRetVal = 0;
-		vr::ETrackedPropertyError error = vr::TrackedProp_UnknownProperty;
-
-		switch ( prop )
-		{
-		case vr::Prop_DeviceClass_Int32:
-			nRetVal = vr::TrackedDeviceClass_HMD;
-			error = vr::TrackedProp_Success;
-			break;
-		}
-
-		if ( pError )
-		{
-			*pError = error;
-		}
-
-		return nRetVal;
-	}
-
-	virtual uint64_t GetUint64TrackedDeviceProperty( vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pError ) 
-	{
-		*pError = vr::TrackedProp_Success;
-
-		switch ( prop )
-		{
-		case vr::Prop_CurrentUniverseId_Uint64:
-			// return a constant that's not 0 (invalid) or 1 (reserved for Oculus)
-			return 2;
-		}
-
-		*pError = vr::TrackedProp_ValueNotProvidedByDevice;
-		return 0;
-	}
-
-	vr::HmdMatrix34_t GetMatrix34TrackedDeviceProperty( vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pError ) 
-	{
-		*pError = vr::TrackedProp_ValueNotProvidedByDevice;
-		HmdMatrix34_t matIdentity;
-		HmdMatrix_SetIdentity( &matIdentity);
-		return matIdentity;
-	}
-
-	virtual uint32_t GetStringTrackedDeviceProperty( vr::ETrackedDeviceProperty prop, char *pchValue, uint32_t unBufferSize, vr::ETrackedPropertyError *pError ) 
-	{
-		std::string sValue= GetStringTrackedDeviceProperty( prop, pError );
-		if ( *pError == vr::TrackedProp_Success )
-		{
-			if ( sValue.size( ) + 1 > unBufferSize )
-			{
-				*pError = vr::TrackedProp_BufferTooSmall;
-			}
-			else
-			{
-				strcpy_s( pchValue, unBufferSize, sValue.c_str() );
-			}
-			return (uint32_t)sValue.size( ) + 1;
-		}
-		return 0;
-	}
-
-	std::string GetStringTrackedDeviceProperty( vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *pError ) 
-	{
-		*pError = vr::TrackedProp_ValueNotProvidedByDevice;
-		std::string sRetVal;
-
-		switch ( prop )
-		{
-		case vr::Prop_ModelNumber_String:
-			sRetVal = m_sModelNumber;
-			*pError = vr::TrackedProp_Success;
-			break;
-
-		case vr::Prop_SerialNumber_String:
-			sRetVal = m_sSerialNumber;
-			*pError = vr::TrackedProp_Success;
-			break;
-		}
-
-		return sRetVal;
-	}
-
 
 	void RunFrame()
 	{
@@ -529,13 +332,15 @@ public:
 		// driver blocks it for some periodic task.
 		if ( m_unObjectId != vr::k_unTrackedDeviceIndexInvalid )
 		{
-			m_pServerDriverHost->TrackedDevicePoseUpdated( m_unObjectId, GetPose() );
+			vr::VRServerDriverHost()->TrackedDevicePoseUpdated( m_unObjectId, GetPose(), sizeof( DriverPose_t ) );
 		}
 	}
 
+	std::string GetSerialNumber() const { return m_sSerialNumber; }
+
 private:
-	vr::IServerDriverHost *m_pServerDriverHost;
-	uint32_t m_unObjectId;
+	vr::TrackedDeviceIndex_t m_unObjectId;
+	vr::PropertyContainerHandle_t m_ulPropertyContainer;
 
 	std::string m_sSerialNumber;
 	std::string m_sModelNumber;
@@ -563,12 +368,9 @@ public:
 	{
 	}
 
-	virtual EVRInitError Init( IDriverLog *pDriverLog, 	vr::IServerDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) ;
+	virtual EVRInitError Init( vr::IVRDriverContext *pDriverContext ) ;
 	virtual void Cleanup() ;
 	virtual const char * const *GetInterfaceVersions() { return vr::k_InterfaceVersions; }
-	virtual uint32_t GetTrackedDeviceCount();
-	virtual ITrackedDeviceServerDriver *GetTrackedDeviceDriver( uint32_t unWhich ) ;
-	virtual ITrackedDeviceServerDriver* FindTrackedDeviceDriver( const char *pchId ) ;
 	virtual void RunFrame() ;
 	virtual bool ShouldBlockStandbyMode()  { return false; }
 	virtual void EnterStandby()  {}
@@ -583,18 +385,13 @@ private:
 CServerDriver_Sample g_serverDriverNull;
 
 
-EVRInitError CServerDriver_Sample::Init( IDriverLog *pDriverLog, vr::IServerDriverHost *pDriverHost, const char *pchUserDriverConfigDir, const char *pchDriverInstallDir ) 
+EVRInitError CServerDriver_Sample::Init( vr::IVRDriverContext *pDriverContext )
 {
-	InitDriverLog( pDriverLog );
+	VR_INIT_SERVER_DRIVER_CONTEXT( pDriverContext );
+	InitDriverLog( vr::VRDriverLog() );
 
-	IVRSettings *pSettings = pDriverHost ? pDriverHost->GetSettings( vr::IVRSettings_Version ) : NULL;
-
-	m_bEnableNullDriver = pSettings && pSettings->GetBool( k_pch_Sample_Section, k_pch_Sample_EnableSampleDriver_Bool );
-
-	if ( !m_bEnableNullDriver )
-		return VRInitError_Init_HmdNotFound;
-
-	m_pNullHmdLatest = new CSampleDeviceDriver( pDriverHost);
+	m_pNullHmdLatest = new CSampleDeviceDriver();
+	vr::VRServerDriverHost()->TrackedDeviceAdded( m_pNullHmdLatest->GetSerialNumber().c_str(), vr::TrackedDeviceClass_HMD, m_pNullHmdLatest );
 	return VRInitError_None;
 }
 
@@ -603,27 +400,6 @@ void CServerDriver_Sample::Cleanup()
 	CleanupDriverLog();
 	delete m_pNullHmdLatest;
 	m_pNullHmdLatest = NULL;
-}
-
-
-uint32_t CServerDriver_Sample::GetTrackedDeviceCount()
-{
-	if ( m_bEnableNullDriver )
-		return 1;
-
-	return 0;
-}
-
-
-ITrackedDeviceServerDriver *CServerDriver_Sample::GetTrackedDeviceDriver( uint32_t unWhich )
-{
-	return m_pNullHmdLatest;
-}
-
-
-ITrackedDeviceServerDriver* CServerDriver_Sample::FindTrackedDeviceDriver( const char *pchId )
-{
-	return m_pNullHmdLatest;
 }
 
 
@@ -644,9 +420,9 @@ HMD_DLL_EXPORT void *HmdDriverFactory( const char *pInterfaceName, int *pReturnC
 	{
 		return &g_serverDriverNull;
 	}
-	if( 0 == strcmp( IClientTrackedDeviceProvider_Version, pInterfaceName ) )
+	if( 0 == strcmp( IVRWatchdogProvider_Version, pInterfaceName ) )
 	{
-		return &g_clientDriverNull;
+		return &g_watchdogDriverNull;
 	}
 
 	if( pReturnCode )

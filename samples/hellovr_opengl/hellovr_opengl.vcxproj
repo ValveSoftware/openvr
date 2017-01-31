@@ -87,12 +87,14 @@
     <ClCompile Include="..\shared\lodepng.cpp" />
     <ClCompile Include="..\shared\Matrices.cpp" />
     <ClCompile Include="..\shared\pathtools.cpp" />
+    <ClCompile Include="..\shared\strtools.cpp" />
     <ClCompile Include="hellovr_opengl_main.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\lodepng.h" />
     <ClInclude Include="..\shared\Matrices.h" />
     <ClInclude Include="..\shared\pathtools.h" />
+    <ClInclude Include="..\shared\strtools.h" />
     <ClInclude Include="..\shared\Vectors.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

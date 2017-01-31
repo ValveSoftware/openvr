@@ -172,7 +172,7 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 {
 	// skip rendering if the overlay isn't visible
     if( !vr::VROverlay() ||
-        !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) && !vr::VROverlay()->IsOverlayVisible( m_ulOverlayThumbnailHandle ) )
+        ( !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) && !vr::VROverlay()->IsOverlayVisible( m_ulOverlayThumbnailHandle ) ) )
         return;
 
 	m_pOpenGLContext->makeCurrent( m_pOffscreenSurface );
@@ -188,7 +188,7 @@ void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 	GLuint unTexture = m_pFbo->texture();
 	if( unTexture != 0 )
 	{
-        vr::Texture_t texture = {(void*)unTexture, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
+        vr::Texture_t texture = {(void*)(uintptr_t)unTexture, vr::TextureType_OpenGL, vr::ColorSpace_Auto };
         vr::VROverlay()->SetOverlayTexture( m_ulOverlayHandle, &texture );
 	}
 }
