@@ -1793,9 +1793,11 @@ void CGLRenderModel::Cleanup()
 		glDeleteBuffers(1, &m_glIndexBuffer);
 		glDeleteVertexArrays( 1, &m_glVertArray );
 		glDeleteBuffers(1, &m_glVertBuffer);
+		glDeleteTextures(1, &m_glTexture);
 		m_glIndexBuffer = 0;
 		m_glVertArray = 0;
 		m_glVertBuffer = 0;
+		m_glTexture = 0;
 	}
 }
 
