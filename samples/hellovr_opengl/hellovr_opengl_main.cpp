@@ -995,13 +995,13 @@ void CMainApplication::SetupScene()
 
 	Matrix4 matScale;
 	matScale.scale( m_fScale, m_fScale, m_fScale );
-	Matrix4 matTransform;
-	matTransform.translate(
+	Matrix4 matTranslate;
+	matTranslate.translate(
 		-( (float)m_iSceneVolumeWidth * m_fScaleSpacing ) / 2.f,
 		-( (float)m_iSceneVolumeHeight * m_fScaleSpacing ) / 2.f,
 		-( (float)m_iSceneVolumeDepth * m_fScaleSpacing ) / 2.f);
 	
-	Matrix4 mat = matScale * matTransform;
+	Matrix4 mat = matScale * matTranslate;
 
 	for( int z = 0; z< m_iSceneVolumeDepth; z++ )
 	{
