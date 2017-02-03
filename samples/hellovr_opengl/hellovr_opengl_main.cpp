@@ -93,7 +93,7 @@ public:
 	void AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata );
 	void AddCubeVertex( float fl0, float fl1, float fl2, float fl3, float fl4, std::vector<float> &vertdata );
 
-	void RenderControllerAxes();
+	void UploadControllerAxes();
 
 	bool SetupStereoRenderTargets();
 	void SetupCompanionWindow();
@@ -699,7 +699,7 @@ void CMainApplication::RenderFrame()
 	// for now as fast as possible
 	if ( m_pHMD )
 	{
-		RenderControllerAxes();
+		UploadControllerAxes();
 		RenderStereoTargets();
 		RenderCompanionWindow();
 
@@ -1119,7 +1119,7 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 //-----------------------------------------------------------------------------
 // Purpose: Draw all of the controllers as X/Y/Z lines
 //-----------------------------------------------------------------------------
-void CMainApplication::RenderControllerAxes()
+void CMainApplication::UploadControllerAxes()
 {
 	// don't draw controllers if somebody else has input focus
 	if( m_pHMD->IsInputFocusCapturedByAnotherProcess() )
