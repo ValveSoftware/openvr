@@ -1504,12 +1504,12 @@ Matrix4 CMainApplication::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 	if ( !m_pHMD )
 		return Matrix4();
 
-	vr::HmdMatrix34_t matEyeRight = m_pHMD->GetEyeToHeadTransform( nEye );
+	vr::HmdMatrix34_t matEye = m_pHMD->GetEyeToHeadTransform( nEye );
 	Matrix4 matrixObj(
-		matEyeRight.m[0][0], matEyeRight.m[1][0], matEyeRight.m[2][0], 0.0, 
-		matEyeRight.m[0][1], matEyeRight.m[1][1], matEyeRight.m[2][1], 0.0,
-		matEyeRight.m[0][2], matEyeRight.m[1][2], matEyeRight.m[2][2], 0.0,
-		matEyeRight.m[0][3], matEyeRight.m[1][3], matEyeRight.m[2][3], 1.0f
+		matEye.m[0][0], matEye.m[1][0], matEye.m[2][0], 0.0, 
+		matEye.m[0][1], matEye.m[1][1], matEye.m[2][1], 0.0,
+		matEye.m[0][2], matEye.m[1][2], matEye.m[2][2], 0.0,
+		matEye.m[0][3], matEye.m[1][3], matEye.m[2][3], 1.0f
 		);
 
 	return matrixObj.invert();
