@@ -821,14 +821,13 @@ bool CMainApplication::CreateAllShaders()
 		// Vertex Shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec2 v2UVcoordsIn;\n"
-		"layout(location = 2) in vec3 v3NormalIn;\n"
 		"out vec2 v2UVcoords;\n"
 		"void main()\n"
 		"{\n"
 		"	v2UVcoords = v2UVcoordsIn;\n"
-		"	gl_Position = matrix * position;\n"
+		"	gl_Position = matrix * vec(position, 1);\n"
 		"}\n",
 
 		// Fragment Shader
@@ -854,13 +853,13 @@ bool CMainApplication::CreateAllShaders()
 		// vertex shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec3 v3ColorIn;\n"
 		"out vec4 v4Color;\n"
 		"void main()\n"
 		"{\n"
 		"	v4Color.xyz = v3ColorIn; v4Color.a = 1.0;\n"
-		"	gl_Position = matrix * position;\n"
+		"	gl_Position = matrix * vec4(position, 1);\n"
 		"}\n",
 
 		// fragment shader
@@ -885,14 +884,14 @@ bool CMainApplication::CreateAllShaders()
 		// vertex shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec3 v3NormalIn;\n"
 		"layout(location = 2) in vec2 v2TexCoordsIn;\n"
 		"out vec2 v2TexCoord;\n"
 		"void main()\n"
 		"{\n"
 		"	v2TexCoord = v2TexCoordsIn;\n"
-		"	gl_Position = matrix * vec4(position.xyz, 1);\n"
+		"	gl_Position = matrix * vec4(position, 1);\n"
 		"}\n",
 
 		//fragment shader
@@ -918,13 +917,13 @@ bool CMainApplication::CreateAllShaders()
 
 		// vertex shader
 		"#version 410 core\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec2 position;\n"
 		"layout(location = 1) in vec2 v2UVIn;\n"
 		"noperspective out vec2 v2UV;\n"
 		"void main()\n"
 		"{\n"
 		"	v2UV = v2UVIn;\n"
-		"	gl_Position = position;\n"
+		"	gl_Position = vec4(position, 0, 1);\n"
 		"}\n",
 
 		// fragment shader
