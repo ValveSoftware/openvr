@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation ============//
-#include "strtools.h"
-#include "pathtools.h"
+#include "strtools_public.h"
+#include "pathtools_public.h"
 
 #if defined( _WIN32)
 #include <Windows.h>
@@ -14,6 +14,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <stdlib.h>
 #endif
 #if defined OSX
 #include <Foundation/Foundation.h>
@@ -667,7 +668,7 @@ std::string Path_ReadTextFile( const std::string &strFilename )
 		return "";
 
 	// convert CRLF -> LF
-	int outsize = 1;
+	size_t outsize = 1;
 	for (int i=1; i < size; i++)
 	{
 		if (buf[i] == '\n' && buf[i-1] == '\r') // CRLF
@@ -676,7 +677,7 @@ std::string Path_ReadTextFile( const std::string &strFilename )
 			buf[outsize++] = buf[i]; // just copy
 	}
 
-	std::string ret((char *)buf, (char *)(buf + outsize));
+	std::string ret((char *)buf, outsize);
 	delete[] buf;
 	return ret;
 }

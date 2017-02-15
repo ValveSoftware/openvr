@@ -1,11 +1,11 @@
 //========= Copyright Valve Corporation ============//
 
-#include "vrpathregistry.h"
+#include "vrpathregistry_public.h"
 #include "json/json.h"
-#include "pathtools.h"
-#include "envvartools.h"
-#include "strtools.h"
-#include "dirtools.h"
+#include "pathtools_public.h"
+#include "envvartools_public.h"
+#include "strtools_public.h"
+#include "dirtools_public.h"
 
 #if defined( WIN32 )
 #include <windows.h>
@@ -95,11 +95,10 @@ static std::string GetAppSettingsPath()
 }
 
 
-
 // ---------------------------------------------------------------------------
 // Purpose: Constructor
 // ---------------------------------------------------------------------------
-CVRPathRegistry::CVRPathRegistry()
+CVRPathRegistry_Public::CVRPathRegistry_Public()
 {
 
 }
@@ -107,7 +106,7 @@ CVRPathRegistry::CVRPathRegistry()
 // ---------------------------------------------------------------------------
 // Purpose: Computes the registry filename
 // ---------------------------------------------------------------------------
-std::string CVRPathRegistry::GetOpenVRConfigPath()
+std::string CVRPathRegistry_Public::GetOpenVRConfigPath()
 {
 	std::string sConfigPath = GetAppSettingsPath();
 	if( sConfigPath.empty() )
@@ -129,7 +128,7 @@ std::string CVRPathRegistry::GetOpenVRConfigPath()
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-std::string CVRPathRegistry::GetVRPathRegistryFilename()
+std::string CVRPathRegistry_Public::GetVRPathRegistryFilename()
 {
 	std::string sPath = GetOpenVRConfigPath();
 	if ( sPath.empty() )
@@ -188,7 +187,7 @@ static void StringListToJson( const std::vector< std::string > & vecHistory, Jso
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
-bool CVRPathRegistry::ToJsonString( std::string &sJsonString )
+bool CVRPathRegistry_Public::ToJsonString( std::string &sJsonString )
 {
 	std::string sRegPath = GetVRPathRegistryFilename();
 	if( sRegPath.empty() )
@@ -207,7 +206,7 @@ bool CVRPathRegistry::ToJsonString( std::string &sJsonString )
 // ---------------------------------------------------------------------------
 // Purpose: Loads the config file from its well known location
 // ---------------------------------------------------------------------------
-bool CVRPathRegistry::BLoadFromFile()
+bool CVRPathRegistry_Public::BLoadFromFile()
 {
 	std::string sRegPath = GetVRPathRegistryFilename();
 	if( sRegPath.empty() )
@@ -247,7 +246,7 @@ bool CVRPathRegistry::BLoadFromFile()
 // ---------------------------------------------------------------------------
 // Purpose: Saves the config file to its well known location
 // ---------------------------------------------------------------------------
-bool CVRPathRegistry::BSaveToFile() const
+bool CVRPathRegistry_Public::BSaveToFile() const
 {
 #if defined( DASHBOARD_BUILD_MODE )
 	return false;
@@ -257,6 +256,10 @@ bool CVRPathRegistry::BSaveToFile() const
 		return false;
 	
 	Json::Value root;
+	
+	root[ "version" ] = 1;
+	root[ "jsonid" ] = "vrpathreg";
+
 	StringListToJson( m_vecRuntimePath, root, "runtime" );
 	StringListToJson( m_vecConfigPath, root, "config" );
 	StringListToJson( m_vecLogPath, root, "log" );
@@ -287,7 +290,7 @@ bool CVRPathRegistry::BSaveToFile() const
 // ---------------------------------------------------------------------------
 // Purpose: Returns the current runtime path or NULL if no path is configured.
 // ---------------------------------------------------------------------------
-std::string CVRPathRegistry::GetRuntimePath() const
+std::string CVRPathRegistry_Public::GetRuntimePath() const
 {
 	if( m_vecRuntimePath.empty() )
 		return "";
@@ -299,7 +302,7 @@ std::string CVRPathRegistry::GetRuntimePath() const
 // ---------------------------------------------------------------------------
 // Purpose: Returns the current config path or NULL if no path is configured.
 // ---------------------------------------------------------------------------
-std::string CVRPathRegistry::GetConfigPath() const
+std::string CVRPathRegistry_Public::GetConfigPath() const
 {
 	if( m_vecConfigPath.empty() )
 		return "";
@@ -311,7 +314,7 @@ std::string CVRPathRegistry::GetConfigPath() const
 // ---------------------------------------------------------------------------
 // Purpose: Returns the current log path or NULL if no path is configured.
 // ---------------------------------------------------------------------------
-std::string CVRPathRegistry::GetLogPath() const
+std::string CVRPathRegistry_Public::GetLogPath() const
 {
 	if( m_vecLogPath.empty() )
 		return "";
@@ -325,9 +328,9 @@ std::string CVRPathRegistry::GetLogPath() const
 // Purpose: Returns paths using the path registry and the provided override 
 //			values. Pass NULL for any paths you don't care about.
 // ---------------------------------------------------------------------------
-bool CVRPathRegistry::GetPaths( std::string *psRuntimePath, std::string *psConfigPath, std::string *psLogPath, const char *pchConfigPathOverride, const char *pchLogPathOverride, std::vector<std::string> *pvecExternalDrivers )
+bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *psConfigPath, std::string *psLogPath, const char *pchConfigPathOverride, const char *pchLogPathOverride, std::vector<std::string> *pvecExternalDrivers )
 {
-	CVRPathRegistry pathReg;
+	CVRPathRegistry_Public pathReg;
 	bool bLoadedRegistry = pathReg.BLoadFromFile();
 	int nCountEnvironmentVariables = 0;
 

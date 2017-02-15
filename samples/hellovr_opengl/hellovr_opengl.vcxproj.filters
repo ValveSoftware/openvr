@@ -33,6 +33,9 @@
     <ClCompile Include="..\shared\pathtools.cpp">
       <Filter>Shared</Filter>
     </ClCompile>
+    <ClCompile Include="..\shared\strtools.cpp">
+      <Filter>Shared</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="..\shared\lodepng.h">
@@ -45,6 +48,9 @@
       <Filter>Shared</Filter>
     </ClInclude>
     <ClInclude Include="..\shared\pathtools.h">
+      <Filter>Shared</Filter>
+    </ClInclude>
+    <ClInclude Include="..\shared\strtools.h">
       <Filter>Shared</Filter>
     </ClInclude>
   </ItemGroup>

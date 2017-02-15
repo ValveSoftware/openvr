@@ -2,11 +2,11 @@
 #define VR_API_EXPORT 1
 #include "openvr.h"
 #include "ivrclientcore.h"
-#include "vrcommon/pathtools.h"
-#include "vrcommon/sharedlibtools.h"
-#include "vrcommon/envvartools.h"
-#include "vrcommon/hmderrors.h"
-#include "vrcommon/vrpathregistry.h"
+#include "pathtools_public.h"
+#include "sharedlibtools_public.h"
+#include "envvartools_public.h"
+#include "hmderrors_public.h"
+#include "vrpathregistry_public.h"
 
 using vr::EVRInitError;
 using vr::IVRSystem;
@@ -30,6 +30,8 @@ uint32_t VR_GetInitToken()
 }
 
 EVRInitError VR_LoadHmdSystemInternal();
+void CleanupInternalInterfaces();
+
 
 uint32_t VR_InitInternal( EVRInitError *peError, vr::EVRApplicationType eApplicationType )
 {
@@ -78,6 +80,10 @@ void VR_ShutdownInternal()
 		g_pVRModule = NULL;
 	}
 
+#if !defined( VR_API_PUBLIC )
+	CleanupInternalInterfaces();
+#endif
+
 	++g_nVRToken;
 }
 
@@ -85,7 +91,7 @@ EVRInitError VR_LoadHmdSystemInternal()
 {
 	std::string sRuntimePath, sConfigPath, sLogPath;
 
-	bool bReadPathRegistry = CVRPathRegistry::GetPaths( &sRuntimePath, &sConfigPath, &sLogPath, NULL, NULL );
+	bool bReadPathRegistry = CVRPathRegistry_Public::GetPaths( &sRuntimePath, &sConfigPath, &sLogPath, NULL, NULL );
 	if( !bReadPathRegistry )
 	{
 		return vr::VRInitError_Init_PathRegistryNotFound;
@@ -203,7 +209,7 @@ bool VR_IsRuntimeInstalled()
 		// otherwise we need to do a bit more work
 		std::string sRuntimePath, sConfigPath, sLogPath;
 
-		bool bReadPathRegistry = CVRPathRegistry::GetPaths( &sRuntimePath, &sConfigPath, &sLogPath, NULL, NULL );
+		bool bReadPathRegistry = CVRPathRegistry_Public::GetPaths( &sRuntimePath, &sConfigPath, &sLogPath, NULL, NULL );
 		if( !bReadPathRegistry )
 		{
 			return false;
@@ -229,7 +235,7 @@ const char *VR_RuntimePath()
 	static std::string sRuntimePath;
 	std::string sConfigPath, sLogPath;
 
-	bool bReadPathRegistry = CVRPathRegistry::GetPaths( &sRuntimePath, &sConfigPath, &sLogPath, NULL, NULL );
+	bool bReadPathRegistry = CVRPathRegistry_Public::GetPaths( &sRuntimePath, &sConfigPath, &sLogPath, NULL, NULL );
 	if ( !bReadPathRegistry )
 	{
 		return nullptr;

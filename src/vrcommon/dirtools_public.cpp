@@ -1,9 +1,10 @@
 //========= Copyright Valve Corporation ============//
-#include "dirtools.h"
-#include "strtools.h"
-#include "pathtools.h"
+#include "dirtools_public.h"
+#include "strtools_public.h"
+#include "pathtools_public.h"
 
 #include <errno.h>
+#include <string.h>
 
 #ifdef _WIN32
 #include "windows.h"

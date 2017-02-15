@@ -15,21 +15,22 @@ if(NOT PLATFORM)
 endif()
 message(STATUS "Compilation set for ${PLATFORM}bits architectures.")
 
+set(SDL_REQUIRED_LIBRARIES SDL2)
+
 if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  add_definitions(-DLINUX)
+  add_definitions(-DLINUX -DPOSIX)
   set(ARCH_TARGET linux64)
 
   if(${PLATFORM} MATCHES 32)
     message(WARNING "OpenVR x86 binaries not provided on GNU/Linux.")
   endif()
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  add_definitions(-DOSX)
+  set(CMAKE_MACOSX_RPATH 0)
+  add_definitions(-DOSX -DPOSIX)
   set(ARCH_TARGET osx32)
 
-  if(${PLATFORM} MATCHES 64)
-    message(WARNING "OpenVR x64 binaries not provided on OSX.")
-  endif()
 elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+  set(SDL_REQUIRED_LIBRARIES ${SDL_REQUIRED_LIBRARIES} SDL2main)
   add_definitions(-D_WIN32)
   set(ARCH_TARGET win${PLATFORM})
 
@@ -50,7 +51,7 @@ set(SHARED_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/shared)
 # Check that the steamVR SDK is installed 
 # (needed to prevent a segfault in OpenVR).
 if(CMAKE_HOST_UNIX)
-  find_file(OPENVRPATHS openvrpaths.vrpath PATHS $ENV{HOME}/.config/openvr)
+  find_file(OPENVRPATHS openvrpaths.vrpath PATHS $ENV{HOME}/.config/openvr "$ENV{HOME}/Library/Application Support/OpenVR/.openvr")
   if(${OPENVRPATHS} MATCHES OPENVRPATHS-NOTFOUND)
     message(FATAL_ERROR "${OPENVRPATHS} Please install SteamVR SDK to continue..")
   endif()
@@ -74,7 +75,6 @@ endfunction()
 
 # -----------------------------------------------------------------------------
 ## COMPILER DETECTION ##
-
 if(   (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
    OR (${CMAKE_CXX_COMPILER_ID} MATCHES "Clang"))
   # Better to use the prebuilt GNU preprocessor define __GNUC__,
@@ -90,12 +90,12 @@ if(   (${CMAKE_CXX_COMPILER_ID} MATCHES "GNU")
     set(CMAKE_CXX_FLAGS        "${CMAKE_CXX_FLAGS} -m32")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -m32")
   endif()
-elseif(${CMAKE_CXX_COMPILER_ID} MATCHES "MSVC")
+elseif(CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
   set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} /Za")
-  set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /w2 /DEBUG")
+  set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} /W2 /DEBUG")
   set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /MP /INCREMENTAL:NO")
 else()
-  message(FATAL_ERROR "Unsupported compiler.")
+  message(FATAL_ERROR "Unsupported compiler '${CMAKE_CXX_COMPILER_ID}'")
 endif()
 
 # -----------------------------------------------------------------------------
@@ -124,19 +124,33 @@ else()
 endif()
 
 ## SDL 2
-foreach(lib SDL2 SDL2main)
-  find_library(${lib}_LIBRARY
-    NAMES
-      ${lib}
-    PATHS
-      ${THIRDPARTY_DIR}/sdl2-2.0.3/bin
-    PATH_SUFFIXES
-      linux32
-      osx32
-      ${WINDOWS_PATH_SUFFIXES}
-  )
-  list(APPEND SDL2_LIBRARIES ${${lib}_LIBRARY})
-endforeach()
+## osx32 and linux32 cmake can spot each others' .so and .a files, so keep them apart
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  foreach(lib ${SDL_REQUIRED_LIBRARIES})
+    find_library(${lib}_LIBRARY
+      NAMES
+        ${lib}
+      PATHS
+        ${THIRDPARTY_DIR}/sdl2-2.0.3/bin
+      PATH_SUFFIXES
+        osx32
+    )
+    list(APPEND SDL2_LIBRARIES ${${lib}_LIBRARY})
+  endforeach()
+else()
+  foreach(lib ${SDL_REQUIRED_LIBRARIES})
+    find_library(${lib}_LIBRARY
+      NAMES
+        ${lib}
+      PATHS
+        ${THIRDPARTY_DIR}/sdl2-2.0.3/bin
+      PATH_SUFFIXES
+        linux${PLATFORM}
+        ${WINDOWS_PATH_SUFFIXES}
+    )
+    list(APPEND SDL2_LIBRARIES ${${lib}_LIBRARY})
+  endforeach()
+endif()
 set(SDL2_INCLUDE_DIR ${THIRDPARTY_DIR}/sdl2-2.0.3/include)
 
 ## Qt 5
@@ -167,6 +181,8 @@ foreach(module Core Gui Widgets)
     list(APPEND QT_FLAGS        "${Qt5${module}_EXECUTABLE_COMPILE_FLAGS}")
     list(APPEND QT_DEFINITIONS  "${Qt5${module}_DEFINITIONS}")
 endforeach()
+# Correct QT_FLAGS having semicolons, which break the compile step on POSIX
+list(REMOVE_DUPLICATES QT_FLAGS)
 
 ## OpenVR API path
 find_library(OPENVR_LIBRARIES
@@ -176,8 +192,8 @@ find_library(OPENVR_LIBRARIES
     ${CMAKE_CURRENT_SOURCE_DIR}/../bin
     ${CMAKE_CURRENT_SOURCE_DIR}/../lib
   PATH_SUFFIXES
-    linux64
     osx32
+    linux64
     ${WINDOWS_PATH_SUFFIXES}
   NO_DEFAULT_PATH
   NO_CMAKE_FIND_ROOT_PATH
