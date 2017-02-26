@@ -1,0 +1,6 @@
+# build artifacts
+bin/
+
+# CLion
+cmake-build-debug/
+.idea/
