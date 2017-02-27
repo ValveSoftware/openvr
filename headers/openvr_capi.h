@@ -18,6 +18,9 @@
 #endif
 
 #define OPENVR_FNTABLE_CALLTYPE __stdcall
+#if !defined( _WIN32 )
+#define __stdcall
+#endif
 
 // OPENVR API export macro
 #if defined( _WIN32 ) && !defined( _X360 )
