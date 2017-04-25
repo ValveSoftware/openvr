@@ -1166,7 +1166,7 @@ static const uint32_t k_unScreenshotHandleInvalid = 0;
 
 
 #if defined( _WIN32 )
-#define VR_CALLTYPE //__cdecl
+#define VR_CALLTYPE __cdecl
 #else
 #define VR_CALLTYPE 
 #endif
