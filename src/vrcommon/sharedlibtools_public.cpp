@@ -31,6 +31,8 @@ void *SharedLib_GetFunction( SharedLibHandle lib, const char *pchFunctionName)
 
 void SharedLib_Unload( SharedLibHandle lib )
 {
+	if ( !lib )
+		return;
 #if defined( _WIN32)
 	FreeLibrary( (HMODULE)lib );
 #elif defined(POSIX)

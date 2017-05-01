@@ -27,17 +27,7 @@ struct ID3D12CommandQueue;
 
 namespace vr
 {
-
-#if defined(__linux__) || defined(__APPLE__) 
-	// The 32-bit version of gcc has the alignment requirement for uint64 and double set to
-	// 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
-	// The 64-bit version of gcc has the alignment requirement for these types set to
-	// 8 meaning that unless we use #pragma pack(4) our structures will get bigger.
-	// The 64-bit structure packing has to match the 32-bit structure packing for each platform.
-	#pragma pack( push, 4 )
-#else
-	#pragma pack( push, 8 )
-#endif
+#pragma pack( push, 8 )
 
 typedef void* glSharedTextureHandle_t;
 typedef int32_t glInt_t;
@@ -120,7 +110,7 @@ enum ETextureType
 	TextureType_DirectX = 0, // Handle is an ID3D11Texture
 	TextureType_OpenGL = 1,  // Handle is an OpenGL texture name or an OpenGL render buffer name, depending on submit flags
 	TextureType_Vulkan = 2, // Handle is a pointer to a VRVulkanTextureData_t structure
-	TextureType_IOSurface = 3, // Handle is a macOS cross-process-sharable IOSurface
+	TextureType_IOSurface = 3, // Handle is a macOS cross-process-sharable IOSurfaceRef
 	TextureType_DirectX12 = 4, // Handle is a pointer to a D3D12TextureData_t structure
 };
 
@@ -170,6 +160,7 @@ enum ETrackedDeviceClass
 	TrackedDeviceClass_Controller = 2,			// Tracked controllers
 	TrackedDeviceClass_GenericTracker = 3,		// Generic trackers, similar to controllers
 	TrackedDeviceClass_TrackingReference = 4,	// Camera and base stations that serve as tracking reference points
+	TrackedDeviceClass_DisplayRedirect = 5,		// Accessories that aren't necessarily tracked themselves, but may redirect video output from other tracked devices
 };
 
 
@@ -272,7 +263,7 @@ enum ETrackedDeviceProperty
 	Prop_Firmware_ForceUpdateRequired_Bool      = 1032,
 	Prop_ViveSystemButtonFixRequired_Bool		= 1033,
 	Prop_ParentDriver_Uint64					= 1034,
-
+	Prop_ResourceRoot_String					= 1035,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -317,7 +308,7 @@ enum ETrackedDeviceProperty
 	Prop_DisplayMCImageHeight_Int32				= 2039,
 	Prop_DisplayMCImageNumChannels_Int32		= 2040,
 	Prop_DisplayMCImageData_Binary				= 2041,
-	Prop_UsesDriverDirectMode_Bool				= 2042,
+	Prop_SecondsFromPhotonsToVblank_Float		= 2042,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -356,6 +347,11 @@ enum ETrackedDeviceProperty
 	// Properties that are unique to drivers
 	Prop_UserConfigPath_String					= 6000,
 	Prop_InstallPath_String						= 6001,
+	Prop_HasDisplayComponent_Bool				= 6002,
+	Prop_HasControllerComponent_Bool			= 6003,
+	Prop_HasCameraComponent_Bool				= 6004,
+	Prop_HasDriverDirectModeComponent_Bool		= 6005,
+	Prop_HasVirtualDisplayComponent_Bool		= 6006,
 
 	// Vendors are free to expose private debug data in this reserved region
 	Prop_VendorSpecific_Reserved_Start			= 10000,
@@ -561,6 +557,8 @@ enum EVREventType
 	VREvent_ApplicationListUpdated				= 1303,
 	VREvent_ApplicationMimeTypeLoad				= 1304,
 	VREvent_ApplicationTransitionNewAppLaunchComplete = 1305,
+	VREvent_ProcessConnected					= 1306,
+	VREvent_ProcessDisconnected					= 1307,
 
 	VREvent_Compositor_MirrorWindowShown		= 1400,
 	VREvent_Compositor_MirrorWindowHidden		= 1401,
@@ -586,13 +584,17 @@ enum EVREventType
 
 
 /** Level of Hmd activity */
+// UserInteraction_Timeout means the device is in the process of timing out.
+// InUse = ( k_EDeviceActivityLevel_UserInteraction || k_EDeviceActivityLevel_UserInteraction_Timeout )
+// VREvent_TrackedDeviceUserInteractionStarted fires when the devices transitions from Standby -> UserInteraction or Idle -> UserInteraction.
+// VREvent_TrackedDeviceUserInteractionEnded fires when the devices transitions from UserInteraction_Timeout -> Idle
 enum EDeviceActivityLevel
-{
-	k_EDeviceActivityLevel_Unknown = -1,
-	k_EDeviceActivityLevel_Idle = 0,
-	k_EDeviceActivityLevel_UserInteraction = 1,
-	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,
-	k_EDeviceActivityLevel_Standby = 3,
+{	
+	k_EDeviceActivityLevel_Unknown = -1,									
+	k_EDeviceActivityLevel_Idle = 0,						// No activity for the last 10 seconds
+	k_EDeviceActivityLevel_UserInteraction = 1,				// Activity (movement or prox sensor) is happening now	
+	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,		// No activity for the last 0.5 seconds
+	k_EDeviceActivityLevel_Standby = 3,						// Idle for at least 5 seconds (configurable in Settings -> Power Management)
 };
 
 
@@ -800,6 +802,13 @@ typedef union
 	VREvent_Property_t property;
 } VREvent_Data_t;
 
+
+#if defined(__linux__) || defined(__APPLE__) 
+// This structure was originally defined mis-packed on Linux, preserved for 
+// compatibility. 
+#pragma pack( push, 4 )
+#endif
+
 /** An event posted by the server to all running applications */
 struct VREvent_t
 {
@@ -810,6 +819,9 @@ struct VREvent_t
 	VREvent_Data_t data;
 };
 
+#if defined(__linux__) || defined(__APPLE__) 
+#pragma pack( pop )
+#endif
 
 /** The mesh to draw into the stencil (or depth) buffer to perform 
 * early stencil (or depth) kills of pixels that will never appear on the HMD.
@@ -858,6 +870,12 @@ struct VRControllerAxis_t
 static const uint32_t k_unControllerStateAxisCount = 5;
 
 
+#if defined(__linux__) || defined(__APPLE__) 
+// This structure was originally defined mis-packed on Linux, preserved for 
+// compatibility. 
+#pragma pack( push, 4 )
+#endif
+
 /** Holds all the state of a controller at one moment in time. */
 struct VRControllerState001_t
 {
@@ -872,6 +890,9 @@ struct VRControllerState001_t
 	// Axis data for the controller's analog inputs
 	VRControllerAxis_t rAxis[ k_unControllerStateAxisCount ];
 };
+#if defined(__linux__) || defined(__APPLE__) 
+#pragma pack( pop )
+#endif
 
 
 typedef VRControllerState001_t VRControllerState_t;
@@ -954,6 +975,7 @@ enum EVRApplicationType
 									// interfaces (like IVRSettings and IVRApplications) but not hardware.
 	VRApplication_VRMonitor = 5,	// Reserved for vrmonitor
 	VRApplication_SteamWatchdog = 6,// Reserved for Steam
+	VRApplication_Bootstrapper = 7, // Start up SteamVR
 
 	VRApplication_Max
 };
@@ -1199,16 +1221,7 @@ static const uint32_t k_unScreenshotHandleInvalid = 0;
 namespace vr
 {
 
-#if defined(__linux__) || defined(__APPLE__) 
-	// The 32-bit version of gcc has the alignment requirement for uint64 and double set to
-	// 4 meaning that even with #pragma pack(8) these types will only be four-byte aligned.
-	// The 64-bit version of gcc has the alignment requirement for these types set to
-	// 8 meaning that unless we use #pragma pack(4) our structures will get bigger.
-	// The 64-bit structure packing has to match the 32-bit structure packing for each platform.
-	#pragma pack( push, 4 )
-#else
-	#pragma pack( push, 8 )
-#endif
+#pragma pack( push, 8 )
 
 enum ECameraVideoStreamFormat
 {
@@ -1341,7 +1354,6 @@ namespace vr
 	static const char * const k_pch_SteamVR_ForcedHmdKey_String = "forcedHmd";
 	static const char * const k_pch_SteamVR_DisplayDebug_Bool = "displayDebug";
 	static const char * const k_pch_SteamVR_DebugProcessPipe_String = "debugProcessPipe";
-	static const char * const k_pch_SteamVR_EnableDistortion_Bool = "enableDistortion";
 	static const char * const k_pch_SteamVR_DisplayDebugX_Int32 = "displayDebugX";
 	static const char * const k_pch_SteamVR_DisplayDebugY_Int32 = "displayDebugY";
 	static const char * const k_pch_SteamVR_SendSystemButtonToAllApps_Bool= "sendSystemButtonToAllApps";
@@ -2260,11 +2272,18 @@ public:
 	/** Returns true and fills the event with the next event on the queue if there is one. If there are no events
 	* this method returns false. uncbVREvent should be the size in bytes of the VREvent_t struct */
 	virtual bool PollNextEvent( VREvent_t *pEvent, uint32_t uncbVREvent ) = 0;
+
+	/** Provides access to device poses for drivers.  Poses are in their "raw" tracking space which is uniquely
+	* defined by each driver providing poses for its devices.  It is up to clients of this function to correlate
+	* poses across different drivers.  Poses are indexed by their device id, and their associated driver and
+	* other properties can be looked up via IVRProperties. */
+	virtual void GetRawTrackedDevicePoses( float fPredictedSecondsFromNow, TrackedDevicePose_t *pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount ) = 0;
 };
 
 static const char *IVRServerDriverHost_Version = "IVRServerDriverHost_004";
 
 }
+
 // ivrhiddenarea.h
 namespace vr
 {
@@ -2339,6 +2358,33 @@ static const char *IVRWatchdogHost_Version = "IVRWatchdogHost_001";
 
 
 
+// ivrvirtualdisplay.h
+namespace vr
+{
+	// ----------------------------------------------------------------------------------------------
+	// Purpose: This component is used for drivers that implement a virtual display (e.g. wireless).
+	// ----------------------------------------------------------------------------------------------
+	class IVRVirtualDisplay
+	{
+	public:
+
+		/** Submits final backbuffer for display. */
+		virtual void Present( vr::SharedTextureHandle_t backbufferTextureHandle ) = 0;
+
+		/** Block until the last presented buffer start scanning out. */
+		virtual void WaitForPresent() = 0;
+
+		/** Provides timing data for synchronizing with display. */
+		virtual bool GetTimeSinceLastVsync( float *pfSecondsSinceLastVsync, uint64_t *pulFrameCounter ) = 0;
+	};
+
+	static const char *IVRVirtualDisplay_Version = "IVRVirtualDisplay_001";
+
+	/** Returns the current IVRVirtualDisplay pointer or NULL the interface could not be found. */
+	VR_INTERFACE vr::IVRVirtualDisplay *VR_CALLTYPE VRVirtualDisplay();
+}
+
+
 
 
 
@@ -2355,6 +2401,7 @@ namespace vr
 		IVRCameraComponent_Version,
 		IServerTrackedDeviceProvider_Version,
 		IVRWatchdogProvider_Version,
+		IVRVirtualDisplay_Version,
 		nullptr
 	};
 
