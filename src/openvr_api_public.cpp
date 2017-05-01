@@ -38,7 +38,9 @@ uint32_t VR_InitInternal( EVRInitError *peError, vr::EVRApplicationType eApplica
 	EVRInitError err = VR_LoadHmdSystemInternal();
 	if (err != vr::VRInitError_None)
 	{
-		SharedLib_Unload(g_pVRModule);
+		if (g_pVRModule)
+			SharedLib_Unload(g_pVRModule);
+
 		g_pHmdSystem = NULL;
 		g_pVRModule = NULL;
 
