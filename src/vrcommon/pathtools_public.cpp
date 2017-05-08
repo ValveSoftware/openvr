@@ -8,6 +8,7 @@
 #include <shobjidl.h>
 #include <knownfolders.h>
 #include <shlobj.h>
+#include <share.h>
 
 #undef GetEnvironmentVariable
 #else
