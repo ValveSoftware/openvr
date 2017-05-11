@@ -18,7 +18,7 @@ set INSTALL_DIR=%ROOT_DIR%/artifacts
 
 cmake -E make_directory "%BUILD_DIR%"
 if !errorlevel! neq 0 exit /b !errorlevel!
-cmake -E chdir "%BUILD_DIR%" cmake -G "%CMAKE_GENERATOR%" -DCMAKE_INSTALL_PREFIX="%INSTALL_DIR%" ..
+cmake -E chdir "%BUILD_DIR%" cmake -G "%CMAKE_GENERATOR%" -DCMAKE_INSTALL_PREFIX="%INSTALL_DIR%" -DBUILD_SHARED=ON ..
 if !errorlevel! neq 0 exit /b !errorlevel!
 cmake --build "%BUILD_DIR%" --clean-first --config Release --target install -- "/m"
 if !errorlevel! neq 0 exit /b !errorlevel!
