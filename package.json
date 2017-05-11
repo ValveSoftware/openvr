@@ -1,0 +1,21 @@
+{
+  "name": "@sb/openvr",
+  "version": "1.0.7",
+  "description": "OpenVR package for Valhalla",
+  "repository": "https://github.com/fl4re/openvr",
+  "private": false,
+  "binary": {
+    "file": "{package_name}/{package_version}/openvr-{package_version}-{platform}-{arch}.tar.gz",
+    "host": "https://registry-node.starbreeze.com/-/releases",
+    "os": [
+      "win32",
+      "darwin"
+    ],
+    "path": [
+      "artifacts/**"
+    ]
+  },
+  "scripts": {
+    "install": "prades install"
+  }
+}
