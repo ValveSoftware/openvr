@@ -39,47 +39,41 @@ public:
 		m_aVertexArray = new float[3 * uSize];
 		m_aTextureArray = new float[2 * uSize];
 
+		float fXRatio = 360.0 / (uNumW - 1);
+		float fYRatio = 180.0 / (uNumH - 1);
+		float fX;
+		float fY;
 
-		for (unsigned int iH = 0; iH < uNumH; ++iH)
+		for (int i = 0; i<uNumH; i++)
 		{
-			float fY = float(iH) / (uNumH - 1);
-			// pre-compute vertex position
-			float fTmp = fabs(fSize * sin(M_PI * fY));
-			float fVY = fSize * cos(M_PI * fY);
-
-			for (unsigned int iW = 0; iW < uNumW; ++iW)
-			{
-				float fX = float(iW) / (uNumW - 1);
-				unsigned int iIdx = (iH * uNumW + iW);
-
-				// vertex
-				m_aVertexArray[3 * iIdx] = fTmp * cos(2 * M_PI * fX);
-				m_aVertexArray[3 * iIdx + 1] = fVY;
-				m_aVertexArray[3 * iIdx + 2] = fTmp * sin(2 * M_PI * fX);
-
-				// texture
-				m_aTextureArray[2 * iIdx] = fX;
-				m_aTextureArray[2 * iIdx + 1] = fY;
+			for (int j = 0; j<uNumW; j++)
+			{				
+				m_aTextureArray[2*(i * uNumW + j) ] = j / (uNumW - 1.0);
+				m_aTextureArray[2*(i * uNumW + j) + 1] = 1.0 - (i / (uNumH - 1.0));
+				fX = -180.0 + j * fXRatio;
+				fY = -90.0 + i * fYRatio;
+				m_aVertexArray[3 * (i * uNumW + j)] = (fSize*cos(fY*M_PI / 180.0)*cos(fX*M_PI / 180.0));
+				m_aVertexArray[3 * (i * uNumW + j) + 1] = (fSize*cos(fY*M_PI / 180.0)*sin(fX*M_PI / 180.0));
+				m_aVertexArray[3 * (i * uNumW + j) + 2] = (fSize*sin(fY*M_PI / 180.0));
 			}
 		}
 
-		m_uIndexNum = 6 * (uNumW - 1) * (uNumH - 1);
+		m_uIndexNum = (2 * uNumW * (uNumH - 1)) + (uNumH - 1);
 		m_aIndexArray = new unsigned int[m_uIndexNum];
-		for (unsigned int iH = 0; iH < uNumH - 1; ++iH)
+		unsigned int uIndex = 0;
+		for (int i = 0; i<uNumH - 1; i++)
 		{
-			for (unsigned int iW = 0; iW < uNumW - 1; ++iW)
+			for (int j = 0; j<uNumW; j++)
 			{
-				unsigned int iVIdx = (iH * uNumW + iW);
-				unsigned int iIIdx = 6 * (iH * (uNumW - 1) + iW);
-
-				m_aIndexArray[iIIdx] = iVIdx;
-				m_aIndexArray[iIIdx + 1] = iVIdx + uNumW;
-				m_aIndexArray[iIIdx + 2] = iVIdx + uNumW + 1;
-				m_aIndexArray[iIIdx + 3] = iVIdx;
-				m_aIndexArray[iIIdx + 4] = iVIdx + uNumW + 1;
-				m_aIndexArray[iIIdx + 5] = iVIdx + 1;
+				m_aIndexArray[uIndex] = (i*uNumW + j);
+				uIndex++;
+				m_aIndexArray[uIndex] = ((i + 1)*uNumW + j);
+				uIndex++;
 			}
+			m_aIndexArray[uIndex] = (std::numeric_limits<unsigned int>::max());
+			uIndex++;
 		}
+
 	}
 
 	void Initial(const cv::Mat& rImg)
@@ -109,7 +103,8 @@ public:
 		glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 		glTexCoordPointer(2, GL_FLOAT, 0, m_aTextureArray);
 
-		glDrawElements(GL_TRIANGLES, m_uIndexNum, GL_UNSIGNED_INT, m_aIndexArray);
+//		glDrawElements(GL_TRIANGLES, m_uIndexNum, GL_UNSIGNED_INT, m_aIndexArray);
+		glDrawElements(GL_TRIANGLE_STRIP, m_uIndexNum, GL_UNSIGNED_INT, m_aIndexArray);
 
 		glDisableClientState(GL_VERTEX_ARRAY);
 		glDisableClientState(GL_TEXTURE_COORD_ARRAY);
