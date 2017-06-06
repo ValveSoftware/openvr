@@ -6,6 +6,8 @@ project(OpenVRSDK)
 
 # Setup some options.
 option(BUILD_SHARED "Builds the library as shared library" OFF)
+option(BUILD_FRAMEWORK "Builds the library as an apple Framework" OFF)
+option(BUILD_UNIVERSAL "Builds the shared or framework as a universal (fat, 32- & 64-bit) binary" ON)
 option(USE_LIBCXX "Uses libc++ instead of libstdc++" ON)
 option(USE_CUSTOM_LIBCXX "Uses a custom libc++" OFF)
 
@@ -34,6 +36,9 @@ elseif(APPLE)
   if(CMAKE_SYSTEM_NAME MATCHES ".*Darwin.*" OR CMAKE_SYSTEM_NAME MATCHES ".*MacOS.*")
     set(PLATFORM_NAME "osx")
     add_definitions(-DOSX -DPOSIX)
+    if(BUILD_UNIVERSAL)
+      set(CMAKE_OSX_ARCHITECTURES "i386;x86_64")
+    endif()
   endif()
 endif()
 
