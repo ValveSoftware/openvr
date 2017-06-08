@@ -32,7 +32,7 @@ target_link_libraries(${TARGET_NAME}
 
 set_target_properties(${TARGET_NAME}
   PROPERTIES
-  COMPILE_FLAGS "${QT_FLAGS}"
+  COMPILE_FLAGS ${QT_FLAGS}
 )
 
 setTargetOutputDirectory(${TARGET_NAME})
