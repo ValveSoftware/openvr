@@ -5,15 +5,15 @@ set( LIBNAME "openvr_api" )
 
 # Set some properies for specific files.
 if(APPLE)
-  set(CMAKE_MACOSX_RPATH 0)
+  set(CMAKE_MACOSX_RPATH 1)
   if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_source_files_properties(vrcommon/pathtools_public.cpp vrcommon/vrpathregistry_public.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
   endif()
-  if(BUILD_SHARED)
+  if(BUILD_SHARED OR BUILD_FRAMEWORK)
     find_library(FOUNDATION_FRAMEWORK Foundation)
     mark_as_advanced(FOUNDATION_FRAMEWORK)
     set(EXTRA_LIBS ${EXTRA_LIBS} ${FOUNDATION_FRAMEWORK})
-  endif(BUILD_SHARED)
+  endif(BUILD_SHARED OR BUILD_FRAMEWORK)
 elseif(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_definitions( -DWIN64 )
@@ -61,6 +61,28 @@ source_group("VRCommon" FILES
 # Build the library.
 if(BUILD_SHARED)
 	add_library(${LIBNAME} SHARED ${SOURCE_FILES})
+elseif(BUILD_FRAMEWORK)
+	set( LIBNAME "OpenVR" )
+	add_library( ${LIBNAME} 
+            SHARED ${SOURCE_FILES}
+            ${CMAKE_SOURCE_DIR}/headers/openvr.h
+            ${CMAKE_SOURCE_DIR}/headers/openvr_api.cs
+            ${CMAKE_SOURCE_DIR}/headers/openvr_api.json
+            ${CMAKE_SOURCE_DIR}/headers/openvr_capi.h
+            ${CMAKE_SOURCE_DIR}/headers/openvr_driver.h
+	)
+	set_target_properties(OpenVR PROPERTIES
+		FRAMEWORK TRUE
+		FRAMEWORK_VERSION A
+		MACOSX_FRAMEWORK_IDENTIFIER com.valvesoftware.OpenVR.framework
+		MACOSX_FRAMEWORK_INFO_PLIST ${CMAKE_SOURCE_DIR}/src/Info.plist
+		# "current version" in semantic format in Mach-O binary file
+		VERSION 1.0.6
+		# "compatibility version" in semantic format in Mach-O binary file
+		SOVERSION 1.0.0
+		PUBLIC_HEADER "${CMAKE_SOURCE_DIR}/headers/openvr.h;${CMAKE_SOURCE_DIR}/headers/openvr_api.cs;${CMAKE_SOURCE_DIR}/headers/openvr_api.json;${CMAKE_SOURCE_DIR}/headers/openvr_capi.h;${CMAKE_SOURCE_DIR}/headers/openvr_driver.h"
+		LINKER_LANGUAGE CXX
+	)
 else()
 	add_library(${LIBNAME} STATIC ${SOURCE_FILES})
 endif()
