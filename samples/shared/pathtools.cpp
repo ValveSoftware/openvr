@@ -4,11 +4,11 @@
 #include "pathtools.h"
 
 #if defined( _WIN32)
-#include <Windows.h>
+#include <windows.h>
 #include <direct.h>
-#include <Shobjidl.h>
-#include <KnownFolders.h>
-#include <Shlobj.h>
+#include <shobjidl.h>
+#include <knownfolders.h>
+#include <shlobj.h>
 
 #undef GetEnvironmentVariable
 #else
