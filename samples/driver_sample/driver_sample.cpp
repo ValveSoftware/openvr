@@ -8,7 +8,7 @@
 #include <chrono>
 
 #if defined( _WINDOWS )
-#include <Windows.h>
+#include <windows.h>
 #endif
 
 using namespace vr;
