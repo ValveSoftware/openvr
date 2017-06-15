@@ -1174,11 +1174,14 @@ static const uint32_t k_unScreenshotHandleInvalid = 0;
 
 // figure out how to import from the VR API dll
 #if defined(_WIN32)
-
+#ifdef VR_BUILD_SHARED
 #ifdef VR_API_EXPORT
 #define VR_INTERFACE extern "C" __declspec( dllexport )
 #else
 #define VR_INTERFACE extern "C" __declspec( dllimport )
+#endif
+#else
+#define VR_INTERFACE extern "C"
 #endif
 
 #elif defined(__GNUC__) || defined(COMPILER_GCC) || defined(__APPLE__)
