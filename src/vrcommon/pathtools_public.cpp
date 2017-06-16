@@ -3,11 +3,12 @@
 #include "pathtools_public.h"
 
 #if defined( _WIN32)
-#include <Windows.h>
+#include <windows.h>
 #include <direct.h>
-#include <Shobjidl.h>
-#include <KnownFolders.h>
-#include <Shlobj.h>
+#include <shobjidl.h>
+#include <knownFolders.h>
+#include <shlobj.h>
+#include <share.h>
 
 #undef GetEnvironmentVariable
 #else
@@ -17,8 +18,8 @@
 #include <stdlib.h>
 #endif
 #if defined OSX
-#include <Foundation/Foundation.h>
-#include <AppKit/AppKit.h>
+#include <foundation/foundation.h>
+#include <appkit/appkit.h>
 #include <mach-o/dyld.h>
 #define _S_IFDIR S_IFDIR     // really from tier0/platform.h which we dont have yet
 #endif
