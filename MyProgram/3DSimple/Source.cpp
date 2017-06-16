@@ -20,10 +20,10 @@
 
 #pragma comment(lib,"glew32.lib") 
 #ifdef _DEBUG
-#pragma comment(lib,"opencv_world310d.lib") 
+#pragma comment(lib,"opencv_world320d.lib") 
 #pragma comment(lib,"freeglutd.lib") 
 #else
-#pragma comment(lib,"opencv_world310.lib") 
+#pragma comment(lib,"opencv_world320.lib") 
 #pragma comment(lib,"freeglut.lib") 
 #endif
 
@@ -49,7 +49,7 @@ public:
 			for (int j = 0; j<uNumW; j++)
 			{				
 				m_aTextureArray[2*(i * uNumW + j) ] = j / (uNumW - 1.0);
-				m_aTextureArray[2*(i * uNumW + j) + 1] = 1.0 - (i / (uNumH - 1.0));
+				m_aTextureArray[2*(i * uNumW + j) + 1] = (i / (uNumH - 1.0));
 				fX = -180.0 + j * fXRatio;
 				fY = -90.0 + i * fYRatio;
 				m_aVertexArray[3 * (i * uNumW + j)] = (fSize*cos(fY*M_PI / 180.0)*cos(fX*M_PI / 180.0));
@@ -132,7 +132,7 @@ COpenVRGL*	g_pOpenVRGL = nullptr;
 CBall		g_Ball;
 glm::mat4	g_matBall;
 
-bool			g_bVRVideoMode = false;
+bool			g_bVRVideoMode = true;
 
 cv::VideoCapture	g_cvVideo;
 cv::Mat				g_imgFrame;
@@ -198,6 +198,7 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glMultMatrixf(&(glm::inverse(matModelView)[0][0]));
+	glRotatef(90, 1, 0, 0);
 
 	if(!g_bVRVideoMode)
 		glTranslatef(0,1.2,0);
@@ -265,7 +266,7 @@ int main(int argc, char** argv)
 	glewInit();
 
 	if(g_bVRVideoMode)
-		g_Ball.BuildBall(10, 51, 51);
+		g_Ball.BuildBall(10, 255, 255);
 	else
 		g_Ball.BuildBall(0.5, 51, 51);
 	g_Ball.Initial(g_imgFrame);
