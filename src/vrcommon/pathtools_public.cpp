@@ -22,6 +22,9 @@
 #include <mach-o/dyld.h>
 #define _S_IFDIR S_IFDIR     // really from tier0/platform.h which we dont have yet
 #endif
+#if defined(__DragonFly__) || defined(__FreeBSD__) || defined(__NetBSD__)
+#include <sys/sysctl.h>
+#endif
 
 #include <sys/stat.h>
 
@@ -49,10 +52,37 @@ std::string Path_GetExecutablePath()
 		return rchPath;
 	else
 		return "";
-#elif defined LINUX
+#elif defined(KERN_PROC_PATHNAME)
+	char rchPath[1024 + 1];
+	size_t nBuff = sizeof( rchPath );
+	int mib[] = {
+		CTL_KERN,
+#if defined(__NetBSD__)
+		KERN_PROC_ARGS,
+		-1,
+		KERN_PROC_PATHNAME,
+#else
+		KERN_PROC,
+		KERN_PROC_PATHNAME,
+		-1,
+#endif
+	};
+	u_int mibLen = sizeof(mib) / sizeof(mib[0]);
+	int bSuccess = sysctl(mib, mibLen, rchPath, &nBuff, NULL, 0) == 0;
+	if( bSuccess )
+		return rchPath;
+	else
+		return "";
+#else
 	char rchPath[1024];
 	size_t nBuff = sizeof( rchPath );
+#if defined(__linux__)
 	ssize_t nRead = readlink("/proc/self/exe", rchPath, nBuff-1 );
+#elif defined(__sun)
+	ssize_t nRead = readlink("/proc/self/path/a.out", rchPath, nBuff-1 );
+#else
+	ssize_t nRead = readlink("/proc/curproc/file", rchPath, nBuff-1 );
+#endif
 	if ( nRead != -1 )
 	{
 		rchPath[ nRead ] = 0;
@@ -62,9 +92,6 @@ std::string Path_GetExecutablePath()
 	{
 		return "";
 	}
-#else
-	AssertMsg( false, "Implement Plat_GetExecutablePath" );
-	return "";
 #endif
 
 }
