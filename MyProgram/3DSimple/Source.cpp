@@ -198,12 +198,12 @@ void DrawOneEye(vr::Hmd_Eye eEye, glm::mat4 matModelView, glm::mat4 matProjectio
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	glMultMatrixf(&(glm::inverse(matModelView)[0][0]));
-	glRotatef(90, 1, 0, 0);
 
-	if(!g_bVRVideoMode)
-		glTranslatef(0,1.2,0);
+	if (!g_bVRVideoMode)
+		glTranslatef(0, 1.2, 0);
 
 	glMultMatrixf(&g_matBall[0][0]);
+	glRotatef(90, 1, 0, 0);
 
 	g_Ball.Draw();
 }
