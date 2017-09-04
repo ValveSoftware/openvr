@@ -91,7 +91,7 @@ if(USE_CUSTOM_LIBCXX)
 	set(EXTRA_LIBS ${EXTRA_LIBS} c++ c++abi)
 endif()
 
-target_link_libraries(${LIBNAME} ${EXTRA_LIBS} ${CMAKE_DL_LIBS})
+target_link_libraries(${LIBNAME} ${EXTRA_LIBS})
 target_include_directories(${LIBNAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../headers)
 
 install(TARGETS ${LIBNAME} DESTINATION lib)
