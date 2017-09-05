@@ -2,6 +2,9 @@
 
 #if defined( _WIN32 )
 	#define VK_USE_PLATFORM_WIN32_KHR
+#elif defined( OSX )
+    #define VK_USE_PLATFORM_MACOS_MVK
+    #include "osx/SDL_cocoametalview.h"
 #else
 	#define SDL_VIDEO_DRIVER_X11
 	#define VK_USE_PLATFORM_XLIB_KHR
@@ -357,7 +360,7 @@ void dprintf( const char *fmt, ... )
 	char buffer[ 2048 ];
 
 	va_start( args, fmt );
-	vsprintf_s( buffer, fmt, args );
+    sprintf_s( buffer, sizeof( buffer ), fmt, args );
 	va_end( args );
 
 	if ( g_bPrintf )
@@ -706,7 +709,11 @@ bool CMainApplication::GetVulkanInstanceExtensionsRequired( std::vector< std::st
 	}
 
 	outInstanceExtensionList.clear();
-	uint32_t nBufferSize = vr::VRCompositor()->GetVulkanInstanceExtensionsRequired( nullptr, 0 );
+#if defined( OSX )
+    uint32_t nBufferSize = 0;   // GetVulkanInstanceExtensionsRequired() crashes on macOS.
+#else
+    uint32_t nBufferSize = vr::VRCompositor()->GetVulkanInstanceExtensionsRequired( nullptr, 0 );
+#endif
 	if ( nBufferSize > 0 )
 	{
 		// Allocate memory for the space separated list and query for it
@@ -752,8 +759,14 @@ bool CMainApplication::GetVulkanDeviceExtensionsRequired( VkPhysicalDevice pPhys
 	}
 
 	outDeviceExtensionList.clear();
-	uint32_t nBufferSize = vr::VRCompositor()->GetVulkanDeviceExtensionsRequired( ( VkPhysicalDevice_T * ) pPhysicalDevice, nullptr, 0 );
-	if ( nBufferSize > 0 )
+    
+#if defined( OSX )
+    uint32_t nBufferSize = 0;   // GetVulkanDeviceExtensionsRequired() crashes on macOS.
+#else
+    uint32_t nBufferSize = vr::VRCompositor()->GetVulkanDeviceExtensionsRequired( ( VkPhysicalDevice_T * ) pPhysicalDevice, nullptr, 0 );
+#endif
+
+    if ( nBufferSize > 0 )
 	{
 		// Allocate memory for the space separated list and query for it
 		char *pExtensionStr = new char[ nBufferSize ];
@@ -809,6 +822,8 @@ bool CMainApplication::BInitVulkanInstance()
 	requiredInstanceExtensions.push_back( VK_KHR_SURFACE_EXTENSION_NAME );
 #if defined ( _WIN32 )
 	requiredInstanceExtensions.push_back( VK_KHR_WIN32_SURFACE_EXTENSION_NAME );
+#elif defined ( VK_USE_PLATFORM_MACOS_MVK )
+    requiredInstanceExtensions.push_back( VK_MVK_MACOS_SURFACE_EXTENSION_NAME );
 #else
 	requiredInstanceExtensions.push_back( VK_KHR_XLIB_SURFACE_EXTENSION_NAME );
 #endif
@@ -896,7 +911,7 @@ bool CMainApplication::BInitVulkanInstance()
 
 			if ( !bFound )
 			{
-				dprintf( "Vulkan missing requested extension '%s'.\n", requiredInstanceExtensions[ nExt ] );
+				dprintf( "Vulkan missing requested extension '%s'.\n", requiredInstanceExtensions[ nExt ].c_str() );
 			}
 		}
 
@@ -1107,6 +1122,13 @@ bool CMainApplication::BInitVulkanSwapchain()
 	win32SurfaceCreateInfo.hinstance = GetModuleHandle( NULL );
 	win32SurfaceCreateInfo.hwnd = ( HWND ) wmInfo.info.win.window;
 	nResult = vkCreateWin32SurfaceKHR( m_pInstance, &win32SurfaceCreateInfo, nullptr, &m_pSurface );
+#elif defined(VK_USE_PLATFORM_MACOS_MVK)
+    VkMacOSSurfaceCreateInfoMVK macosSurfaceCreateInfo;
+    macosSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+    macosSurfaceCreateInfo.pNext = NULL;
+    macosSurfaceCreateInfo.flags = 0;
+    macosSurfaceCreateInfo.pView = Cocoa_Mtl_AddMetalView(m_pCompanionWindow);
+    nResult = vkCreateMacOSSurfaceMVK( m_pInstance, &macosSurfaceCreateInfo, nullptr, &m_pSurface );
 #else
 	VkXlibSurfaceCreateInfoKHR xlibSurfaceCreateInfo = { VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR };
 	xlibSurfaceCreateInfo.flags = 0;
