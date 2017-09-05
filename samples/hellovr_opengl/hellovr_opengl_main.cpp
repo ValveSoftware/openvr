@@ -537,8 +537,11 @@ void CMainApplication::Shutdown()
 	
 	if( m_pContext )
 	{
-		glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
-		glDebugMessageCallback(nullptr, nullptr);
+		if( m_bDebugOpenGL )
+		{
+			glDebugMessageControl( GL_DONT_CARE, GL_DONT_CARE, GL_DONT_CARE, 0, nullptr, GL_FALSE );
+			glDebugMessageCallback(nullptr, nullptr);
+		}
 		glDeleteBuffers(1, &m_glSceneVertBuffer);
 
 		if ( m_unSceneProgramID )

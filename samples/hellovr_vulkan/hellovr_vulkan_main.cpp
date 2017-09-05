@@ -989,8 +989,26 @@ bool CMainApplication::BInitVulkanDevice()
 		return false;
 	}
 
-	// Grab the first physical device
-	m_pPhysicalDevice = pPhysicalDevices[ 0 ];
+	// Query OpenVR for the physical device to use
+	uint64_t pHMDPhysicalDevice = 0;
+	m_pHMD->GetOutputDevice( &pHMDPhysicalDevice, vr::TextureType_Vulkan, ( VkInstance_T * ) m_pInstance );
+
+	// Select the HMD physical device
+	m_pPhysicalDevice = VK_NULL_HANDLE;
+	for ( uint32_t nPhysicalDevice = 0; nPhysicalDevice < nDeviceCount; nPhysicalDevice++ )
+	{
+		if ( ( ( VkPhysicalDevice ) pHMDPhysicalDevice ) == pPhysicalDevices[ nPhysicalDevice ] )
+		{
+			m_pPhysicalDevice = ( VkPhysicalDevice ) pHMDPhysicalDevice;
+			break;
+		}
+	}
+	if ( m_pPhysicalDevice == VK_NULL_HANDLE )
+	{
+		// Fallback: Grab the first physical device
+		dprintf( "Failed to find GetOutputDevice VkPhysicalDevice, falling back to choosing first device.\n" );
+		m_pPhysicalDevice = pPhysicalDevices[ 0 ];
+	}
 	delete [] pPhysicalDevices;
 
 	vkGetPhysicalDeviceProperties( m_pPhysicalDevice, &m_physicalDeviceProperties );
