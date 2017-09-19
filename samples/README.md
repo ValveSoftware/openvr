@@ -49,9 +49,20 @@ To build:
 
 Generate the Xcode project:
 
-	cmake .. -G Xcode -DCMAKE_PREFIX_PATH=path-to-Qt/5.6/clang_64/lib/cmake -DCMAKE_BUILD_TYPE=Release
+	cmake .. -G Xcode -DCMAKE_PREFIX_PATH=<path-to-Qt>/5.6/clang_64/lib/cmake -DCMAKE_BUILD_TYPE=Release
 
-Then open the `openvr_samples.xcodeproj` *Xcode* project and build and run the appropriate target.
+On macOS, the `hellovr_vulkan` sample uses the MoltenVK Vulkan driver. To run this sample, install 
+`Molten` in the same directory as `openvr`:
+
+	Molten/
+	openvr/
+
+or if you have installed `Molten` somewhere else, modify the sample's symlink to your MoltenVK installation:
+
+	cd openvr/samples/thirdparty/vulkan-1.0.49.0/lib/osx32
+	ln -sfn <path-to-Molten-installation>/MoltenVK
+
+Then open the `samples/build/openvr_samples.xcodeproj` *Xcode* project and build and run the appropriate target.
 
 
 ### Windows

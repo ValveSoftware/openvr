@@ -158,13 +158,11 @@ if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
   find_library(VULKAN_LIBRARY
       NAMES
         MoltenVK
-        vulkan
       PATHS
-        ${THIRDPARTY_DIR}/vulkan-1.0.49.0/lib
-      PATH_SUFFIXES
-        osx32
+        ${THIRDPARTY_DIR}/vulkan-1.0.49.0/lib/osx32/MoltenVK/macOS
       NO_DEFAULT_PATH
   )
+  set(VULKAN_INCLUDE_DIR ${THIRDPARTY_DIR}/vulkan-1.0.49.0/lib/osx32/MoltenVK/include)
 else()
   find_library(VULKAN_LIBRARY
       NAMES
@@ -177,8 +175,8 @@ else()
         ${WINDOWS_PATH_SUFFIXES}
       NO_DEFAULT_PATH
   )
+  set(VULKAN_INCLUDE_DIR ${THIRDPARTY_DIR}/vulkan-1.0.49.0/include)
 endif()
-set(VULKAN_INCLUDE_DIR ${THIRDPARTY_DIR}/vulkan-1.0.49.0/include)
 
 
 ## Qt 5

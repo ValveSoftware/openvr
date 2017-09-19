@@ -4,6 +4,7 @@
 	#define VK_USE_PLATFORM_WIN32_KHR
 #elif defined( OSX )
     #define VK_USE_PLATFORM_MACOS_MVK
+    #include <MoltenVK/vk_mvk_moltenvk.h>
     #include "osx/SDL_cocoametalview.h"
 #else
 	#define SDL_VIDEO_DRIVER_X11
@@ -488,6 +489,11 @@ static bool CreateVulkanBuffer( VkDevice pDevice, const VkPhysicalDeviceMemoryPr
 	return true;
 }
 
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+#define MSAA_SAMPLES    1
+#else
+#define MSAA_SAMPLES    4
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -502,7 +508,7 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 	, m_bVerbose( false )
 	, m_bPerf( false )
 	, m_bVblank( false )
-	, m_nMSAASampleCount( 4 )
+    , m_nMSAASampleCount( MSAA_SAMPLES )
 	, m_flSuperSampleScale( 1.0f )
 	, m_iTrackedControllerCount( 0 )
 	, m_iTrackedControllerCount_Last( -1 )
@@ -990,6 +996,24 @@ bool CMainApplication::BInitVulkanDevice()
 	}
 
 	// Query OpenVR for the physical device to use
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+    uint64_t pHMDPhysicalDevice = 0;
+    m_pHMD->GetOutputDevice( &pHMDPhysicalDevice, vr::TextureType_IOSurface);
+
+    // Select the HMD physical device
+    m_pPhysicalDevice = VK_NULL_HANDLE;
+    for ( uint32_t nPhysicalDevice = 0; nPhysicalDevice < nDeviceCount; nPhysicalDevice++ )
+    {
+        id<MTLDevice> pMTLDevice;
+        vkGetMTLDeviceMVK(pPhysicalDevices[ nPhysicalDevice ], &pMTLDevice);
+
+        if ( ( ( id<MTLDevice> ) pHMDPhysicalDevice ) == pMTLDevice )
+        {
+            m_pPhysicalDevice = ( VkPhysicalDevice ) pPhysicalDevices[ nPhysicalDevice ];
+            break;
+        }
+    }
+#else
 	uint64_t pHMDPhysicalDevice = 0;
 	m_pHMD->GetOutputDevice( &pHMDPhysicalDevice, vr::TextureType_Vulkan, ( VkInstance_T * ) m_pInstance );
 
@@ -1003,6 +1027,8 @@ bool CMainApplication::BInitVulkanDevice()
 			break;
 		}
 	}
+#endif
+
 	if ( m_pPhysicalDevice == VK_NULL_HANDLE )
 	{
 		// Fallback: Grab the first physical device
@@ -1777,6 +1803,27 @@ void CMainApplication::RenderFrame()
 		bounds.vMin = 0.0f;
 		bounds.vMax = 1.0f;
 
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+        IOSurfaceRef ioSurface;
+        vr::Texture_t texture = { nullptr, vr::TextureType_IOSurface, vr::ColorSpace_Auto };
+        vr::EVRCompositorError subErr;
+
+        vkGetIOSurfaceMVK(m_leftEyeDesc.m_pImage, &ioSurface);
+        texture.handle = ioSurface;
+        subErr = vr::VRCompositor()->Submit( vr::Eye_Left, &texture, &bounds );
+        if (subErr)
+        {
+            dprintf( "VR Submit left eye error: %d\n", subErr );
+        }
+
+        vkGetIOSurfaceMVK(m_rightEyeDesc.m_pImage, &ioSurface);
+        texture.handle = ioSurface;
+        subErr = vr::VRCompositor()->Submit( vr::Eye_Right, &texture, &bounds );
+        if (subErr)
+        {
+            dprintf( "VR Submit right eye error: %d\n", subErr );
+        }
+#else
 		vr::VRVulkanTextureData_t vulkanData;
 		vulkanData.m_nImage = ( uint64_t ) m_leftEyeDesc.m_pImage;
 		vulkanData.m_pDevice = ( VkDevice_T * ) m_pDevice;
@@ -1795,6 +1842,8 @@ void CMainApplication::RenderFrame()
 		
 		vulkanData.m_nImage = ( uint64_t ) m_rightEyeDesc.m_pImage;
 		vr::VRCompositor()->Submit( vr::Eye_Right, &texture, &bounds );
+#endif
+
 	}
 
 	VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
@@ -2650,6 +2699,16 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 		dprintf( "vkCreateImage failed for eye image with error %d\n", nResult );
 		return false;
 	}
+
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+    nResult = vkUseIOSurfaceMVK(framebufferDesc.m_pImage, nullptr);
+    if ( nResult != VK_SUCCESS )
+    {
+        dprintf( "vkUseIOSurfaceMVK failed for eye image with error %d\n", nResult );
+        return false;
+    }
+#endif
+
 	VkMemoryRequirements memoryRequirements = {};
 	vkGetImageMemoryRequirements( m_pDevice, framebufferDesc.m_pImage, &memoryRequirements );
 
@@ -2696,7 +2755,6 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	//-----------------------------------//
 	//    Create depth/stencil target    //
 	//-----------------------------------//
-	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageCreateInfo.format = VK_FORMAT_D32_SFLOAT;
 	imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
 	nResult = vkCreateImage( m_pDevice, &imageCreateInfo, nullptr, &framebufferDesc.m_pDepthStencilImage );
