@@ -63,7 +63,7 @@ if(BUILD_SHARED)
 	add_library(${LIBNAME} SHARED ${SOURCE_FILES})
 elseif(BUILD_FRAMEWORK)
 	set( LIBNAME "OpenVR" )
-	add_library( ${LIBNAME} 
+	add_library( ${LIBNAME}
             SHARED ${SOURCE_FILES}
             ${CMAKE_SOURCE_DIR}/headers/openvr.h
             ${CMAKE_SOURCE_DIR}/headers/openvr_api.cs
@@ -94,3 +94,4 @@ endif()
 target_link_libraries(${LIBNAME} ${EXTRA_LIBS})
 
 install(TARGETS ${LIBNAME} DESTINATION lib)
+install (FILES ${CMAKE_SOURCE_DIR}/headers/openvr.h DESTINATION include)
