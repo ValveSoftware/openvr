@@ -79,7 +79,7 @@ bool BCreateDirectoryRecursive( const char *pchPath )
 //-----------------------------------------------------------------------------
 bool BCreateDirectory( const char *pchPath )
 {
-#ifdef WIN32
+#ifdef _WIN32
 	std::wstring wPath = UTF8to16( pchPath );
 	if ( ::CreateDirectoryW( wPath.c_str(), NULL ) )
 		return true;

@@ -24,7 +24,10 @@ endif()
 
 # Get platform.
 if(WIN32)
-	set(PLATFORM_NAME "win")
+  set(PLATFORM_NAME "win")
+  if(BUILD_SHARED)
+    add_definitions(-DVR_BUILD_SHARED)
+  endif()
 elseif(UNIX AND NOT APPLE)
   if(CMAKE_SYSTEM_NAME MATCHES ".*Linux")
     set(PLATFORM_NAME "linux")

@@ -167,7 +167,7 @@ bool Path_IsAbsolute( const std::string & sPath )
 	if( sPath.empty() )
 		return false;
 
-#if defined( WIN32 )
+#if defined( _WIN32 )
 	if ( sPath.size() < 3 ) // must be c:\x or \\x at least
 		return false;
 
@@ -398,7 +398,7 @@ std::string Path_Compact( const std::string & sRawPath, char slash )
 std::string Path_GetThisModulePath()
 {
 	// gets the path of vrclient.dll itself
-#ifdef WIN32
+#ifdef _WIN32
 	HMODULE hmodule = NULL;
 
 	::GetModuleHandleEx( GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCTSTR>(Path_GetThisModulePath), &hmodule );
@@ -737,7 +737,7 @@ bool Path_WriteStringToTextFileAtomic( const std::string &strFilename, const cha
 }
 
 
-#if defined(WIN32)
+#if defined(_WIN32)
 #define FILE_URL_PREFIX "file:///"
 #else
 #define FILE_URL_PREFIX "file://"

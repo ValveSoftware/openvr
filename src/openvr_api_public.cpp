@@ -119,9 +119,9 @@ EVRInitError VR_LoadHmdSystemInternal()
 	}
 
 #if defined( WIN64 )
-	std::string sDLLPath = Path_Join( sTestPath, "vrclient_x64" DYNAMIC_LIB_EXT );
+	std::string sDLLPath = Path_Join( sTestPath, "vrclient_x64" );
 #else
-	std::string sDLLPath = Path_Join( sTestPath, "vrclient" DYNAMIC_LIB_EXT );
+	std::string sDLLPath = Path_Join( sTestPath, "vrclient" );
 #endif
 
 	// only look in the override
