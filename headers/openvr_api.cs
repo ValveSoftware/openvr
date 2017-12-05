@@ -846,7 +846,7 @@ public struct IVRCompositor
 	internal _GetVulkanDeviceExtensionsRequired GetVulkanDeviceExtensionsRequired;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate void _SetExplicitTimingMode(bool bExplicitTimingMode);
+	internal delegate void _SetExplicitTimingMode(EVRCompositorTimingMode eTimingMode);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _SetExplicitTimingMode SetExplicitTimingMode;
 
@@ -1144,6 +1144,16 @@ public struct IVROverlay
 	internal delegate EVROverlayError _MoveGamepadFocusToNeighbor(EOverlayDirection eDirection, ulong ulFrom);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _MoveGamepadFocusToNeighbor MoveGamepadFocusToNeighbor;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVROverlayError _SetOverlayDualAnalogTransform(ulong ulOverlay, EDualAnalogWhich eWhich, IntPtr vCenter, float fRadius);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _SetOverlayDualAnalogTransform SetOverlayDualAnalogTransform;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVROverlayError _GetOverlayDualAnalogTransform(ulong ulOverlay, EDualAnalogWhich eWhich, ref HmdVector2_t pvCenter, ref float pfRadius);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetOverlayDualAnalogTransform GetOverlayDualAnalogTransform;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVROverlayError _SetOverlayTexture(ulong ulOverlayHandle, ref Texture_t pTexture);
@@ -2460,9 +2470,9 @@ public class CVRCompositor
 		uint result = FnTable.GetVulkanDeviceExtensionsRequired(pPhysicalDevice,pchValue,unBufferSize);
 		return result;
 	}
-	public void SetExplicitTimingMode(bool bExplicitTimingMode)
+	public void SetExplicitTimingMode(EVRCompositorTimingMode eTimingMode)
 	{
-		FnTable.SetExplicitTimingMode(bExplicitTimingMode);
+		FnTable.SetExplicitTimingMode(eTimingMode);
 	}
 	public EVRCompositorError SubmitExplicitTimingData()
 	{
@@ -2805,6 +2815,17 @@ public class CVROverlay
 	public EVROverlayError MoveGamepadFocusToNeighbor(EOverlayDirection eDirection,ulong ulFrom)
 	{
 		EVROverlayError result = FnTable.MoveGamepadFocusToNeighbor(eDirection,ulFrom);
+		return result;
+	}
+	public EVROverlayError SetOverlayDualAnalogTransform(ulong ulOverlay,EDualAnalogWhich eWhich,IntPtr vCenter,float fRadius)
+	{
+		EVROverlayError result = FnTable.SetOverlayDualAnalogTransform(ulOverlay,eWhich,vCenter,fRadius);
+		return result;
+	}
+	public EVROverlayError GetOverlayDualAnalogTransform(ulong ulOverlay,EDualAnalogWhich eWhich,ref HmdVector2_t pvCenter,ref float pfRadius)
+	{
+		pfRadius = 0;
+		EVROverlayError result = FnTable.GetOverlayDualAnalogTransform(ulOverlay,eWhich,ref pvCenter,ref pfRadius);
 		return result;
 	}
 	public EVROverlayError SetOverlayTexture(ulong ulOverlayHandle,ref Texture_t pTexture)
@@ -3336,6 +3357,8 @@ public enum ETrackedDeviceProperty
 	Prop_ViveSystemButtonFixRequired_Bool = 1033,
 	Prop_ParentDriver_Uint64 = 1034,
 	Prop_ResourceRoot_String = 1035,
+	Prop_RegisteredDeviceType_String = 1036,
+	Prop_InputProfileName_String = 1037,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -3383,6 +3406,12 @@ public enum ETrackedDeviceProperty
 	Prop_DisplayDebugMode_Bool = 2044,
 	Prop_GraphicsAdapterLuid_Uint64 = 2045,
 	Prop_DriverProvidedChaperonePath_String = 2048,
+	Prop_ExpectedTrackingReferenceCount_Int32 = 2049,
+	Prop_ExpectedControllerCount_Int32 = 2050,
+	Prop_NamedIconPathControllerLeftDeviceOff_String = 2051,
+	Prop_NamedIconPathControllerRightDeviceOff_String = 2052,
+	Prop_NamedIconPathTrackingReferenceDeviceOff_String = 2053,
+	Prop_DoNotApplyPrediction_Bool = 2054,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -3409,6 +3438,7 @@ public enum ETrackedDeviceProperty
 	Prop_NamedIconPathDeviceAlertLow_String = 5008,
 	Prop_DisplayHiddenArea_Binary_Start = 5100,
 	Prop_DisplayHiddenArea_Binary_End = 5150,
+	Prop_ParentContainer = 5151,
 	Prop_UserConfigPath_String = 6000,
 	Prop_InstallPath_String = 6001,
 	Prop_HasDisplayComponent_Bool = 6002,
@@ -3433,6 +3463,7 @@ public enum ETrackedPropertyError
 	TrackedProp_NotYetAvailable = 9,
 	TrackedProp_PermissionDenied = 10,
 	TrackedProp_InvalidOperation = 11,
+	TrackedProp_CannotWriteToWildcards = 12,
 }
 public enum EVRSubmitFlags
 {
@@ -3475,6 +3506,14 @@ public enum EVREventType
 	VREvent_ButtonUnpress = 201,
 	VREvent_ButtonTouch = 202,
 	VREvent_ButtonUntouch = 203,
+	VREvent_DualAnalog_Press = 250,
+	VREvent_DualAnalog_Unpress = 251,
+	VREvent_DualAnalog_Touch = 252,
+	VREvent_DualAnalog_Untouch = 253,
+	VREvent_DualAnalog_Move = 254,
+	VREvent_DualAnalog_ModeSwitch1 = 255,
+	VREvent_DualAnalog_ModeSwitch2 = 256,
+	VREvent_DualAnalog_Cancel = 257,
 	VREvent_MouseMove = 300,
 	VREvent_MouseButtonDown = 301,
 	VREvent_MouseButtonUp = 302,
@@ -3493,6 +3532,8 @@ public enum EVREventType
 	VREvent_SceneApplicationSecondaryRenderingStarted = 407,
 	VREvent_HideRenderModels = 410,
 	VREvent_ShowRenderModels = 411,
+	VREvent_ConsoleOpened = 420,
+	VREvent_ConsoleClosed = 421,
 	VREvent_OverlayShown = 500,
 	VREvent_OverlayHidden = 501,
 	VREvent_DashboardActivated = 502,
@@ -3540,6 +3581,14 @@ public enum EVREventType
 	VREvent_EnvironmentSettingsHaveChanged = 854,
 	VREvent_PowerSettingsHaveChanged = 855,
 	VREvent_EnableHomeAppSettingsHaveChanged = 856,
+	VREvent_SteamVRSectionSettingChanged = 857,
+	VREvent_LighthouseSectionSettingChanged = 858,
+	VREvent_NullSectionSettingChanged = 859,
+	VREvent_UserInterfaceSectionSettingChanged = 860,
+	VREvent_NotificationsSectionSettingChanged = 861,
+	VREvent_KeyboardSectionSettingChanged = 862,
+	VREvent_PerfSectionSettingChanged = 863,
+	VREvent_DashboardSectionSettingChanged = 864,
 	VREvent_StatusUpdate = 900,
 	VREvent_MCImageUpdated = 1000,
 	VREvent_FirmwareUpdateStarted = 1100,
@@ -3606,6 +3655,11 @@ public enum EVRMouseButton
 	Left = 1,
 	Right = 2,
 	Middle = 4,
+}
+public enum EDualAnalogWhich
+{
+	k_EDualAnalog_Left = 0,
+	k_EDualAnalog_Right = 1,
 }
 public enum EHiddenAreaMeshType
 {
@@ -3729,6 +3783,7 @@ public enum EVRInitError
 	Init_RebootingBusy = 137,
 	Init_FirmwareUpdateBusy = 138,
 	Init_FirmwareRecoveryBusy = 139,
+	Init_USBServiceBusy = 140,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -3757,6 +3812,7 @@ public enum EVRInitError
 	Compositor_ScreenshotsInitFailed = 404,
 	Compositor_UnableToCreateDevice = 405,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
+	VendorSpecific_WindowsNotInDevMode = 1001,
 	VendorSpecific_HmdFound_CantOpenDevice = 1101,
 	VendorSpecific_HmdFound_UnableToRequestConfigStart = 1102,
 	VendorSpecific_HmdFound_NoStoredConfig = 1103,
@@ -3849,6 +3905,8 @@ public enum EVRApplicationProperty
 	NewsURL_String = 51,
 	ImagePath_String = 52,
 	Source_String = 53,
+	ActionManifestPath_String = 54,
+	ActionBindingPath_String = 55,
 	IsDashboardOverlay_Bool = 60,
 	IsTemplate_Bool = 61,
 	IsInstanced_Bool = 62,
@@ -3900,10 +3958,17 @@ public enum EVRCompositorError
 	AlreadySubmitted = 108,
 	InvalidBounds = 109,
 }
+public enum EVRCompositorTimingMode
+{
+	Implicit = 0,
+	Explicit_RuntimePerformsPostPresentHandoff = 1,
+	Explicit_ApplicationPerformsPostPresentHandoff = 2,
+}
 public enum VROverlayInputMethod
 {
 	None = 0,
 	Mouse = 1,
+	DualAnalog = 2,
 }
 public enum VROverlayTransformType
 {
@@ -4294,6 +4359,14 @@ public enum EVRScreenshotError
 	public ulong container;
 	public ETrackedDeviceProperty prop;
 }
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_DualAnalog_t
+{
+	public float x;
+	public float y;
+	public float transformedX;
+	public float transformedY;
+	public EDualAnalogWhich which;
+}
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_t
 {
 	public uint eventType;
@@ -4405,6 +4478,14 @@ public enum EVRScreenshotError
 	public uint nBytesPerPixel;
 	public uint nFrameSequence;
 	public TrackedDevicePose_t standingTrackedDevicePose;
+}
+[StructLayout(LayoutKind.Sequential)] public struct DriverDirectMode_FrameTiming
+{
+	public uint m_nSize;
+	public uint m_nNumFramePresents;
+	public uint m_nNumMisPresented;
+	public uint m_nNumDroppedFrames;
+	public uint m_nReprojectionFlags;
 }
 [StructLayout(LayoutKind.Sequential)] public struct AppOverrideKeys_t
 {
@@ -4633,7 +4714,7 @@ public class OpenVR
 	public const uint k_nDriverNone = 4294967295;
 	public const uint k_unMaxDriverDebugResponseSize = 32768;
 	public const uint k_unTrackedDeviceIndex_Hmd = 0;
-	public const uint k_unMaxTrackedDeviceCount = 16;
+	public const uint k_unMaxTrackedDeviceCount = 64;
 	public const uint k_unTrackedDeviceIndexOther = 4294967294;
 	public const uint k_unTrackedDeviceIndexInvalid = 4294967295;
 	public const ulong k_ulInvalidPropertyContainer = 0;
@@ -4648,6 +4729,10 @@ public class OpenVR
 	public const uint k_unHmdVector3PropertyTag = 22;
 	public const uint k_unHmdVector4PropertyTag = 23;
 	public const uint k_unHiddenAreaPropertyTag = 30;
+	public const uint k_unPathHandleInfoTag = 31;
+	public const uint k_unActionPropertyTag = 32;
+	public const uint k_unInputValuePropertyTag = 33;
+	public const uint k_unWildcardPropertyTag = 34;
 	public const uint k_unOpenVRInternalReserved_Start = 1000;
 	public const uint k_unOpenVRInternalReserved_End = 10000;
 	public const uint k_unMaxPropertyStringSize = 32768;
@@ -4663,12 +4748,12 @@ public class OpenVR
 	public const string IVRApplications_Version = "IVRApplications_006";
 	public const string IVRChaperone_Version = "IVRChaperone_003";
 	public const string IVRChaperoneSetup_Version = "IVRChaperoneSetup_005";
-	public const string IVRCompositor_Version = "IVRCompositor_021";
+	public const string IVRCompositor_Version = "IVRCompositor_022";
 	public const uint k_unVROverlayMaxKeyLength = 128;
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 64;
 	public const uint k_unMaxOverlayIntersectionMaskPrimitivesCount = 32;
-	public const string IVROverlay_Version = "IVROverlay_016";
+	public const string IVROverlay_Version = "IVROverlay_017";
 	public const string k_pch_Controller_Component_GDC2015 = "gdc2015";
 	public const string k_pch_Controller_Component_Base = "base";
 	public const string k_pch_Controller_Component_Tip = "tip";
@@ -4723,12 +4808,14 @@ public class OpenVR
 	public const string k_pch_SteamVR_IpdOffset_Float = "ipdOffset";
 	public const string k_pch_SteamVR_AllowSupersampleFiltering_Bool = "allowSupersampleFiltering";
 	public const string k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
+	public const string k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
 	public const string k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
 	public const string k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
 	public const string k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
+	public const string k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 	public const string k_pch_Null_Section = "driver_null";
 	public const string k_pch_Null_SerialNumber_String = "serialNumber";
 	public const string k_pch_Null_ModelNumber_String = "modelNumber";

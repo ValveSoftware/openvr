@@ -151,7 +151,7 @@ static const uint32_t k_unMaxDriverDebugResponseSize = 32768;
 /** Used to pass device IDs to API calls */
 typedef uint32_t TrackedDeviceIndex_t;
 static const uint32_t k_unTrackedDeviceIndex_Hmd = 0;
-static const uint32_t k_unMaxTrackedDeviceCount = 16;
+static const uint32_t k_unMaxTrackedDeviceCount = 64;
 static const uint32_t k_unTrackedDeviceIndexOther = 0xFFFFFFFE;
 static const uint32_t k_unTrackedDeviceIndexInvalid = 0xFFFFFFFF;
 
@@ -219,6 +219,10 @@ static const PropertyTypeTag_t k_unHmdVector3PropertyTag = 22;
 static const PropertyTypeTag_t k_unHmdVector4PropertyTag = 23;
 
 static const PropertyTypeTag_t k_unHiddenAreaPropertyTag = 30;
+static const PropertyTypeTag_t k_unPathHandleInfoTag = 31;
+static const PropertyTypeTag_t k_unActionPropertyTag = 32;
+static const PropertyTypeTag_t k_unInputValuePropertyTag = 33;
+static const PropertyTypeTag_t k_unWildcardPropertyTag = 34;
 
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_Start = 1000;
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_End = 10000;
@@ -267,6 +271,8 @@ enum ETrackedDeviceProperty
 	Prop_ViveSystemButtonFixRequired_Bool		= 1033,
 	Prop_ParentDriver_Uint64					= 1034,
 	Prop_ResourceRoot_String					= 1035,
+	Prop_RegisteredDeviceType_String			= 1036,
+	Prop_InputProfileName_String				= 1037, // input profile to use for this device in the input system. Will default to tracking system name if this isn't provided
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -316,6 +322,12 @@ enum ETrackedDeviceProperty
 	Prop_DisplayDebugMode_Bool					= 2044,
 	Prop_GraphicsAdapterLuid_Uint64				= 2045,
 	Prop_DriverProvidedChaperonePath_String		= 2048,
+	Prop_ExpectedTrackingReferenceCount_Int32	= 2049, // expected number of sensors or basestations to reserve UI space for
+	Prop_ExpectedControllerCount_Int32			= 2050, // expected number of tracked controllers to reserve UI space for
+	Prop_NamedIconPathControllerLeftDeviceOff_String	= 2051, // placeholder icon for "left" controller if not yet detected/loaded
+	Prop_NamedIconPathControllerRightDeviceOff_String	= 2052, // placeholder icon for "right" controller if not yet detected/loaded
+	Prop_NamedIconPathTrackingReferenceDeviceOff_String	= 2053, // placeholder icon for sensor/base if not yet detected/loaded
+	Prop_DoNotApplyPrediction_Bool				= 2054,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -350,6 +362,7 @@ enum ETrackedDeviceProperty
 	// Properties that are used by helpers, but are opaque to applications
 	Prop_DisplayHiddenArea_Binary_Start				= 5100,
 	Prop_DisplayHiddenArea_Binary_End				= 5150,
+	Prop_ParentContainer							= 5151,
 
 	// Properties that are unique to drivers
 	Prop_UserConfigPath_String					= 6000,
@@ -383,6 +396,7 @@ enum ETrackedPropertyError
 	TrackedProp_NotYetAvailable				= 9, // The property value isn't known yet, but is expected soon. Call again later.
 	TrackedProp_PermissionDenied			= 10,
 	TrackedProp_InvalidOperation			= 11,
+	TrackedProp_CannotWriteToWildcards		= 12,
 };
 
 /** Allows the application to control what part of the provided texture will be used in the
@@ -481,6 +495,15 @@ enum EVREventType
 	VREvent_ButtonTouch					= 202, // data is controller
 	VREvent_ButtonUntouch				= 203, // data is controller
 
+	VREvent_DualAnalog_Press			= 250, // data is dualAnalog
+	VREvent_DualAnalog_Unpress			= 251, // data is dualAnalog
+	VREvent_DualAnalog_Touch			= 252, // data is dualAnalog
+	VREvent_DualAnalog_Untouch			= 253, // data is dualAnalog
+	VREvent_DualAnalog_Move				= 254, // data is dualAnalog
+	VREvent_DualAnalog_ModeSwitch1		= 255, // data is dualAnalog
+	VREvent_DualAnalog_ModeSwitch2		= 256, // data is dualAnalog
+	VREvent_DualAnalog_Cancel			= 257, // data is dualAnalog
+
 	VREvent_MouseMove					= 300, // data is mouse
 	VREvent_MouseButtonDown				= 301, // data is mouse
 	VREvent_MouseButtonUp				= 302, // data is mouse
@@ -501,6 +524,9 @@ enum EVREventType
 
 	VREvent_HideRenderModels			= 410, // Sent to the scene application to request hiding render models temporarily
 	VREvent_ShowRenderModels			= 411, // Sent to the scene application to request restoring render model visibility
+
+	VREvent_ConsoleOpened               = 420,
+	VREvent_ConsoleClosed               = 421,
 
 	VREvent_OverlayShown				= 500,
 	VREvent_OverlayHidden				= 501,
@@ -550,13 +576,21 @@ enum EVREventType
 
 	VREvent_AudioSettingsHaveChanged		= 820,
 
-	VREvent_BackgroundSettingHasChanged		= 850,
-	VREvent_CameraSettingsHaveChanged		= 851,
-	VREvent_ReprojectionSettingHasChanged	= 852,
-	VREvent_ModelSkinSettingsHaveChanged	= 853,
-	VREvent_EnvironmentSettingsHaveChanged	= 854,
-	VREvent_PowerSettingsHaveChanged		= 855,
-	VREvent_EnableHomeAppSettingsHaveChanged = 856,
+	VREvent_BackgroundSettingHasChanged		   = 850,
+	VREvent_CameraSettingsHaveChanged		   = 851,
+	VREvent_ReprojectionSettingHasChanged	   = 852,
+	VREvent_ModelSkinSettingsHaveChanged	   = 853,
+	VREvent_EnvironmentSettingsHaveChanged	   = 854,
+	VREvent_PowerSettingsHaveChanged		   = 855,
+	VREvent_EnableHomeAppSettingsHaveChanged   = 856,
+	VREvent_SteamVRSectionSettingChanged       = 857,
+	VREvent_LighthouseSectionSettingChanged    = 858,
+	VREvent_NullSectionSettingChanged          = 859,
+	VREvent_UserInterfaceSectionSettingChanged = 860,
+	VREvent_NotificationsSectionSettingChanged = 861,
+	VREvent_KeyboardSectionSettingChanged      = 862,
+	VREvent_PerfSectionSettingChanged          = 863,
+	VREvent_DashboardSectionSettingChanged     = 864,
 
 	VREvent_StatusUpdate					= 900,
 
@@ -679,7 +713,8 @@ struct VREvent_Scroll_t
 };
 
 /** when in mouse input mode you can receive data from the touchpad, these events are only sent if the users finger
-   is on the touchpad (or just released from it) 
+   is on the touchpad (or just released from it). These events are sent to overlays with the VROverlayFlags_SendVRTouchpadEvents
+   flag set.
 **/
 struct VREvent_TouchPadMove_t
 {
@@ -796,6 +831,20 @@ struct VREvent_Property_t
 	ETrackedDeviceProperty prop;
 };
 
+enum EDualAnalogWhich
+{
+	k_EDualAnalog_Left = 0,
+	k_EDualAnalog_Right = 1,
+};
+
+struct VREvent_DualAnalog_t
+{
+	float x, y; // coordinates are -1..1 analog values
+	float transformedX, transformedY; // transformed by the center and radius numbers provided by the overlay
+	EDualAnalogWhich which;
+};
+
+
 /** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
 typedef union
 {
@@ -819,6 +868,7 @@ typedef union
 	VREvent_EditingCameraSurface_t cameraSurface;
 	VREvent_MessageOverlay_t messageOverlay;
 	VREvent_Property_t property;
+	VREvent_DualAnalog_t dualAnalog;
 } VREvent_Data_t;
 
 
@@ -1068,7 +1118,7 @@ enum EVRInitError
 	VRInitError_Init_RebootingBusy					= 137,
 	VRInitError_Init_FirmwareUpdateBusy				= 138,
 	VRInitError_Init_FirmwareRecoveryBusy			= 139,
-
+	VRInitError_Init_USBServiceBusy					= 140,
 
 	VRInitError_Driver_Failed						= 200,
 	VRInitError_Driver_Unknown						= 201,
@@ -1102,6 +1152,7 @@ enum EVRInitError
 	VRInitError_Compositor_UnableToCreateDevice		= 405,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime		= 1000,
+	VRInitError_VendorSpecific_WindowsNotInDevMode					= 1001,
 
 	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 				= 1101,
 	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart	= 1102,
@@ -1185,6 +1236,16 @@ struct CameraVideoStreamFrameHeader_t
 typedef uint32_t ScreenshotHandle_t;
 
 static const uint32_t k_unScreenshotHandleInvalid = 0;
+
+/** Frame timing data provided by direct mode drivers. */
+struct DriverDirectMode_FrameTiming
+{
+	uint32_t m_nSize; // Set to sizeof( DriverDirectMode_FrameTiming )
+	uint32_t m_nNumFramePresents; // number of times frame was presented
+	uint32_t m_nNumMisPresented; // number of times frame was presented on a vsync other than it was originally predicted to
+	uint32_t m_nNumDroppedFrames; // number of additional times previous frame was scanned out (i.e. compositor missed vsync)
+	uint32_t m_nReprojectionFlags;
+};
 
 #pragma pack( pop )
 
@@ -1582,6 +1643,8 @@ namespace vr
 		VRApplicationProperty_NewsURL_String			= 51,
 		VRApplicationProperty_ImagePath_String			= 52,
 		VRApplicationProperty_Source_String				= 53,
+		VRApplicationProperty_ActionManifestPath_String = 54,
+		VRApplicationProperty_ActionBindingPath_String	= 55,
 
 		VRApplicationProperty_IsDashboardOverlay_Bool	= 60,
 		VRApplicationProperty_IsTemplate_Bool			= 61,
@@ -1835,6 +1898,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_IpdOffset_Float = "ipdOffset";
 	static const char * const k_pch_SteamVR_AllowSupersampleFiltering_Bool = "allowSupersampleFiltering";
 	static const char * const k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
+	static const char * const k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1844,6 +1908,7 @@ namespace vr
 	static const char * const k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
 	static const char * const k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
 	static const char * const k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
+	static const char * const k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 
 	//-----------------------------------------------------------------------------
 	// null keys
@@ -2140,6 +2205,14 @@ enum EVRCompositorError
 	VRCompositorError_InvalidBounds				= 109,
 };
 
+/** Timing mode passed to SetExplicitTimingMode(); see that function for documentation */
+enum EVRCompositorTimingMode
+{
+	VRCompositorTimingMode_Implicit											= 0,
+	VRCompositorTimingMode_Explicit_RuntimePerformsPostPresentHandoff		= 1,
+	VRCompositorTimingMode_Explicit_ApplicationPerformsPostPresentHandoff	= 2,
+};
+
 const uint32_t VRCompositor_ReprojectionReason_Cpu = 0x01;
 const uint32_t VRCompositor_ReprojectionReason_Gpu = 0x02;
 const uint32_t VRCompositor_ReprojectionAsync      = 0x04;	// This flag indicates the async reprojection mode is active,
@@ -2400,11 +2473,11 @@ public:
 	* Vulkan/D3D12 as it is for D3D11, resulting in a more accurate GPU time measurement for the frame.
 	*
 	* Avoiding WaitGetPoses accessing the Vulkan queue can be achieved using SetExplicitTimingMode as well.  If this is desired,
-	* the application *MUST* call PostPresentHandoff itself prior to WaitGetPoses.  If SetExplicitTimingMode is true and the
-	* application calls PostPresentHandoff, then WaitGetPoses is guaranteed not to access the queue.  Note that PostPresentHandoff
+	* the application should set the timing mode to Explicit_ApplicationPerformsPostPresentHandoff and *MUST* call PostPresentHandoff
+	* itself. If these conditions are met, then WaitGetPoses is guaranteed not to access the queue.  Note that PostPresentHandoff
 	* and SubmitExplicitTimingData will access the queue, so only WaitGetPoses becomes safe for accessing the queue from another
 	* thread. */
-	virtual void SetExplicitTimingMode( bool bExplicitTimingMode ) = 0;
+	virtual void SetExplicitTimingMode( EVRCompositorTimingMode eTimingMode ) = 0;
 
 	/** [ Vulkan/D3D12 Only ]
 	* Submit explicit timing data.  When SetExplicitTimingMode is true, this must be called immediately before
@@ -2415,7 +2488,7 @@ public:
 	virtual EVRCompositorError SubmitExplicitTimingData() = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_021";
+static const char * const IVRCompositor_Version = "IVRCompositor_022";
 
 } // namespace vr
 
@@ -2531,6 +2604,7 @@ namespace vr
 	{
 		VROverlayInputMethod_None		= 0, // No input events will be generated automatically for this overlay
 		VROverlayInputMethod_Mouse		= 1, // Tracked controllers will get mouse events automatically
+		VROverlayInputMethod_DualAnalog = 2, // Analog inputs from tracked controllers are turned into DualAnalog events
 	};
 
 	/** Allows the caller to figure out which overlay transform getter to call. */
@@ -2896,6 +2970,12 @@ namespace vr
 		* neighbor in that direction */
 		virtual EVROverlayError MoveGamepadFocusToNeighbor( EOverlayDirection eDirection, VROverlayHandle_t ulFrom ) = 0;
 
+		/** Sets the analog input to Dual Analog coordinate scale for the specified overlay. */
+		virtual EVROverlayError SetOverlayDualAnalogTransform( VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, const HmdVector2_t & vCenter, float fRadius ) = 0;
+
+		/** Gets the analog input to Dual Analog coordinate scale for the specified overlay. */
+		virtual EVROverlayError GetOverlayDualAnalogTransform( VROverlayHandle_t ulOverlay, EDualAnalogWhich eWhich, HmdVector2_t *pvCenter, float *pfRadius ) = 0;
+
 		// ---------------------------------------------
 		// Overlay texture methods
 		// ---------------------------------------------
@@ -3005,7 +3085,7 @@ namespace vr
 		virtual void CloseMessageOverlay() = 0;
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_016";
+	static const char * const IVROverlay_Version = "IVROverlay_017";
 
 } // namespace vr
 
