@@ -4,6 +4,7 @@
 #include <string>
 #include <stdint.h>
 #include <sys/types.h>
+#include <vector>
 
 /** returns true if the string has the prefix */
 bool StringHasPrefix( const std::string & sString, const std::string & sPrefix );
@@ -124,3 +125,5 @@ size_t V_URLDecode( char *pchDecodeDest, int nDecodeDestLen, const char *pchEnco
 void V_StripExtension( std::string &in );
 
 
+/** Tokenizes a string into a vector of strings */
+std::vector<std::string> TokenizeString( const std::string & sString, char cToken );

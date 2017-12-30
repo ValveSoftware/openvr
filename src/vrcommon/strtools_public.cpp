@@ -3,6 +3,8 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <sstream>
+#include <iostream>
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -433,5 +435,21 @@ void V_StripExtension( std::string &in )
 			in.resize( test );
 		}
 	}
+}
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Tokenizes a string into a vector of strings
+//-----------------------------------------------------------------------------
+std::vector<std::string> TokenizeString( const std::string & sString, char cToken )
+{
+	std::vector<std::string> vecStrings;
+	std::istringstream stream( sString );
+	std::string s;
+	while ( std::getline( stream, s, cToken ) )
+	{
+		vecStrings.push_back( s );
+	}
+	return vecStrings;
 }
 

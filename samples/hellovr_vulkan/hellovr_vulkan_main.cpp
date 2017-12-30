@@ -2264,7 +2264,7 @@ bool CMainApplication::SetupTexturemaps()
 	imageMemoryBarrier.subresourceRange.layerCount = 1;
 	imageMemoryBarrier.srcQueueFamilyIndex = m_nQueueFamilyIndex;
 	imageMemoryBarrier.dstQueueFamilyIndex = m_nQueueFamilyIndex;
-	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 
 	// Issue the copy to fill the image data
 	vkCmdCopyBufferToImage( m_currentCommandBuffer.m_pCommandBuffer, m_pSceneStagingBuffer, m_pSceneImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ( uint32_t ) bufferImageCopies.size(), &bufferImageCopies[ 0 ] );
@@ -2934,7 +2934,7 @@ void CMainApplication::RenderStereoTargets()
 	imageMemoryBarrier.subresourceRange.layerCount = 1;
 	imageMemoryBarrier.srcQueueFamilyIndex = m_nQueueFamilyIndex;
 	imageMemoryBarrier.dstQueueFamilyIndex = m_nQueueFamilyIndex;
-	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 	m_leftEyeDesc.m_nImageLayout = imageMemoryBarrier.newLayout;
 
 	// Transition the depth buffer to VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL on first use
@@ -2946,7 +2946,7 @@ void CMainApplication::RenderStereoTargets()
 		imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		imageMemoryBarrier.oldLayout = m_leftEyeDesc.m_nDepthStencilImageLayout;
 		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+		vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 		m_leftEyeDesc.m_nDepthStencilImageLayout = imageMemoryBarrier.newLayout;
 	}
 
@@ -2993,7 +2993,7 @@ void CMainApplication::RenderStereoTargets()
 	imageMemoryBarrier.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 	imageMemoryBarrier.oldLayout = m_rightEyeDesc.m_nImageLayout;
 	imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 	m_rightEyeDesc.m_nImageLayout = imageMemoryBarrier.newLayout;
 
 	// Transition the depth buffer to VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL on first use
@@ -3005,7 +3005,7 @@ void CMainApplication::RenderStereoTargets()
 		imageMemoryBarrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 		imageMemoryBarrier.oldLayout = m_rightEyeDesc.m_nDepthStencilImageLayout;
 		imageMemoryBarrier.newLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
-		vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+		vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 		m_rightEyeDesc.m_nDepthStencilImageLayout = imageMemoryBarrier.newLayout;
 	}
 
@@ -3109,7 +3109,7 @@ void CMainApplication::RenderCompanionWindow()
 	imageMemoryBarrier.subresourceRange.layerCount = 1;
 	imageMemoryBarrier.srcQueueFamilyIndex = m_nQueueFamilyIndex;
 	imageMemoryBarrier.dstQueueFamilyIndex = m_nQueueFamilyIndex;
-	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+	vkCmdPipelineBarrier( m_currentCommandBuffer.m_pCommandBuffer, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 
 	// Start the renderpass
 	VkRenderPassBeginInfo renderPassBeginInfo = { VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO };
@@ -3587,7 +3587,7 @@ bool VulkanRenderModel::BInit( VkDevice pDevice, const VkPhysicalDeviceMemoryPro
 		imageMemoryBarrier.subresourceRange.levelCount = imageCreateInfo.mipLevels;
 		imageMemoryBarrier.subresourceRange.baseArrayLayer = 0;
 		imageMemoryBarrier.subresourceRange.layerCount = 1;
-		vkCmdPipelineBarrier( pCommandBuffer, VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
+		vkCmdPipelineBarrier( pCommandBuffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, NULL, 0, NULL, 1, &imageMemoryBarrier );
 
 		// Issue the copy to fill the image data
 		vkCmdCopyBufferToImage( pCommandBuffer, m_pImageStagingBuffer, m_pImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, ( uint32_t ) bufferImageCopies.size(), &bufferImageCopies[ 0 ] );
