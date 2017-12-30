@@ -1039,9 +1039,6 @@ void CMainApplication::SetupScene()
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
 
 	glBindVertexArray( 0 );
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-
 }
 
 
@@ -1335,9 +1332,6 @@ void CMainApplication::SetupCompanionWindow()
 	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(VertexDataWindow), (void *)offsetof( VertexDataWindow, texCoord ) );
 
 	glBindVertexArray( 0 );
-
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
