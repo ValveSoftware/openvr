@@ -4583,15 +4583,15 @@ public enum EVRScreenshotError
 }
 [StructLayout(LayoutKind.Sequential)] public struct RenderModel_TextureMap_t
 {
-	public char unWidth;
-	public char unHeight;
+	public ushort unWidth;
+	public ushort unHeight;
 	public IntPtr rubTextureMapData; // const uint8_t *
 }
 // This structure is for backwards binary compatibility on Linux and OSX only
 [StructLayout(LayoutKind.Sequential, Pack = 4)] public struct RenderModel_TextureMap_t_Packed
 {
-	public char unWidth;
-	public char unHeight;
+	public ushort unWidth;
+	public ushort unHeight;
 	public IntPtr rubTextureMapData; // const uint8_t *
 	public RenderModel_TextureMap_t_Packed(RenderModel_TextureMap_t unpacked)
 	{
