@@ -1444,8 +1444,8 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 //-----------------------------------------------------------------------------
 void CMainApplication::UpdateControllerAxes()
 {
-	// don't draw controllers if somebody else has input focus
-	if( m_pHMD->IsInputFocusCapturedByAnotherProcess() )
+	// Don't attempt to update controllers if input is not available
+	if( !m_pHMD->IsInputAvailable() )
 		return;
 
 	std::vector<float> vertdataarray;
@@ -1753,9 +1753,9 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 		m_pCommandList->DrawInstanced( m_uiVertcount, 1, 0, 0 );
 	}
 
-	bool bIsInputCapturedByAnotherProcess = m_pHMD->IsInputFocusCapturedByAnotherProcess();
+	bool bIsInputAvailable = m_pHMD->IsInputAvailable();
 
-	if( !bIsInputCapturedByAnotherProcess && m_pControllerAxisVertexBuffer )
+	if( bIsInputAvailable && m_pControllerAxisVertexBuffer )
 	{
 		// draw the controller axis lines
 		m_pCommandList->SetPipelineState( m_pAxesPipelineState.Get() );
@@ -1776,7 +1776,7 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 		if( !pose.bPoseIsValid )
 			continue;
 
-		if( bIsInputCapturedByAnotherProcess && m_pHMD->GetTrackedDeviceClass( unTrackedDevice ) == vr::TrackedDeviceClass_Controller )
+		if( !bIsInputAvailable && m_pHMD->GetTrackedDeviceClass( unTrackedDevice ) == vr::TrackedDeviceClass_Controller )
 			continue;
 
 		const Matrix4 & matDeviceToTracking = m_rmat4DevicePose[ unTrackedDevice ];

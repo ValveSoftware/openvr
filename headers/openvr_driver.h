@@ -36,7 +36,7 @@ typedef uint32_t glUInt_t;
 // right-handed system
 // +y is up
 // +x is to the right
-// -z is going away from you
+// -z is forward
 // Distance unit is  meters
 struct HmdMatrix34_t
 {
@@ -223,6 +223,7 @@ static const PropertyTypeTag_t k_unPathHandleInfoTag = 31;
 static const PropertyTypeTag_t k_unActionPropertyTag = 32;
 static const PropertyTypeTag_t k_unInputValuePropertyTag = 33;
 static const PropertyTypeTag_t k_unWildcardPropertyTag = 34;
+static const PropertyTypeTag_t k_unHapticVibrationPropertyTag = 35;
 
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_Start = 1000;
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_End = 10000;
@@ -272,7 +273,7 @@ enum ETrackedDeviceProperty
 	Prop_ParentDriver_Uint64					= 1034,
 	Prop_ResourceRoot_String					= 1035,
 	Prop_RegisteredDeviceType_String			= 1036,
-	Prop_InputProfileName_String				= 1037, // input profile to use for this device in the input system. Will default to tracking system name if this isn't provided
+	Prop_InputProfilePath_String				= 1037, // input profile to use for this device in the input system. Will default to tracking system name if this isn't provided
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -328,6 +329,10 @@ enum ETrackedDeviceProperty
 	Prop_NamedIconPathControllerRightDeviceOff_String	= 2052, // placeholder icon for "right" controller if not yet detected/loaded
 	Prop_NamedIconPathTrackingReferenceDeviceOff_String	= 2053, // placeholder icon for sensor/base if not yet detected/loaded
 	Prop_DoNotApplyPrediction_Bool				= 2054,
+	Prop_CameraToHeadTransforms_Matrix34_Array	= 2055,
+	Prop_DriverIsDrawingControllers_Bool		= 2057,
+	Prop_DriverRequestsApplicationPause_Bool	= 2058,
+	Prop_DriverRequestsReducedRendering_Bool	= 2059,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -373,9 +378,15 @@ enum ETrackedDeviceProperty
 	Prop_HasDriverDirectModeComponent_Bool		= 6005,
 	Prop_HasVirtualDisplayComponent_Bool		= 6006,
 
+	// Properties that are set internally based on other information provided by drivers
+	Prop_ControllerType_String					= 7000,
+	Prop_LegacyInputProfile_String				= 7001,
+
 	// Vendors are free to expose private debug data in this reserved region
 	Prop_VendorSpecific_Reserved_Start			= 10000,
 	Prop_VendorSpecific_Reserved_End			= 10999,
+	
+	Prop_TrackedDeviceProperty_Max				= 1000000,
 };
 
 /** No string property will ever be longer than this length */
@@ -413,6 +424,23 @@ struct VRTextureWithPose_t : public Texture_t
 	HmdMatrix34_t mDeviceToAbsoluteTracking; // Actual pose used to render scene textures.
 };
 
+struct VRTextureDepthInfo_t
+{
+	void* handle; // See ETextureType definition above
+	HmdMatrix44_t mProjection;
+	HmdVector2_t vRange; // 0..1
+};
+
+struct VRTextureWithDepth_t : public Texture_t
+{
+	VRTextureDepthInfo_t depth;
+};
+
+struct VRTextureWithPoseAndDepth_t : public VRTextureWithPose_t
+{
+	VRTextureDepthInfo_t depth;
+};
+
 /** Allows the application to control how scene textures are used by the compositor when calling Submit. */
 enum EVRSubmitFlags
 {
@@ -431,7 +459,12 @@ enum EVRSubmitFlags
 	Submit_Reserved = 0x04,
 
 	// Set to indicate that pTexture is a pointer to a VRTextureWithPose_t.
+	// This flag can be combined with Submit_TextureWithDepth to pass a VRTextureWithPoseAndDepth_t.
 	Submit_TextureWithPose = 0x08,
+
+	// Set to indicate that pTexture is a pointer to a VRTextureWithDepth_t.
+	// This flag can be combined with Submit_TextureWithPose to pass a VRTextureWithPoseAndDepth_t.
+	Submit_TextureWithDepth = 0x10,
 };
 
 /** Data required for passing Vulkan textures to IVRCompositor::Submit.
@@ -591,8 +624,11 @@ enum EVREventType
 	VREvent_KeyboardSectionSettingChanged      = 862,
 	VREvent_PerfSectionSettingChanged          = 863,
 	VREvent_DashboardSectionSettingChanged     = 864,
+	VREvent_WebInterfaceSectionSettingChanged  = 865,
 
 	VREvent_StatusUpdate					= 900,
+
+	VREvent_WebInterface_InstallDriverCompleted = 950,
 
 	VREvent_MCImageUpdated					= 1000,
 
@@ -630,6 +666,8 @@ enum EVREventType
 	VREvent_MessageOverlay_Closed			= 1650,
 	VREvent_MessageOverlayCloseRequested	= 1651,
 	
+	VREvent_Input_HapticVibration			= 1700, // data is hapticVibration
+
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start	= 10000,
 	VREvent_VendorSpecific_Reserved_End		= 19999,
@@ -844,6 +882,15 @@ struct VREvent_DualAnalog_t
 	EDualAnalogWhich which;
 };
 
+struct VREvent_HapticVibration_t
+{
+	uint64_t containerHandle; // property container handle of the device with the haptic component
+	uint64_t componentHandle; // Which haptic component needs to vibrate
+	float fDurationSeconds;
+	float fFrequency;
+	float fAmplitude;
+};
+
 
 /** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
 typedef union
@@ -869,6 +916,7 @@ typedef union
 	VREvent_MessageOverlay_t messageOverlay;
 	VREvent_Property_t property;
 	VREvent_DualAnalog_t dualAnalog;
+	VREvent_HapticVibration_t hapticVibration;
 } VREvent_Data_t;
 
 
@@ -891,6 +939,21 @@ struct VREvent_t
 #if defined(__linux__) || defined(__APPLE__) 
 #pragma pack( pop )
 #endif
+
+enum EVRInputError
+{
+	VRInputError_None = 0,
+	VRInputError_NameNotFound = 1,
+	VRInputError_WrongType = 2,
+	VRInputError_InvalidHandle = 3,
+	VRInputError_InvalidParam = 4,
+	VRInputError_NoSteam = 5,
+	VRInputError_MaxCapacityReached = 6,
+	VRInputError_IPCError = 7,
+	VRInputError_NoActiveActionSet = 8,
+	VRInputError_InvalidDevice = 9,
+};
+
 
 /** The mesh to draw into the stencil (or depth) buffer to perform 
 * early stencil (or depth) kills of pixels that will never appear on the HMD.
@@ -1029,6 +1092,9 @@ enum EVROverlayError
 	VROverlayError_NoNeighbor				= 27,
 	VROverlayError_TooManyMaskPrimitives	= 29,
 	VROverlayError_BadMaskPrimitive			= 30,
+	VROverlayError_TextureAlreadyLocked		= 31,
+	VROverlayError_TextureLockCapacityReached = 32,
+	VROverlayError_TextureNotLocked			= 33,
 };
 
 /** enum values to pass in to VR_Init to identify whether the application will 
@@ -1480,12 +1546,15 @@ namespace vr
 	static const char * const k_pch_SteamVR_IpdOffset_Float = "ipdOffset";
 	static const char * const k_pch_SteamVR_AllowSupersampleFiltering_Bool = "allowSupersampleFiltering";
 	static const char * const k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
+	static const char * const k_pch_SteamVR_AllowDisplayLockedMode_Bool = "allowDisplayLockedMode";
 	static const char * const k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
+	static const char * const k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
 	static const char * const k_pch_Lighthouse_Section = "driver_lighthouse";
 	static const char * const k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
+	static const char * const k_pch_Lighthouse_DisableIMUExceptHMD_Bool = "disableimuexcepthmd";
 	static const char * const k_pch_Lighthouse_UseDisambiguation_String = "usedisambiguation";
 	static const char * const k_pch_Lighthouse_DisambiguationDebug_Int32 = "disambiguationdebug";
 	static const char * const k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestation";
@@ -1818,35 +1887,6 @@ namespace vr
 
 }
 
-// ivrcontrollercomponent.h
-namespace vr
-{
-
-
-	// ----------------------------------------------------------------------------------------------
-	// Purpose: Controller access on a single tracked device.
-	// ----------------------------------------------------------------------------------------------
-	class IVRControllerComponent
-	{
-	public:
-
-		// ------------------------------------
-		// Controller Methods
-		// ------------------------------------
-
-		/** Gets the current state of a controller. */
-		virtual VRControllerState_t GetControllerState( ) = 0;
-
-		/** Returns a uint64 property. If the property is not available this function will return 0. */
-		virtual bool TriggerHapticPulse( uint32_t unAxisId, uint16_t usPulseDurationMicroseconds ) = 0;
-
-	};
-
-
-
-	static const char *IVRControllerComponent_Version = "IVRControllerComponent_001";
-
-}
 // ivrcameracomponent.h
 namespace vr
 {
@@ -1979,6 +2019,7 @@ static const char *IVRWatchdogProvider_Version = "IVRWatchdogProvider_001";
 }
 // ivrproperties.h
 #include <string>
+#include <vector>
 
 namespace vr
 {
@@ -2060,6 +2101,10 @@ public:
 	* return an empty string. */
 	std::string GetStringProperty( vr::PropertyContainerHandle_t ulContainer, vr::ETrackedDeviceProperty prop, vr::ETrackedPropertyError *peError = nullptr );
 
+	/** Reads a std::vector of data from a property. */
+	template< typename T>
+	ETrackedPropertyError GetPropertyVector( PropertyContainerHandle_t ulContainer, ETrackedDeviceProperty prop, PropertyTypeTag_t unExpectedTag, std::vector<T> *pvecResults );
+
 	/** Sets a scaler property. The new value will be returned on any subsequent call to get this property in any process. */
 	ETrackedPropertyError SetBoolProperty( PropertyContainerHandle_t ulContainerHandle, ETrackedDeviceProperty prop, bool bNewValue );
 	ETrackedPropertyError SetFloatProperty( PropertyContainerHandle_t ulContainerHandle, ETrackedDeviceProperty prop, float fNewValue );
@@ -2080,6 +2125,10 @@ public:
 
 	/* Turns a device index into a property container handle. */
 	PropertyContainerHandle_t TrackedDeviceToPropertyContainer( TrackedDeviceIndex_t nDevice ) { return m_pProperties->TrackedDeviceToPropertyContainer( nDevice );  }
+
+	/** Sets a std::vector of typed data to a property. */
+	template< typename T>
+	ETrackedPropertyError SetPropertyVector( PropertyContainerHandle_t ulContainer, ETrackedDeviceProperty prop, PropertyTypeTag_t unExpectedTag, std::vector<T> *vecProperties );
 
 private:
 	template<typename T>
@@ -2298,8 +2347,100 @@ inline ETrackedPropertyError CVRPropertyHelpers::EraseProperty( PropertyContaine
 
 }
 
+template< typename T >
+ETrackedPropertyError CVRPropertyHelpers::SetPropertyVector(PropertyContainerHandle_t ulContainer, vr::ETrackedDeviceProperty prop, PropertyTypeTag_t unTag, std::vector<T> *pvecProperties)
+{
+	return SetProperty( ulContainer, prop, &(*pvecProperties)[0], (uint32_t)(pvecProperties->size() * sizeof( T )), unTag );
 }
 
+template< typename T >
+ETrackedPropertyError CVRPropertyHelpers::GetPropertyVector( PropertyContainerHandle_t ulContainer, ETrackedDeviceProperty prop, PropertyTypeTag_t unExpectedTag, std::vector<T> *pvecResults )
+{
+	ETrackedPropertyError err;
+	PropertyTypeTag_t unTag;
+	uint32_t unNeeded;
+	if ( pvecResults->empty() )
+		unNeeded = GetProperty( ulContainer, prop, nullptr, 0, &unTag, &err );
+	else
+		unNeeded = GetProperty( ulContainer, prop, &(*pvecResults)[0], (uint32_t)(pvecResults->size() * sizeof( T )), &unTag, &err );
+	uint32_t unFound = unNeeded / sizeof( T );
+	if ( err == TrackedProp_Success )
+	{
+		if ( unTag != unExpectedTag && unFound > 0 )
+		{
+			return TrackedProp_WrongDataType;
+		}
+
+		pvecResults->resize( unFound );
+		return TrackedProp_Success;
+	}
+	else if ( err == TrackedProp_BufferTooSmall )
+	{
+		pvecResults->resize( unFound );
+		unNeeded = GetProperty( ulContainer, prop, &(*pvecResults)[0], (uint32_t)(pvecResults->size() * sizeof( T )), &unTag, &err );
+		unFound = unNeeded / sizeof( T );
+
+		if ( err == TrackedProp_Success )
+		{
+			if ( unTag != unExpectedTag )
+			{
+				return TrackedProp_WrongDataType;
+			}
+
+			pvecResults->resize( unFound );
+			return TrackedProp_Success;
+		}
+	}
+	return err;
+}
+
+}
+
+
+// ivrdriverinput.h
+namespace vr
+{
+
+	typedef uint64_t VRInputComponentHandle_t;
+	static const VRInputComponentHandle_t k_ulInvalidInputComponentHandle = 0;
+
+	enum EVRScalarType
+	{
+		VRScalarType_Absolute = 0,
+		VRScalarType_Relative = 1,
+	};
+
+
+	enum EVRScalarUnits
+	{
+		VRScalarUnits_NormalizedOneSided = 0, // Value ranges from 0 to 1
+		VRScalarUnits_NormalizedTwoSided = 1, // Value ranges from -1 to 1
+	};
+
+	class IVRDriverInput
+	{
+	public:
+
+		/** Creates a boolean input component for the device */
+		virtual EVRInputError CreateBooleanComponent( PropertyContainerHandle_t ulContainer, const char *pchName, VRInputComponentHandle_t *pHandle ) = 0;
+
+		/** Updates a boolean component */
+		virtual EVRInputError UpdateBooleanComponent( VRInputComponentHandle_t ulComponent, bool bNewValue, double fTimeOffset ) = 0;
+
+		/** Creates a scalar input component for the device */
+		virtual EVRInputError CreateScalarComponent( PropertyContainerHandle_t ulContainer, const char *pchName, VRInputComponentHandle_t *pHandle, EVRScalarType eType, EVRScalarUnits eUnits ) = 0;
+
+		/** Updates a boolean component */
+		virtual EVRInputError UpdateScalarComponent( VRInputComponentHandle_t ulComponent, float fNewValue, double fTimeOffset ) = 0;
+
+		/** Creates a haptic component for the device */
+		virtual EVRInputError CreateHapticComponent( PropertyContainerHandle_t ulContainer, const char *pchName, VRInputComponentHandle_t *pHandle ) = 0;
+
+	};
+
+	static const char * const IVRDriverInput_Version = "IVRDriverInput_001";
+
+} // namespace vr
 
 // ivrdriverlog.h
 namespace vr
@@ -2343,24 +2484,6 @@ public:
 	* only permitted on devices of the HMD class. */
 	virtual void VsyncEvent( double vsyncTimeOffsetSeconds ) = 0;
 
-	/** notifies the server that the button was pressed */
-	virtual void TrackedDeviceButtonPressed( uint32_t unWhichDevice, EVRButtonId eButtonId, double eventTimeOffset ) = 0;
-
-	/** notifies the server that the button was unpressed */
-	virtual void TrackedDeviceButtonUnpressed( uint32_t unWhichDevice, EVRButtonId eButtonId, double eventTimeOffset ) = 0;
-
-	/** notifies the server that the button was pressed */
-	virtual void TrackedDeviceButtonTouched( uint32_t unWhichDevice, EVRButtonId eButtonId, double eventTimeOffset ) = 0;
-
-	/** notifies the server that the button was unpressed */
-	virtual void TrackedDeviceButtonUntouched( uint32_t unWhichDevice, EVRButtonId eButtonId, double eventTimeOffset ) = 0;
-
-	/** notifies the server than a controller axis changed */
-	virtual void TrackedDeviceAxisUpdated( uint32_t unWhichDevice, uint32_t unWhichAxis, const VRControllerAxis_t & axisState ) = 0;
-
-	/** Notifies the server that the proximity sensor on the specified device  */
-	virtual void ProximitySensorState( uint32_t unWhichDevice, bool bProximitySensorTriggered ) = 0;
-
 	/** Sends a vendor specific event (VREvent_VendorSpecific_Reserved_Start..VREvent_VendorSpecific_Reserved_End */
 	virtual void VendorSpecificEvent( uint32_t unWhichDevice, vr::EVREventType eventType, const VREvent_Data_t & eventData, double eventTimeOffset ) = 0;
 
@@ -2381,7 +2504,7 @@ public:
 	virtual void TrackedDeviceDisplayTransformUpdated( uint32_t unWhichDevice, HmdMatrix34_t eyeToHeadLeft, HmdMatrix34_t eyeToHeadRight ) = 0;
 };
 
-static const char *IVRServerDriverHost_Version = "IVRServerDriverHost_004";
+static const char *IVRServerDriverHost_Version = "IVRServerDriverHost_005";
 
 }
 
@@ -2505,7 +2628,7 @@ public:
 	/** Provides the full path to the specified resource. Resource names can include named directories for
 	* drivers and other things, and this resolves all of those and returns the actual physical path. 
 	* pchResourceTypeDirectory is the subdirectory of resources to look in. */
-	virtual uint32_t GetResourceFullPath( const char *pchResourceName, const char *pchResourceTypeDirectory, char *pchPathBuffer, uint32_t unBufferLen ) = 0;
+	virtual uint32_t GetResourceFullPath( const char *pchResourceName, const char *pchResourceTypeDirectory, VR_OUT_STRING() char *pchPathBuffer, uint32_t unBufferLen ) = 0;
 };
 
 static const char * const IVRResources_Version = "IVRResources_001";
@@ -2541,7 +2664,6 @@ namespace vr
 		ITrackedDeviceServerDriver_Version,
 		IVRDisplayComponent_Version,
 		IVRDriverDirectModeComponent_Version,
-		IVRControllerComponent_Version,
 		IVRCameraComponent_Version,
 		IServerTrackedDeviceProvider_Version,
 		IVRWatchdogProvider_Version,
@@ -2655,6 +2777,16 @@ namespace vr
 			return m_pVRResources;
 		}
 
+		IVRDriverInput *VRDriverInput()
+		{
+			if ( !m_pVRDriverInput )
+			{
+				EVRInitError eError;
+				m_pVRDriverInput = (IVRDriverInput *)VRDriverContext()->GetGenericInterface( IVRDriverInput_Version, &eError );
+			}
+			return m_pVRDriverInput;
+		}
+
 	private:
 		CVRPropertyHelpers		m_propertyHelpers;
 		CVRHiddenAreaHelpers	m_hiddenAreaHelpers;
@@ -2666,6 +2798,7 @@ namespace vr
 		IVRDriverLog			*m_pVRDriverLog;
 		IVRDriverManager		*m_pVRDriverManager;
 		IVRResources			*m_pVRResources;
+		IVRDriverInput			*m_pVRDriverInput;
 	};
 
 	inline COpenVRDriverContext &OpenVRInternal_ModuleServerDriverContext()
@@ -2684,6 +2817,7 @@ namespace vr
 	inline DriverHandle_t VR_CALLTYPE VRDriverHandle() { return OpenVRInternal_ModuleServerDriverContext().VRDriverHandle(); }
 	inline IVRDriverManager *VR_CALLTYPE VRDriverManager() { return OpenVRInternal_ModuleServerDriverContext().VRDriverManager(); }
 	inline IVRResources *VR_CALLTYPE VRResources() { return OpenVRInternal_ModuleServerDriverContext().VRResources(); }
+	inline IVRDriverInput *VR_CALLTYPE VRDriverInput() { return OpenVRInternal_ModuleServerDriverContext().VRDriverInput(); }
 
 	inline void COpenVRDriverContext::Clear()
 	{
@@ -2694,6 +2828,7 @@ namespace vr
 		m_pVRWatchdogHost = nullptr;
 		m_pVRDriverManager = nullptr;
 		m_pVRResources = nullptr;
+		m_pVRDriverInput = nullptr;
 	}
 
 	inline EVRInitError COpenVRDriverContext::InitServer()

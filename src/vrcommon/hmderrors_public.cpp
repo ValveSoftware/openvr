@@ -160,6 +160,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_RebootingBusy );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FirmwareUpdateBusy );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FirmwareRecoveryBusy );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_USBServiceBusy );
 
 		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdDriverIdIsNone );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdNotFoundPresenceFailed );

@@ -11,15 +11,15 @@
 
 #include <QtCore/QtCore>
 // because of incompatibilities with QtOpenGL and GLEW we need to cherry pick includes
-#include <QVector2D>
-#include <QMatrix4x4>
-#include <QVector>
-#include <QVector2D>
-#include <QVector3D>
+#include <QtGui/QVector2D>
+#include <QtGui/QMatrix4x4>
+#include <QtCore/QVector>
+#include <QtGui/QVector2D>
+#include <QtGui/QVector3D>
 #include <QtGui/QOpenGLContext>
+#include <QtGui/QOpenGLFramebufferObject>
 #include <QtWidgets/QGraphicsScene>
-#include <QOffscreenSurface>
-class QOpenGLFramebufferObject;
+#include <QtGui/QOffscreenSurface>
 
 class COpenVROverlayController : public QObject
 {
@@ -83,7 +83,6 @@ private:
 
 	QPointF m_ptLastMouse;
 	Qt::MouseButtons m_lastMouseButtons;
-	bool m_bManualMouseHandling;
 };
 
 
