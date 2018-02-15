@@ -147,6 +147,8 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_NotSupportedWithCompositor );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_NotAvailableToUtilityApps );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_Internal );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdDriverIdIsNone );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdNotFoundPresenceFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_VRMonitorNotFound );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_VRMonitorStartupFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_LowPowerWatchdogNotSupported );
@@ -161,9 +163,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FirmwareUpdateBusy );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FirmwareRecoveryBusy );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_USBServiceBusy );
-
-		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdDriverIdIsNone );
-		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdNotFoundPresenceFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRWebHelperStartupFailed );
 
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Unknown );
