@@ -144,8 +144,8 @@ std::wstring UTF8to16(const char * in)
 
 void strcpy_safe( char *pchBuffer, size_t unBufferSizeBytes, const char *pchSource )
 {
-	pchBuffer[ unBufferSizeBytes - 1 ] = '\0';
 	strncpy( pchBuffer, pchSource, unBufferSizeBytes - 1 );
+	pchBuffer[unBufferSizeBytes - 1] = '\0';
 }
 
 
@@ -199,12 +199,6 @@ uint32_t ReturnStdString( const std::string & sValue, char *pchBuffer, uint32_t 
 	return unLen;
 }
 
-void BufferToStdString( std::string & sDest, const char *pchBuffer, uint32_t unBufferLen )
-{
-	sDest.resize( unBufferLen + 1 );
-	memcpy( const_cast< char* >( sDest.c_str() ), pchBuffer, unBufferLen );
-	const_cast< char* >( sDest.c_str() )[ unBufferLen ] = '\0';
-}
 
 /** Returns a std::string from a uint64_t */
 std::string Uint64ToString( uint64_t ulValue )

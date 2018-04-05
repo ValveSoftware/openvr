@@ -3334,6 +3334,7 @@ public enum ETrackedControllerRole
 	LeftHand = 1,
 	RightHand = 2,
 	OptOut = 3,
+	Max = 4,
 }
 public enum ETrackingUniverseOrigin
 {
@@ -3383,6 +3384,8 @@ public enum ETrackedDeviceProperty
 	Prop_RegisteredDeviceType_String = 1036,
 	Prop_InputProfilePath_String = 1037,
 	Prop_NeverTracked_Bool = 1038,
+	Prop_NumCameras_Int32 = 1039,
+	Prop_CameraFrameLayout_Int32 = 1040,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -3567,6 +3570,7 @@ public enum EVREventType
 	VREvent_InputFocusChanged = 406,
 	VREvent_SceneApplicationSecondaryRenderingStarted = 407,
 	VREvent_SceneApplicationUsingWrongGraphicsAdapter = 408,
+	VREvent_ActionBindingReloaded = 409,
 	VREvent_HideRenderModels = 410,
 	VREvent_ShowRenderModels = 411,
 	VREvent_ConsoleOpened = 420,
@@ -3920,12 +3924,25 @@ public enum EVRTrackedCameraError
 	InvalidArgument = 114,
 	InvalidFrameBufferSize = 115,
 }
+public enum EVRTrackedCameraFrameLayout
+{
+	Mono = 1,
+	Stereo = 2,
+	VerticalLayout = 16,
+	HorizontalLayout = 32,
+}
 public enum EVRTrackedCameraFrameType
 {
 	Distorted = 0,
 	Undistorted = 1,
 	MaximumUndistorted = 2,
 	MAX_CAMERA_FRAME_TYPES = 3,
+}
+public enum EVSync
+{
+	None = 0,
+	WaitRender = 1,
+	NoWaitRender = 2,
 }
 public enum EVRApplicationError
 {
@@ -4167,6 +4184,7 @@ public enum EVRScreenshotError
 	[FieldOffset(0)] public VREvent_Property_t property;
 	[FieldOffset(0)] public VREvent_DualAnalog_t dualAnalog;
 	[FieldOffset(0)] public VREvent_HapticVibration_t hapticVibration;
+	[FieldOffset(0)] public VREvent_WebConsole_t webConsole;
 	[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 }
 
@@ -4372,6 +4390,7 @@ public enum EVRScreenshotError
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Overlay_t
 {
 	public ulong overlayHandle;
+	public ulong devicePath;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Status_t
 {
@@ -4450,6 +4469,10 @@ public enum EVRScreenshotError
 	public float fDurationSeconds;
 	public float fFrequency;
 	public float fAmplitude;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_WebConsole_t
+{
+	public ulong webConsoleHandle;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_t
 {
@@ -4893,11 +4916,13 @@ public class OpenVR
 	public const string k_pch_SteamVR_RetailDemo_Bool = "retailDemo";
 	public const string k_pch_SteamVR_IpdOffset_Float = "ipdOffset";
 	public const string k_pch_SteamVR_AllowSupersampleFiltering_Bool = "allowSupersampleFiltering";
+	public const string k_pch_SteamVR_SupersampleManualOverride_Bool = "supersampleManualOverride";
 	public const string k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
 	public const string k_pch_SteamVR_AllowDisplayLockedMode_Bool = "allowDisplayLockedMode";
 	public const string k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
 	public const string k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 	public const string k_pch_SteamVR_DebugInput = "debugInput";
+	public const string k_pch_SteamVR_LegacyInputRebinding = "legacyInputRebinding";
 	public const string k_pch_Lighthouse_Section = "driver_lighthouse";
 	public const string k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 	public const string k_pch_Lighthouse_DisableIMUExceptHMD_Bool = "disableimuexcepthmd";
@@ -4961,6 +4986,7 @@ public class OpenVR
 	public const string k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
 	public const string k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 	public const string k_pch_Camera_BoundsStrength_Int32 = "cameraBoundsStrength";
+	public const string k_pch_Camera_RoomViewMode_Int32 = "cameraRoomViewMode";
 	public const string k_pch_audio_Section = "audio";
 	public const string k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
 	public const string k_pch_audio_OnRecordDevice_String = "onRecordDevice";
@@ -4979,6 +5005,7 @@ public class OpenVR
 	public const string k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 	public const string k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
 	public const string k_pch_Dashboard_EnableWebUI = "webUI";
+	public const string k_pch_Dashboard_EnableWebUIDevTools = "webUIDevTools";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";
 	public const string k_pch_WebInterface_Section = "WebInterface";

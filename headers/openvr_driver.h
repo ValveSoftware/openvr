@@ -176,6 +176,7 @@ enum ETrackedControllerRole
 	TrackedControllerRole_LeftHand = 1,					// Tracked device associated with the left hand
 	TrackedControllerRole_RightHand = 2,				// Tracked device associated with the right hand
 	TrackedControllerRole_OptOut = 3,					// Tracked device is opting out of left/right hand selection
+	TrackedControllerRole_Max = 4
 };
 
 
@@ -201,6 +202,9 @@ enum ETrackingUniverseOrigin
 	TrackingUniverseStanding = 1,	// Poses are provided relative to the safe bounds configured by the user
 	TrackingUniverseRawAndUncalibrated = 2,	// Poses are provided in the coordinate system defined by the driver.  It has Y up and is unified for devices of the same driver. You usually don't want this one.
 };
+
+typedef uint64_t WebConsoleHandle_t;
+#define INVALID_WEB_CONSOLE_HANDLE	((vr::WebConsoleHandle_t)0)
 
 // Refers to a single container of properties
 typedef uint64_t PropertyContainerHandle_t;
@@ -281,6 +285,8 @@ enum ETrackedDeviceProperty
 	Prop_RegisteredDeviceType_String			= 1036,
 	Prop_InputProfilePath_String				= 1037, // input profile to use for this device in the input system. Will default to tracking system name if this isn't provided
 	Prop_NeverTracked_Bool						= 1038, // Used for devices that will never have a valid pose by design
+	Prop_NumCameras_Int32						= 1039,
+	Prop_CameraFrameLayout_Int32				= 1040, // EVRTrackedCameraFrameLayout value
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -566,6 +572,7 @@ enum EVREventType
 	VREvent_InputFocusChanged			= 406, // data is process
 	VREvent_SceneApplicationSecondaryRenderingStarted = 407, // data is process
 	VREvent_SceneApplicationUsingWrongGraphicsAdapter = 408, // data is process
+	VREvent_ActionBindingReloaded		 = 409, // data is process - The App that action binds reloaded for
 
 	VREvent_HideRenderModels			= 410, // Sent to the scene application to request hiding render models temporarily
 	VREvent_ShowRenderModels			= 411, // Sent to the scene application to request restoring render model visibility
@@ -806,6 +813,7 @@ struct VREvent_Process_t
 struct VREvent_Overlay_t
 {
 	uint64_t overlayHandle;
+	uint64_t devicePath;
 };
 
 
@@ -908,6 +916,10 @@ struct VREvent_HapticVibration_t
 	float fAmplitude;
 };
 
+struct VREvent_WebConsole_t
+{
+	WebConsoleHandle_t webConsoleHandle;
+};
 
 /** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
 typedef union
@@ -934,6 +946,7 @@ typedef union
 	VREvent_Property_t property;
 	VREvent_DualAnalog_t dualAnalog;
 	VREvent_HapticVibration_t hapticVibration;
+	VREvent_WebConsole_t webConsole;
 } VREvent_Data_t;
 
 
@@ -1292,6 +1305,14 @@ enum EVRTrackedCameraError
 	VRTrackedCameraError_InvalidFrameBufferSize     = 115,
 };
 
+enum EVRTrackedCameraFrameLayout
+{
+	EVRTrackedCameraFrameLayout_Mono				= 0x0001,
+	EVRTrackedCameraFrameLayout_Stereo				= 0x0002,
+	EVRTrackedCameraFrameLayout_VerticalLayout		= 0x0010,	// Stereo frames are Top/Bottom (left/right)
+	EVRTrackedCameraFrameLayout_HorizontalLayout	= 0x0020,	// Stereo frames are Left/Right
+};
+	
 enum EVRTrackedCameraFrameType
 {
 	VRTrackedCameraFrameType_Distorted = 0,			// This is the camera video frame size in pixels, still distorted.
@@ -1329,6 +1350,13 @@ struct DriverDirectMode_FrameTiming
 	uint32_t m_nNumMisPresented; // number of times frame was presented on a vsync other than it was originally predicted to
 	uint32_t m_nNumDroppedFrames; // number of additional times previous frame was scanned out (i.e. compositor missed vsync)
 	uint32_t m_nReprojectionFlags;
+};
+
+enum EVSync
+{
+	VSync_None,
+	VSync_WaitRender,	// block following render work until vsync
+	VSync_NoWaitRender,	// do not block following render work (allow to get started early)
 };
 
 #pragma pack( pop )
@@ -1420,6 +1448,16 @@ enum ECameraCompatibilityMode
 	CAMERA_COMPAT_MODE_ISO_35FPS,
 	CAMERA_COMPAT_MODE_ISO_30FPS,
 	MAX_CAMERA_COMPAT_MODES
+};
+
+enum ETrackedCameraRoomViewMode
+{
+	TRACKED_CAMERA_ROOMVIEW_MODE_DEFAULT = 0,
+	TRACKED_CAMERA_ROOMVIEW_MODE_EDGE_A,
+	TRACKED_CAMERA_ROOMVIEW_MODE_EDGE_B,
+	TRACKED_CAMERA_ROOMVIEW_MODE_VIDEO_TRANSLUSCENT,
+	TRACKED_CAMERA_ROOMVIEW_MODE_VIDEO_OPAQUE,
+	TRACKED_CAMERA_ROOMVIEW_MODE_COUNT,
 };
 
 #ifdef _MSC_VER
@@ -1563,11 +1601,13 @@ namespace vr
 	static const char * const k_pch_SteamVR_RetailDemo_Bool = "retailDemo";
 	static const char * const k_pch_SteamVR_IpdOffset_Float = "ipdOffset";
 	static const char * const k_pch_SteamVR_AllowSupersampleFiltering_Bool = "allowSupersampleFiltering";
+	static const char * const k_pch_SteamVR_SupersampleManualOverride_Bool = "supersampleManualOverride";
 	static const char * const k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
 	static const char * const k_pch_SteamVR_AllowDisplayLockedMode_Bool = "allowDisplayLockedMode";
 	static const char * const k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
 	static const char * const k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 	static const char * const k_pch_SteamVR_DebugInput = "debugInput";
+	static const char * const k_pch_SteamVR_LegacyInputRebinding = "legacyInputRebinding";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1655,6 +1695,7 @@ namespace vr
 	static const char * const k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
 	static const char * const k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 	static const char * const k_pch_Camera_BoundsStrength_Int32 = "cameraBoundsStrength";
+	static const char * const k_pch_Camera_RoomViewMode_Int32 = "cameraRoomViewMode";
 
 	//-----------------------------------------------------------------------------
 	// audio keys
@@ -1682,6 +1723,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 	static const char * const k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
 	static const char * const k_pch_Dashboard_EnableWebUI = "webUI";
+	static const char * const k_pch_Dashboard_EnableWebUIDevTools = "webUIDevTools";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
@@ -2173,6 +2215,8 @@ public:
 	template< typename T>
 	ETrackedPropertyError SetPropertyVector( PropertyContainerHandle_t ulContainer, ETrackedDeviceProperty prop, PropertyTypeTag_t unExpectedTag, std::vector<T> *vecProperties );
 
+	/** Returns true if the specified property is set on the specified container */
+	bool IsPropertySet( PropertyContainerHandle_t ulContainer, ETrackedDeviceProperty prop, ETrackedPropertyError *peError = nullptr );
 private:
 	template<typename T>
 	T GetPropertyHelper( PropertyContainerHandle_t ulContainerHandle, ETrackedDeviceProperty prop, ETrackedPropertyError *pError, T bDefault, PropertyTypeTag_t unTypeTag );
@@ -2437,7 +2481,17 @@ ETrackedPropertyError CVRPropertyHelpers::GetPropertyVector( PropertyContainerHa
 	return err;
 }
 
+inline bool CVRPropertyHelpers::IsPropertySet( PropertyContainerHandle_t ulContainer, ETrackedDeviceProperty prop, ETrackedPropertyError *peError )
+{
+	ETrackedPropertyError error;
+	GetProperty( ulContainer, prop, nullptr, 0, nullptr, &error );
+	if ( peError )
+		*peError = error;
+	return error == TrackedProp_Success || error == TrackedProp_BufferTooSmall;
 }
+
+}
+
 
 
 // ivrdriverinput.h
@@ -2628,6 +2682,14 @@ static const char *IVRWatchdogHost_Version = "IVRWatchdogHost_001";
 // ivrvirtualdisplay.h
 namespace vr
 {
+	struct PresentInfo_t
+	{
+		SharedTextureHandle_t backbufferTextureHandle;
+		EVSync vsync;
+		uint64_t nFrameId;
+		double flVSyncTimeInSeconds;
+	};
+
 	// ----------------------------------------------------------------------------------------------
 	// Purpose: This component is used for drivers that implement a virtual display (e.g. wireless).
 	// ----------------------------------------------------------------------------------------------
@@ -2636,7 +2698,7 @@ namespace vr
 	public:
 
 		/** Submits final backbuffer for display. */
-		virtual void Present( vr::SharedTextureHandle_t backbufferTextureHandle ) = 0;
+		virtual void Present( const PresentInfo_t *pPresentInfo, uint32_t unPresentInfoSize ) = 0;
 
 		/** Block until the last presented buffer start scanning out. */
 		virtual void WaitForPresent() = 0;
@@ -2645,7 +2707,7 @@ namespace vr
 		virtual bool GetTimeSinceLastVsync( float *pfSecondsSinceLastVsync, uint64_t *pulFrameCounter ) = 0;
 	};
 
-	static const char *IVRVirtualDisplay_Version = "IVRVirtualDisplay_001";
+	static const char *IVRVirtualDisplay_Version = "IVRVirtualDisplay_002";
 
 	/** Returns the current IVRVirtualDisplay pointer or NULL the interface could not be found. */
 	VR_INTERFACE vr::IVRVirtualDisplay *VR_CALLTYPE VRVirtualDisplay();

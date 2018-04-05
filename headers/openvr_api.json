@@ -4,6 +4,7 @@
 ,{"typedef": "vr::SharedTextureHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::DriverId_t","type": "uint32_t"}
 ,{"typedef": "vr::TrackedDeviceIndex_t","type": "uint32_t"}
+,{"typedef": "vr::WebConsoleHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::PropertyContainerHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::PropertyTypeTag_t","type": "uint32_t"}
 ,{"typedef": "vr::DriverHandle_t","type": "PropertyContainerHandle_t"}
@@ -70,6 +71,7 @@
 	,{"name": "TrackedControllerRole_LeftHand","value": "1"}
 	,{"name": "TrackedControllerRole_RightHand","value": "2"}
 	,{"name": "TrackedControllerRole_OptOut","value": "3"}
+	,{"name": "TrackedControllerRole_Max","value": "4"}
 ]}
 ,	{"enumname": "vr::ETrackingUniverseOrigin","values": [ 
 	{"name": "TrackingUniverseSeated","value": "0"}
@@ -117,6 +119,8 @@
 	,{"name": "Prop_RegisteredDeviceType_String","value": "1036"}
 	,{"name": "Prop_InputProfilePath_String","value": "1037"}
 	,{"name": "Prop_NeverTracked_Bool","value": "1038"}
+	,{"name": "Prop_NumCameras_Int32","value": "1039"}
+	,{"name": "Prop_CameraFrameLayout_Int32","value": "1040"}
 	,{"name": "Prop_ReportsTimeSinceVSync_Bool","value": "2000"}
 	,{"name": "Prop_SecondsFromVsyncToPhotons_Float","value": "2001"}
 	,{"name": "Prop_DisplayFrequency_Float","value": "2002"}
@@ -297,6 +301,7 @@
 	,{"name": "VREvent_InputFocusChanged","value": "406"}
 	,{"name": "VREvent_SceneApplicationSecondaryRenderingStarted","value": "407"}
 	,{"name": "VREvent_SceneApplicationUsingWrongGraphicsAdapter","value": "408"}
+	,{"name": "VREvent_ActionBindingReloaded","value": "409"}
 	,{"name": "VREvent_HideRenderModels","value": "410"}
 	,{"name": "VREvent_ShowRenderModels","value": "411"}
 	,{"name": "VREvent_ConsoleOpened","value": "420"}
@@ -633,11 +638,22 @@
 	,{"name": "VRTrackedCameraError_InvalidArgument","value": "114"}
 	,{"name": "VRTrackedCameraError_InvalidFrameBufferSize","value": "115"}
 ]}
+,	{"enumname": "vr::EVRTrackedCameraFrameLayout","values": [ 
+	{"name": "EVRTrackedCameraFrameLayout_Mono","value": "1"}
+	,{"name": "EVRTrackedCameraFrameLayout_Stereo","value": "2"}
+	,{"name": "EVRTrackedCameraFrameLayout_VerticalLayout","value": "16"}
+	,{"name": "EVRTrackedCameraFrameLayout_HorizontalLayout","value": "32"}
+]}
 ,	{"enumname": "vr::EVRTrackedCameraFrameType","values": [ 
 	{"name": "VRTrackedCameraFrameType_Distorted","value": "0"}
 	,{"name": "VRTrackedCameraFrameType_Undistorted","value": "1"}
 	,{"name": "VRTrackedCameraFrameType_MaximumUndistorted","value": "2"}
 	,{"name": "MAX_CAMERA_FRAME_TYPES","value": "3"}
+]}
+,	{"enumname": "vr::EVSync","values": [ 
+	{"name": "VSync_None","value": "0"}
+	,{"name": "VSync_WaitRender","value": "1"}
+	,{"name": "VSync_NoWaitRender","value": "2"}
 ]}
 ,	{"enumname": "vr::EVRApplicationError","values": [ 
 	{"name": "VRApplicationError_None","value": "0"}
@@ -1031,6 +1047,8 @@
 ,{
 	"constname": "k_pch_SteamVR_AllowSupersampleFiltering_Bool","consttype": "const char *const", "constval": "allowSupersampleFiltering"}
 ,{
+	"constname": "k_pch_SteamVR_SupersampleManualOverride_Bool","consttype": "const char *const", "constval": "supersampleManualOverride"}
+,{
 	"constname": "k_pch_SteamVR_EnableLinuxVulkanAsync_Bool","consttype": "const char *const", "constval": "enableLinuxVulkanAsync"}
 ,{
 	"constname": "k_pch_SteamVR_AllowDisplayLockedMode_Bool","consttype": "const char *const", "constval": "allowDisplayLockedMode"}
@@ -1040,6 +1058,8 @@
 	"constname": "k_pch_SteamVR_ForceWindows32bitVRMonitor","consttype": "const char *const", "constval": "forceWindows32BitVRMonitor"}
 ,{
 	"constname": "k_pch_SteamVR_DebugInput","consttype": "const char *const", "constval": "debugInput"}
+,{
+	"constname": "k_pch_SteamVR_LegacyInputRebinding","consttype": "const char *const", "constval": "legacyInputRebinding"}
 ,{
 	"constname": "k_pch_Lighthouse_Section","consttype": "const char *const", "constval": "driver_lighthouse"}
 ,{
@@ -1167,6 +1187,8 @@
 ,{
 	"constname": "k_pch_Camera_BoundsStrength_Int32","consttype": "const char *const", "constval": "cameraBoundsStrength"}
 ,{
+	"constname": "k_pch_Camera_RoomViewMode_Int32","consttype": "const char *const", "constval": "cameraRoomViewMode"}
+,{
 	"constname": "k_pch_audio_Section","consttype": "const char *const", "constval": "audio"}
 ,{
 	"constname": "k_pch_audio_OnPlaybackDevice_String","consttype": "const char *const", "constval": "onPlaybackDevice"}
@@ -1202,6 +1224,8 @@
 	"constname": "k_pch_Dashboard_ArcadeMode_Bool","consttype": "const char *const", "constval": "arcadeMode"}
 ,{
 	"constname": "k_pch_Dashboard_EnableWebUI","consttype": "const char *const", "constval": "webUI"}
+,{
+	"constname": "k_pch_Dashboard_EnableWebUIDevTools","consttype": "const char *const", "constval": "webUIDevTools"}
 ,{
 	"constname": "k_pch_modelskin_Section","consttype": "const char *const", "constval": "modelskins"}
 ,{
@@ -1314,7 +1338,8 @@
 { "fieldname": "oldPid", "fieldtype": "uint32_t"},
 { "fieldname": "bForced", "fieldtype": "_Bool"}]}
 ,{"struct": "vr::VREvent_Overlay_t","fields": [
-{ "fieldname": "overlayHandle", "fieldtype": "uint64_t"}]}
+{ "fieldname": "overlayHandle", "fieldtype": "uint64_t"},
+{ "fieldname": "devicePath", "fieldtype": "uint64_t"}]}
 ,{"struct": "vr::VREvent_Status_t","fields": [
 { "fieldname": "statusState", "fieldtype": "uint32_t"}]}
 ,{"struct": "vr::VREvent_Keyboard_t","fields": [
@@ -1362,6 +1387,8 @@
 { "fieldname": "fDurationSeconds", "fieldtype": "float"},
 { "fieldname": "fFrequency", "fieldtype": "float"},
 { "fieldname": "fAmplitude", "fieldtype": "float"}]}
+,{"struct": "vr::VREvent_WebConsole_t","fields": [
+{ "fieldname": "webConsoleHandle", "fieldtype": "WebConsoleHandle_t"}]}
 ,{"struct": "vr::(anonymous)","fields": [
 { "fieldname": "reserved", "fieldtype": "struct vr::VREvent_Reserved_t"},
 { "fieldname": "controller", "fieldtype": "struct vr::VREvent_Controller_t"},
@@ -1384,7 +1411,8 @@
 { "fieldname": "messageOverlay", "fieldtype": "struct vr::VREvent_MessageOverlay_t"},
 { "fieldname": "property", "fieldtype": "struct vr::VREvent_Property_t"},
 { "fieldname": "dualAnalog", "fieldtype": "struct vr::VREvent_DualAnalog_t"},
-{ "fieldname": "hapticVibration", "fieldtype": "struct vr::VREvent_HapticVibration_t"}]}
+{ "fieldname": "hapticVibration", "fieldtype": "struct vr::VREvent_HapticVibration_t"},
+{ "fieldname": "webConsole", "fieldtype": "struct vr::VREvent_WebConsole_t"}]}
 ,{"struct": "vr::VREvent_t","fields": [
 { "fieldname": "eventType", "fieldtype": "uint32_t"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},

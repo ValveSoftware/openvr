@@ -161,11 +161,13 @@ static const char * k_pch_SteamVR_CycleBackgroundImageTimeSec_Int32 = "CycleBack
 static const char * k_pch_SteamVR_RetailDemo_Bool = "retailDemo";
 static const char * k_pch_SteamVR_IpdOffset_Float = "ipdOffset";
 static const char * k_pch_SteamVR_AllowSupersampleFiltering_Bool = "allowSupersampleFiltering";
+static const char * k_pch_SteamVR_SupersampleManualOverride_Bool = "supersampleManualOverride";
 static const char * k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
 static const char * k_pch_SteamVR_AllowDisplayLockedMode_Bool = "allowDisplayLockedMode";
 static const char * k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
 static const char * k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 static const char * k_pch_SteamVR_DebugInput = "debugInput";
+static const char * k_pch_SteamVR_LegacyInputRebinding = "legacyInputRebinding";
 static const char * k_pch_Lighthouse_Section = "driver_lighthouse";
 static const char * k_pch_Lighthouse_DisableIMU_Bool = "disableimu";
 static const char * k_pch_Lighthouse_DisableIMUExceptHMD_Bool = "disableimuexcepthmd";
@@ -229,6 +231,7 @@ static const char * k_pch_Camera_BoundsColorGammaG_Int32 = "cameraBoundsColorGam
 static const char * k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
 static const char * k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 static const char * k_pch_Camera_BoundsStrength_Int32 = "cameraBoundsStrength";
+static const char * k_pch_Camera_RoomViewMode_Int32 = "cameraRoomViewMode";
 static const char * k_pch_audio_Section = "audio";
 static const char * k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
 static const char * k_pch_audio_OnRecordDevice_String = "onRecordDevice";
@@ -247,6 +250,7 @@ static const char * k_pch_Dashboard_Section = "dashboard";
 static const char * k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 static const char * k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
 static const char * k_pch_Dashboard_EnableWebUI = "webUI";
+static const char * k_pch_Dashboard_EnableWebUIDevTools = "webUIDevTools";
 static const char * k_pch_modelskin_Section = "modelskins";
 static const char * k_pch_Driver_Enable_Bool = "enable";
 static const char * k_pch_WebInterface_Section = "WebInterface";
@@ -305,6 +309,7 @@ typedef enum ETrackedControllerRole
 	ETrackedControllerRole_TrackedControllerRole_LeftHand = 1,
 	ETrackedControllerRole_TrackedControllerRole_RightHand = 2,
 	ETrackedControllerRole_TrackedControllerRole_OptOut = 3,
+	ETrackedControllerRole_TrackedControllerRole_Max = 4,
 } ETrackedControllerRole;
 
 typedef enum ETrackingUniverseOrigin
@@ -356,6 +361,8 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_RegisteredDeviceType_String = 1036,
 	ETrackedDeviceProperty_Prop_InputProfilePath_String = 1037,
 	ETrackedDeviceProperty_Prop_NeverTracked_Bool = 1038,
+	ETrackedDeviceProperty_Prop_NumCameras_Int32 = 1039,
+	ETrackedDeviceProperty_Prop_CameraFrameLayout_Int32 = 1040,
 	ETrackedDeviceProperty_Prop_ReportsTimeSinceVSync_Bool = 2000,
 	ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	ETrackedDeviceProperty_Prop_DisplayFrequency_Float = 2002,
@@ -544,6 +551,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_InputFocusChanged = 406,
 	EVREventType_VREvent_SceneApplicationSecondaryRenderingStarted = 407,
 	EVREventType_VREvent_SceneApplicationUsingWrongGraphicsAdapter = 408,
+	EVREventType_VREvent_ActionBindingReloaded = 409,
 	EVREventType_VREvent_HideRenderModels = 410,
 	EVREventType_VREvent_ShowRenderModels = 411,
 	EVREventType_VREvent_ConsoleOpened = 420,
@@ -915,6 +923,14 @@ typedef enum EVRTrackedCameraError
 	EVRTrackedCameraError_VRTrackedCameraError_InvalidFrameBufferSize = 115,
 } EVRTrackedCameraError;
 
+typedef enum EVRTrackedCameraFrameLayout
+{
+	EVRTrackedCameraFrameLayout_Mono = 1,
+	EVRTrackedCameraFrameLayout_Stereo = 2,
+	EVRTrackedCameraFrameLayout_VerticalLayout = 16,
+	EVRTrackedCameraFrameLayout_HorizontalLayout = 32,
+} EVRTrackedCameraFrameLayout;
+
 typedef enum EVRTrackedCameraFrameType
 {
 	EVRTrackedCameraFrameType_VRTrackedCameraFrameType_Distorted = 0,
@@ -922,6 +938,13 @@ typedef enum EVRTrackedCameraFrameType
 	EVRTrackedCameraFrameType_VRTrackedCameraFrameType_MaximumUndistorted = 2,
 	EVRTrackedCameraFrameType_MAX_CAMERA_FRAME_TYPES = 3,
 } EVRTrackedCameraFrameType;
+
+typedef enum EVSync
+{
+	EVSync_VSync_None = 0,
+	EVSync_VSync_WaitRender = 1,
+	EVSync_VSync_NoWaitRender = 2,
+} EVSync;
 
 typedef enum EVRApplicationError
 {
@@ -1174,6 +1197,7 @@ typedef uint32_t glUInt_t;
 typedef uint64_t SharedTextureHandle_t;
 typedef uint32_t DriverId_t;
 typedef uint32_t TrackedDeviceIndex_t;
+typedef uint64_t WebConsoleHandle_t;
 typedef uint64_t PropertyContainerHandle_t;
 typedef uint32_t PropertyTypeTag_t;
 typedef PropertyContainerHandle_t DriverHandle_t;
@@ -1378,6 +1402,7 @@ typedef struct VREvent_Process_t
 typedef struct VREvent_Overlay_t
 {
 	uint64_t overlayHandle;
+	uint64_t devicePath;
 } VREvent_Overlay_t;
 
 typedef struct VREvent_Status_t
@@ -1471,6 +1496,11 @@ typedef struct VREvent_HapticVibration_t
 	float fFrequency;
 	float fAmplitude;
 } VREvent_HapticVibration_t;
+
+typedef struct VREvent_WebConsole_t
+{
+	WebConsoleHandle_t webConsoleHandle;
+} VREvent_WebConsole_t;
 
 typedef struct HiddenAreaMesh_t
 {
