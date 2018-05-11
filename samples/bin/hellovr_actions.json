@@ -1,0 +1,54 @@
+{
+      "default_bindings": [
+         {
+            "controller_type" : "vive_controller",
+            "binding_url" : "hellovr_bindings_vive_controller"
+         }
+      ], 
+  "actions": [
+    {
+      "name": "/actions/demo/in/HideCubes",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/demo/in/HideThisController",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/demo/in/TriggerHaptic",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/demo/in/AnalogInput",
+      "type": "vector2"
+    },
+    {
+      "name": "/actions/demo/in/Hand_Right",
+      "type": "pose"
+    },
+    {
+      "name": "/actions/demo/in/Hand_Left",
+      "type": "pose"
+    },
+    {
+      "name": "/actions/demo/out/Haptic_Left",
+      "type": "vibration"
+    },
+    {
+      "name": "/actions/demo/out/Haptic_Right",
+      "type": "vibration"
+    }
+  ],
+    "localization" : [
+        {
+            "language_tag": "en",
+            "/actions/demo/in/HideCubes" : "Hide Cubes",
+            "/actions/demo/in/TriggerHaptic" : "Trigger Haptic Pulse",
+            "/actions/demo/in/AnalogInput" : "Analog Input",
+            "/actions/demo/in/Hand_Right" : "Right Hand Pose",
+            "/actions/demo/in/Hand_Left" : "Left Hand Pose",
+            "/actions/demo/out/Haptic_Left" : "Left Haptic Feedback",
+            "/actions/demo/out/Haptic_Right" : "Right Haptic Feedback"
+        }
+    ]
+}

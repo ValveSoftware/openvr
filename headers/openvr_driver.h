@@ -73,6 +73,11 @@ struct HmdQuaternion_t
 	double w, x, y, z;
 };
 
+struct HmdQuaternionf_t
+{
+	float w, x, y, z;
+};
+
 struct HmdColor_t
 {
 	float r, g, b, a;
@@ -234,6 +239,7 @@ static const PropertyTypeTag_t k_unActionPropertyTag = 32;
 static const PropertyTypeTag_t k_unInputValuePropertyTag = 33;
 static const PropertyTypeTag_t k_unWildcardPropertyTag = 34;
 static const PropertyTypeTag_t k_unHapticVibrationPropertyTag = 35;
+static const PropertyTypeTag_t k_unSkeletonPropertyTag = 36;
 
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_Start = 1000;
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_End = 10000;
@@ -350,6 +356,11 @@ enum ETrackedDeviceProperty
 	Prop_MinimumIpdStepMeters_Float				= 2060,
 	Prop_AudioBridgeFirmwareVersion_Uint64		= 2061,
 	Prop_ImageBridgeFirmwareVersion_Uint64		= 2062,
+	Prop_ImuToHeadTransform_Matrix34			= 2063,
+	Prop_ImuFactoryGyroBias_Vector3				= 2064,
+	Prop_ImuFactoryGyroScale_Vector3			= 2065,
+	Prop_ImuFactoryAccelerometerBias_Vector3	= 2066,
+	Prop_ImuFactoryAccelerometerScale_Vector3	= 2067,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -689,6 +700,8 @@ enum EVREventType
 	VREvent_MessageOverlayCloseRequested	= 1651,
 	
 	VREvent_Input_HapticVibration			= 1700, // data is hapticVibration
+	VREvent_Input_BindingLoadFailed			= 1701, // data is process
+	VREvent_Input_BindingLoadSuccessful		= 1702, // data is process
 
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start	= 10000,
@@ -921,6 +934,14 @@ struct VREvent_WebConsole_t
 	WebConsoleHandle_t webConsoleHandle;
 };
 
+struct VREvent_InputBindingLoad_t
+{
+	vr::PropertyContainerHandle_t ulAppContainer;
+	uint64_t pathMessage;
+	uint64_t pathUrl;
+};
+
+
 /** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
 typedef union
 {
@@ -947,6 +968,7 @@ typedef union
 	VREvent_DualAnalog_t dualAnalog;
 	VREvent_HapticVibration_t hapticVibration;
 	VREvent_WebConsole_t webConsole;
+	VREvent_InputBindingLoad_t inputBinding;
 } VREvent_Data_t;
 
 
@@ -982,6 +1004,12 @@ enum EVRInputError
 	VRInputError_IPCError = 7,
 	VRInputError_NoActiveActionSet = 8,
 	VRInputError_InvalidDevice = 9,
+	VRInputError_InvalidSkeleton = 10,
+	VRInputError_InvalidBoneCount = 11,
+	VRInputError_InvalidCompressedData = 12,
+	VRInputError_NoData = 13,
+	VRInputError_BufferTooSmall = 14,
+	VRInputError_MismatchedActionManifest = 15,
 };
 
 
@@ -1163,6 +1191,14 @@ enum EVRNotificationError
 	VRNotificationError_NotificationQueueFull = 101,
 	VRNotificationError_InvalidOverlayHandle = 102,
 	VRNotificationError_SystemWithUserValueAlreadyExists = 103,
+};
+
+
+/** Holds the transform for a single bone */
+struct VRBoneTransform_t
+{
+	HmdVector4_t position;
+	HmdQuaternionf_t orientation;
 };
 
 
@@ -1357,6 +1393,25 @@ enum EVSync
 	VSync_None,
 	VSync_WaitRender,	// block following render work until vsync
 	VSync_NoWaitRender,	// do not block following render work (allow to get started early)
+};
+
+/** raw IMU data provided by IVRIOBuffer from paths to tracked devices with IMUs */
+enum Imu_OffScaleFlags
+{
+	OffScale_AccelX	= 0x01,
+	OffScale_AccelY	= 0x02,
+	OffScale_AccelZ	= 0x04,
+	OffScale_GyroX	= 0x08,
+	OffScale_GyroY	= 0x10,
+	OffScale_GyroZ	= 0x20,
+};
+	
+struct ImuSample_t
+{
+	double fSampleTime;
+	HmdVector3d_t vAccel;
+	HmdVector3d_t vGyro;
+	uint32_t unOffScaleFlags;
 };
 
 #pragma pack( pop )
@@ -1608,6 +1663,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 	static const char * const k_pch_SteamVR_DebugInput = "debugInput";
 	static const char * const k_pch_SteamVR_LegacyInputRebinding = "legacyInputRebinding";
+	static const char * const k_pch_SteamVR_DebugInputBinding = "debugInputBinding";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1737,6 +1793,18 @@ namespace vr
 	// web interface keys
 	static const char* const k_pch_WebInterface_Section = "WebInterface";
 	static const char* const k_pch_WebInterface_WebPort_String = "WebPort";
+
+	//-----------------------------------------------------------------------------
+	// tracking overrides - keys are device paths, values are the device paths their
+	//  tracking/pose information overrides
+	static const char* const k_pch_TrackingOverride_Section = "TrackingOverrides";
+
+	//-----------------------------------------------------------------------------
+	// per-app keys - the section name for these is the app key itself. Some of these are prefixed by the controller type
+	static const char* const k_pch_App_BindingAutosaveURLSuffix_String = "AutosaveURL";
+	static const char* const k_pch_App_BindingCurrentURLSuffix_String = "CurrentURL";
+	static const char* const k_pch_App_NeedToUpdateAutosaveSuffix_Bool = "NeedToUpdateAutosave";
+	static const char* const k_pch_App_ActionManifestURL_String = "ActionManifestURL";
 
 } // namespace vr
 
@@ -2533,6 +2601,12 @@ namespace vr
 		/** Creates a haptic component for the device */
 		virtual EVRInputError CreateHapticComponent( PropertyContainerHandle_t ulContainer, const char *pchName, VRInputComponentHandle_t *pHandle ) = 0;
 
+		/** Creates a skeleton component. */
+		virtual EVRInputError CreateSkeletonComponent( PropertyContainerHandle_t ulContainer, const char *pchName, const char *pchSkeletonPath, const char *pchBasePosePath, const VRBoneTransform_t *pGripLimitTransforms, uint32_t unGripLimitTransformCount, VRInputComponentHandle_t *pHandle ) = 0;
+
+		/** Updates a skeleton component. */
+		virtual EVRInputError UpdateSkeletonComponent( VRInputComponentHandle_t ulComponent, const VRBoneTransform_t *pTransforms, uint32_t unTransformCount ) = 0;
+
 	};
 
 	static const char * const IVRDriverInput_Version = "IVRDriverInput_001";
@@ -2740,6 +2814,56 @@ static const char * const IVRResources_Version = "IVRResources_001";
 
 
 }
+// ivriobuffer.h
+namespace vr
+{
+
+typedef uint64_t IOBufferHandle_t;
+static const uint64_t k_ulInvalidIOBufferHandle = 0;
+	
+	enum EIOBufferError
+	{
+		IOBuffer_Success                  = 0,
+		IOBuffer_OperationFailed          = 100,
+		IOBuffer_InvalidHandle            = 101,
+		IOBuffer_InvalidArgument          = 102,
+		IOBuffer_PathExists               = 103,
+		IOBuffer_PathDoesNotExist         = 104,
+		IOBuffer_Permission               = 105,
+	};
+
+	enum EIOBufferMode
+	{
+		IOBufferMode_Read                 = 0x0001,
+		IOBufferMode_Write                = 0x0002,
+		IOBufferMode_Create               = 0x0200,
+	};
+
+	// ----------------------------------------------------------------------------------------------
+	// Purpose:
+	// ----------------------------------------------------------------------------------------------
+	class IVRIOBuffer
+	{
+	public:
+		/** opens an existing or creates a new IOBuffer of unSize bytes */
+		virtual vr::EIOBufferError Open( const char *pchPath, vr::EIOBufferMode mode, uint32_t unElementSize, uint32_t unElements, vr::IOBufferHandle_t *pulBuffer ) = 0;
+		
+		/** closes a previously opened or created buffer */
+		virtual vr::EIOBufferError Close( vr::IOBufferHandle_t ulBuffer ) = 0;
+		
+		/** reads up to unBytes from buffer into *pDst, returning number of bytes read in *punRead */
+		virtual vr::EIOBufferError Read( vr::IOBufferHandle_t ulBuffer, void *pDst, uint32_t unBytes, uint32_t *punRead ) = 0;
+		
+		/** writes unBytes of data from *pSrc into a buffer. */
+		virtual vr::EIOBufferError Write( vr::IOBufferHandle_t ulBuffer, void *pSrc, uint32_t unBytes ) = 0;
+		
+		/** retrieves the property container of an buffer. */
+		virtual vr::PropertyContainerHandle_t PropertyContainer( vr::IOBufferHandle_t ulBuffer ) = 0;
+	};
+
+	static const char *IVRIOBuffer_Version = "IVRIOBuffer_001";
+}
+
 // ivrdrivermanager.h
 namespace vr
 {
@@ -2894,6 +3018,16 @@ namespace vr
 			return m_pVRDriverInput;
 		}
 
+		IVRIOBuffer *VRIOBuffer()
+		{
+			if ( !m_pVRIOBuffer )
+			{
+				EVRInitError eError;
+				m_pVRIOBuffer = (IVRIOBuffer *)VRDriverContext()->GetGenericInterface( IVRIOBuffer_Version, &eError );
+			}
+			return m_pVRIOBuffer;
+		}
+		
 	private:
 		CVRPropertyHelpers		m_propertyHelpers;
 		CVRHiddenAreaHelpers	m_hiddenAreaHelpers;
@@ -2906,6 +3040,7 @@ namespace vr
 		IVRDriverManager		*m_pVRDriverManager;
 		IVRResources			*m_pVRResources;
 		IVRDriverInput			*m_pVRDriverInput;
+		IVRIOBuffer				*m_pVRIOBuffer;
 	};
 
 	inline COpenVRDriverContext &OpenVRInternal_ModuleServerDriverContext()
@@ -2925,6 +3060,7 @@ namespace vr
 	inline IVRDriverManager *VR_CALLTYPE VRDriverManager() { return OpenVRInternal_ModuleServerDriverContext().VRDriverManager(); }
 	inline IVRResources *VR_CALLTYPE VRResources() { return OpenVRInternal_ModuleServerDriverContext().VRResources(); }
 	inline IVRDriverInput *VR_CALLTYPE VRDriverInput() { return OpenVRInternal_ModuleServerDriverContext().VRDriverInput(); }
+	inline IVRIOBuffer *VR_CALLTYPE VRIOBuffer() { return OpenVRInternal_ModuleServerDriverContext().VRIOBuffer(); }
 
 	inline void COpenVRDriverContext::Clear()
 	{
@@ -2936,6 +3072,7 @@ namespace vr
 		m_pVRDriverManager = nullptr;
 		m_pVRResources = nullptr;
 		m_pVRDriverInput = nullptr;
+		m_pVRIOBuffer = nullptr;
 	}
 
 	inline EVRInitError COpenVRDriverContext::InitServer()

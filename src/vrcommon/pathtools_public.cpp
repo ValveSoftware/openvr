@@ -746,9 +746,11 @@ bool Path_WriteStringToTextFileAtomic( const std::string &strFilename, const cha
 // ----------------------------------------------------------------------------------------------------------------------------
 std::string Path_FilePathToUrl( const std::string & sRelativePath, const std::string & sBasePath )
 {
-	if ( !strnicmp( sRelativePath.c_str(), "http://", 7 )
-		|| !strnicmp( sRelativePath.c_str(), "https://", 8 )
-		|| !strnicmp( sRelativePath.c_str(), "file://", 7 ) )
+	if ( StringHasPrefix( sRelativePath, "http://" )
+		|| StringHasPrefix( sRelativePath, "https://" )
+		|| StringHasPrefix( sRelativePath, "vr-input-workshop://" )
+		|| StringHasPrefix( sRelativePath, "file://" )
+	   )
 	{
 		return sRelativePath;
 	}
