@@ -1,4 +1,5 @@
-{"typedefs":[{"typedef": "vr::glSharedTextureHandle_t","type": "void *"}
+{"typedefs":[{"typedef": "vr::SpatialAnchorHandle_t","type": "uint32_t"}
+,{"typedef": "vr::glSharedTextureHandle_t","type": "void *"}
 ,{"typedef": "vr::glInt_t","type": "int32_t"}
 ,{"typedef": "vr::glUInt_t","type": "uint32_t"}
 ,{"typedef": "vr::SharedTextureHandle_t","type": "uint64_t"}
@@ -8,6 +9,9 @@
 ,{"typedef": "vr::PropertyContainerHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::PropertyTypeTag_t","type": "uint32_t"}
 ,{"typedef": "vr::DriverHandle_t","type": "PropertyContainerHandle_t"}
+,{"typedef": "vr::VRActionHandle_t","type": "uint64_t"}
+,{"typedef": "vr::VRActionSetHandle_t","type": "uint64_t"}
+,{"typedef": "vr::VRInputValueHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::VREvent_Data_t","type": "union VREvent_Data_t"}
 ,{"typedef": "vr::VRControllerState_t","type": "struct vr::VRControllerState001_t"}
 ,{"typedef": "vr::VROverlayHandle_t","type": "uint64_t"}
@@ -17,9 +21,6 @@
 ,{"typedef": "vr::VRComponentProperties","type": "uint32_t"}
 ,{"typedef": "vr::TextureID_t","type": "int32_t"}
 ,{"typedef": "vr::VRNotificationId","type": "uint32_t"}
-,{"typedef": "vr::VRActionHandle_t","type": "uint64_t"}
-,{"typedef": "vr::VRActionSetHandle_t","type": "uint64_t"}
-,{"typedef": "vr::VRInputValueHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::IOBufferHandle_t","type": "uint64_t"}
 ,{"typedef": "vr::HmdError","type": "enum vr::EVRInitError"}
 ,{"typedef": "vr::Hmd_Eye","type": "enum vr::EVREye"}
@@ -43,12 +44,14 @@
 	,{"name": "Eye_Right","value": "1"}
 ]}
 ,	{"enumname": "vr::ETextureType","values": [ 
-	{"name": "TextureType_DirectX","value": "0"}
+	{"name": "TextureType_Invalid","value": "-1"}
+	,{"name": "TextureType_DirectX","value": "0"}
 	,{"name": "TextureType_OpenGL","value": "1"}
 	,{"name": "TextureType_Vulkan","value": "2"}
 	,{"name": "TextureType_IOSurface","value": "3"}
 	,{"name": "TextureType_DirectX12","value": "4"}
 	,{"name": "TextureType_DXGISharedHandle","value": "5"}
+	,{"name": "TextureType_Metal","value": "6"}
 ]}
 ,	{"enumname": "vr::EColorSpace","values": [ 
 	{"name": "ColorSpace_Auto","value": "0"}
@@ -69,6 +72,7 @@
 	,{"name": "TrackedDeviceClass_GenericTracker","value": "3"}
 	,{"name": "TrackedDeviceClass_TrackingReference","value": "4"}
 	,{"name": "TrackedDeviceClass_DisplayRedirect","value": "5"}
+	,{"name": "TrackedDeviceClass_Max","value": "6"}
 ]}
 ,	{"enumname": "vr::ETrackedControllerRole","values": [ 
 	{"name": "TrackedControllerRole_Invalid","value": "0"}
@@ -191,6 +195,16 @@
 	,{"name": "Prop_ImuFactoryGyroScale_Vector3","value": "2065"}
 	,{"name": "Prop_ImuFactoryAccelerometerBias_Vector3","value": "2066"}
 	,{"name": "Prop_ImuFactoryAccelerometerScale_Vector3","value": "2067"}
+	,{"name": "Prop_ConfigurationIncludesLighthouse20Features_Bool","value": "2069"}
+	,{"name": "Prop_DriverRequestedMuraCorrectionMode_Int32","value": "2200"}
+	,{"name": "Prop_DriverRequestedMuraFeather_InnerLeft_Int32","value": "2201"}
+	,{"name": "Prop_DriverRequestedMuraFeather_InnerRight_Int32","value": "2202"}
+	,{"name": "Prop_DriverRequestedMuraFeather_InnerTop_Int32","value": "2203"}
+	,{"name": "Prop_DriverRequestedMuraFeather_InnerBottom_Int32","value": "2204"}
+	,{"name": "Prop_DriverRequestedMuraFeather_OuterLeft_Int32","value": "2205"}
+	,{"name": "Prop_DriverRequestedMuraFeather_OuterRight_Int32","value": "2206"}
+	,{"name": "Prop_DriverRequestedMuraFeather_OuterTop_Int32","value": "2207"}
+	,{"name": "Prop_DriverRequestedMuraFeather_OuterBottom_Int32","value": "2208"}
 	,{"name": "Prop_AttachedDeviceId_String","value": "3000"}
 	,{"name": "Prop_SupportedButtons_Uint64","value": "3001"}
 	,{"name": "Prop_Axis0Type_Int32","value": "3002"}
@@ -225,6 +239,7 @@
 	,{"name": "Prop_HasCameraComponent_Bool","value": "6004"}
 	,{"name": "Prop_HasDriverDirectModeComponent_Bool","value": "6005"}
 	,{"name": "Prop_HasVirtualDisplayComponent_Bool","value": "6006"}
+	,{"name": "Prop_HasSpatialAnchorsSupport_Bool","value": "6007"}
 	,{"name": "Prop_ControllerType_String","value": "7000"}
 	,{"name": "Prop_LegacyInputProfile_String","value": "7001"}
 	,{"name": "Prop_VendorSpecific_Reserved_Start","value": "10000"}
@@ -372,6 +387,7 @@
 	,{"name": "VREvent_PerfSectionSettingChanged","value": "863"}
 	,{"name": "VREvent_DashboardSectionSettingChanged","value": "864"}
 	,{"name": "VREvent_WebInterfaceSectionSettingChanged","value": "865"}
+	,{"name": "VREvent_TrackersSectionSettingChanged","value": "866"}
 	,{"name": "VREvent_StatusUpdate","value": "900"}
 	,{"name": "VREvent_WebInterface_InstallDriverCompleted","value": "950"}
 	,{"name": "VREvent_MCImageUpdated","value": "1000"}
@@ -405,6 +421,12 @@
 	,{"name": "VREvent_Input_HapticVibration","value": "1700"}
 	,{"name": "VREvent_Input_BindingLoadFailed","value": "1701"}
 	,{"name": "VREvent_Input_BindingLoadSuccessful","value": "1702"}
+	,{"name": "VREvent_Input_ActionManifestReloaded","value": "1703"}
+	,{"name": "VREvent_Input_ActionManifestLoadFailed","value": "1704"}
+	,{"name": "VREvent_SpatialAnchors_PoseUpdated","value": "1800"}
+	,{"name": "VREvent_SpatialAnchors_DescriptorUpdated","value": "1801"}
+	,{"name": "VREvent_SpatialAnchors_RequestPoseUpdate","value": "1802"}
+	,{"name": "VREvent_SpatialAnchors_RequestDescriptorUpdate","value": "1803"}
 	,{"name": "VREvent_VendorSpecific_Reserved_Start","value": "10000"}
 	,{"name": "VREvent_VendorSpecific_Reserved_End","value": "19999"}
 ]}
@@ -433,6 +455,9 @@
 	,{"name": "k_EButton_SteamVR_Touchpad","value": "32"}
 	,{"name": "k_EButton_SteamVR_Trigger","value": "33"}
 	,{"name": "k_EButton_Dashboard_Back","value": "2"}
+	,{"name": "k_EButton_Knuckles_A","value": "2"}
+	,{"name": "k_EButton_Knuckles_B","value": "1"}
+	,{"name": "k_EButton_Knuckles_JoyStick","value": "35"}
 	,{"name": "k_EButton_Max","value": "64"}
 ]}
 ,	{"enumname": "vr::EVRMouseButton","values": [ 
@@ -461,6 +486,23 @@
 	,{"name": "VRInputError_NoData","value": "13"}
 	,{"name": "VRInputError_BufferTooSmall","value": "14"}
 	,{"name": "VRInputError_MismatchedActionManifest","value": "15"}
+	,{"name": "VRInputError_MissingSkeletonData","value": "16"}
+]}
+,	{"enumname": "vr::EVRSpatialAnchorError","values": [ 
+	{"name": "VRSpatialAnchorError_Success","value": "0"}
+	,{"name": "VRSpatialAnchorError_Internal","value": "1"}
+	,{"name": "VRSpatialAnchorError_UnknownHandle","value": "2"}
+	,{"name": "VRSpatialAnchorError_ArrayTooSmall","value": "3"}
+	,{"name": "VRSpatialAnchorError_InvalidDescriptorChar","value": "4"}
+	,{"name": "VRSpatialAnchorError_NotYetAvailable","value": "5"}
+	,{"name": "VRSpatialAnchorError_NotAvailableInThisUniverse","value": "6"}
+	,{"name": "VRSpatialAnchorError_PermanentlyUnavailable","value": "7"}
+	,{"name": "VRSpatialAnchorError_WrongDriver","value": "8"}
+	,{"name": "VRSpatialAnchorError_DescriptorTooLong","value": "9"}
+	,{"name": "VRSpatialAnchorError_Unknown","value": "10"}
+	,{"name": "VRSpatialAnchorError_NoRoomCalibration","value": "11"}
+	,{"name": "VRSpatialAnchorError_InvalidArgument","value": "12"}
+	,{"name": "VRSpatialAnchorError_UnknownDriver","value": "13"}
 ]}
 ,	{"enumname": "vr::EHiddenAreaMeshType","values": [ 
 	{"name": "k_eHiddenAreaMesh_Standard","value": "0"}
@@ -535,6 +577,10 @@
 	,{"name": "VRNotificationError_InvalidOverlayHandle","value": "102"}
 	,{"name": "VRNotificationError_SystemWithUserValueAlreadyExists","value": "103"}
 ]}
+,	{"enumname": "vr::EVRSkeletalMotionRange","values": [ 
+	{"name": "VRSkeletalMotionRange_WithController","value": "0"}
+	,{"name": "VRSkeletalMotionRange_WithoutController","value": "1"}
+]}
 ,	{"enumname": "vr::EVRInitError","values": [ 
 	{"name": "VRInitError_None","value": "0"}
 	,{"name": "VRInitError_Unknown","value": "1"}
@@ -580,6 +626,7 @@
 	,{"name": "VRInitError_Init_FirmwareRecoveryBusy","value": "139"}
 	,{"name": "VRInitError_Init_USBServiceBusy","value": "140"}
 	,{"name": "VRInitError_Init_VRWebHelperStartupFailed","value": "141"}
+	,{"name": "VRInitError_Init_TrackerManagerInitFailed","value": "142"}
 	,{"name": "VRInitError_Driver_Failed","value": "200"}
 	,{"name": "VRInitError_Driver_Unknown","value": "201"}
 	,{"name": "VRInitError_Driver_HmdUnknown","value": "202"}
@@ -671,6 +718,10 @@
 	{"name": "VSync_None","value": "0"}
 	,{"name": "VSync_WaitRender","value": "1"}
 	,{"name": "VSync_NoWaitRender","value": "2"}
+]}
+,	{"enumname": "vr::EVRMuraCorrectionMode","values": [ 
+	{"name": "EVRMuraCorrectionMode_Default","value": "0"}
+	,{"name": "EVRMuraCorrectionMode_NoCorrection","value": "1"}
 ]}
 ,	{"enumname": "vr::Imu_OffScaleFlags","values": [ 
 	{"name": "OffScale_AccelX","value": "1"}
@@ -875,7 +926,7 @@
 	,{"name": "VRScreenshotError_ScreenshotAlreadyInProgress","value": "108"}
 ]}
 ,	{"enumname": "vr::EVRSkeletalTransformSpace","values": [ 
-	{"name": "VRSkeletalTransformSpace_Action","value": "0"}
+	{"name": "VRSkeletalTransformSpace_Model","value": "0"}
 	,{"name": "VRSkeletalTransformSpace_Parent","value": "1"}
 	,{"name": "VRSkeletalTransformSpace_Additive","value": "2"}
 ]}
@@ -949,11 +1000,19 @@
 ,{
 	"constname": "k_unSkeletonPropertyTag","consttype": "const PropertyTypeTag_t", "constval": "36"}
 ,{
+	"constname": "k_unSpatialAnchorPosePropertyTag","consttype": "const PropertyTypeTag_t", "constval": "40"}
+,{
 	"constname": "k_unOpenVRInternalReserved_Start","consttype": "const PropertyTypeTag_t", "constval": "1000"}
 ,{
 	"constname": "k_unOpenVRInternalReserved_End","consttype": "const PropertyTypeTag_t", "constval": "10000"}
 ,{
 	"constname": "k_unMaxPropertyStringSize","consttype": "const uint32_t", "constval": "32768"}
+,{
+	"constname": "k_ulInvalidActionHandle","consttype": "const VRActionHandle_t", "constval": "0"}
+,{
+	"constname": "k_ulInvalidActionSetHandle","consttype": "const VRActionSetHandle_t", "constval": "0"}
+,{
+	"constname": "k_ulInvalidInputValueHandle","consttype": "const VRInputValueHandle_t", "constval": "0"}
 ,{
 	"constname": "k_unControllerStateAxisCount","consttype": "const uint32_t", "constval": "5"}
 ,{
@@ -1001,7 +1060,7 @@
 ,{
 	"constname": "k_pch_Controller_Component_Status","consttype": "const char *const", "constval": "status"}
 ,{
-	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_005"}
+	"constname": "IVRRenderModels_Version","consttype": "const char *const", "constval": "IVRRenderModels_006"}
 ,{
 	"constname": "k_unNotificationTextMaxSize","consttype": "const uint32_t", "constval": "256"}
 ,{
@@ -1112,6 +1171,10 @@
 	"constname": "k_pch_SteamVR_LegacyInputRebinding","consttype": "const char *const", "constval": "legacyInputRebinding"}
 ,{
 	"constname": "k_pch_SteamVR_DebugInputBinding","consttype": "const char *const", "constval": "debugInputBinding"}
+,{
+	"constname": "k_pch_SteamVR_InputBindingUIBlock","consttype": "const char *const", "constval": "inputBindingUI"}
+,{
+	"constname": "k_pch_SteamVR_RenderCameraMode","consttype": "const char *const", "constval": "renderCameraMode"}
 ,{
 	"constname": "k_pch_Lighthouse_Section","consttype": "const char *const", "constval": "driver_lighthouse"}
 ,{
@@ -1279,11 +1342,15 @@
 ,{
 	"constname": "k_pch_Dashboard_EnableWebUIDevTools","consttype": "const char *const", "constval": "webUIDevTools"}
 ,{
+	"constname": "k_pch_Dashboard_EnableWebUIDashboardReplacement","consttype": "const char *const", "constval": "webUIDashboard"}
+,{
 	"constname": "k_pch_modelskin_Section","consttype": "const char *const", "constval": "modelskins"}
 ,{
 	"constname": "k_pch_Driver_Enable_Bool","consttype": "const char *const", "constval": "enable"}
 ,{
 	"constname": "k_pch_WebInterface_Section","consttype": "const char *const", "constval": "WebInterface"}
+,{
+	"constname": "k_pch_WebInterface_WebEnable_Bool","consttype": "const char *const", "constval": "WebEnable"}
 ,{
 	"constname": "k_pch_WebInterface_WebPort_String","consttype": "const char *const", "constval": "WebPort"}
 ,{
@@ -1297,17 +1364,13 @@
 ,{
 	"constname": "k_pch_App_ActionManifestURL_String","consttype": "const char *const", "constval": "ActionManifestURL"}
 ,{
+	"constname": "k_pch_Trackers_Section","consttype": "const char *const", "constval": "trackers"}
+,{
 	"constname": "IVRScreenshots_Version","consttype": "const char *const", "constval": "IVRScreenshots_001"}
 ,{
 	"constname": "IVRResources_Version","consttype": "const char *const", "constval": "IVRResources_001"}
 ,{
 	"constname": "IVRDriverManager_Version","consttype": "const char *const", "constval": "IVRDriverManager_001"}
-,{
-	"constname": "k_ulInvalidActionHandle","consttype": "const VRActionHandle_t", "constval": "0"}
-,{
-	"constname": "k_ulInvalidActionSetHandle","consttype": "const VRActionSetHandle_t", "constval": "0"}
-,{
-	"constname": "k_ulInvalidInputValueHandle","consttype": "const VRInputValueHandle_t", "constval": "0"}
 ,{
 	"constname": "k_unMaxActionNameLength","consttype": "const uint32_t", "constval": "64"}
 ,{
@@ -1315,14 +1378,20 @@
 ,{
 	"constname": "k_unMaxActionOriginCount","consttype": "const uint32_t", "constval": "16"}
 ,{
-	"constname": "IVRInput_Version","consttype": "const char *const", "constval": "IVRInput_003"}
+	"constname": "IVRInput_Version","consttype": "const char *const", "constval": "IVRInput_004"}
 ,{
 	"constname": "k_ulInvalidIOBufferHandle","consttype": "const uint64_t", "constval": "0"}
 ,{
 	"constname": "IVRIOBuffer_Version","consttype": "const char *", "constval": "IVRIOBuffer_001"}
+,{
+	"constname": "k_ulInvalidSpatialAnchorHandle","consttype": "const SpatialAnchorHandle_t", "constval": "0"}
+,{
+	"constname": "IVRSpatialAnchors_Version","consttype": "const char *const", "constval": "IVRSpatialAnchors_001"}
 ],
 "structs":[{"struct": "vr::HmdMatrix34_t","fields": [
 { "fieldname": "m", "fieldtype": "float [3][4]"}]}
+,{"struct": "vr::HmdMatrix33_t","fields": [
+{ "fieldname": "m", "fieldtype": "float [3][3]"}]}
 ,{"struct": "vr::HmdMatrix44_t","fields": [
 { "fieldname": "m", "fieldtype": "float [4][4]"}]}
 ,{"struct": "vr::HmdVector3_t","fields": [
@@ -1477,7 +1546,15 @@
 ,{"struct": "vr::VREvent_InputBindingLoad_t","fields": [
 { "fieldname": "ulAppContainer", "fieldtype": "vr::PropertyContainerHandle_t"},
 { "fieldname": "pathMessage", "fieldtype": "uint64_t"},
-{ "fieldname": "pathUrl", "fieldtype": "uint64_t"}]}
+{ "fieldname": "pathUrl", "fieldtype": "uint64_t"},
+{ "fieldname": "pathControllerType", "fieldtype": "uint64_t"}]}
+,{"struct": "vr::VREvent_InputActionManifestLoad_t","fields": [
+{ "fieldname": "pathAppKey", "fieldtype": "uint64_t"},
+{ "fieldname": "pathMessage", "fieldtype": "uint64_t"},
+{ "fieldname": "pathMessageParam", "fieldtype": "uint64_t"},
+{ "fieldname": "pathManifestPath", "fieldtype": "uint64_t"}]}
+,{"struct": "vr::VREvent_SpatialAnchor_t","fields": [
+{ "fieldname": "unHandle", "fieldtype": "SpatialAnchorHandle_t"}]}
 ,{"struct": "vr::(anonymous)","fields": [
 { "fieldname": "reserved", "fieldtype": "struct vr::VREvent_Reserved_t"},
 { "fieldname": "controller", "fieldtype": "struct vr::VREvent_Controller_t"},
@@ -1502,7 +1579,9 @@
 { "fieldname": "dualAnalog", "fieldtype": "struct vr::VREvent_DualAnalog_t"},
 { "fieldname": "hapticVibration", "fieldtype": "struct vr::VREvent_HapticVibration_t"},
 { "fieldname": "webConsole", "fieldtype": "struct vr::VREvent_WebConsole_t"},
-{ "fieldname": "inputBinding", "fieldtype": "struct vr::VREvent_InputBindingLoad_t"}]}
+{ "fieldname": "inputBinding", "fieldtype": "struct vr::VREvent_InputBindingLoad_t"},
+{ "fieldname": "actionManifest", "fieldtype": "struct vr::VREvent_InputActionManifestLoad_t"},
+{ "fieldname": "spatialAnchor", "fieldtype": "struct vr::VREvent_SpatialAnchor_t"}]}
 ,{"struct": "vr::VREvent_t","fields": [
 { "fieldname": "eventType", "fieldtype": "uint32_t"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},
@@ -1648,6 +1727,8 @@
 { "fieldname": "m_nWidth", "fieldtype": "int32_t"},
 { "fieldname": "m_nHeight", "fieldtype": "int32_t"},
 { "fieldname": "m_nBytesPerPixel", "fieldtype": "int32_t"}]}
+,{"struct": "vr::CVRSettingHelper","fields": [
+{ "fieldname": "m_pSettings", "fieldtype": "class vr::IVRSettings *"}]}
 ,{"struct": "vr::InputAnalogActionData_t","fields": [
 { "fieldname": "bActive", "fieldtype": "_Bool"},
 { "fieldname": "activeOrigin", "fieldtype": "VRInputValueHandle_t"},
@@ -1668,9 +1749,10 @@
 { "fieldname": "bActive", "fieldtype": "_Bool"},
 { "fieldname": "activeOrigin", "fieldtype": "VRInputValueHandle_t"},
 { "fieldname": "pose", "fieldtype": "struct vr::TrackedDevicePose_t"}]}
-,{"struct": "vr::InputSkeletonActionData_t","fields": [
+,{"struct": "vr::InputSkeletalActionData_t","fields": [
 { "fieldname": "bActive", "fieldtype": "_Bool"},
-{ "fieldname": "activeOrigin", "fieldtype": "VRInputValueHandle_t"}]}
+{ "fieldname": "activeOrigin", "fieldtype": "VRInputValueHandle_t"},
+{ "fieldname": "boneCount", "fieldtype": "uint32_t"}]}
 ,{"struct": "vr::InputOriginInfo_t","fields": [
 { "fieldname": "devicePath", "fieldtype": "VRInputValueHandle_t"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},
@@ -1678,7 +1760,11 @@
 ,{"struct": "vr::VRActiveActionSet_t","fields": [
 { "fieldname": "ulActionSet", "fieldtype": "VRActionSetHandle_t"},
 { "fieldname": "ulRestrictedToDevice", "fieldtype": "VRInputValueHandle_t"},
-{ "fieldname": "ulSecondaryActionSet", "fieldtype": "VRActionSetHandle_t"}]}
+{ "fieldname": "ulSecondaryActionSet", "fieldtype": "VRActionSetHandle_t"},
+{ "fieldname": "unPadding", "fieldtype": "uint32_t"},
+{ "fieldname": "nPriority", "fieldtype": "int32_t"}]}
+,{"struct": "vr::SpatialAnchorPose_t","fields": [
+{ "fieldname": "mAnchorToAbsoluteTracking", "fieldtype": "struct vr::HmdMatrix34_t"}]}
 ,{"struct": "vr::COpenVRContext","fields": [
 { "fieldname": "m_pVRSystem", "fieldtype": "class vr::IVRSystem *"},
 { "fieldname": "m_pVRChaperone", "fieldtype": "class vr::IVRChaperone *"},
@@ -1694,7 +1780,8 @@
 { "fieldname": "m_pVRScreenshots", "fieldtype": "class vr::IVRScreenshots *"},
 { "fieldname": "m_pVRDriverManager", "fieldtype": "class vr::IVRDriverManager *"},
 { "fieldname": "m_pVRInput", "fieldtype": "class vr::IVRInput *"},
-{ "fieldname": "m_pVRIOBuffer", "fieldtype": "class vr::IVRIOBuffer *"}]}
+{ "fieldname": "m_pVRIOBuffer", "fieldtype": "class vr::IVRIOBuffer *"},
+{ "fieldname": "m_pVRSpatialAnchors", "fieldtype": "class vr::IVRSpatialAnchors *"}]}
 ],
 "methods":[{
 	"classname": "vr::IVRSystem",
@@ -3949,6 +4036,18 @@
 }
 ,{
 	"classname": "vr::IVRRenderModels",
+	"methodname": "GetComponentStateForDevicePath",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "pchRenderModelName" ,"paramtype": "const char *"},
+{	"paramname": "pchComponentName" ,"paramtype": "const char *"},
+{	"paramname": "devicePath" ,"paramtype": "vr::VRInputValueHandle_t"},
+{	"paramname": "pState" ,"paramtype": "const vr::RenderModel_ControllerMode_State_t *"},
+{	"paramname": "pComponentState" ,"paramtype": "vr::RenderModel_ComponentState_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRRenderModels",
 	"methodname": "GetComponentState",
 	"returntype": "bool",
 	"params": [ 
@@ -4309,7 +4408,8 @@
 	"params": [ 
 {	"paramname": "action" ,"paramtype": "vr::VRActionHandle_t"},
 {	"paramname": "pActionData" ,"paramtype": "struct vr::InputDigitalActionData_t *"},
-{	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"}
+{	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"},
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
 	 ]
 }
 ,{
@@ -4319,7 +4419,8 @@
 	"params": [ 
 {	"paramname": "action" ,"paramtype": "vr::VRActionHandle_t"},
 {	"paramname": "pActionData" ,"paramtype": "struct vr::InputAnalogActionData_t *"},
-{	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"}
+{	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"},
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
 	 ]
 }
 ,{
@@ -4331,7 +4432,8 @@
 {	"paramname": "eOrigin" ,"paramtype": "vr::ETrackingUniverseOrigin"},
 {	"paramname": "fPredictedSecondsFromNow" ,"paramtype": "float"},
 {	"paramname": "pActionData" ,"paramtype": "struct vr::InputPoseActionData_t *"},
-{	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"}
+{	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"},
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
 	 ]
 }
 ,{
@@ -4340,35 +4442,46 @@
 	"returntype": "vr::EVRInputError",
 	"params": [ 
 {	"paramname": "action" ,"paramtype": "vr::VRActionHandle_t"},
-{	"paramname": "eBoneParent" ,"paramtype": "vr::EVRSkeletalTransformSpace"},
-{	"paramname": "fPredictedSecondsFromNow" ,"paramtype": "float"},
-{	"paramname": "pActionData" ,"paramtype": "struct vr::InputSkeletonActionData_t *"},
+{	"paramname": "pActionData" ,"paramtype": "struct vr::InputSkeletalActionData_t *"},
 {	"paramname": "unActionDataSize" ,"paramtype": "uint32_t"},
-{	"paramname": "pTransformArray" ,"array_count": "unTransformArrayCount" ,"paramtype": "struct vr::VRBoneTransform_t *"},
-{	"paramname": "unTransformArrayCount" ,"paramtype": "uint32_t"}
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
 	 ]
 }
 ,{
 	"classname": "vr::IVRInput",
-	"methodname": "GetSkeletalActionDataCompressed",
+	"methodname": "GetSkeletalBoneData",
 	"returntype": "vr::EVRInputError",
 	"params": [ 
 {	"paramname": "action" ,"paramtype": "vr::VRActionHandle_t"},
-{	"paramname": "eBoneParent" ,"paramtype": "vr::EVRSkeletalTransformSpace"},
-{	"paramname": "fPredictedSecondsFromNow" ,"paramtype": "float"},
-{	"paramname": "pvCompressedData" ,"out_buffer_count": "unCompressedSize" ,"paramtype": "void *"},
-{	"paramname": "unCompressedSize" ,"paramtype": "uint32_t"},
-{	"paramname": "punRequiredCompressedSize" ,"paramtype": "uint32_t *"}
+{	"paramname": "eTransformSpace" ,"paramtype": "vr::EVRSkeletalTransformSpace"},
+{	"paramname": "eMotionRange" ,"paramtype": "vr::EVRSkeletalMotionRange"},
+{	"paramname": "pTransformArray" ,"array_count": "unTransformArrayCount" ,"paramtype": "struct vr::VRBoneTransform_t *"},
+{	"paramname": "unTransformArrayCount" ,"paramtype": "uint32_t"},
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
 	 ]
 }
 ,{
 	"classname": "vr::IVRInput",
-	"methodname": "UncompressSkeletalActionData",
+	"methodname": "GetSkeletalBoneDataCompressed",
+	"returntype": "vr::EVRInputError",
+	"params": [ 
+{	"paramname": "action" ,"paramtype": "vr::VRActionHandle_t"},
+{	"paramname": "eTransformSpace" ,"paramtype": "vr::EVRSkeletalTransformSpace"},
+{	"paramname": "eMotionRange" ,"paramtype": "vr::EVRSkeletalMotionRange"},
+{	"paramname": "pvCompressedData" ,"out_buffer_count": "unCompressedSize" ,"paramtype": "void *"},
+{	"paramname": "unCompressedSize" ,"paramtype": "uint32_t"},
+{	"paramname": "punRequiredCompressedSize" ,"paramtype": "uint32_t *"},
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRInput",
+	"methodname": "DecompressSkeletalBoneData",
 	"returntype": "vr::EVRInputError",
 	"params": [ 
 {	"paramname": "pvCompressedBuffer" ,"paramtype": "void *"},
 {	"paramname": "unCompressedBufferSize" ,"paramtype": "uint32_t"},
-{	"paramname": "peBoneParent" ,"paramtype": "vr::EVRSkeletalTransformSpace *"},
+{	"paramname": "peTransformSpace" ,"paramtype": "vr::EVRSkeletalTransformSpace *"},
 {	"paramname": "pTransformArray" ,"array_count": "unTransformArrayCount" ,"paramtype": "struct vr::VRBoneTransform_t *"},
 {	"paramname": "unTransformArrayCount" ,"paramtype": "uint32_t"}
 	 ]
@@ -4382,7 +4495,8 @@
 {	"paramname": "fStartSecondsFromNow" ,"paramtype": "float"},
 {	"paramname": "fDurationSeconds" ,"paramtype": "float"},
 {	"paramname": "fFrequency" ,"paramtype": "float"},
-{	"paramname": "fAmplitude" ,"paramtype": "float"}
+{	"paramname": "fAmplitude" ,"paramtype": "float"},
+{	"paramname": "ulRestrictToDevice" ,"paramtype": "vr::VRInputValueHandle_t"}
 	 ]
 }
 ,{
@@ -4483,6 +4597,46 @@
 	"returntype": "vr::PropertyContainerHandle_t",
 	"params": [ 
 {	"paramname": "ulBuffer" ,"paramtype": "vr::IOBufferHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSpatialAnchors",
+	"methodname": "CreateSpatialAnchorFromDescriptor",
+	"returntype": "vr::EVRSpatialAnchorError",
+	"params": [ 
+{	"paramname": "pchDescriptor" ,"paramtype": "const char *"},
+{	"paramname": "pHandleOut" ,"paramtype": "vr::SpatialAnchorHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSpatialAnchors",
+	"methodname": "CreateSpatialAnchorFromPose",
+	"returntype": "vr::EVRSpatialAnchorError",
+	"params": [ 
+{	"paramname": "unDeviceIndex" ,"paramtype": "vr::TrackedDeviceIndex_t"},
+{	"paramname": "eOrigin" ,"paramtype": "vr::ETrackingUniverseOrigin"},
+{	"paramname": "pPose" ,"paramtype": "struct vr::SpatialAnchorPose_t *"},
+{	"paramname": "pHandleOut" ,"paramtype": "vr::SpatialAnchorHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSpatialAnchors",
+	"methodname": "GetSpatialAnchorPose",
+	"returntype": "vr::EVRSpatialAnchorError",
+	"params": [ 
+{	"paramname": "unHandle" ,"paramtype": "vr::SpatialAnchorHandle_t"},
+{	"paramname": "eOrigin" ,"paramtype": "vr::ETrackingUniverseOrigin"},
+{	"paramname": "pPoseOut" ,"paramtype": "struct vr::SpatialAnchorPose_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSpatialAnchors",
+	"methodname": "GetSpatialAnchorDescriptor",
+	"returntype": "vr::EVRSpatialAnchorError",
+	"params": [ 
+{	"paramname": "unHandle" ,"paramtype": "vr::SpatialAnchorHandle_t"},
+{	"paramname": "pchDescriptorOut" ,"out_string": " " ,"paramtype": "char *"},
+{	"paramname": "punDescriptorBufferLenInOut" ,"paramtype": "uint32_t *"}
 	 ]
 }
 ]

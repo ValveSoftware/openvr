@@ -29,6 +29,10 @@ namespace vr
 {
 #pragma pack( push, 8 )
 
+/** A handle for a spatial anchor.  This handle is only valid during the session it was created in.
+* Anchors that live beyond one session should be saved by their string descriptors. */
+typedef uint32_t SpatialAnchorHandle_t;
+
 typedef void* glSharedTextureHandle_t;
 typedef int32_t glInt_t;
 typedef uint32_t glUInt_t;
@@ -41,6 +45,11 @@ typedef uint32_t glUInt_t;
 struct HmdMatrix34_t
 {
 	float m[3][4];
+};
+
+struct HmdMatrix33_t
+{
+	float m[3][3];
 };
 
 struct HmdMatrix44_t
@@ -112,13 +121,17 @@ enum EVREye
 
 enum ETextureType
 {
+	TextureType_Invalid = -1, // Handle has been invalidated
 	TextureType_DirectX = 0, // Handle is an ID3D11Texture
 	TextureType_OpenGL = 1,  // Handle is an OpenGL texture name or an OpenGL render buffer name, depending on submit flags
 	TextureType_Vulkan = 2, // Handle is a pointer to a VRVulkanTextureData_t structure
-	TextureType_IOSurface = 3, // Handle is a macOS cross-process-sharable IOSurfaceRef
+	TextureType_IOSurface = 3, // Handle is a macOS cross-process-sharable IOSurfaceRef, deprecated in favor of TextureType_Metal on supported platforms
 	TextureType_DirectX12 = 4, // Handle is a pointer to a D3D12TextureData_t structure
 	TextureType_DXGISharedHandle = 5, // Handle is a HANDLE DXGI share handle, only supported for Overlay render targets. 
 									  // this texture is used directly by our renderer, so only perform atomic (copyresource or resolve) on it
+	TextureType_Metal = 6, // Handle is a MTLTexture conforming to the MTLSharedTexture protocol. Textures submitted to IVRCompositor::Submit which
+						   // are of type MTLTextureType2DArray assume layer 0 is the left eye texture (vr::EVREye::Eye_left), layer 1 is the right
+						   // eye texture (vr::EVREye::Eye_Right)
 };
 
 enum EColorSpace
@@ -171,6 +184,8 @@ enum ETrackedDeviceClass
 	TrackedDeviceClass_GenericTracker = 3,		// Generic trackers, similar to controllers
 	TrackedDeviceClass_TrackingReference = 4,	// Camera and base stations that serve as tracking reference points
 	TrackedDeviceClass_DisplayRedirect = 5,		// Accessories that aren't necessarily tracked themselves, but may redirect video output from other tracked devices
+
+	TrackedDeviceClass_Max
 };
 
 
@@ -240,6 +255,8 @@ static const PropertyTypeTag_t k_unInputValuePropertyTag = 33;
 static const PropertyTypeTag_t k_unWildcardPropertyTag = 34;
 static const PropertyTypeTag_t k_unHapticVibrationPropertyTag = 35;
 static const PropertyTypeTag_t k_unSkeletonPropertyTag = 36;
+
+static const PropertyTypeTag_t k_unSpatialAnchorPosePropertyTag = 40;
 
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_Start = 1000;
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_End = 10000;
@@ -361,6 +378,19 @@ enum ETrackedDeviceProperty
 	Prop_ImuFactoryGyroScale_Vector3			= 2065,
 	Prop_ImuFactoryAccelerometerBias_Vector3	= 2066,
 	Prop_ImuFactoryAccelerometerScale_Vector3	= 2067,
+	// reserved 2068
+	Prop_ConfigurationIncludesLighthouse20Features_Bool = 2069,
+
+	// Driver requested mura correction properties
+	Prop_DriverRequestedMuraCorrectionMode_Int32		= 2200,
+	Prop_DriverRequestedMuraFeather_InnerLeft_Int32		= 2201,
+	Prop_DriverRequestedMuraFeather_InnerRight_Int32	= 2202,
+	Prop_DriverRequestedMuraFeather_InnerTop_Int32		= 2203,
+	Prop_DriverRequestedMuraFeather_InnerBottom_Int32	= 2204,
+	Prop_DriverRequestedMuraFeather_OuterLeft_Int32		= 2205,
+	Prop_DriverRequestedMuraFeather_OuterRight_Int32	= 2206,
+	Prop_DriverRequestedMuraFeather_OuterTop_Int32		= 2207,
+	Prop_DriverRequestedMuraFeather_OuterBottom_Int32	= 2208,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -405,6 +435,7 @@ enum ETrackedDeviceProperty
 	Prop_HasCameraComponent_Bool				= 6004,
 	Prop_HasDriverDirectModeComponent_Bool		= 6005,
 	Prop_HasVirtualDisplayComponent_Bool		= 6006,
+	Prop_HasSpatialAnchorsSupport_Bool		    = 6007,
 
 	// Properties that are set internally based on other information provided by drivers
 	Prop_ControllerType_String					= 7000,
@@ -437,6 +468,16 @@ enum ETrackedPropertyError
 	TrackedProp_InvalidOperation			= 11,
 	TrackedProp_CannotWriteToWildcards		= 12,
 };
+
+
+typedef uint64_t VRActionHandle_t;
+typedef uint64_t VRActionSetHandle_t;
+typedef uint64_t VRInputValueHandle_t;
+
+static const VRActionHandle_t k_ulInvalidActionHandle = 0;
+static const VRActionSetHandle_t k_ulInvalidActionSetHandle = 0;
+static const VRInputValueHandle_t k_ulInvalidInputValueHandle = 0;
+
 
 /** Allows the application to control what part of the provided texture will be used in the
 * frame buffer. */
@@ -496,7 +537,8 @@ enum EVRSubmitFlags
 };
 
 /** Data required for passing Vulkan textures to IVRCompositor::Submit.
-* Be sure to call OpenVR_Shutdown before destroying these resources. */
+* Be sure to call OpenVR_Shutdown before destroying these resources. 
+* Please see https://github.com/ValveSoftware/openvr/wiki/Vulkan for Vulkan-specific documentation */
 struct VRVulkanTextureData_t
 {
 	uint64_t m_nImage; // VkImage
@@ -657,7 +699,8 @@ enum EVREventType
 	VREvent_KeyboardSectionSettingChanged      = 862,
 	VREvent_PerfSectionSettingChanged          = 863,
 	VREvent_DashboardSectionSettingChanged     = 864,
-	VREvent_WebInterfaceSectionSettingChanged  = 865,
+	VREvent_WebInterfaceSectionSettingChanged	= 865,
+	VREvent_TrackersSectionSettingChanged	= 866,
 
 	VREvent_StatusUpdate					= 900,
 
@@ -700,8 +743,15 @@ enum EVREventType
 	VREvent_MessageOverlayCloseRequested	= 1651,
 	
 	VREvent_Input_HapticVibration			= 1700, // data is hapticVibration
-	VREvent_Input_BindingLoadFailed			= 1701, // data is process
-	VREvent_Input_BindingLoadSuccessful		= 1702, // data is process
+	VREvent_Input_BindingLoadFailed			= 1701, // data is inputBinding
+	VREvent_Input_BindingLoadSuccessful		= 1702, // data is inputBinding
+	VREvent_Input_ActionManifestReloaded	= 1703, // no data
+	VREvent_Input_ActionManifestLoadFailed	= 1704, // data is actionManifest
+
+	VREvent_SpatialAnchors_PoseUpdated		= 1800,        // data is spatialAnchor. broadcast
+	VREvent_SpatialAnchors_DescriptorUpdated = 1801,       // data is spatialAnchor. broadcast
+	VREvent_SpatialAnchors_RequestPoseUpdate = 1802,       // data is spatialAnchor. sent to specific driver
+	VREvent_SpatialAnchors_RequestDescriptorUpdate = 1803, // data is spatialAnchor. sent to specific driver
 
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start	= 10000,
@@ -749,6 +799,10 @@ enum EVRButtonId
 	k_EButton_SteamVR_Trigger	= k_EButton_Axis1,
 
 	k_EButton_Dashboard_Back	= k_EButton_Grip,
+
+	k_EButton_Knuckles_A		= k_EButton_Grip,
+	k_EButton_Knuckles_B		= k_EButton_ApplicationMenu,
+	k_EButton_Knuckles_JoyStick	= k_EButton_Axis3,
 
 	k_EButton_Max				= 64
 };
@@ -939,10 +993,22 @@ struct VREvent_InputBindingLoad_t
 	vr::PropertyContainerHandle_t ulAppContainer;
 	uint64_t pathMessage;
 	uint64_t pathUrl;
+	uint64_t pathControllerType;
 };
 
+struct VREvent_InputActionManifestLoad_t
+{
+	uint64_t pathAppKey;
+	uint64_t pathMessage;
+	uint64_t pathMessageParam;
+	uint64_t pathManifestPath;
+};
 
-/** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
+struct VREvent_SpatialAnchor_t
+{
+	SpatialAnchorHandle_t unHandle;
+};
+
 typedef union
 {
 	VREvent_Reserved_t reserved;
@@ -969,6 +1035,9 @@ typedef union
 	VREvent_HapticVibration_t hapticVibration;
 	VREvent_WebConsole_t webConsole;
 	VREvent_InputBindingLoad_t inputBinding;
+	VREvent_InputActionManifestLoad_t actionManifest;
+	VREvent_SpatialAnchor_t spatialAnchor;
+    /** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
 } VREvent_Data_t;
 
 
@@ -1010,8 +1079,26 @@ enum EVRInputError
 	VRInputError_NoData = 13,
 	VRInputError_BufferTooSmall = 14,
 	VRInputError_MismatchedActionManifest = 15,
+	VRInputError_MissingSkeletonData = 16,
 };
 
+enum EVRSpatialAnchorError
+{
+	VRSpatialAnchorError_Success = 0,
+	VRSpatialAnchorError_Internal = 1,
+	VRSpatialAnchorError_UnknownHandle = 2,
+	VRSpatialAnchorError_ArrayTooSmall = 3,
+	VRSpatialAnchorError_InvalidDescriptorChar = 4,
+	VRSpatialAnchorError_NotYetAvailable = 5,
+	VRSpatialAnchorError_NotAvailableInThisUniverse = 6,
+	VRSpatialAnchorError_PermanentlyUnavailable = 7,
+	VRSpatialAnchorError_WrongDriver = 8,
+	VRSpatialAnchorError_DescriptorTooLong = 9,
+	VRSpatialAnchorError_Unknown = 10,
+	VRSpatialAnchorError_NoRoomCalibration = 11,
+	VRSpatialAnchorError_InvalidArgument = 12,
+	VRSpatialAnchorError_UnknownDriver = 13,
+};
 
 /** The mesh to draw into the stencil (or depth) buffer to perform 
 * early stencil (or depth) kills of pixels that will never appear on the HMD.
@@ -1194,6 +1281,19 @@ enum EVRNotificationError
 };
 
 
+enum EVRSkeletalMotionRange
+{
+	// The range of motion of the skeleton takes into account any physical limits imposed by
+	// the controller itself.  This will tend to be the most accurate pose compared to the user's
+	// actual hand pose, but might not allow a closed fist for example
+	VRSkeletalMotionRange_WithController = 0,
+
+	// Retarget the range of motion provided by the input device to make the hand appear to move
+	// as if it was not holding a controller.  eg: map "hand grasping controller" to "closed fist"
+	VRSkeletalMotionRange_WithoutController = 1,
+};
+
+
 /** Holds the transform for a single bone */
 struct VRBoneTransform_t
 {
@@ -1252,6 +1352,7 @@ enum EVRInitError
 	VRInitError_Init_FirmwareRecoveryBusy			= 139,
 	VRInitError_Init_USBServiceBusy					= 140,
 	VRInitError_Init_VRWebHelperStartupFailed		= 141,
+	VRInitError_Init_TrackerManagerInitFailed		= 142,
 
 	VRInitError_Driver_Failed						= 200,
 	VRInitError_Driver_Unknown						= 201,
@@ -1393,6 +1494,12 @@ enum EVSync
 	VSync_None,
 	VSync_WaitRender,	// block following render work until vsync
 	VSync_NoWaitRender,	// do not block following render work (allow to get started early)
+};
+
+enum EVRMuraCorrectionMode
+{
+	EVRMuraCorrectionMode_Default = 0,
+	EVRMuraCorrectionMode_NoCorrection
 };
 
 /** raw IMU data provided by IVRIOBuffer from paths to tracked devices with IMUs */
@@ -1569,6 +1676,8 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 
 #endif // _VRTRACKEDCAMERATYPES_H
 // ivrsettings.h
+#include <string>
+
 namespace vr
 {
 	enum EVRSettingsError
@@ -1610,6 +1719,88 @@ namespace vr
 
 	//-----------------------------------------------------------------------------
 	static const char * const IVRSettings_Version = "IVRSettings_002";
+
+	class CVRSettingHelper
+	{
+		IVRSettings *m_pSettings = nullptr;
+	public:
+		CVRSettingHelper( IVRSettings *pSettings ) 
+		{ 
+			m_pSettings = pSettings; 
+		}
+
+		const char *GetSettingsErrorNameFromEnum( EVRSettingsError eError ) 
+		{ 
+			return m_pSettings->GetSettingsErrorNameFromEnum( eError ); 
+		}
+
+		// Returns true if file sync occurred (force or settings dirty)
+		bool Sync( bool bForce = false, EVRSettingsError *peError = nullptr ) 
+		{ 
+			return m_pSettings->Sync( bForce, peError ); 
+		}
+
+		void SetBool( const char *pchSection, const char *pchSettingsKey, bool bValue, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->SetBool( pchSection, pchSettingsKey, bValue, peError );
+		}
+
+		void SetInt32( const char *pchSection, const char *pchSettingsKey, int32_t nValue, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->SetInt32( pchSection, pchSettingsKey, nValue, peError );
+		}
+		void SetFloat( const char *pchSection, const char *pchSettingsKey, float flValue, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->SetFloat( pchSection, pchSettingsKey, flValue, peError );
+		}
+		void SetString( const char *pchSection, const char *pchSettingsKey, const char *pchValue, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->SetString( pchSection, pchSettingsKey, pchValue, peError );
+		}
+		void SetString( const std::string & sSection, const std::string &  sSettingsKey, const std::string & sValue, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->SetString( sSection.c_str(), sSettingsKey.c_str(), sValue.c_str(), peError );
+		}
+
+		bool GetBool( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr )
+		{
+			return m_pSettings->GetBool( pchSection, pchSettingsKey, peError );
+		}
+		int32_t GetInt32( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr )
+		{
+			return m_pSettings->GetInt32( pchSection, pchSettingsKey, peError );
+		}
+		float GetFloat( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr )
+		{
+			return m_pSettings->GetFloat( pchSection, pchSettingsKey, peError );
+		}
+		void GetString( const char *pchSection, const char *pchSettingsKey, VR_OUT_STRING() char *pchValue, uint32_t unValueLen, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->GetString( pchSection, pchSettingsKey, pchValue, unValueLen, peError );
+		}
+		std::string GetString( const std::string & sSection, const std::string & sSettingsKey, EVRSettingsError *peError = nullptr )
+		{
+			char buf[4096];
+			vr::EVRSettingsError eError;
+			m_pSettings->GetString( sSection.c_str(), sSettingsKey.c_str(), buf, sizeof( buf ), &eError );
+			if ( peError )
+				*peError = eError;
+			if ( eError == vr::VRSettingsError_None )
+				return buf;
+			else
+				return "";
+		}
+
+		void RemoveSection( const char *pchSection, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->RemoveSection( pchSection, peError );
+		}
+		void RemoveKeyInSection( const char *pchSection, const char *pchSettingsKey, EVRSettingsError *peError = nullptr )
+		{
+			m_pSettings->RemoveKeyInSection( pchSection, pchSettingsKey, peError );
+		}
+	};
+
 
 	//-----------------------------------------------------------------------------
 	// steamvr keys
@@ -1664,6 +1855,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_DebugInput = "debugInput";
 	static const char * const k_pch_SteamVR_LegacyInputRebinding = "legacyInputRebinding";
 	static const char * const k_pch_SteamVR_DebugInputBinding = "debugInputBinding";
+	static const char * const k_pch_SteamVR_InputBindingUIBlock = "inputBindingUI";
+	static const char * const k_pch_SteamVR_RenderCameraMode = "renderCameraMode";
 
 	//-----------------------------------------------------------------------------
 	// lighthouse keys
@@ -1780,6 +1973,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
 	static const char * const k_pch_Dashboard_EnableWebUI = "webUI";
 	static const char * const k_pch_Dashboard_EnableWebUIDevTools = "webUIDevTools";
+	static const char * const k_pch_Dashboard_EnableWebUIDashboardReplacement = "webUIDashboard";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
@@ -1792,6 +1986,7 @@ namespace vr
 	//-----------------------------------------------------------------------------
 	// web interface keys
 	static const char* const k_pch_WebInterface_Section = "WebInterface";
+	static const char* const k_pch_WebInterface_WebEnable_Bool = "WebEnable";
 	static const char* const k_pch_WebInterface_WebPort_String = "WebPort";
 
 	//-----------------------------------------------------------------------------
@@ -1805,6 +2000,10 @@ namespace vr
 	static const char* const k_pch_App_BindingCurrentURLSuffix_String = "CurrentURL";
 	static const char* const k_pch_App_NeedToUpdateAutosaveSuffix_Bool = "NeedToUpdateAutosave";
 	static const char* const k_pch_App_ActionManifestURL_String = "ActionManifestURL";
+
+	//-----------------------------------------------------------------------------
+	// configuration for trackers
+	static const char * const k_pch_Trackers_Section = "trackers";
 
 } // namespace vr
 
@@ -2168,6 +2367,29 @@ public:
 };
 
 static const char *IVRWatchdogProvider_Version = "IVRWatchdogProvider_001";
+
+
+
+
+/** This is an optional interface drivers may implement. It will be loaded in vrcompositor.exe */
+class IVRCompositorPluginProvider
+{
+public:
+	/** initializes the driver when used to load compositor plugins */
+	virtual EVRInitError Init( IVRDriverContext *pDriverContext ) = 0;
+
+	/** cleans up the driver right before it is unloaded */
+	virtual void Cleanup() = 0;
+
+	/** Returns the versions of interfaces used by this driver */
+	virtual const char * const *GetInterfaceVersions() = 0;
+
+	/** Requests a component interface of the driver for specific functionality. The driver should return NULL
+	* if the requested interface or version is not supported. */
+	virtual void *GetComponent( const char *pchComponentNameAndVersion ) = 0;
+};
+
+static const char *IVRCompositorPluginProvider_Version = "IVRCompositorPluginProvider_001";
 
 }
 // ivrproperties.h
@@ -2605,11 +2827,11 @@ namespace vr
 		virtual EVRInputError CreateSkeletonComponent( PropertyContainerHandle_t ulContainer, const char *pchName, const char *pchSkeletonPath, const char *pchBasePosePath, const VRBoneTransform_t *pGripLimitTransforms, uint32_t unGripLimitTransformCount, VRInputComponentHandle_t *pHandle ) = 0;
 
 		/** Updates a skeleton component. */
-		virtual EVRInputError UpdateSkeletonComponent( VRInputComponentHandle_t ulComponent, const VRBoneTransform_t *pTransforms, uint32_t unTransformCount ) = 0;
+		virtual EVRInputError UpdateSkeletonComponent( VRInputComponentHandle_t ulComponent, EVRSkeletalMotionRange eMotionRange, const VRBoneTransform_t *pTransforms, uint32_t unTransformCount ) = 0;
 
 	};
 
-	static const char * const IVRDriverInput_Version = "IVRDriverInput_001";
+	static const char * const IVRDriverInput_Version = "IVRDriverInput_002";
 
 } // namespace vr
 
@@ -2676,6 +2898,22 @@ public:
 };
 
 static const char *IVRServerDriverHost_Version = "IVRServerDriverHost_005";
+
+}
+
+// ivrcompositordriverhost.h
+namespace vr
+{
+
+class IVRCompositorDriverHost
+{
+public:
+	/** Returns true and fills the event with the next event on the queue if there is one. If there are no events
+	* this method returns false. uncbVREvent should be the size in bytes of the VREvent_t struct */
+	virtual bool PollNextEvent( VREvent_t *pEvent, uint32_t uncbVREvent ) = 0;
+};
+
+static const char *IVRCompositorDriverHost_Version = "IVRCompositorDriverHost_001";
 
 }
 
@@ -2782,9 +3020,6 @@ namespace vr
 	};
 
 	static const char *IVRVirtualDisplay_Version = "IVRVirtualDisplay_002";
-
-	/** Returns the current IVRVirtualDisplay pointer or NULL the interface could not be found. */
-	VR_INTERFACE vr::IVRVirtualDisplay *VR_CALLTYPE VRVirtualDisplay();
 }
 
 
@@ -2885,10 +3120,103 @@ static const char * const IVRDriverManager_Version = "IVRDriverManager_001";
 
 
 
+// ivrdriverspatialanchors.h
+namespace vr
+{
+	struct SpatialAnchorDriverPose_t
+	{
+		/** This position is in the same "world" space (+Y up) as provided by DriverPose_t. */
+		vr::HmdQuaternion_t qWorldRotation;
+		vr::HmdVector3d_t vWorldTranslation;
+
+		/** The pose will automatically start returning VRSpatialAnchorError_NotAvailableInThisUniverse
+		* if this is nonzero and does not match the current universe ID. */
+		uint64_t ulRequiredUniverseId;
+
+		/** When this time expires, SteamVR will start generating
+		* VREvent_SpatialAnchors_RequestPoseUpdate when the pose is read by an application
+		* to let the driver know it is still worth updating.
+		* You can use this facility in several ways:
+		*   1. Set to -1 to never receive an update request for this pose.  The driver
+		*      may still update poses at any time.
+		*   2. Set to 0 to always receive an update request *after* each time the pose
+		*      is read.  The rate of requests could be very high if the application gets
+		*      the pose at framerate.
+		*   3. If the driver knows there is no reason to update the pose for some amount of
+		*      time, it can set that time here and receive the update request reminder later.
+		*   4. If the driver plans to automatically update this pose for some amount of time
+		*      (as it gets better information about the virtual location of this anchor) it can
+		*      set that duration here to indicate that no "update requested" reminders are needed.
+		*      When that automatic update period expires, any future interest in the pose will
+		*      be indicated by a pose update request.
+		* The driver may always update the pose, including during the valid duration. */
+		double fValidDuration;  // seconds
+	};
+
+	class IVRDriverSpatialAnchors
+	{
+	public:
+
+		/* NOTE: You must declare support for spatial anchors in your driver manifest.  Add
+		* "spatialAnchorsSupport": true to your manifest.  Without that setting, SteamVR
+		* will short-circuit anchor requests from applications and provide a generic descriptor
+		* that does not have any of the advantages of true spatial anchors. */
+
+		/* The driver should monitor for events VREvent_SpatialAnchors_RequestPoseUpdate (for new
+		* descriptors from applications that need UpdateSpatialAnchorPose()) and for
+		* VREvent_SpatialAnchors_RequestDescriptorUpdate (for new poses that need UpdateSpatialAnchorDescriptor()).
+		* For automatic pose updates over time, the driver should keep track of the handles it
+		* has seen and provide updates when conditions change.  If the driver uses fValidDuration,
+		* it may wait for VREvent_SpatialAnchors_RequestPoseUpdate instead of keeping track itself. */
+
+		/** Update a pose for a spatial anchor.  Should be called when an event notifies the driver that a
+		* new descriptor has been registered by an application.  May be called for any anchor whenever the
+		* driver has better information about the best virtual coordinate to represent the anchor.  Should
+		* be called on all active handles whenever driver state changes in a way that changes how physical
+		* world locations map to virtual coordinates (e.g. anything that would cause a universe ID change).
+		* This fires an event when it is called for the first time (to alert whoever submitted the descriptor). */
+		virtual EVRSpatialAnchorError UpdateSpatialAnchorPose( SpatialAnchorHandle_t unHandle, const SpatialAnchorDriverPose_t *pPose ) = 0;
+
+		/** Invalidate any pose associated with the handle and cause future calls to GetSpatialAnchorPose (on
+		* both the client and driver side) to return the specified error.  eError must be one of
+		* VRSpatialAnchorError_NotYetAvailable, VRSpatialAnchorError_NotAvailableInThisUniverse, or
+		* VRSpatialAnchorError_PermanentlyUnavailable */
+		virtual EVRSpatialAnchorError SetSpatialAnchorPoseError( SpatialAnchorHandle_t unHandle, EVRSpatialAnchorError eError, double fValidDuration ) = 0;
+
+		/** Update the descriptor for a spatial anchor.  Should be called when an event notifies the driver
+		* that a new pose has been registered by an application.  May be called for any anchor whenever the
+		* driver has better or additional information it wants to include in the anchor descriptor.  Note,
+		* however, that the application may never fetch the updated anchor descriptor and may request the
+		* original descriptor in a future session having ignored the update.
+		* The supplied descriptor should be only the driver's opaque internal data, not the decorated form that
+		* is used by clients (wrapped by runtime metadata).  The descriptor must not contain non-ASCII characters or
+		* the two special characters ~ or "
+		* This fires an event every time it is called. */
+		virtual EVRSpatialAnchorError UpdateSpatialAnchorDescriptor( SpatialAnchorHandle_t unHandle, const char *pchDescriptor ) = 0;
+
+		/** Get the pose for a given handle. */
+		virtual EVRSpatialAnchorError GetSpatialAnchorPose( SpatialAnchorHandle_t unHandle, SpatialAnchorDriverPose_t *pDriverPoseOut ) = 0;
+
+		/** Get the descriptor for a given handle.  This will be VRSpatialAnchorError_NotYetAvailable for handles
+		* where the driver has not yet built a descriptor.  It will be the application-supplied descriptor for previously
+		* saved anchors that the application is requesting poses for.  If the driver has called UpdateSpatialAnchorDescriptor()
+		* already in this session, it will be the descriptor provided by the driver.
+		* If bDecorated, returns the descriptor wrapped with runtime metadata suitable for a client to save.  Else returns only
+		* the driver's opaque internal data.
+		*/
+		virtual EVRSpatialAnchorError GetSpatialAnchorDescriptor( SpatialAnchorHandle_t unHandle, VR_OUT_STRING() char *pchDescriptorOut, uint32_t *punDescriptorBufferLenInOut, bool bDecorated ) = 0;
+
+	};
+
+	static const char * const IVRDriverSpatialAnchors_Version = "IVRDriverSpatialAnchors_001";
+
+} // namespace vr
+
 
 
 namespace vr
 {
+#if !defined( OPENVR_INTERFACE_INTERNAL )
 	static const char * const k_InterfaceVersions[] =
 	{
 		IVRSettings_Version,
@@ -2901,6 +3229,7 @@ namespace vr
 		IVRVirtualDisplay_Version,
 		IVRDriverManager_Version,
 		IVRResources_Version,
+		IVRCompositorPluginProvider_Version,
 		nullptr
 	};
 
@@ -2918,6 +3247,7 @@ namespace vr
 
 		EVRInitError InitServer();
 		EVRInitError InitWatchdog();
+		EVRInitError InitCompositor();
 
 		IVRSettings *VRSettings()
 		{
@@ -2971,6 +3301,16 @@ namespace vr
 				m_pVRWatchdogHost = (IVRWatchdogHost *)VRDriverContext()->GetGenericInterface( IVRWatchdogHost_Version, &eError );
 			}
 			return m_pVRWatchdogHost;
+		}
+
+		IVRCompositorDriverHost *VRCompositorDriverHost()
+		{
+			if ( m_pVRCompositorDriverHost == nullptr )
+			{
+				EVRInitError eError;
+				m_pVRCompositorDriverHost = ( IVRCompositorDriverHost * )VRDriverContext()->GetGenericInterface( IVRCompositorDriverHost_Version, &eError );
+			}
+			return m_pVRCompositorDriverHost;
 		}
 
 		IVRDriverLog *VRDriverLog()
@@ -3028,6 +3368,16 @@ namespace vr
 			return m_pVRIOBuffer;
 		}
 		
+		IVRDriverSpatialAnchors *VRDriverSpatialAnchors()
+		{
+			if ( !m_pVRDriverSpatialAnchors )
+			{
+				EVRInitError eError;
+				m_pVRDriverSpatialAnchors = (IVRDriverSpatialAnchors *)VRDriverContext()->GetGenericInterface( IVRDriverSpatialAnchors_Version, &eError );
+			}
+			return m_pVRDriverSpatialAnchors;
+		}
+
 	private:
 		CVRPropertyHelpers		m_propertyHelpers;
 		CVRHiddenAreaHelpers	m_hiddenAreaHelpers;
@@ -3036,11 +3386,13 @@ namespace vr
 		IVRProperties			*m_pVRProperties;
 		IVRServerDriverHost		*m_pVRServerDriverHost;
 		IVRWatchdogHost			*m_pVRWatchdogHost;
+		IVRCompositorDriverHost	*m_pVRCompositorDriverHost;
 		IVRDriverLog			*m_pVRDriverLog;
 		IVRDriverManager		*m_pVRDriverManager;
 		IVRResources			*m_pVRResources;
 		IVRDriverInput			*m_pVRDriverInput;
 		IVRIOBuffer				*m_pVRIOBuffer;
+		IVRDriverSpatialAnchors *m_pVRDriverSpatialAnchors;
 	};
 
 	inline COpenVRDriverContext &OpenVRInternal_ModuleServerDriverContext()
@@ -3056,23 +3408,27 @@ namespace vr
 	inline IVRDriverLog *VR_CALLTYPE VRDriverLog() { return OpenVRInternal_ModuleServerDriverContext().VRDriverLog(); }
 	inline IVRServerDriverHost *VR_CALLTYPE VRServerDriverHost() { return OpenVRInternal_ModuleServerDriverContext().VRServerDriverHost(); }
 	inline IVRWatchdogHost *VR_CALLTYPE VRWatchdogHost() { return OpenVRInternal_ModuleServerDriverContext().VRWatchdogHost(); }
+	inline IVRCompositorDriverHost *VR_CALLTYPE VRCompositorDriverHost() { return OpenVRInternal_ModuleServerDriverContext().VRCompositorDriverHost(); }
 	inline DriverHandle_t VR_CALLTYPE VRDriverHandle() { return OpenVRInternal_ModuleServerDriverContext().VRDriverHandle(); }
 	inline IVRDriverManager *VR_CALLTYPE VRDriverManager() { return OpenVRInternal_ModuleServerDriverContext().VRDriverManager(); }
 	inline IVRResources *VR_CALLTYPE VRResources() { return OpenVRInternal_ModuleServerDriverContext().VRResources(); }
 	inline IVRDriverInput *VR_CALLTYPE VRDriverInput() { return OpenVRInternal_ModuleServerDriverContext().VRDriverInput(); }
 	inline IVRIOBuffer *VR_CALLTYPE VRIOBuffer() { return OpenVRInternal_ModuleServerDriverContext().VRIOBuffer(); }
+	inline IVRDriverSpatialAnchors *VR_CALLTYPE VRDriverSpatialAnchors() { return OpenVRInternal_ModuleServerDriverContext().VRDriverSpatialAnchors(); }
 
 	inline void COpenVRDriverContext::Clear()
 	{
 		m_pVRSettings = nullptr;
 		m_pVRProperties = nullptr;
 		m_pVRServerDriverHost = nullptr;
-		m_pVRDriverLog = nullptr;
 		m_pVRWatchdogHost = nullptr;
+		m_pVRCompositorDriverHost = nullptr;
+		m_pVRDriverLog = nullptr;
 		m_pVRDriverManager = nullptr;
 		m_pVRResources = nullptr;
 		m_pVRDriverInput = nullptr;
 		m_pVRIOBuffer = nullptr;
+		m_pVRDriverSpatialAnchors = nullptr;
 	}
 
 	inline EVRInitError COpenVRDriverContext::InitServer()
@@ -3098,6 +3454,19 @@ namespace vr
 		return VRInitError_None;
 	}
 
+	inline EVRInitError COpenVRDriverContext::InitCompositor()
+	{
+		Clear();
+		if ( !VRCompositorDriverHost()
+			|| !VRSettings()
+			|| !VRProperties()
+			|| !VRDriverLog()
+			|| !VRDriverManager()
+			|| !VRResources() )
+			return VRInitError_Init_InterfaceNotFound;
+		return VRInitError_None;
+	}
+
 	inline EVRInitError InitServerDriverContext( IVRDriverContext *pContext )
 	{
 		VRDriverContext() = pContext;
@@ -3108,6 +3477,12 @@ namespace vr
 	{
 		VRDriverContext() = pContext;
 		return OpenVRInternal_ModuleServerDriverContext().InitWatchdog();
+	}
+
+	inline EVRInitError InitCompositorDriverContext( IVRDriverContext *pContext )
+	{
+		VRDriverContext() = pContext;
+		return OpenVRInternal_ModuleServerDriverContext().InitCompositor();
 	}
 
 	inline void CleanupDriverContext()
@@ -3135,6 +3510,20 @@ namespace vr
 
 	#define VR_CLEANUP_WATCHDOG_DRIVER_CONTEXT() \
 		vr::CleanupDriverContext();
+
+#define VR_INIT_COMPOSITOR_DRIVER_CONTEXT( pContext ) \
+			{ \
+			vr::EVRInitError eError = vr::InitCompositorDriverContext( pContext ); \
+			if( eError != vr::VRInitError_None ) \
+				return eError; \
+			}
+
+#define VR_CLEANUP_COMPOSITOR_DRIVER_CONTEXT() \
+		vr::CleanupDriverContext();
+
+
+#endif // OPENVR_INTERFACE_INTERNAL
+
 }
 // End
 

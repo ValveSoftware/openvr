@@ -40,11 +40,17 @@ std::string StringToLower( const std::string & sString );
 #if defined( OSX ) || defined( LINUX )
 #include <strings.h>
 inline int stricmp(const char *pStr1, const char *pStr2) { return strcasecmp(pStr1,pStr2); }
+#ifndef _stricmp
 #define _stricmp stricmp
+#endif
 inline int strnicmp( const char *pStr1, const char *pStr2, size_t unBufferLen ) { return strncasecmp( pStr1,pStr2, unBufferLen ); }
+#ifndef _strnicmp
 #define _strnicmp strnicmp
+#endif
 
+#ifndef _vsnprintf_s
 #define _vsnprintf_s vsnprintf
+#endif
 
 #define _TRUNCATE ((size_t)-1)
 

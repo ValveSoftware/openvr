@@ -11,6 +11,16 @@
                "path" : "/user/hand/right/pose/raw"
             }
          ],
+         "haptics" : [
+            {
+               "output" : "/actions/demo/out/haptic_right",
+               "path" : "/user/hand/right/output/haptic"
+            },
+            {
+               "output" : "/actions/demo/out/haptic_left",
+               "path" : "/user/hand/left/output/haptic"
+            }
+         ],
          "sources" : [
             {
                "inputs" : {

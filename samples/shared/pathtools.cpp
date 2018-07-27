@@ -757,6 +757,7 @@ std::string Path_FilePathToUrl( const std::string & sRelativePath, const std::st
 		std::string sAbsolute = Path_MakeAbsolute( sRelativePath, sBasePath );
 		if ( sAbsolute.empty() )
 			return sAbsolute;
+		sAbsolute = Path_FixSlashes( sAbsolute, '/' );
 		return std::string( FILE_URL_PREFIX ) + sAbsolute;
 	}
 }
@@ -768,7 +769,9 @@ std::string Path_UrlToFilePath( const std::string & sFileUrl )
 {
 	if ( !strnicmp( sFileUrl.c_str(), FILE_URL_PREFIX, strlen( FILE_URL_PREFIX ) ) )
 	{
-		return sFileUrl.c_str() + strlen( FILE_URL_PREFIX );
+		std::string sRet = sFileUrl.c_str() + strlen( FILE_URL_PREFIX );
+		sRet = Path_FixSlashes( sRet );
+		return sRet;
 	}
 	else
 	{

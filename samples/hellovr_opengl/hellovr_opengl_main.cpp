@@ -252,7 +252,7 @@ private: // OpenGL bookkeeping
 bool GetDigitalActionRisingEdge(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath = nullptr )
 {
 	vr::InputDigitalActionData_t actionData;
-	vr::VRInput()->GetDigitalActionData(action, &actionData, sizeof(actionData));
+	vr::VRInput()->GetDigitalActionData(action, &actionData, sizeof(actionData), vr::k_ulInvalidInputValueHandle );
 	if (pDevicePath)
 	{
 		*pDevicePath = vr::k_ulInvalidInputValueHandle;
@@ -275,7 +275,7 @@ bool GetDigitalActionRisingEdge(vr::VRActionHandle_t action, vr::VRInputValueHan
 bool GetDigitalActionFallingEdge(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath = nullptr )
 {
 	vr::InputDigitalActionData_t actionData;
-	vr::VRInput()->GetDigitalActionData(action, &actionData, sizeof(actionData));
+	vr::VRInput()->GetDigitalActionData(action, &actionData, sizeof(actionData), vr::k_ulInvalidInputValueHandle );
 	if (pDevicePath)
 	{
 		*pDevicePath = vr::k_ulInvalidInputValueHandle;
@@ -298,7 +298,7 @@ bool GetDigitalActionFallingEdge(vr::VRActionHandle_t action, vr::VRInputValueHa
 bool GetDigitalActionState(vr::VRActionHandle_t action, vr::VRInputValueHandle_t *pDevicePath = nullptr )
 {
 	vr::InputDigitalActionData_t actionData;
-	vr::VRInput()->GetDigitalActionData(action, &actionData, sizeof(actionData));
+	vr::VRInput()->GetDigitalActionData(action, &actionData, sizeof(actionData), vr::k_ulInvalidInputValueHandle );
 	if (pDevicePath)
 	{
 		*pDevicePath = vr::k_ulInvalidInputValueHandle;
@@ -739,16 +739,16 @@ bool CMainApplication::HandleInput()
 	{
 		if ( ulHapticDevice == m_rHand[Left].m_source )
 		{
-			vr::VRInput()->TriggerHapticVibrationAction( m_rHand[Left].m_actionHaptic, 0, 1, 4.f, 1.0f );
+			vr::VRInput()->TriggerHapticVibrationAction( m_rHand[Left].m_actionHaptic, 0, 1, 4.f, 1.0f, vr::k_ulInvalidInputValueHandle );
 		}
 		if ( ulHapticDevice == m_rHand[Right].m_source )
 		{
-			vr::VRInput()->TriggerHapticVibrationAction( m_rHand[Right].m_actionHaptic, 0, 1, 4.f, 1.0f );
+			vr::VRInput()->TriggerHapticVibrationAction( m_rHand[Right].m_actionHaptic, 0, 1, 4.f, 1.0f, vr::k_ulInvalidInputValueHandle );
 		}
 	}
 
 	vr::InputAnalogActionData_t analogData;
-	if ( vr::VRInput()->GetAnalogActionData( m_actionAnalongInput, &analogData, sizeof( analogData ) ) == vr::VRInputError_None && analogData.bActive )
+	if ( vr::VRInput()->GetAnalogActionData( m_actionAnalongInput, &analogData, sizeof( analogData ), vr::k_ulInvalidInputValueHandle ) == vr::VRInputError_None && analogData.bActive )
 	{
 		m_vAnalogValue[0] = analogData.x;
 		m_vAnalogValue[1] = analogData.y;
@@ -773,7 +773,7 @@ bool CMainApplication::HandleInput()
 	for ( EHand eHand = Left; eHand <= Right; ((int&)eHand)++ )
 	{
 		vr::InputPoseActionData_t poseData;
-		if ( vr::VRInput()->GetPoseActionData( m_rHand[eHand].m_actionPose, vr::TrackingUniverseStanding, 0, &poseData, sizeof( poseData ) ) != vr::VRInputError_None
+		if ( vr::VRInput()->GetPoseActionData( m_rHand[eHand].m_actionPose, vr::TrackingUniverseStanding, 0, &poseData, sizeof( poseData ), vr::k_ulInvalidInputValueHandle ) != vr::VRInputError_None
 			|| !poseData.bActive || !poseData.pose.bPoseIsValid )
 		{
 			m_rHand[eHand].m_bShowController = false;
