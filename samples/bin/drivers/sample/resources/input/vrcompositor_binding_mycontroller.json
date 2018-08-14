@@ -1,0 +1,37 @@
+{
+   "app_key" : "openvr.component.vrcompositor",
+   "bindings" : {
+      "/actions/lasermouse" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "single" : {
+                     "output" : "/actions/lasermouse/in/leftclick"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/devices/sample/CTRL_1234/input/b"
+            }
+         ]
+      },
+      "/actions/system" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "single" : {
+                     "output" : "/actions/system/in/toggledashboard"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "sub_mode" : "complex"
+               },
+               "path" : "/devices/sample/CTRL_1234/input/a"
+            }
+         ]
+      }
+   },
+   "controller_type" : "mycontroller",
+   "description" : "",
+   "name" : "My VR Compositor configuration for mycontroller"
+}

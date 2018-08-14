@@ -1,0 +1,47 @@
+{
+   "bindings" : {
+      "/actions/legacy" : {
+         "sources" : [
+            {
+               "inputs" : {
+                  "single" : {
+                     "output" : "/actions/legacy/in/right_axis1_press"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "sub_mode" : "complex"
+               },
+               "path" : "/user/hand/right/input/a"
+            },
+            {
+               "inputs" : {
+                  "single" : {
+                     "output" : "/actions/legacy/in/right_a_press"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "sub_mode" : "complex"
+               },
+               "path" : "/user/hand/right/input/c"
+            },
+            {
+               "inputs" : {
+                  "single" : {
+                     "output" : "/actions/legacy/in/right_grip_press"
+                  }
+               },
+               "mode" : "button",
+               "parameters" : {
+                  "sub_mode" : "complex"
+               },
+               "path" : "/user/hand/right/input/b"
+            }
+         ]
+      }
+   },
+   "controller_type" : "mycontroller",
+   "description" : "",
+   "name" : "Default binding for Sample Driver Controller for legacy applications"
+}

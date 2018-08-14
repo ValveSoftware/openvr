@@ -36,20 +36,19 @@ COpenVROverlayController *COpenVROverlayController::SharedInstance()
 //-----------------------------------------------------------------------------
 COpenVROverlayController::COpenVROverlayController()
 	: BaseClass()
+	, m_strVRDriver( "No Driver" )
+	, m_strVRDisplay( "No Display" )
     , m_eLastHmdError( vr::VRInitError_None )
     , m_eCompositorError( vr::VRInitError_None )
     , m_eOverlayError( vr::VRInitError_None )
-	, m_strVRDriver( "No Driver" )
-	, m_strVRDisplay( "No Display" )
+	, m_ulOverlayHandle( vr::k_ulOverlayHandleInvalid )
 	, m_pOpenGLContext( NULL )
 	, m_pScene( NULL )
-	, m_pOffscreenSurface ( NULL )
 	, m_pFbo( NULL )
-	, m_pWidget( NULL )
+	, m_pOffscreenSurface ( NULL )
 	, m_pPumpEventsTimer( NULL )
+	, m_pWidget( NULL )
 	, m_lastMouseButtons( 0 )
-	, m_ulOverlayHandle( vr::k_ulOverlayHandleInvalid )
-	, m_bManualMouseHandling( false )
 {
 }
 
@@ -171,7 +170,7 @@ void COpenVROverlayController::Shutdown()
 void COpenVROverlayController::OnSceneChanged( const QList<QRectF>& )
 {
 	// skip rendering if the overlay isn't visible
-    if( !vr::VROverlay() ||
+    if( ( m_ulOverlayHandle == k_ulOverlayHandleInvalid ) || !vr::VROverlay() ||
         ( !vr::VROverlay()->IsOverlayVisible( m_ulOverlayHandle ) && !vr::VROverlay()->IsOverlayVisible( m_ulOverlayThumbnailHandle ) ) )
         return;
 
@@ -201,19 +200,6 @@ void COpenVROverlayController::OnTimeoutPumpEvents()
 {
     if( !vr::VRSystem() )
 		return;
-
-
-	if( m_bManualMouseHandling )
-	{
-		// tell OpenVR to make some events for us
-		for( vr::TrackedDeviceIndex_t unDeviceId = 1; unDeviceId < vr::k_unControllerStateAxisCount; unDeviceId++ )
-		{
-            if( vr::VROverlay()->HandleControllerOverlayInteractionAsMouse( m_ulOverlayHandle, unDeviceId ) )
-			{
-				break;
-			}
-		}
-	}
 
 	vr::VREvent_t vrEvent;
     while( vr::VROverlay()->PollNextOverlayEvent( m_ulOverlayHandle, &vrEvent, sizeof( vrEvent )  ) )

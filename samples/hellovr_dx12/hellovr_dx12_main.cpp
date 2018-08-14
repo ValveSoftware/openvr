@@ -45,54 +45,12 @@ enum CBVSRVIndex_t
 	SRV_TEXTURE_MAP,
 	// Slot for texture in each possible render model
 	SRV_TEXTURE_RENDER_MODEL0,
-	SRV_TEXTURE_RENDER_MODEL1,
-	SRV_TEXTURE_RENDER_MODEL2,
-	SRV_TEXTURE_RENDER_MODEL3,
-	SRV_TEXTURE_RENDER_MODEL4,
-	SRV_TEXTURE_RENDER_MODEL5,
-	SRV_TEXTURE_RENDER_MODEL6,
-	SRV_TEXTURE_RENDER_MODEL7,
-	SRV_TEXTURE_RENDER_MODEL8,
-	SRV_TEXTURE_RENDER_MODEL9,
-	SRV_TEXTURE_RENDER_MODEL10,
-	SRV_TEXTURE_RENDER_MODEL11,
-	SRV_TEXTURE_RENDER_MODEL12,
-	SRV_TEXTURE_RENDER_MODEL13,
-	SRV_TEXTURE_RENDER_MODEL14,
-	SRV_TEXTURE_RENDER_MODEL15,
+	SRV_TEXTURE_RENDER_MODEL_MAX = SRV_TEXTURE_RENDER_MODEL0 + vr::k_unMaxTrackedDeviceCount,
 	// Slot for transform in each possible rendermodel
 	CBV_LEFT_EYE_RENDER_MODEL0,
-	CBV_LEFT_EYE_RENDER_MODEL1,
-	CBV_LEFT_EYE_RENDER_MODEL2,
-	CBV_LEFT_EYE_RENDER_MODEL3,
-	CBV_LEFT_EYE_RENDER_MODEL4,
-	CBV_LEFT_EYE_RENDER_MODEL5,
-	CBV_LEFT_EYE_RENDER_MODEL6,
-	CBV_LEFT_EYE_RENDER_MODEL7,
-	CBV_LEFT_EYE_RENDER_MODEL8,
-	CBV_LEFT_EYE_RENDER_MODEL9,
-	CBV_LEFT_EYE_RENDER_MODEL10,
-	CBV_LEFT_EYE_RENDER_MODEL11,
-	CBV_LEFT_EYE_RENDER_MODEL12,
-	CBV_LEFT_EYE_RENDER_MODEL13,
-	CBV_LEFT_EYE_RENDER_MODEL14,
-	CBV_LEFT_EYE_RENDER_MODEL15,
+	CBV_LEFT_EYE_RENDER_MODEL_MAX = CBV_LEFT_EYE_RENDER_MODEL0 + vr::k_unMaxTrackedDeviceCount,
 	CBV_RIGHT_EYE_RENDER_MODEL0,
-	CBV_RIGHT_EYE_RENDER_MODEL1,
-	CBV_RIGHT_EYE_RENDER_MODEL2,
-	CBV_RIGHT_EYE_RENDER_MODEL3,
-	CBV_RIGHT_EYE_RENDER_MODEL4,
-	CBV_RIGHT_EYE_RENDER_MODEL5,
-	CBV_RIGHT_EYE_RENDER_MODEL6,
-	CBV_RIGHT_EYE_RENDER_MODEL7,
-	CBV_RIGHT_EYE_RENDER_MODEL8,
-	CBV_RIGHT_EYE_RENDER_MODEL9,
-	CBV_RIGHT_EYE_RENDER_MODEL10,
-	CBV_RIGHT_EYE_RENDER_MODEL11,
-	CBV_RIGHT_EYE_RENDER_MODEL12,
-	CBV_RIGHT_EYE_RENDER_MODEL13,
-	CBV_RIGHT_EYE_RENDER_MODEL14,
-	CBV_RIGHT_EYE_RENDER_MODEL15,
+	CBV_RIGHT_EYE_RENDER_MODEL_MAX = CBV_RIGHT_EYE_RENDER_MODEL0 + vr::k_unMaxTrackedDeviceCount,
 	NUM_SRV_CBVS
 };
 
@@ -1444,8 +1402,8 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 //-----------------------------------------------------------------------------
 void CMainApplication::UpdateControllerAxes()
 {
-	// don't draw controllers if somebody else has input focus
-	if( m_pHMD->IsInputFocusCapturedByAnotherProcess() )
+	// Don't attempt to update controllers if input is not available
+	if( !m_pHMD->IsInputAvailable() )
 		return;
 
 	std::vector<float> vertdataarray;
@@ -1529,7 +1487,7 @@ void CMainApplication::UpdateControllerAxes()
 	}
 
 	// Update the VB data
-	if ( m_pControllerAxisVertexBuffer )
+	if ( m_pControllerAxisVertexBuffer && vertdataarray.size() > 0 )
 	{
 		UINT8 *pMappedBuffer;
 		CD3DX12_RANGE readRange( 0, 0 );
@@ -1753,9 +1711,9 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 		m_pCommandList->DrawInstanced( m_uiVertcount, 1, 0, 0 );
 	}
 
-	bool bIsInputCapturedByAnotherProcess = m_pHMD->IsInputFocusCapturedByAnotherProcess();
+	bool bIsInputAvailable = m_pHMD->IsInputAvailable();
 
-	if( !bIsInputCapturedByAnotherProcess && m_pControllerAxisVertexBuffer )
+	if( bIsInputAvailable && m_pControllerAxisVertexBuffer )
 	{
 		// draw the controller axis lines
 		m_pCommandList->SetPipelineState( m_pAxesPipelineState.Get() );
@@ -1776,7 +1734,7 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 		if( !pose.bPoseIsValid )
 			continue;
 
-		if( bIsInputCapturedByAnotherProcess && m_pHMD->GetTrackedDeviceClass( unTrackedDevice ) == vr::TrackedDeviceClass_Controller )
+		if( !bIsInputAvailable && m_pHMD->GetTrackedDeviceClass( unTrackedDevice ) == vr::TrackedDeviceClass_Controller )
 			continue;
 
 		const Matrix4 & matDeviceToTracking = m_rmat4DevicePose[ unTrackedDevice ];
@@ -2282,6 +2240,8 @@ int main(int argc, char *argv[])
 	pMainApplication->RunMainLoop();
 
 	pMainApplication->Shutdown();
+
+	delete pMainApplication;
 
 	return 0;
 }

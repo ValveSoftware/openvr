@@ -140,13 +140,6 @@ std::wstring UTF8to16(const char * in)
 }
 
 
-void strcpy_safe( char *pchBuffer, size_t unBufferSizeBytes, const char *pchSource )
-{
-	pchBuffer[ unBufferSizeBytes - 1 ] = '\0';
-	strncpy( pchBuffer, pchSource, unBufferSizeBytes - 1 );
-}
-
-
 // --------------------------------------------------------------------
 // Purpose: converts a string to upper case
 // --------------------------------------------------------------------

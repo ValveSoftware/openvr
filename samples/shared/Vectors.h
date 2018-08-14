@@ -237,8 +237,8 @@ inline float& Vector2::operator[](int index) {
     return (&x)[index];
 }
 
-inline void Vector2::set(float x, float y) {
-    this->x = x; this->y = y;
+inline void Vector2::set(float x_, float y_) {
+    this->x = x_; this->y = y_;
 }
 
 inline float Vector2::length() const {
@@ -356,8 +356,8 @@ inline float& Vector3::operator[](int index) {
     return (&x)[index];
 }
 
-inline void Vector3::set(float x, float y, float z) {
-    this->x = x; this->y = y; this->z = z;
+inline void Vector3::set(float x_, float y_, float z_) {
+    this->x = x_; this->y = y_; this->z = z_;
 }
 
 inline float Vector3::length() const {
@@ -481,8 +481,8 @@ inline float& Vector4::operator[](int index) {
     return (&x)[index];
 }
 
-inline void Vector4::set(float x, float y, float z, float w) {
-    this->x = x; this->y = y; this->z = z; this->w = w;
+inline void Vector4::set(float x_, float y_, float z_, float w_) {
+    this->x = x_; this->y = y_; this->z = z_; this->w = w_;
 }
 
 inline float Vector4::length() const {

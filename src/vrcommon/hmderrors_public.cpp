@@ -55,6 +55,7 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	case VRInitError_Init_RebootingBusy:				return "Rebooting In Progress (137)";
 	case VRInitError_Init_FirmwareUpdateBusy:			return "Firmware Update In Progress (138)";
 	case VRInitError_Init_FirmwareRecoveryBusy:			return "Firmware Recovery In Progress (139)";
+	case VRInitError_Init_USBServiceBusy:				return "USB Service Busy (140)";
 
 	case VRInitError_Driver_Failed:							return "Driver Failed (200)";
 	case VRInitError_Driver_Unknown:						return "Driver Not Known (201)";
@@ -108,11 +109,7 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	case VRInitError_Steam_SteamInstallationNotFound: return "Unable to find Steam installation (2000)";
 
 	default:
-		{
-			static char buf[128];
-			sprintf( buf, "Unknown error (%d)", eError );
-			return buf;
-		}
+		return GetIDForVRInitError( eError );
 	}
 
 }
@@ -150,6 +147,8 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_NotSupportedWithCompositor );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_NotAvailableToUtilityApps );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_Internal );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdDriverIdIsNone );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdNotFoundPresenceFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_VRMonitorNotFound );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_VRMonitorStartupFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_LowPowerWatchdogNotSupported );
@@ -163,9 +162,9 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_RebootingBusy );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FirmwareUpdateBusy );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FirmwareRecoveryBusy );
-
-		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdDriverIdIsNone );
-		RETURN_ENUM_AS_STRING( VRInitError_Init_HmdNotFoundPresenceFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_USBServiceBusy );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRWebHelperStartupFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_TrackerManagerInitFailed );
 
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Unknown );
@@ -198,8 +197,9 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_ScreenshotsInitFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_UnableToCreateDevice );
 
-		// Oculus
+		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);
+		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_WindowsNotInDevMode );
 
 		// Lighthouse
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_HmdFound_CantOpenDevice);
