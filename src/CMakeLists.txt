@@ -22,7 +22,7 @@ elseif(WIN32)
 endif()
 
 # Add include folders.
-include_directories(${CMAKE_SOURCE_DIR}/src ${CMAKE_SOURCE_DIR}/headers ${CMAKE_SOURCE_DIR}/src/vrcommon)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../headers ${CMAKE_CURRENT_SOURCE_DIR}/vrcommon)
 
 if(USE_CUSTOM_LIBCXX)
 	link_directories(
@@ -92,5 +92,6 @@ if(USE_CUSTOM_LIBCXX)
 endif()
 
 target_link_libraries(${LIBNAME} ${EXTRA_LIBS})
+target_include_directories(${LIBNAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../headers)
 
 install(TARGETS ${LIBNAME} DESTINATION lib)
