@@ -125,7 +125,7 @@ enum ETextureType
 	TextureType_DirectX = 0, // Handle is an ID3D11Texture
 	TextureType_OpenGL = 1,  // Handle is an OpenGL texture name or an OpenGL render buffer name, depending on submit flags
 	TextureType_Vulkan = 2, // Handle is a pointer to a VRVulkanTextureData_t structure
-	TextureType_IOSurface = 3, // Handle is a macOS cross-process-sharable IOSurfaceRef, deprecated in favor of TextureType_Metal on supported platforms
+	TextureType_IOSurface = 3, // Handle is a macOS cross-process-sharable IOSurfaceRef (kIOSurfaceIsGlobal must be set for SteamVR), deprecated in favor of TextureType_Metal on supported platforms
 	TextureType_DirectX12 = 4, // Handle is a pointer to a D3D12TextureData_t structure
 	TextureType_DXGISharedHandle = 5, // Handle is a HANDLE DXGI share handle, only supported for Overlay render targets. 
 									  // this texture is used directly by our renderer, so only perform atomic (copyresource or resolve) on it
