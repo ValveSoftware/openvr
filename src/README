@@ -30,7 +30,7 @@ their application or redistribute the binary they build.
 This is a cmake project, to build it use the version of cmake appropriate
 for your platform. For example, to build on a POSIX system simply perform
 
-  cd src; mkdir _build; cd _build; cmake ..; make
+  mkdir build; cd build; cmake ..; make
 
 and you will end up with the static library /src/bin/<arch>/libopenvr_api.a
 
