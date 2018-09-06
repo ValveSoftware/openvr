@@ -3616,6 +3616,8 @@ public class OpenVRInterop
 	internal static extern bool IsHmdPresent();
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IsRuntimeInstalled", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern bool IsRuntimeInstalled();
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_RuntimePath", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern string RuntimePath();
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetStringForHmdError", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr GetStringForHmdError(EVRInitError error);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetGenericInterface", CallingConvention = CallingConvention.Cdecl)]
@@ -5505,6 +5507,11 @@ public class OpenVR
 	public static bool IsRuntimeInstalled()
 	{
 		return OpenVRInterop.IsRuntimeInstalled();
+	}
+	
+    public static string RuntimePath()
+	{
+		return OpenVRInterop.RuntimePath();
 	}
 
 	public static string GetStringForHmdError(EVRInitError error)
