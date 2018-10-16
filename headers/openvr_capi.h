@@ -89,6 +89,7 @@ static const unsigned int k_unWildcardPropertyTag = 34;
 static const unsigned int k_unHapticVibrationPropertyTag = 35;
 static const unsigned int k_unSkeletonPropertyTag = 36;
 static const unsigned int k_unSpatialAnchorPosePropertyTag = 40;
+static const unsigned int k_unJsonPropertyTag = 41;
 static const unsigned int k_unOpenVRInternalReserved_Start = 1000;
 static const unsigned int k_unOpenVRInternalReserved_End = 10000;
 static const unsigned int k_unMaxPropertyStringSize = 32768;
@@ -100,7 +101,7 @@ static const unsigned long k_ulOverlayHandleInvalid = 0;
 static const unsigned int k_unScreenshotHandleInvalid = 0;
 static const char * IVRSystem_Version = "IVRSystem_019";
 static const char * IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
-static const char * IVRTrackedCamera_Version = "IVRTrackedCamera_003";
+static const char * IVRTrackedCamera_Version = "IVRTrackedCamera_004";
 static const unsigned int k_unMaxApplicationKeyLength = 128;
 static const char * k_pch_MimeType_HomeApp = "vr/home";
 static const char * k_pch_MimeType_GameTheater = "vr/game_theater";
@@ -150,13 +151,15 @@ static const char * k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speak
 static const char * k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
 static const char * k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 static const char * k_pch_SteamVR_SupersampleScale_Float = "supersampleScale";
+static const char * k_pch_SteamVR_MaxRecommendedResolution_Int32 = "maxRecommendedResolution";
 static const char * k_pch_SteamVR_AllowAsyncReprojection_Bool = "allowAsyncReprojection";
 static const char * k_pch_SteamVR_AllowReprojection_Bool = "allowInterleavedReprojection";
 static const char * k_pch_SteamVR_ForceReprojection_Bool = "forceReprojection";
 static const char * k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
-static const char * k_pch_SteamVR_DefaultMirrorView_Int32 = "defaultMirrorView";
+static const char * k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
 static const char * k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
 static const char * k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
+static const char * k_pch_SteamVR_MirrorViewGeometryMaximized_String = "mirrorViewGeometryMaximized";
 static const char * k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
 static const char * k_pch_SteamVR_StartCompositorFromAppLaunch_Bool = "startCompositorFromAppLaunch";
 static const char * k_pch_SteamVR_StartDashboardFromAppLaunch_Bool = "startDashboardFromAppLaunch";
@@ -185,6 +188,7 @@ static const char * k_pch_Lighthouse_PrimaryBasestation_Int32 = "primarybasestat
 static const char * k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
 static const char * k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 static const char * k_pch_Lighthouse_PowerManagedBaseStations_String = "PowerManagedBaseStations";
+static const char * k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
 static const char * k_pch_Null_Section = "driver_null";
 static const char * k_pch_Null_SerialNumber_String = "serialNumber";
 static const char * k_pch_Null_ModelNumber_String = "modelNumber";
@@ -199,6 +203,7 @@ static const char * k_pch_Null_DisplayFrequency_Float = "displayFrequency";
 static const char * k_pch_UserInterface_Section = "userinterface";
 static const char * k_pch_UserInterface_StatusAlwaysOnTop_Bool = "StatusAlwaysOnTop";
 static const char * k_pch_UserInterface_MinimizeToTray_Bool = "MinimizeToTray";
+static const char * k_pch_UserInterface_HidePopupsWhenStatusMinimized_Bool = "HidePopupsWhenStatusMinimized";
 static const char * k_pch_UserInterface_Screenshots_Bool = "screenshots";
 static const char * k_pch_UserInterface_ScreenshotType_Int = "screenshotType";
 static const char * k_pch_Notifications_Section = "notifications";
@@ -212,9 +217,7 @@ static const char * k_pch_Keyboard_OffsetRightX = "OffsetRightX";
 static const char * k_pch_Keyboard_OffsetY = "OffsetY";
 static const char * k_pch_Keyboard_Smoothing = "Smoothing";
 static const char * k_pch_Perf_Section = "perfcheck";
-static const char * k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
-static const char * k_pch_Perf_NotifyInHMD_Bool = "warnInHMD";
-static const char * k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
+static const char * k_pch_Perf_PerfGraphInHMD_Bool = "perfGraphInHMD";
 static const char * k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 static const char * k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 static const char * k_pch_Perf_TestData_Float = "perfTestData";
@@ -265,6 +268,9 @@ static const char * k_pch_Driver_Enable_Bool = "enable";
 static const char * k_pch_WebInterface_Section = "WebInterface";
 static const char * k_pch_WebInterface_WebEnable_Bool = "WebEnable";
 static const char * k_pch_WebInterface_WebPort_String = "WebPort";
+static const char * k_pch_VRWebHelper_Section = "VRWebHelper";
+static const char * k_pch_VRWebHelper_DebuggerEnabled_Bool = "DebuggerEnabled";
+static const char * k_pch_VRWebHelper_DebuggerPort_Int32 = "DebuggerPort";
 static const char * k_pch_TrackingOverride_Section = "TrackingOverrides";
 static const char * k_pch_App_BindingAutosaveURLSuffix_String = "AutosaveURL";
 static const char * k_pch_App_BindingCurrentURLSuffix_String = "CurrentURL";
@@ -317,6 +323,7 @@ typedef enum ETrackingResult
 	ETrackingResult_TrackingResult_Calibrating_OutOfRange = 101,
 	ETrackingResult_TrackingResult_Running_OK = 200,
 	ETrackingResult_TrackingResult_Running_OutOfRange = 201,
+	ETrackingResult_TrackingResult_Fallback_RotationOnly = 300,
 } ETrackingResult;
 
 typedef enum ETrackedDeviceClass
@@ -390,6 +397,7 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_NeverTracked_Bool = 1038,
 	ETrackedDeviceProperty_Prop_NumCameras_Int32 = 1039,
 	ETrackedDeviceProperty_Prop_CameraFrameLayout_Int32 = 1040,
+	ETrackedDeviceProperty_Prop_CameraStreamFormat_Int32 = 1041,
 	ETrackedDeviceProperty_Prop_ReportsTimeSinceVSync_Bool = 2000,
 	ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	ETrackedDeviceProperty_Prop_DisplayFrequency_Float = 2002,
@@ -503,6 +511,7 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_HasSpatialAnchorsSupport_Bool = 6007,
 	ETrackedDeviceProperty_Prop_ControllerType_String = 7000,
 	ETrackedDeviceProperty_Prop_LegacyInputProfile_String = 7001,
+	ETrackedDeviceProperty_Prop_ControllerHandSelectionPriority_Int32 = 7002,
 	ETrackedDeviceProperty_Prop_VendorSpecific_Reserved_Start = 10000,
 	ETrackedDeviceProperty_Prop_VendorSpecific_Reserved_End = 10999,
 	ETrackedDeviceProperty_Prop_TrackedDeviceProperty_Max = 1000000,
@@ -523,6 +532,7 @@ typedef enum ETrackedPropertyError
 	ETrackedPropertyError_TrackedProp_PermissionDenied = 10,
 	ETrackedPropertyError_TrackedProp_InvalidOperation = 11,
 	ETrackedPropertyError_TrackedProp_CannotWriteToWildcards = 12,
+	ETrackedPropertyError_TrackedProp_IPCReadFailure = 13,
 } ETrackedPropertyError;
 
 typedef enum EVRSubmitFlags
@@ -692,6 +702,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_Input_BindingLoadSuccessful = 1702,
 	EVREventType_VREvent_Input_ActionManifestReloaded = 1703,
 	EVREventType_VREvent_Input_ActionManifestLoadFailed = 1704,
+	EVREventType_VREvent_Input_TrackerActivated = 1706,
 	EVREventType_VREvent_SpatialAnchors_PoseUpdated = 1800,
 	EVREventType_VREvent_SpatialAnchors_DescriptorUpdated = 1801,
 	EVREventType_VREvent_SpatialAnchors_RequestPoseUpdate = 1802,
@@ -1564,7 +1575,7 @@ typedef struct VREvent_Status_t
 
 typedef struct VREvent_Keyboard_t
 {
-	char * cNewInput[8]; //char[8]
+	char cNewInput[8]; //char[8]
 	uint64_t uUserValue;
 } VREvent_Keyboard_t;
 
@@ -1727,6 +1738,7 @@ typedef struct CameraVideoStreamFrameHeader_t
 	uint32_t nBytesPerPixel;
 	uint32_t nFrameSequence;
 	struct TrackedDevicePose_t standingTrackedDevicePose;
+	uint64_t ulFrameExposureTime;
 } CameraVideoStreamFrameHeader_t;
 
 typedef struct DriverDirectMode_FrameTiming
@@ -1778,6 +1790,8 @@ typedef struct Compositor_FrameTiming
 	float m_flCompositorUpdateEndMs;
 	float m_flCompositorRenderStartMs;
 	TrackedDevicePose_t m_HmdPose;
+	uint32_t m_nNumVSyncsReadyForUse;
+	uint32_t m_nNumVSyncsToFirstView;
 } Compositor_FrameTiming;
 
 typedef struct Compositor_CumulativeStats
@@ -1929,7 +1943,7 @@ typedef struct InputOriginInfo_t
 {
 	VRInputValueHandle_t devicePath;
 	TrackedDeviceIndex_t trackedDeviceIndex;
-	char * rchRenderModelComponentName[128]; //char[128]
+	char rchRenderModelComponentName[128]; //char[128]
 } InputOriginInfo_t;
 
 typedef struct VRActiveActionSet_t
@@ -1983,7 +1997,25 @@ typedef union
 	VREvent_PerformanceTest_t performanceTest;
 	VREvent_TouchPadMove_t touchPadMove;
 	VREvent_SeatedZeroPoseReset_t seatedZeroPoseReset;
+	VREvent_Screenshot_t screenshot;
+	VREvent_ScreenshotProgress_t screenshotProgress;
+	VREvent_ApplicationLaunch_t applicationLaunch;
+	VREvent_EditingCameraSurface_t cameraSurface;
+	VREvent_MessageOverlay_t messageOverlay;
+	VREvent_Property_t property;
+	VREvent_DualAnalog_t dualAnalog;
+	VREvent_HapticVibration_t hapticVibration;
+	VREvent_WebConsole_t webConsole;
+	VREvent_InputBindingLoad_t inputBinding;
+	VREvent_InputActionManifestLoad_t actionManifest;
+	VREvent_SpatialAnchor_t spatialAnchor;
 } VREvent_Data_t;
+
+#if defined(__linux__) || defined(__APPLE__) 
+// This structure was originally defined mis-packed on Linux, preserved for 
+// compatibility. 
+#pragma pack( push, 4 )
+#endif
 
 /** An event posted by the server to all running applications */
 struct VREvent_t
@@ -1994,6 +2026,10 @@ struct VREvent_t
 	// event data must be the end of the struct as its size is variable
 	VREvent_Data_t data;
 };
+
+#if defined(__linux__) || defined(__APPLE__) 
+#pragma pack( pop )
+#endif
 
 
 typedef union

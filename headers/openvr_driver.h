@@ -161,6 +161,8 @@ enum ETrackingResult
 
 	TrackingResult_Running_OK				= 200,
 	TrackingResult_Running_OutOfRange		= 201,
+
+	TrackingResult_Fallback_RotationOnly	= 300,
 };
 
 typedef uint32_t DriverId_t;
@@ -257,6 +259,7 @@ static const PropertyTypeTag_t k_unHapticVibrationPropertyTag = 35;
 static const PropertyTypeTag_t k_unSkeletonPropertyTag = 36;
 
 static const PropertyTypeTag_t k_unSpatialAnchorPosePropertyTag = 40;
+static const PropertyTypeTag_t k_unJsonPropertyTag = 41;
 
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_Start = 1000;
 static const PropertyTypeTag_t k_unOpenVRInternalReserved_End = 10000;
@@ -310,6 +313,7 @@ enum ETrackedDeviceProperty
 	Prop_NeverTracked_Bool						= 1038, // Used for devices that will never have a valid pose by design
 	Prop_NumCameras_Int32						= 1039,
 	Prop_CameraFrameLayout_Int32				= 1040, // EVRTrackedCameraFrameLayout value
+	Prop_CameraStreamFormat_Int32				= 1041, // ECameraVideoStreamFormat value
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -440,6 +444,7 @@ enum ETrackedDeviceProperty
 	// Properties that are set internally based on other information provided by drivers
 	Prop_ControllerType_String					= 7000,
 	Prop_LegacyInputProfile_String				= 7001,
+	Prop_ControllerHandSelectionPriority_Int32	= 7002, // Allows hand assignments to prefer some controllers over others. High numbers are selected over low numbers
 
 	// Vendors are free to expose private debug data in this reserved region
 	Prop_VendorSpecific_Reserved_Start			= 10000,
@@ -467,6 +472,7 @@ enum ETrackedPropertyError
 	TrackedProp_PermissionDenied			= 10,
 	TrackedProp_InvalidOperation			= 11,
 	TrackedProp_CannotWriteToWildcards		= 12,
+	TrackedProp_IPCReadFailure				= 13,
 };
 
 
@@ -747,6 +753,7 @@ enum EVREventType
 	VREvent_Input_BindingLoadSuccessful		= 1702, // data is inputBinding
 	VREvent_Input_ActionManifestReloaded	= 1703, // no data
 	VREvent_Input_ActionManifestLoadFailed	= 1704, // data is actionManifest
+	VREvent_Input_TrackerActivated			= 1706,
 
 	VREvent_SpatialAnchors_PoseUpdated		= 1800,        // data is spatialAnchor. broadcast
 	VREvent_SpatialAnchors_DescriptorUpdated = 1801,       // data is spatialAnchor. broadcast
@@ -1472,6 +1479,8 @@ struct CameraVideoStreamFrameHeader_t
 	uint32_t nFrameSequence;
 
 	TrackedDevicePose_t standingTrackedDevicePose;
+	
+	uint64_t ulFrameExposureTime;						// mid-point of the exposure of the image in host system ticks
 };
 
 // Screenshot types
@@ -1591,6 +1600,7 @@ enum ECameraVideoStreamFormat
 	CVS_FORMAT_NV12 = 2,		// 12 bits per pixel
 	CVS_FORMAT_RGB24 = 3,		// 24 bits per pixel
 	CVS_FORMAT_NV12_2 = 4,		// 12 bits per pixel, 2x height
+	CVS_FORMAT_YUYV16 = 5,		// 16 bits per pixel
 	CVS_MAX_FORMATS
 };
 
@@ -1722,7 +1732,7 @@ namespace vr
 
 	class CVRSettingHelper
 	{
-		IVRSettings *m_pSettings = nullptr;
+		IVRSettings *m_pSettings;
 	public:
 		CVRSettingHelper( IVRSettings *pSettings ) 
 		{ 
@@ -1831,13 +1841,15 @@ namespace vr
 	static const char * const k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
 	static const char * const k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 	static const char * const k_pch_SteamVR_SupersampleScale_Float = "supersampleScale";
+	static const char * const k_pch_SteamVR_MaxRecommendedResolution_Int32 = "maxRecommendedResolution";
 	static const char * const k_pch_SteamVR_AllowAsyncReprojection_Bool = "allowAsyncReprojection";
 	static const char * const k_pch_SteamVR_AllowReprojection_Bool = "allowInterleavedReprojection";
 	static const char * const k_pch_SteamVR_ForceReprojection_Bool = "forceReprojection";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
-	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "defaultMirrorView";
+	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
 	static const char * const k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
 	static const char * const k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
+	static const char * const k_pch_SteamVR_MirrorViewGeometryMaximized_String = "mirrorViewGeometryMaximized";
 	static const char * const k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
 	static const char * const k_pch_SteamVR_StartCompositorFromAppLaunch_Bool = "startCompositorFromAppLaunch";
 	static const char * const k_pch_SteamVR_StartDashboardFromAppLaunch_Bool = "startDashboardFromAppLaunch";
@@ -1869,6 +1881,7 @@ namespace vr
 	static const char * const k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
 	static const char * const k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 	static const char * const k_pch_Lighthouse_PowerManagedBaseStations_String = "PowerManagedBaseStations";
+	static const char * const k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
 
 	//-----------------------------------------------------------------------------
 	// null keys
@@ -1889,6 +1902,7 @@ namespace vr
 	static const char * const k_pch_UserInterface_Section = "userinterface";
 	static const char * const k_pch_UserInterface_StatusAlwaysOnTop_Bool = "StatusAlwaysOnTop";
 	static const char * const k_pch_UserInterface_MinimizeToTray_Bool = "MinimizeToTray";
+	static const char * const k_pch_UserInterface_HidePopupsWhenStatusMinimized_Bool = "HidePopupsWhenStatusMinimized";
 	static const char * const k_pch_UserInterface_Screenshots_Bool = "screenshots";
 	static const char * const k_pch_UserInterface_ScreenshotType_Int = "screenshotType";
 
@@ -1911,9 +1925,7 @@ namespace vr
 	//-----------------------------------------------------------------------------
 	// perf keys
 	static const char * const k_pch_Perf_Section = "perfcheck";
-	static const char * const k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
-	static const char * const k_pch_Perf_NotifyInHMD_Bool = "warnInHMD";
-	static const char * const k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
+	static const char * const k_pch_Perf_PerfGraphInHMD_Bool = "perfGraphInHMD";
 	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 	static const char * const k_pch_Perf_TestData_Float = "perfTestData";
@@ -1988,6 +2000,12 @@ namespace vr
 	static const char* const k_pch_WebInterface_Section = "WebInterface";
 	static const char* const k_pch_WebInterface_WebEnable_Bool = "WebEnable";
 	static const char* const k_pch_WebInterface_WebPort_String = "WebPort";
+
+	//-----------------------------------------------------------------------------
+	// vrwebhelper keys
+	static const char* const k_pch_VRWebHelper_Section = "VRWebHelper";
+	static const char* const k_pch_VRWebHelper_DebuggerEnabled_Bool = "DebuggerEnabled";
+	static const char* const k_pch_VRWebHelper_DebuggerPort_Int32 = "DebuggerPort";
 
 	//-----------------------------------------------------------------------------
 	// tracking overrides - keys are device paths, values are the device paths their
@@ -2444,7 +2462,6 @@ public:
 
 	/** Returns a container handle given a tracked device index */
 	virtual PropertyContainerHandle_t TrackedDeviceToPropertyContainer( TrackedDeviceIndex_t nDevice ) = 0;
-
 };
 
 static const char * const IVRProperties_Version = "IVRProperties_001";

@@ -3616,6 +3616,8 @@ public class OpenVRInterop
 	internal static extern bool IsHmdPresent();
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_IsRuntimeInstalled", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern bool IsRuntimeInstalled();
+	[DllImportAttribute("openvr_api", EntryPoint = "VR_RuntimePath", CallingConvention = CallingConvention.Cdecl)]
+	internal static extern string RuntimePath();
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetStringForHmdError", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern IntPtr GetStringForHmdError(EVRInitError error);
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_GetGenericInterface", CallingConvention = CallingConvention.Cdecl)]
@@ -3656,6 +3658,7 @@ public enum ETrackingResult
 	Calibrating_OutOfRange = 101,
 	Running_OK = 200,
 	Running_OutOfRange = 201,
+	Fallback_RotationOnly = 300,
 }
 public enum ETrackedDeviceClass
 {
@@ -3725,6 +3728,7 @@ public enum ETrackedDeviceProperty
 	Prop_NeverTracked_Bool = 1038,
 	Prop_NumCameras_Int32 = 1039,
 	Prop_CameraFrameLayout_Int32 = 1040,
+	Prop_CameraStreamFormat_Int32 = 1041,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -3838,6 +3842,7 @@ public enum ETrackedDeviceProperty
 	Prop_HasSpatialAnchorsSupport_Bool = 6007,
 	Prop_ControllerType_String = 7000,
 	Prop_LegacyInputProfile_String = 7001,
+	Prop_ControllerHandSelectionPriority_Int32 = 7002,
 	Prop_VendorSpecific_Reserved_Start = 10000,
 	Prop_VendorSpecific_Reserved_End = 10999,
 	Prop_TrackedDeviceProperty_Max = 1000000,
@@ -3857,6 +3862,7 @@ public enum ETrackedPropertyError
 	TrackedProp_PermissionDenied = 10,
 	TrackedProp_InvalidOperation = 11,
 	TrackedProp_CannotWriteToWildcards = 12,
+	TrackedProp_IPCReadFailure = 13,
 }
 public enum EVRSubmitFlags
 {
@@ -4023,6 +4029,7 @@ public enum EVREventType
 	VREvent_Input_BindingLoadSuccessful = 1702,
 	VREvent_Input_ActionManifestReloaded = 1703,
 	VREvent_Input_ActionManifestLoadFailed = 1704,
+	VREvent_Input_TrackerActivated = 1706,
 	VREvent_SpatialAnchors_PoseUpdated = 1800,
 	VREvent_SpatialAnchors_DescriptorUpdated = 1801,
 	VREvent_SpatialAnchors_RequestPoseUpdate = 1802,
@@ -4625,6 +4632,7 @@ public enum EIOBufferMode
 	[FieldOffset(0)] public VREvent_WebConsole_t webConsole;
 	[FieldOffset(0)] public VREvent_InputBindingLoad_t inputBinding;
 	[FieldOffset(0)] public VREvent_SpatialAnchor_t spatialAnchor;
+	[FieldOffset(0)] public VREvent_InputActionManifestLoad_t actionManifest;
 	[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 }
 
@@ -4862,16 +4870,16 @@ public enum EIOBufferMode
 	{
 		get
 		{
-			var stringBuilder = new System.Text.StringBuilder(8);
-			stringBuilder.Append(cNewInput0);
-			stringBuilder.Append(cNewInput1);
-			stringBuilder.Append(cNewInput2);
-			stringBuilder.Append(cNewInput3);
-			stringBuilder.Append(cNewInput4);
-			stringBuilder.Append(cNewInput5);
-			stringBuilder.Append(cNewInput6);
-			stringBuilder.Append(cNewInput7);
-			return stringBuilder.ToString();
+			return new string(new char[] {
+				(char)cNewInput0,
+				(char)cNewInput1,
+				(char)cNewInput2,
+				(char)cNewInput3,
+				(char)cNewInput4,
+				(char)cNewInput5,
+				(char)cNewInput6,
+				(char)cNewInput7
+			}).TrimEnd('\0');
 		}
 	}
 	public ulong uUserValue;
@@ -5083,6 +5091,7 @@ public enum EIOBufferMode
 	public uint nBytesPerPixel;
 	public uint nFrameSequence;
 	public TrackedDevicePose_t standingTrackedDevicePose;
+	public ulong ulFrameExposureTime;
 }
 [StructLayout(LayoutKind.Sequential)] public struct DriverDirectMode_FrameTiming
 {
@@ -5130,6 +5139,8 @@ public enum EIOBufferMode
 	public float m_flCompositorUpdateEndMs;
 	public float m_flCompositorRenderStartMs;
 	public TrackedDevicePose_t m_HmdPose;
+	public uint m_nNumVSyncsReadyForUse;
+	public uint m_nNumVSyncsToFirstView;
 }
 [StructLayout(LayoutKind.Sequential)] public struct Compositor_CumulativeStats
 {
@@ -5314,136 +5325,136 @@ public enum EIOBufferMode
 	{
 		get
 		{
-			var stringBuilder = new System.Text.StringBuilder(128);
-			stringBuilder.Append(rchRenderModelComponentName0);
-			stringBuilder.Append(rchRenderModelComponentName1);
-			stringBuilder.Append(rchRenderModelComponentName2);
-			stringBuilder.Append(rchRenderModelComponentName3);
-			stringBuilder.Append(rchRenderModelComponentName4);
-			stringBuilder.Append(rchRenderModelComponentName5);
-			stringBuilder.Append(rchRenderModelComponentName6);
-			stringBuilder.Append(rchRenderModelComponentName7);
-			stringBuilder.Append(rchRenderModelComponentName8);
-			stringBuilder.Append(rchRenderModelComponentName9);
-			stringBuilder.Append(rchRenderModelComponentName10);
-			stringBuilder.Append(rchRenderModelComponentName11);
-			stringBuilder.Append(rchRenderModelComponentName12);
-			stringBuilder.Append(rchRenderModelComponentName13);
-			stringBuilder.Append(rchRenderModelComponentName14);
-			stringBuilder.Append(rchRenderModelComponentName15);
-			stringBuilder.Append(rchRenderModelComponentName16);
-			stringBuilder.Append(rchRenderModelComponentName17);
-			stringBuilder.Append(rchRenderModelComponentName18);
-			stringBuilder.Append(rchRenderModelComponentName19);
-			stringBuilder.Append(rchRenderModelComponentName20);
-			stringBuilder.Append(rchRenderModelComponentName21);
-			stringBuilder.Append(rchRenderModelComponentName22);
-			stringBuilder.Append(rchRenderModelComponentName23);
-			stringBuilder.Append(rchRenderModelComponentName24);
-			stringBuilder.Append(rchRenderModelComponentName25);
-			stringBuilder.Append(rchRenderModelComponentName26);
-			stringBuilder.Append(rchRenderModelComponentName27);
-			stringBuilder.Append(rchRenderModelComponentName28);
-			stringBuilder.Append(rchRenderModelComponentName29);
-			stringBuilder.Append(rchRenderModelComponentName30);
-			stringBuilder.Append(rchRenderModelComponentName31);
-			stringBuilder.Append(rchRenderModelComponentName32);
-			stringBuilder.Append(rchRenderModelComponentName33);
-			stringBuilder.Append(rchRenderModelComponentName34);
-			stringBuilder.Append(rchRenderModelComponentName35);
-			stringBuilder.Append(rchRenderModelComponentName36);
-			stringBuilder.Append(rchRenderModelComponentName37);
-			stringBuilder.Append(rchRenderModelComponentName38);
-			stringBuilder.Append(rchRenderModelComponentName39);
-			stringBuilder.Append(rchRenderModelComponentName40);
-			stringBuilder.Append(rchRenderModelComponentName41);
-			stringBuilder.Append(rchRenderModelComponentName42);
-			stringBuilder.Append(rchRenderModelComponentName43);
-			stringBuilder.Append(rchRenderModelComponentName44);
-			stringBuilder.Append(rchRenderModelComponentName45);
-			stringBuilder.Append(rchRenderModelComponentName46);
-			stringBuilder.Append(rchRenderModelComponentName47);
-			stringBuilder.Append(rchRenderModelComponentName48);
-			stringBuilder.Append(rchRenderModelComponentName49);
-			stringBuilder.Append(rchRenderModelComponentName50);
-			stringBuilder.Append(rchRenderModelComponentName51);
-			stringBuilder.Append(rchRenderModelComponentName52);
-			stringBuilder.Append(rchRenderModelComponentName53);
-			stringBuilder.Append(rchRenderModelComponentName54);
-			stringBuilder.Append(rchRenderModelComponentName55);
-			stringBuilder.Append(rchRenderModelComponentName56);
-			stringBuilder.Append(rchRenderModelComponentName57);
-			stringBuilder.Append(rchRenderModelComponentName58);
-			stringBuilder.Append(rchRenderModelComponentName59);
-			stringBuilder.Append(rchRenderModelComponentName60);
-			stringBuilder.Append(rchRenderModelComponentName61);
-			stringBuilder.Append(rchRenderModelComponentName62);
-			stringBuilder.Append(rchRenderModelComponentName63);
-			stringBuilder.Append(rchRenderModelComponentName64);
-			stringBuilder.Append(rchRenderModelComponentName65);
-			stringBuilder.Append(rchRenderModelComponentName66);
-			stringBuilder.Append(rchRenderModelComponentName67);
-			stringBuilder.Append(rchRenderModelComponentName68);
-			stringBuilder.Append(rchRenderModelComponentName69);
-			stringBuilder.Append(rchRenderModelComponentName70);
-			stringBuilder.Append(rchRenderModelComponentName71);
-			stringBuilder.Append(rchRenderModelComponentName72);
-			stringBuilder.Append(rchRenderModelComponentName73);
-			stringBuilder.Append(rchRenderModelComponentName74);
-			stringBuilder.Append(rchRenderModelComponentName75);
-			stringBuilder.Append(rchRenderModelComponentName76);
-			stringBuilder.Append(rchRenderModelComponentName77);
-			stringBuilder.Append(rchRenderModelComponentName78);
-			stringBuilder.Append(rchRenderModelComponentName79);
-			stringBuilder.Append(rchRenderModelComponentName80);
-			stringBuilder.Append(rchRenderModelComponentName81);
-			stringBuilder.Append(rchRenderModelComponentName82);
-			stringBuilder.Append(rchRenderModelComponentName83);
-			stringBuilder.Append(rchRenderModelComponentName84);
-			stringBuilder.Append(rchRenderModelComponentName85);
-			stringBuilder.Append(rchRenderModelComponentName86);
-			stringBuilder.Append(rchRenderModelComponentName87);
-			stringBuilder.Append(rchRenderModelComponentName88);
-			stringBuilder.Append(rchRenderModelComponentName89);
-			stringBuilder.Append(rchRenderModelComponentName90);
-			stringBuilder.Append(rchRenderModelComponentName91);
-			stringBuilder.Append(rchRenderModelComponentName92);
-			stringBuilder.Append(rchRenderModelComponentName93);
-			stringBuilder.Append(rchRenderModelComponentName94);
-			stringBuilder.Append(rchRenderModelComponentName95);
-			stringBuilder.Append(rchRenderModelComponentName96);
-			stringBuilder.Append(rchRenderModelComponentName97);
-			stringBuilder.Append(rchRenderModelComponentName98);
-			stringBuilder.Append(rchRenderModelComponentName99);
-			stringBuilder.Append(rchRenderModelComponentName100);
-			stringBuilder.Append(rchRenderModelComponentName101);
-			stringBuilder.Append(rchRenderModelComponentName102);
-			stringBuilder.Append(rchRenderModelComponentName103);
-			stringBuilder.Append(rchRenderModelComponentName104);
-			stringBuilder.Append(rchRenderModelComponentName105);
-			stringBuilder.Append(rchRenderModelComponentName106);
-			stringBuilder.Append(rchRenderModelComponentName107);
-			stringBuilder.Append(rchRenderModelComponentName108);
-			stringBuilder.Append(rchRenderModelComponentName109);
-			stringBuilder.Append(rchRenderModelComponentName110);
-			stringBuilder.Append(rchRenderModelComponentName111);
-			stringBuilder.Append(rchRenderModelComponentName112);
-			stringBuilder.Append(rchRenderModelComponentName113);
-			stringBuilder.Append(rchRenderModelComponentName114);
-			stringBuilder.Append(rchRenderModelComponentName115);
-			stringBuilder.Append(rchRenderModelComponentName116);
-			stringBuilder.Append(rchRenderModelComponentName117);
-			stringBuilder.Append(rchRenderModelComponentName118);
-			stringBuilder.Append(rchRenderModelComponentName119);
-			stringBuilder.Append(rchRenderModelComponentName120);
-			stringBuilder.Append(rchRenderModelComponentName121);
-			stringBuilder.Append(rchRenderModelComponentName122);
-			stringBuilder.Append(rchRenderModelComponentName123);
-			stringBuilder.Append(rchRenderModelComponentName124);
-			stringBuilder.Append(rchRenderModelComponentName125);
-			stringBuilder.Append(rchRenderModelComponentName126);
-			stringBuilder.Append(rchRenderModelComponentName127);
-			return stringBuilder.ToString();
+			return new string(new char[] {
+				(char)rchRenderModelComponentName0,
+				(char)rchRenderModelComponentName1,
+				(char)rchRenderModelComponentName2,
+				(char)rchRenderModelComponentName3,
+				(char)rchRenderModelComponentName4,
+				(char)rchRenderModelComponentName5,
+				(char)rchRenderModelComponentName6,
+				(char)rchRenderModelComponentName7,
+				(char)rchRenderModelComponentName8,
+				(char)rchRenderModelComponentName9,
+				(char)rchRenderModelComponentName10,
+				(char)rchRenderModelComponentName11,
+				(char)rchRenderModelComponentName12,
+				(char)rchRenderModelComponentName13,
+				(char)rchRenderModelComponentName14,
+				(char)rchRenderModelComponentName15,
+				(char)rchRenderModelComponentName16,
+				(char)rchRenderModelComponentName17,
+				(char)rchRenderModelComponentName18,
+				(char)rchRenderModelComponentName19,
+				(char)rchRenderModelComponentName20,
+				(char)rchRenderModelComponentName21,
+				(char)rchRenderModelComponentName22,
+				(char)rchRenderModelComponentName23,
+				(char)rchRenderModelComponentName24,
+				(char)rchRenderModelComponentName25,
+				(char)rchRenderModelComponentName26,
+				(char)rchRenderModelComponentName27,
+				(char)rchRenderModelComponentName28,
+				(char)rchRenderModelComponentName29,
+				(char)rchRenderModelComponentName30,
+				(char)rchRenderModelComponentName31,
+				(char)rchRenderModelComponentName32,
+				(char)rchRenderModelComponentName33,
+				(char)rchRenderModelComponentName34,
+				(char)rchRenderModelComponentName35,
+				(char)rchRenderModelComponentName36,
+				(char)rchRenderModelComponentName37,
+				(char)rchRenderModelComponentName38,
+				(char)rchRenderModelComponentName39,
+				(char)rchRenderModelComponentName40,
+				(char)rchRenderModelComponentName41,
+				(char)rchRenderModelComponentName42,
+				(char)rchRenderModelComponentName43,
+				(char)rchRenderModelComponentName44,
+				(char)rchRenderModelComponentName45,
+				(char)rchRenderModelComponentName46,
+				(char)rchRenderModelComponentName47,
+				(char)rchRenderModelComponentName48,
+				(char)rchRenderModelComponentName49,
+				(char)rchRenderModelComponentName50,
+				(char)rchRenderModelComponentName51,
+				(char)rchRenderModelComponentName52,
+				(char)rchRenderModelComponentName53,
+				(char)rchRenderModelComponentName54,
+				(char)rchRenderModelComponentName55,
+				(char)rchRenderModelComponentName56,
+				(char)rchRenderModelComponentName57,
+				(char)rchRenderModelComponentName58,
+				(char)rchRenderModelComponentName59,
+				(char)rchRenderModelComponentName60,
+				(char)rchRenderModelComponentName61,
+				(char)rchRenderModelComponentName62,
+				(char)rchRenderModelComponentName63,
+				(char)rchRenderModelComponentName64,
+				(char)rchRenderModelComponentName65,
+				(char)rchRenderModelComponentName66,
+				(char)rchRenderModelComponentName67,
+				(char)rchRenderModelComponentName68,
+				(char)rchRenderModelComponentName69,
+				(char)rchRenderModelComponentName70,
+				(char)rchRenderModelComponentName71,
+				(char)rchRenderModelComponentName72,
+				(char)rchRenderModelComponentName73,
+				(char)rchRenderModelComponentName74,
+				(char)rchRenderModelComponentName75,
+				(char)rchRenderModelComponentName76,
+				(char)rchRenderModelComponentName77,
+				(char)rchRenderModelComponentName78,
+				(char)rchRenderModelComponentName79,
+				(char)rchRenderModelComponentName80,
+				(char)rchRenderModelComponentName81,
+				(char)rchRenderModelComponentName82,
+				(char)rchRenderModelComponentName83,
+				(char)rchRenderModelComponentName84,
+				(char)rchRenderModelComponentName85,
+				(char)rchRenderModelComponentName86,
+				(char)rchRenderModelComponentName87,
+				(char)rchRenderModelComponentName88,
+				(char)rchRenderModelComponentName89,
+				(char)rchRenderModelComponentName90,
+				(char)rchRenderModelComponentName91,
+				(char)rchRenderModelComponentName92,
+				(char)rchRenderModelComponentName93,
+				(char)rchRenderModelComponentName94,
+				(char)rchRenderModelComponentName95,
+				(char)rchRenderModelComponentName96,
+				(char)rchRenderModelComponentName97,
+				(char)rchRenderModelComponentName98,
+				(char)rchRenderModelComponentName99,
+				(char)rchRenderModelComponentName100,
+				(char)rchRenderModelComponentName101,
+				(char)rchRenderModelComponentName102,
+				(char)rchRenderModelComponentName103,
+				(char)rchRenderModelComponentName104,
+				(char)rchRenderModelComponentName105,
+				(char)rchRenderModelComponentName106,
+				(char)rchRenderModelComponentName107,
+				(char)rchRenderModelComponentName108,
+				(char)rchRenderModelComponentName109,
+				(char)rchRenderModelComponentName110,
+				(char)rchRenderModelComponentName111,
+				(char)rchRenderModelComponentName112,
+				(char)rchRenderModelComponentName113,
+				(char)rchRenderModelComponentName114,
+				(char)rchRenderModelComponentName115,
+				(char)rchRenderModelComponentName116,
+				(char)rchRenderModelComponentName117,
+				(char)rchRenderModelComponentName118,
+				(char)rchRenderModelComponentName119,
+				(char)rchRenderModelComponentName120,
+				(char)rchRenderModelComponentName121,
+				(char)rchRenderModelComponentName122,
+				(char)rchRenderModelComponentName123,
+				(char)rchRenderModelComponentName124,
+				(char)rchRenderModelComponentName125,
+				(char)rchRenderModelComponentName126,
+				(char)rchRenderModelComponentName127
+			}).TrimEnd('\0');
 		}
 	}
 }
@@ -5507,6 +5518,11 @@ public class OpenVR
 		return OpenVRInterop.IsRuntimeInstalled();
 	}
 
+	public static string RuntimePath()
+	{
+		return OpenVRInterop.RuntimePath();
+	}
+
 	public static string GetStringForHmdError(EVRInitError error)
 	{
 		return Marshal.PtrToStringAnsi(OpenVRInterop.GetStringForHmdError(error));
@@ -5553,6 +5569,7 @@ public class OpenVR
 	public const uint k_unHapticVibrationPropertyTag = 35;
 	public const uint k_unSkeletonPropertyTag = 36;
 	public const uint k_unSpatialAnchorPosePropertyTag = 40;
+	public const uint k_unJsonPropertyTag = 41;
 	public const uint k_unOpenVRInternalReserved_Start = 1000;
 	public const uint k_unOpenVRInternalReserved_End = 10000;
 	public const uint k_unMaxPropertyStringSize = 32768;
@@ -5564,7 +5581,7 @@ public class OpenVR
 	public const uint k_unScreenshotHandleInvalid = 0;
 	public const string IVRSystem_Version = "IVRSystem_019";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
-	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_003";
+	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_004";
 	public const uint k_unMaxApplicationKeyLength = 128;
 	public const string k_pch_MimeType_HomeApp = "vr/home";
 	public const string k_pch_MimeType_GameTheater = "vr/game_theater";
@@ -5614,13 +5631,15 @@ public class OpenVR
 	public const string k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
 	public const string k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 	public const string k_pch_SteamVR_SupersampleScale_Float = "supersampleScale";
+	public const string k_pch_SteamVR_MaxRecommendedResolution_Int32 = "maxRecommendedResolution";
 	public const string k_pch_SteamVR_AllowAsyncReprojection_Bool = "allowAsyncReprojection";
 	public const string k_pch_SteamVR_AllowReprojection_Bool = "allowInterleavedReprojection";
 	public const string k_pch_SteamVR_ForceReprojection_Bool = "forceReprojection";
 	public const string k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
-	public const string k_pch_SteamVR_DefaultMirrorView_Int32 = "defaultMirrorView";
+	public const string k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
 	public const string k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
 	public const string k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
+	public const string k_pch_SteamVR_MirrorViewGeometryMaximized_String = "mirrorViewGeometryMaximized";
 	public const string k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
 	public const string k_pch_SteamVR_StartCompositorFromAppLaunch_Bool = "startCompositorFromAppLaunch";
 	public const string k_pch_SteamVR_StartDashboardFromAppLaunch_Bool = "startDashboardFromAppLaunch";
@@ -5649,6 +5668,7 @@ public class OpenVR
 	public const string k_pch_Lighthouse_DBHistory_Bool = "dbhistory";
 	public const string k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 	public const string k_pch_Lighthouse_PowerManagedBaseStations_String = "PowerManagedBaseStations";
+	public const string k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
 	public const string k_pch_Null_Section = "driver_null";
 	public const string k_pch_Null_SerialNumber_String = "serialNumber";
 	public const string k_pch_Null_ModelNumber_String = "modelNumber";
@@ -5663,6 +5683,7 @@ public class OpenVR
 	public const string k_pch_UserInterface_Section = "userinterface";
 	public const string k_pch_UserInterface_StatusAlwaysOnTop_Bool = "StatusAlwaysOnTop";
 	public const string k_pch_UserInterface_MinimizeToTray_Bool = "MinimizeToTray";
+	public const string k_pch_UserInterface_HidePopupsWhenStatusMinimized_Bool = "HidePopupsWhenStatusMinimized";
 	public const string k_pch_UserInterface_Screenshots_Bool = "screenshots";
 	public const string k_pch_UserInterface_ScreenshotType_Int = "screenshotType";
 	public const string k_pch_Notifications_Section = "notifications";
@@ -5676,9 +5697,7 @@ public class OpenVR
 	public const string k_pch_Keyboard_OffsetY = "OffsetY";
 	public const string k_pch_Keyboard_Smoothing = "Smoothing";
 	public const string k_pch_Perf_Section = "perfcheck";
-	public const string k_pch_Perf_HeuristicActive_Bool = "heuristicActive";
-	public const string k_pch_Perf_NotifyInHMD_Bool = "warnInHMD";
-	public const string k_pch_Perf_NotifyOnlyOnce_Bool = "warnOnlyOnce";
+	public const string k_pch_Perf_PerfGraphInHMD_Bool = "perfGraphInHMD";
 	public const string k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	public const string k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 	public const string k_pch_Perf_TestData_Float = "perfTestData";
@@ -5729,6 +5748,9 @@ public class OpenVR
 	public const string k_pch_WebInterface_Section = "WebInterface";
 	public const string k_pch_WebInterface_WebEnable_Bool = "WebEnable";
 	public const string k_pch_WebInterface_WebPort_String = "WebPort";
+	public const string k_pch_VRWebHelper_Section = "VRWebHelper";
+	public const string k_pch_VRWebHelper_DebuggerEnabled_Bool = "DebuggerEnabled";
+	public const string k_pch_VRWebHelper_DebuggerPort_Int32 = "DebuggerPort";
 	public const string k_pch_TrackingOverride_Section = "TrackingOverrides";
 	public const string k_pch_App_BindingAutosaveURLSuffix_String = "AutosaveURL";
 	public const string k_pch_App_BindingCurrentURLSuffix_String = "CurrentURL";
@@ -5997,7 +6019,7 @@ public class OpenVR
 		{
 			VRToken = InitInternal2(ref peError, eApplicationType, pchStartupInfo);
 		}
-		catch (EntryPointNotFoundException e)
+		catch (EntryPointNotFoundException)
 		{
 			VRToken = InitInternal(ref peError, eApplicationType);
 		}
