@@ -4,8 +4,6 @@
 #include <GL/glew.h>
 #include <SDL_opengl.h>
 #if defined( OSX )
-#include <Foundation/Foundation.h>
-#include <AppKit/AppKit.h>
 #include <OpenGL/glu.h>
 // Apple's version of glut.h #undef's APIENTRY, redefine it
 #define APIENTRY
@@ -324,7 +322,7 @@ void dprintf( const char *fmt, ... )
 	char buffer[ 2048 ];
 
 	va_start( args, fmt );
-	vsprintf_s( buffer, fmt, args );
+    sprintf_s( buffer, sizeof( buffer ), fmt, args );
 	va_end( args );
 
 	if ( g_bPrintf )

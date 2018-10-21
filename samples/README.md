@@ -28,24 +28,41 @@ On Windows x64, you will need the SDL2 runtime library.
 We will use the command-line on Unix and [Git Bash](https://git-for-windows.github.io/) on Windows.
 
 First, move from the repository root to the samples directory to create a build directory:
-```
-cd samples
-mkdir build; cd build
-```
+
+	cd samples
+	mkdir build
+	cd build
 
 Then, depending on your system:
 
 ### Unix
 
 Generate the CMake cache using Makefile:
-```
-cmake .. -G Makefile -DCMAKE_PREFIX_PATH=/opt/Qt/5.6/gcc_64/lib/cmake -DCMAKE_BUILD_TYPE=Release
-```
 
-To build type:
-```
-make -j4
-```
+	cmake .. -G Makefile -DCMAKE_PREFIX_PATH=/opt/Qt/5.6/gcc_64/lib/cmake -DCMAKE_BUILD_TYPE=Release
+
+To build:
+
+	make -j4
+
+### macOS
+
+Generate the Xcode project:
+
+	cmake .. -G Xcode -DCMAKE_PREFIX_PATH=<path-to-Qt>/5.6/clang_64/lib/cmake -DCMAKE_BUILD_TYPE=Release
+
+On macOS, the `hellovr_vulkan` sample uses the MoltenVK Vulkan driver. To run this sample, install 
+`Molten` in the same directory as `openvr`:
+
+	Molten/
+	openvr/
+
+or if you have installed `Molten` somewhere else, modify the sample's symlink to your MoltenVK installation:
+
+	cd openvr/samples/thirdparty/vulkan-1.0.49.0/lib/osx32
+	ln -sfn <path-to-Molten-installation>/MoltenVK
+
+Then open the `samples/build/openvr_samples.xcodeproj` *Xcode* project and build and run the appropriate target.
 
 
 ### Windows

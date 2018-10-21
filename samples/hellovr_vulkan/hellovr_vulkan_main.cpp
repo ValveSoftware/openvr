@@ -2,6 +2,8 @@
 
 #if defined( _WIN32 )
 	#define VK_USE_PLATFORM_WIN32_KHR
+#elif defined( OSX )
+    #define VK_USE_PLATFORM_MACOS_MVK
 #else
 	#define SDL_VIDEO_DRIVER_X11
 	#define VK_USE_PLATFORM_XLIB_KHR
@@ -16,12 +18,17 @@
 #include <openvr.h>
 #include <deque>
 
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+    #include <MoltenVK/vk_mvk_moltenvk.h>
+    #include "osx/SDL_cocoametalview.h"
+#endif
+
 #include "shared/lodepng.h"
 #include "shared/Matrices.h"
 #include "shared/pathtools.h"
 
 #if defined(POSIX)
-#include "unistd.h"
+    #include "unistd.h"
 #endif
 
 #ifndef _countof
@@ -166,7 +173,8 @@ private:
 	int m_nMSAASampleCount;
 	// Optional scaling factor to render with supersampling (defaults off, use -scale)
 	float m_flSuperSampleScale;
-	
+    bool m_bResolveBeforeCompositor;
+
 	vr::IVRSystem *m_pHMD;
 	vr::IVRRenderModels *m_pRenderModels;
 	std::string m_strDriver;
@@ -300,6 +308,10 @@ private:
 		VkImageLayout m_nImageLayout;
 		VkDeviceMemory m_pDeviceMemory;
 		VkImageView m_pImageView;
+        VkImage m_pResolveImage;
+        VkImageLayout m_nResolveImageLayout;
+        VkDeviceMemory m_pResolveDeviceMemory;
+        VkImageView m_pResolveImageView;
 		VkImage m_pDepthStencilImage;
 		VkImageLayout m_nDepthStencilImageLayout;
 		VkDeviceMemory m_pDepthStencilDeviceMemory;
@@ -329,7 +341,7 @@ void dprintf( const char *fmt, ... )
 	char buffer[ 2048 ];
 
 	va_start( args, fmt );
-	vsprintf_s( buffer, fmt, args );
+    sprintf_s( buffer, sizeof( buffer ), fmt, args );
 	va_end( args );
 
 	if ( g_bPrintf )
@@ -457,6 +469,12 @@ static bool CreateVulkanBuffer( VkDevice pDevice, const VkPhysicalDeviceMemoryPr
 	return true;
 }
 
+#define MSAA_SAMPLES    4
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+    #define MSAA_RESOLVE    (MSAA_SAMPLES > 1)
+#else
+    #define MSAA_RESOLVE    false
+#endif
 
 //-----------------------------------------------------------------------------
 // Purpose: Constructor
@@ -471,8 +489,9 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 	, m_bVerbose( false )
 	, m_bPerf( false )
 	, m_bVblank( false )
-	, m_nMSAASampleCount( 4 )
+    , m_nMSAASampleCount( MSAA_SAMPLES )
 	, m_flSuperSampleScale( 1.0f )
+    , m_bResolveBeforeCompositor( MSAA_RESOLVE )
 	, m_iTrackedControllerCount( 0 )
 	, m_iTrackedControllerCount_Last( -1 )
 	, m_iValidPoseCount( 0 )
@@ -542,6 +561,10 @@ CMainApplication::CMainApplication( int argc, char *argv[] )
 			m_flSuperSampleScale = ( float )atof( argv[ i + 1 ] );
 			i++;
 		}
+        else if( !stricmp( argv[i], "-msaaresolve" ) )
+        {
+            m_bResolveBeforeCompositor = true;
+        }
 		else if( !stricmp( argv[i], "-noprintf" ) )
 		{
 			g_bPrintf = false;
@@ -678,7 +701,11 @@ bool CMainApplication::GetVulkanInstanceExtensionsRequired( std::vector< std::st
 	}
 
 	outInstanceExtensionList.clear();
-	uint32_t nBufferSize = vr::VRCompositor()->GetVulkanInstanceExtensionsRequired( nullptr, 0 );
+#if defined( OSX )
+    uint32_t nBufferSize = 0;   // GetVulkanInstanceExtensionsRequired() crashes on macOS.
+#else
+    uint32_t nBufferSize = vr::VRCompositor()->GetVulkanInstanceExtensionsRequired( nullptr, 0 );
+#endif
 	if ( nBufferSize > 0 )
 	{
 		// Allocate memory for the space separated list and query for it
@@ -724,8 +751,14 @@ bool CMainApplication::GetVulkanDeviceExtensionsRequired( VkPhysicalDevice pPhys
 	}
 
 	outDeviceExtensionList.clear();
-	uint32_t nBufferSize = vr::VRCompositor()->GetVulkanDeviceExtensionsRequired( ( VkPhysicalDevice_T * ) pPhysicalDevice, nullptr, 0 );
-	if ( nBufferSize > 0 )
+    
+#if defined( OSX )
+    uint32_t nBufferSize = 0;   // GetVulkanDeviceExtensionsRequired() crashes on macOS.
+#else
+    uint32_t nBufferSize = vr::VRCompositor()->GetVulkanDeviceExtensionsRequired( ( VkPhysicalDevice_T * ) pPhysicalDevice, nullptr, 0 );
+#endif
+
+    if ( nBufferSize > 0 )
 	{
 		// Allocate memory for the space separated list and query for it
 		char *pExtensionStr = new char[ nBufferSize ];
@@ -781,6 +814,8 @@ bool CMainApplication::BInitVulkanInstance()
 	requiredInstanceExtensions.push_back( VK_KHR_SURFACE_EXTENSION_NAME );
 #if defined ( _WIN32 )
 	requiredInstanceExtensions.push_back( VK_KHR_WIN32_SURFACE_EXTENSION_NAME );
+#elif defined ( VK_USE_PLATFORM_MACOS_MVK )
+    requiredInstanceExtensions.push_back( VK_MVK_MACOS_SURFACE_EXTENSION_NAME );
 #else
 	requiredInstanceExtensions.push_back( VK_KHR_XLIB_SURFACE_EXTENSION_NAME );
 #endif
@@ -868,7 +903,7 @@ bool CMainApplication::BInitVulkanInstance()
 
 			if ( !bFound )
 			{
-				dprintf( "Vulkan missing requested extension '%s'.\n", requiredInstanceExtensions[ nExt ] );
+				dprintf( "Vulkan missing requested extension '%s'.\n", requiredInstanceExtensions[ nExt ].c_str() );
 			}
 		}
 
@@ -947,6 +982,24 @@ bool CMainApplication::BInitVulkanDevice()
 	}
 
 	// Query OpenVR for the physical device to use
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+    uint64_t pHMDPhysicalDevice = 0;
+    m_pHMD->GetOutputDevice( &pHMDPhysicalDevice, vr::TextureType_IOSurface);
+
+    // Select the HMD physical device
+    m_pPhysicalDevice = VK_NULL_HANDLE;
+    for ( uint32_t nPhysicalDevice = 0; nPhysicalDevice < nDeviceCount; nPhysicalDevice++ )
+    {
+        id<MTLDevice> pMTLDevice;
+        vkGetMTLDeviceMVK(pPhysicalDevices[ nPhysicalDevice ], &pMTLDevice);
+
+        if ( ( ( id<MTLDevice> ) pHMDPhysicalDevice ) == pMTLDevice )
+        {
+            m_pPhysicalDevice = ( VkPhysicalDevice ) pPhysicalDevices[ nPhysicalDevice ];
+            break;
+        }
+    }
+#else
 	uint64_t pHMDPhysicalDevice = 0;
 	m_pHMD->GetOutputDevice( &pHMDPhysicalDevice, vr::TextureType_Vulkan, ( VkInstance_T * ) m_pInstance );
 
@@ -960,6 +1013,8 @@ bool CMainApplication::BInitVulkanDevice()
 			break;
 		}
 	}
+#endif
+
 	if ( m_pPhysicalDevice == VK_NULL_HANDLE )
 	{
 		// Fallback: Grab the first physical device
@@ -1097,6 +1152,13 @@ bool CMainApplication::BInitVulkanSwapchain()
 	win32SurfaceCreateInfo.hinstance = GetModuleHandle( NULL );
 	win32SurfaceCreateInfo.hwnd = ( HWND ) wmInfo.info.win.window;
 	nResult = vkCreateWin32SurfaceKHR( m_pInstance, &win32SurfaceCreateInfo, nullptr, &m_pSurface );
+#elif defined(VK_USE_PLATFORM_MACOS_MVK)
+    VkMacOSSurfaceCreateInfoMVK macosSurfaceCreateInfo;
+    macosSurfaceCreateInfo.sType = VK_STRUCTURE_TYPE_MACOS_SURFACE_CREATE_INFO_MVK;
+    macosSurfaceCreateInfo.pNext = NULL;
+    macosSurfaceCreateInfo.flags = 0;
+    macosSurfaceCreateInfo.pView = Cocoa_Mtl_AddMetalView(m_pCompanionWindow);
+    nResult = vkCreateMacOSSurfaceMVK( m_pInstance, &macosSurfaceCreateInfo, nullptr, &m_pSurface );
 #else
 	VkXlibSurfaceCreateInfoKHR xlibSurfaceCreateInfo = { VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR };
 	xlibSurfaceCreateInfo.flags = 0;
@@ -1524,6 +1586,12 @@ void CMainApplication::Shutdown()
 				vkDestroyImageView( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pImageView, nullptr );
 				vkDestroyImage( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pImage, nullptr );
 				vkFreeMemory( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pDeviceMemory, nullptr );
+                if (m_bResolveBeforeCompositor)
+                {
+                    vkDestroyImageView( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pResolveImageView, nullptr );
+                    vkDestroyImage( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pResolveImage, nullptr );
+                    vkFreeMemory( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pResolveDeviceMemory, nullptr );
+                }
 				vkDestroyImageView( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pDepthStencilImageView, nullptr );
 				vkDestroyImage( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pDepthStencilImage, nullptr );
 				vkFreeMemory( m_pDevice, pFramebufferDescs[ nFramebuffer ]->m_pDepthStencilDeviceMemory, nullptr );
@@ -1727,6 +1795,33 @@ void CMainApplication::RenderFrame()
 		bounds.vMin = 0.0f;
 		bounds.vMax = 1.0f;
 
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+        // On macOS, openvr uses IOSurfaces to submit to the compositor.
+        // Retrieve the IOsurface for the image that will be submitted to the compositor.
+
+        IOSurfaceRef ioSurface;
+        VkImage pImage;
+        vr::Texture_t texture = { nullptr, vr::TextureType_IOSurface, vr::ColorSpace_Auto };
+        vr::EVRCompositorError subErr;
+
+        pImage = m_bResolveBeforeCompositor ? m_leftEyeDesc.m_pResolveImage : m_leftEyeDesc.m_pImage;
+        vkGetIOSurfaceMVK(pImage, &ioSurface);
+        texture.handle = ioSurface;
+        subErr = vr::VRCompositor()->Submit( vr::Eye_Left, &texture, &bounds );
+        if (subErr)
+        {
+            dprintf( "VR Submit left eye error: %d\n", subErr );
+        }
+
+        pImage = m_bResolveBeforeCompositor ? m_rightEyeDesc.m_pResolveImage : m_rightEyeDesc.m_pImage;
+        vkGetIOSurfaceMVK(pImage, &ioSurface);
+        texture.handle = ioSurface;
+        subErr = vr::VRCompositor()->Submit( vr::Eye_Right, &texture, &bounds );
+        if (subErr)
+        {
+            dprintf( "VR Submit right eye error: %d\n", subErr );
+        }
+#else
 		vr::VRVulkanTextureData_t vulkanData;
 		vulkanData.m_nImage = ( uint64_t ) m_leftEyeDesc.m_pImage;
 		vulkanData.m_pDevice = ( VkDevice_T * ) m_pDevice;
@@ -1745,6 +1840,8 @@ void CMainApplication::RenderFrame()
 		
 		vulkanData.m_nImage = ( uint64_t ) m_rightEyeDesc.m_pImage;
 		vr::VRCompositor()->Submit( vr::Eye_Right, &texture, &bounds );
+#endif
+
 	}
 
 	VkPresentInfoKHR presentInfo = { VK_STRUCTURE_TYPE_PRESENT_INFO_KHR };
@@ -2600,6 +2697,7 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 		dprintf( "vkCreateImage failed for eye image with error %d\n", nResult );
 		return false;
 	}
+
 	VkMemoryRequirements memoryRequirements = {};
 	vkGetImageMemoryRequirements( m_pDevice, framebufferDesc.m_pImage, &memoryRequirements );
 
@@ -2643,12 +2741,72 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 		return false;
 	}
 
+    if (m_bResolveBeforeCompositor)
+    {
+        //-----------------------------//
+        //    Create resolve target    //
+        //-----------------------------//
+        imageCreateInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+        
+        nResult = vkCreateImage( m_pDevice, &imageCreateInfo, nullptr, &framebufferDesc.m_pResolveImage );
+        if ( nResult != VK_SUCCESS )
+        {
+            dprintf( "vkCreateImage failed for eye image with error %d\n", nResult );
+            return false;
+        }
+        
+        vkGetImageMemoryRequirements( m_pDevice, framebufferDesc.m_pResolveImage, &memoryRequirements );
+        
+        VkMemoryAllocateInfo memoryAllocateInfo = { VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO };
+        memoryAllocateInfo.allocationSize = memoryRequirements.size;
+        if ( !MemoryTypeFromProperties( m_physicalDeviceMemoryProperties, memoryRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, &memoryAllocateInfo.memoryTypeIndex ) )
+        {
+            dprintf( "Failed to find memory type matching requirements.\n" );
+            return false;
+        }
+        
+        nResult = vkAllocateMemory( m_pDevice, &memoryAllocateInfo, nullptr, &framebufferDesc.m_pResolveDeviceMemory );
+        if ( nResult != VK_SUCCESS )
+        {
+            dprintf( "Failed to find memory for image.\n" );
+            return false;
+        }
+        
+        nResult = vkBindImageMemory( m_pDevice, framebufferDesc.m_pResolveImage, framebufferDesc.m_pResolveDeviceMemory, 0 );
+        if ( nResult != VK_SUCCESS )
+        {
+            dprintf( "Failed to bind memory for image.\n" );
+            return false;
+        }
+        
+        imageViewCreateInfo.image = framebufferDesc.m_pResolveImage;
+        imageViewCreateInfo.format = imageCreateInfo.format;
+        nResult = vkCreateImageView( m_pDevice, &imageViewCreateInfo, nullptr, &framebufferDesc.m_pResolveImageView );
+        if ( nResult != VK_SUCCESS )
+        {
+            dprintf( "vkCreateImageView failed with error %d\n", nResult );
+            return false;
+        }
+    }
+
+#if defined ( VK_USE_PLATFORM_MACOS_MVK )
+    // On macOS, openvr uses IOSurfaces to submit to the compositor.
+    // Tell the image that will be submitted to the compositor to use an IOSurface.
+    VkImage pImage = m_bResolveBeforeCompositor ? framebufferDesc.m_pResolveImage : framebufferDesc.m_pImage;
+    nResult = vkUseIOSurfaceMVK(pImage, nullptr);
+    if ( nResult != VK_SUCCESS )
+    {
+        dprintf( "vkUseIOSurfaceMVK failed for eye image with error %d\n", nResult );
+        return false;
+    }
+#endif
+
 	//-----------------------------------//
 	//    Create depth/stencil target    //
 	//-----------------------------------//
-	imageCreateInfo.imageType = VK_IMAGE_TYPE_2D;
 	imageCreateInfo.format = VK_FORMAT_D32_SFLOAT;
 	imageCreateInfo.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    imageCreateInfo.samples = ( VkSampleCountFlagBits ) m_nMSAASampleCount;     // In case resolve attachment changed it
 	nResult = vkCreateImage( m_pDevice, &imageCreateInfo, nullptr, &framebufferDesc.m_pDepthStencilImage );
 	if ( nResult != VK_SUCCESS )
 	{
@@ -2689,10 +2847,11 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	}
 
 	// Create a renderpass
-	uint32_t nTotalAttachments = 2;
-	VkAttachmentDescription attachmentDescs[ 2 ];
-	VkAttachmentReference attachmentReferences[ 2 ];
-	attachmentReferences[ 0 ].attachment = 0;
+    uint32_t nTotalAttachments = m_bResolveBeforeCompositor ? 3 : 2;
+	VkAttachmentDescription attachmentDescs[ nTotalAttachments ];
+	VkAttachmentReference attachmentReferences[ nTotalAttachments ];
+
+    attachmentReferences[ 0 ].attachment = 0;
 	attachmentReferences[ 0 ].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 	attachmentReferences[ 1 ].attachment = 1;
 	attachmentReferences[ 1 ].layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
@@ -2700,7 +2859,7 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	attachmentDescs[ 0 ].format = VK_FORMAT_R8G8B8A8_SRGB;
 	attachmentDescs[ 0 ].samples = imageCreateInfo.samples;
 	attachmentDescs[ 0 ].loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	attachmentDescs[ 0 ].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachmentDescs[ 0 ].storeOp = m_bResolveBeforeCompositor ? VK_ATTACHMENT_STORE_OP_DONT_CARE : VK_ATTACHMENT_STORE_OP_STORE;
 	attachmentDescs[ 0 ].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	attachmentDescs[ 0 ].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	attachmentDescs[ 0 ].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
@@ -2717,6 +2876,22 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	attachmentDescs[ 1 ].finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 	attachmentDescs[ 1 ].flags = 0;
 
+    if (m_bResolveBeforeCompositor)
+    {
+        attachmentReferences[ 2 ].attachment = 2;
+        attachmentReferences[ 2 ].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        attachmentDescs[ 2 ].format = VK_FORMAT_R8G8B8A8_SRGB;
+        attachmentDescs[ 2 ].samples =VK_SAMPLE_COUNT_1_BIT;
+        attachmentDescs[ 2 ].loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachmentDescs[ 2 ].storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        attachmentDescs[ 2 ].stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        attachmentDescs[ 2 ].stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        attachmentDescs[ 2 ].initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        attachmentDescs[ 2 ].finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        attachmentDescs[ 2 ].flags = 0;
+    }
+
 	VkSubpassDescription subPassCreateInfo = { };
 	subPassCreateInfo.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 	subPassCreateInfo.flags = 0;
@@ -2724,7 +2899,7 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	subPassCreateInfo.pInputAttachments = NULL;
 	subPassCreateInfo.colorAttachmentCount = 1;
 	subPassCreateInfo.pColorAttachments = &attachmentReferences[ 0 ];
-	subPassCreateInfo.pResolveAttachments = NULL;
+    subPassCreateInfo.pResolveAttachments = m_bResolveBeforeCompositor ? &attachmentReferences[ 2 ] : NULL;
 	subPassCreateInfo.pDepthStencilAttachment = &attachmentReferences[ 1 ];
 	subPassCreateInfo.preserveAttachmentCount = 0;
 	subPassCreateInfo.pPreserveAttachments = NULL;
@@ -2732,7 +2907,7 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	VkRenderPassCreateInfo renderPassCreateInfo = { };
 	renderPassCreateInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassCreateInfo.flags = 0;
-	renderPassCreateInfo.attachmentCount = 2;
+	renderPassCreateInfo.attachmentCount = nTotalAttachments;
 	renderPassCreateInfo.pAttachments = &attachmentDescs[ 0 ];
 	renderPassCreateInfo.subpassCount = 1;
 	renderPassCreateInfo.pSubpasses = &subPassCreateInfo;
@@ -2747,10 +2922,17 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	}
 
 	// Create the framebuffer
-	VkImageView attachments[ 2 ] = { framebufferDesc.m_pImageView, framebufferDesc.m_pDepthStencilImageView };
-	VkFramebufferCreateInfo framebufferCreateInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
+    VkImageView attachments[ nTotalAttachments ];
+    attachments[ 0 ] = framebufferDesc.m_pImageView;
+    attachments[ 1 ] = framebufferDesc.m_pDepthStencilImageView;
+    if (m_bResolveBeforeCompositor)
+    {
+        attachments[ 2 ] = framebufferDesc.m_pResolveImageView;
+    }
+
+    VkFramebufferCreateInfo framebufferCreateInfo = { VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO };
 	framebufferCreateInfo.renderPass = framebufferDesc.m_pRenderPass;
-	framebufferCreateInfo.attachmentCount = 2;
+	framebufferCreateInfo.attachmentCount = nTotalAttachments;
 	framebufferCreateInfo.pAttachments = &attachments[ 0 ];
 	framebufferCreateInfo.width = nWidth;
 	framebufferCreateInfo.height = nHeight;
@@ -2763,7 +2945,8 @@ bool CMainApplication::CreateFrameBuffer( int nWidth, int nHeight, FramebufferDe
 	}
 
 	framebufferDesc.m_nImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	framebufferDesc.m_nDepthStencilImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    framebufferDesc.m_nResolveImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    framebufferDesc.m_nDepthStencilImageLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 	return true;
 }
 

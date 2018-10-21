@@ -153,7 +153,17 @@ endif()
 set(SDL2_INCLUDE_DIR ${THIRDPARTY_DIR}/sdl2-2.0.3/include)
 
 ## Vulkan
-if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+## osx32 and linux32 cmake can spot each others' .so and .a files, so keep them apart
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+  find_library(VULKAN_LIBRARY
+      NAMES
+        MoltenVK
+      PATHS
+        ${THIRDPARTY_DIR}/vulkan-1.0.49.0/lib/osx32/MoltenVK/macOS
+      NO_DEFAULT_PATH
+  )
+  set(VULKAN_INCLUDE_DIR ${THIRDPARTY_DIR}/vulkan-1.0.49.0/lib/osx32/MoltenVK/include)
+else()
   find_library(VULKAN_LIBRARY
       NAMES
         vulkan-1
@@ -227,6 +237,7 @@ file(GLOB SHARED_SRC_FILES
 
 include_directories(
   .
+  ${VULKAN_INCLUDE_DIR}
   ${OPENGL_INCLUDE_DIR}
   ${GLEW_INCLUDE_DIR}
   ${SDL2_INCLUDE_DIR}
@@ -234,19 +245,14 @@ include_directories(
   ${OPENVR_INCLUDE_DIR}
 )
 
-if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-  include_directories(${VULKAN_INCLUDE_DIR})
-endif()
-
 # -----------------------------------------------------------------------------
 ## SUBDIRECTORIES ##
 
 add_subdirectory(driver_sample)
 add_subdirectory(hellovr_opengl)
-if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
-  add_subdirectory(hellovr_vulkan)
-endif()
+add_subdirectory(hellovr_vulkan)
 add_subdirectory(helloworldoverlay)
 add_subdirectory(tracked_camera_openvr_sample)
+
 
 # -----------------------------------------------------------------------------
