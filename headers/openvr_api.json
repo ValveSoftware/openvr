@@ -602,6 +602,13 @@
 	{"name": "VRSkeletalMotionRange_WithController","value": "0"}
 	,{"name": "VRSkeletalMotionRange_WithoutController","value": "1"}
 ]}
+,	{"enumname": "vr::EVRSkeletalTrackingLevel","values": [ 
+	{"name": "VRSkeletalTracking_Estimated","value": "0"}
+	,{"name": "VRSkeletalTracking_Partial","value": "1"}
+	,{"name": "VRSkeletalTracking_Full","value": "2"}
+	,{"name": "VRSkeletalTrackingLevel_Count","value": "3"}
+	,{"name": "VRSkeletalTrackingLevel_Max","value": "2"}
+]}
 ,	{"enumname": "vr::EVRInitError","values": [ 
 	{"name": "VRInitError_None","value": "0"}
 	,{"name": "VRInitError_Unknown","value": "1"}
@@ -977,13 +984,6 @@
 	,{"name": "VRFingerSplay_Middle_Ring","value": "2"}
 	,{"name": "VRFingerSplay_Ring_Pinky","value": "3"}
 	,{"name": "VRFingerSplay_Count","value": "4"}
-]}
-,	{"enumname": "vr::EVRSkeletalTrackingLevel","values": [ 
-	{"name": "VRSkeletalTracking_Estimated","value": "0"}
-	,{"name": "VRSkeletalTracking_Partial","value": "1"}
-	,{"name": "VRSkeletalTracking_Full","value": "2"}
-	,{"name": "VRSkeletalTrackingLevel_Count","value": "3"}
-	,{"name": "VRSkeletalTrackingLevel_Max","value": "2"}
 ]}
 ,	{"enumname": "vr::EVRInputFilterCancelType","values": [ 
 	{"name": "VRInputFilterCancel_Timers","value": "0"}

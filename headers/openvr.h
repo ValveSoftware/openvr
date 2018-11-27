@@ -1361,6 +1361,28 @@ enum EVRSkeletalMotionRange
 	VRSkeletalMotionRange_WithoutController = 1,
 };
 
+enum EVRSkeletalTrackingLevel
+{
+	// body part location can’t be directly determined by the device. Any skeletal pose provided by 
+	// the device is estimated by assuming the position required to active buttons, triggers, joysticks, 
+	// or other input sensors. 
+	// E.g. Vive Controller, Gamepad
+	VRSkeletalTracking_Estimated = 0,
+
+	// body part location can be measured directly but with fewer degrees of freedom than the actual body 
+	// part. Certain body part positions may be unmeasured by the device and estimated from other input data. 
+	// E.g. Knuckles, gloves that only measure finger curl
+	VRSkeletalTracking_Partial,
+
+	// Body part location can be measured directly throughout the entire range of motion of the body part. 
+	// E.g. Mocap suit for the full body, gloves that measure rotation of each finger segment
+	VRSkeletalTracking_Full,
+
+	VRSkeletalTrackingLevel_Count,
+	VRSkeletalTrackingLevel_Max = VRSkeletalTrackingLevel_Count - 1
+};
+
+
 
 /** Holds the transform for a single bone */
 struct VRBoneTransform_t
@@ -4115,27 +4137,6 @@ namespace vr
 		VRFingerSplay_Middle_Ring,
 		VRFingerSplay_Ring_Pinky,
 		VRFingerSplay_Count
-	};
-
-	enum EVRSkeletalTrackingLevel
-	{
-		// body part location can’t be directly determined by the device. Any skeletal pose provided by 
-		// the device is estimated by assuming the position required to active buttons, triggers, joysticks, 
-		// or other input sensors. 
-		// E.g. Vive Controller, Gamepad
-		VRSkeletalTracking_Estimated = 0,
-		
-		// body part location can be measured directly but with fewer degrees of freedom than the actual body 
-		// part. Certain body part positions may be unmeasured by the device and estimated from other input data. 
-		// E.g. Knuckles, gloves that only measure finger curl
-		VRSkeletalTracking_Partial,
-		
-		// Body part location can be measured directly throughout the entire range of motion of the body part. 
-		// E.g. Mocap suit for the full body, gloves that measure rotation of each finger segment
-		VRSkeletalTracking_Full,
-		
-		VRSkeletalTrackingLevel_Count,
-		VRSkeletalTrackingLevel_Max = VRSkeletalTrackingLevel_Count - 1
 	};
 
 	enum EVRInputFilterCancelType

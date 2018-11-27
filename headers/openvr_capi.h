@@ -922,6 +922,15 @@ typedef enum EVRSkeletalMotionRange
 	EVRSkeletalMotionRange_VRSkeletalMotionRange_WithoutController = 1,
 } EVRSkeletalMotionRange;
 
+typedef enum EVRSkeletalTrackingLevel
+{
+	EVRSkeletalTrackingLevel_VRSkeletalTracking_Estimated = 0,
+	EVRSkeletalTrackingLevel_VRSkeletalTracking_Partial = 1,
+	EVRSkeletalTrackingLevel_VRSkeletalTracking_Full = 2,
+	EVRSkeletalTrackingLevel_VRSkeletalTrackingLevel_Count = 3,
+	EVRSkeletalTrackingLevel_VRSkeletalTrackingLevel_Max = 2,
+} EVRSkeletalTrackingLevel;
+
 typedef enum EVRInitError
 {
 	EVRInitError_VRInitError_None = 0,
@@ -1369,15 +1378,6 @@ typedef enum EVRFingerSplay
 	EVRFingerSplay_VRFingerSplay_Ring_Pinky = 3,
 	EVRFingerSplay_VRFingerSplay_Count = 4,
 } EVRFingerSplay;
-
-typedef enum EVRSkeletalTrackingLevel
-{
-	EVRSkeletalTrackingLevel_VRSkeletalTracking_Estimated = 0,
-	EVRSkeletalTrackingLevel_VRSkeletalTracking_Partial = 1,
-	EVRSkeletalTrackingLevel_VRSkeletalTracking_Full = 2,
-	EVRSkeletalTrackingLevel_VRSkeletalTrackingLevel_Count = 3,
-	EVRSkeletalTrackingLevel_VRSkeletalTrackingLevel_Max = 2,
-} EVRSkeletalTrackingLevel;
 
 typedef enum EVRInputFilterCancelType
 {

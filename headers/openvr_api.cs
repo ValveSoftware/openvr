@@ -4272,6 +4272,14 @@ public enum EVRSkeletalMotionRange
 	WithController = 0,
 	WithoutController = 1,
 }
+public enum EVRSkeletalTrackingLevel
+{
+	VRSkeletalTracking_Estimated = 0,
+	VRSkeletalTracking_Partial = 1,
+	VRSkeletalTracking_Full = 2,
+	Count = 3,
+	Max = 2,
+}
 public enum EVRInitError
 {
 	None = 0,
@@ -4683,14 +4691,6 @@ public enum EVRFingerSplay
 	Middle_Ring = 2,
 	Ring_Pinky = 3,
 	Count = 4,
-}
-public enum EVRSkeletalTrackingLevel
-{
-	VRSkeletalTracking_Estimated = 0,
-	VRSkeletalTracking_Partial = 1,
-	VRSkeletalTracking_Full = 2,
-	Count = 3,
-	Max = 2,
 }
 public enum EVRInputFilterCancelType
 {
