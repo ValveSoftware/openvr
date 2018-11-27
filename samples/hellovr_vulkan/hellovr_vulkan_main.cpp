@@ -329,7 +329,7 @@ void dprintf( const char *fmt, ... )
 	char buffer[ 2048 ];
 
 	va_start( args, fmt );
-	vsprintf_s( buffer, fmt, args );
+	vsnprintf( buffer, sizeof( buffer ), fmt, args );
 	va_end( args );
 
 	if ( g_bPrintf )
@@ -1458,6 +1458,9 @@ bool CMainApplication::BInitVulkan()
 	vkQueueSubmit( m_pQueue, 1, &submitInfo, m_currentCommandBuffer.m_pFence );
 	m_commandBuffers.push_front( m_currentCommandBuffer );
 
+	m_currentCommandBuffer.m_pCommandBuffer = VK_NULL_HANDLE;
+	m_currentCommandBuffer.m_pFence = VK_NULL_HANDLE;
+
 	// Wait for the GPU before proceeding
 	vkQueueWaitIdle( m_pQueue );
 
@@ -1719,6 +1722,9 @@ void CMainApplication::RenderFrame()
 
 		// Add the command buffer back for later recycling
 		m_commandBuffers.push_front( m_currentCommandBuffer );
+
+		m_currentCommandBuffer.m_pCommandBuffer = VK_NULL_HANDLE;
+		m_currentCommandBuffer.m_pFence = VK_NULL_HANDLE;
 
 		// Submit to SteamVR
 		vr::VRTextureBounds_t bounds;
@@ -3303,6 +3309,20 @@ VulkanRenderModel *CMainApplication::FindOrLoadRenderModel( vr::TrackedDeviceInd
 			m_pDescriptorSets[ DESCRIPTOR_SET_LEFT_EYE_RENDER_MODEL0 + unTrackedDeviceIndex ],
 			m_pDescriptorSets[ DESCRIPTOR_SET_RIGHT_EYE_RENDER_MODEL0 + unTrackedDeviceIndex ],
 		};
+
+		// If this gets called during HandleInput() there will be no command buffer current, so create one
+		// and submit it immediately.
+		bool bNewCommandBuffer = false;
+		if ( m_currentCommandBuffer.m_pCommandBuffer == VK_NULL_HANDLE )
+		{
+			m_currentCommandBuffer = GetCommandBuffer();
+
+			// Start the command buffer
+			VkCommandBufferBeginInfo commandBufferBeginInfo = { VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO };
+			commandBufferBeginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+			vkBeginCommandBuffer( m_currentCommandBuffer.m_pCommandBuffer, &commandBufferBeginInfo );
+			bNewCommandBuffer = true;
+		}
 		if ( !pRenderModel->BInit( m_pDevice, m_physicalDeviceMemoryProperties, m_currentCommandBuffer.m_pCommandBuffer, unTrackedDeviceIndex, pDescriptorSets, *pModel, *pTexture ) )
 		{
 			dprintf( "Unable to create Vulkan model from render model %s\n", pchRenderModelName );
@@ -3312,6 +3332,23 @@ VulkanRenderModel *CMainApplication::FindOrLoadRenderModel( vr::TrackedDeviceInd
 		else
 		{
 			m_vecRenderModels.push_back( pRenderModel );
+
+			// If this is during HandleInput() there is was no command buffer current, so submit it now.
+			if ( bNewCommandBuffer )
+			{
+				vkEndCommandBuffer( m_currentCommandBuffer.m_pCommandBuffer );
+
+				// Submit now
+				VkSubmitInfo submitInfo = { VK_STRUCTURE_TYPE_SUBMIT_INFO };
+				submitInfo.commandBufferCount = 1;
+				submitInfo.pCommandBuffers = &m_currentCommandBuffer.m_pCommandBuffer;
+				vkQueueSubmit( m_pQueue, 1, &submitInfo, m_currentCommandBuffer.m_pFence );
+				m_commandBuffers.push_front( m_currentCommandBuffer );
+
+				// Reset current command buffer
+				m_currentCommandBuffer.m_pCommandBuffer = VK_NULL_HANDLE;
+				m_currentCommandBuffer.m_pFence = VK_NULL_HANDLE;
+			}
 		}
 		vr::VRRenderModels()->FreeRenderModel( pModel );
 		vr::VRRenderModels()->FreeTexture( pTexture );

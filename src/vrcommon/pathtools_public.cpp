@@ -97,6 +97,24 @@ bool Path_SetWorkingDirectory( const std::string & sPath )
 	return bSuccess;
 }
 
+/** Gets the path to a temporary directory. */
+std::string Path_GetTemporaryDirectory()
+{
+#if defined( _WIN32 )
+	wchar_t buf[MAX_UNICODE_PATH];
+	if ( GetTempPathW( MAX_UNICODE_PATH, buf ) == 0 )
+		return Path_GetWorkingDirectory();
+	return UTF16to8( buf );
+#else
+	const char *pchTmpDir = getenv( "TMPDIR" );
+	if ( pchTmpDir == NULL )
+	{
+		return "";
+	}
+	return pchTmpDir;
+#endif
+}
+
 /** Returns the specified path without its filename */
 std::string Path_StripFilename( const std::string & sPath, char slash )
 {
@@ -820,3 +838,16 @@ std::string GetUserDocumentsPath()
 #endif
 }
 
+
+// -----------------------------------------------------------------------------------------------------
+// Purpose: deletes / unlinks a single file
+// -----------------------------------------------------------------------------------------------------
+bool Path_UnlinkFile( const std::string &strFilename )
+{
+#if defined( WIN32 )
+	std::wstring wsFilename = UTF8to16( strFilename.c_str() );
+	return ( 0 != DeleteFileW( wsFilename.c_str() ) );
+#else
+	return ( 0 == unlink( strFilename.c_str() ) );
+#endif
+}
