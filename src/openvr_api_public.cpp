@@ -1,5 +1,6 @@
 //========= Copyright Valve Corporation ============//
 #define VR_API_EXPORT 1
+#define VR_API_PUBLIC
 #include "openvr.h"
 #include "ivrclientcore.h"
 #include "pathtools_public.h"
