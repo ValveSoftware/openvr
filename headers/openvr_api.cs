@@ -691,7 +691,7 @@ public struct IVRCompositor
 	internal _GetFrameTiming GetFrameTiming;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate uint _GetFrameTimings(ref Compositor_FrameTiming pTiming, uint nFrames);
+	internal delegate uint _GetFrameTimings([In, Out] Compositor_FrameTiming[] pTiming, uint nFrames);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _GetFrameTimings GetFrameTimings;
 
@@ -1690,6 +1690,11 @@ public struct IVRIOBuffer
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _PropertyContainer PropertyContainer;
 
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate bool _HasReaders(ulong ulBuffer);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _HasReaders HasReaders;
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -2518,9 +2523,9 @@ public class CVRCompositor
 		bool result = FnTable.GetFrameTiming(ref pTiming,unFramesAgo);
 		return result;
 	}
-	public uint GetFrameTimings(ref Compositor_FrameTiming pTiming,uint nFrames)
+	public uint GetFrameTimings(Compositor_FrameTiming [] pTiming)
 	{
-		uint result = FnTable.GetFrameTimings(ref pTiming,nFrames);
+		uint result = FnTable.GetFrameTimings(pTiming,(uint) pTiming.Length);
 		return result;
 	}
 	public float GetFrameTimeRemaining()
@@ -3621,6 +3626,11 @@ public class CVRIOBuffer
 		ulong result = FnTable.PropertyContainer(ulBuffer);
 		return result;
 	}
+	public bool HasReaders(ulong ulBuffer)
+	{
+		bool result = FnTable.HasReaders(ulBuffer);
+		return result;
+	}
 }
 
 
@@ -3738,6 +3748,13 @@ public enum ETrackingUniverseOrigin
 	TrackingUniverseStanding = 1,
 	TrackingUniverseRawAndUncalibrated = 2,
 }
+public enum EAdditionalRadioFeatures
+{
+	None = 0,
+	HTCLinkBox = 1,
+	InternalDongle = 2,
+	ExternalDongle = 4,
+}
 public enum ETrackedDeviceProperty
 {
 	Prop_Invalid = 0,
@@ -3785,6 +3802,7 @@ public enum ETrackedDeviceProperty
 	Prop_CameraStreamFormat_Int32 = 1041,
 	Prop_AdditionalDeviceSettingsPath_String = 1042,
 	Prop_Identifiable_Bool = 1043,
+	Prop_BootloaderVersion_Uint64 = 1044,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -3852,6 +3870,11 @@ public enum ETrackedDeviceProperty
 	Prop_ImuFactoryAccelerometerBias_Vector3 = 2066,
 	Prop_ImuFactoryAccelerometerScale_Vector3 = 2067,
 	Prop_ConfigurationIncludesLighthouse20Features_Bool = 2069,
+	Prop_AdditionalRadioFeatures_Uint64 = 2070,
+	Prop_CameraWhiteBalance_Vector4_Array = 2071,
+	Prop_CameraDistortionFunction_Int32_Array = 2072,
+	Prop_CameraDistortionCoefficients_Float_Array = 2073,
+	Prop_ExpectedControllerType_String = 2074,
 	Prop_DriverRequestedMuraCorrectionMode_Int32 = 2200,
 	Prop_DriverRequestedMuraFeather_InnerLeft_Int32 = 2201,
 	Prop_DriverRequestedMuraFeather_InnerRight_Int32 = 2202,
@@ -3975,10 +3998,11 @@ public enum EVREventType
 	VREvent_MouseButtonUp = 302,
 	VREvent_FocusEnter = 303,
 	VREvent_FocusLeave = 304,
-	VREvent_Scroll = 305,
+	VREvent_ScrollDiscrete = 305,
 	VREvent_TouchPadMove = 306,
 	VREvent_OverlayFocusChanged = 307,
 	VREvent_ReloadOverlays = 308,
+	VREvent_ScrollSmooth = 309,
 	VREvent_InputFocusCaptured = 400,
 	VREvent_InputFocusReleased = 401,
 	VREvent_SceneFocusLost = 402,
@@ -4054,6 +4078,7 @@ public enum EVREventType
 	VREvent_WebInterfaceSectionSettingChanged = 865,
 	VREvent_TrackersSectionSettingChanged = 866,
 	VREvent_LastKnownSectionSettingChanged = 867,
+	VREvent_DismissedWarningsSectionSettingChanged = 868,
 	VREvent_StatusUpdate = 900,
 	VREvent_WebInterface_InstallDriverCompleted = 950,
 	VREvent_MCImageUpdated = 1000,
@@ -4091,6 +4116,7 @@ public enum EVREventType
 	VREvent_Input_ActionManifestLoadFailed = 1704,
 	VREvent_Input_ProgressUpdate = 1705,
 	VREvent_Input_TrackerActivated = 1706,
+	VREvent_Input_BindingsUpdated = 1707,
 	VREvent_SpatialAnchors_PoseUpdated = 1800,
 	VREvent_SpatialAnchors_DescriptorUpdated = 1801,
 	VREvent_SpatialAnchors_RequestPoseUpdate = 1802,
@@ -4146,6 +4172,7 @@ public enum EShowUIType
 	ShowUI_ControllerBinding = 0,
 	ShowUI_ManageTrackers = 1,
 	ShowUI_QuickStart = 2,
+	ShowUI_Pairing = 3,
 }
 public enum EVRInputError
 {
@@ -4354,6 +4381,85 @@ public enum EVRInitError
 	Compositor_OverlayInitFailed = 403,
 	Compositor_ScreenshotsInitFailed = 404,
 	Compositor_UnableToCreateDevice = 405,
+	Compositor_SharedStateIsNull = 406,
+	Compositor_NotificationManagerIsNull = 407,
+	Compositor_ResourceManagerClientIsNull = 408,
+	Compositor_MessageOverlaySharedStateInitFailure = 409,
+	Compositor_PropertiesInterfaceIsNull = 410,
+	Compositor_CreateFullscreenWindowFailed = 411,
+	Compositor_SettingsInterfaceIsNull = 412,
+	Compositor_FailedToShowWindow = 413,
+	Compositor_DistortInterfaceIsNull = 414,
+	Compositor_DisplayFrequencyFailure = 415,
+	Compositor_RendererInitializationFailed = 416,
+	Compositor_DXGIFactoryInterfaceIsNull = 417,
+	Compositor_DXGIFactoryCreateFailed = 418,
+	Compositor_DXGIFactoryQueryFailed = 419,
+	Compositor_InvalidAdapterDesktop = 420,
+	Compositor_InvalidHmdAttachment = 421,
+	Compositor_InvalidOutputDesktop = 422,
+	Compositor_InvalidDeviceProvided = 423,
+	Compositor_D3D11RendererInitializationFailed = 424,
+	Compositor_FailedToFindDisplayMode = 425,
+	Compositor_FailedToCreateSwapChain = 426,
+	Compositor_FailedToGetBackBuffer = 427,
+	Compositor_FailedToCreateRenderTarget = 428,
+	Compositor_FailedToCreateDXGI2SwapChain = 429,
+	Compositor_FailedtoGetDXGI2BackBuffer = 430,
+	Compositor_FailedToCreateDXGI2RenderTarget = 431,
+	Compositor_FailedToGetDXGIDeviceInterface = 432,
+	Compositor_SelectDisplayMode = 433,
+	Compositor_FailedToCreateNvAPIRenderTargets = 434,
+	Compositor_NvAPISetDisplayMode = 435,
+	Compositor_FailedToCreateDirectModeDisplay = 436,
+	Compositor_InvalidHmdPropertyContainer = 437,
+	Compositor_UpdateDisplayFrequency = 438,
+	Compositor_CreateRasterizerState = 439,
+	Compositor_CreateWireframeRasterizerState = 440,
+	Compositor_CreateSamplerState = 441,
+	Compositor_CreateClampToBorderSamplerState = 442,
+	Compositor_CreateAnisoSamplerState = 443,
+	Compositor_CreateOverlaySamplerState = 444,
+	Compositor_CreatePanoramaSamplerState = 445,
+	Compositor_CreateFontSamplerState = 446,
+	Compositor_CreateNoBlendState = 447,
+	Compositor_CreateBlendState = 448,
+	Compositor_CreateAlphaBlendState = 449,
+	Compositor_CreateBlendStateMaskR = 450,
+	Compositor_CreateBlendStateMaskG = 451,
+	Compositor_CreateBlendStateMaskB = 452,
+	Compositor_CreateDepthStencilState = 453,
+	Compositor_CreateDepthStencilStateNoWrite = 454,
+	Compositor_CreateDepthStencilStateNoDepth = 455,
+	Compositor_CreateFlushTexture = 456,
+	Compositor_CreateDistortionSurfaces = 457,
+	Compositor_CreateConstantBuffer = 458,
+	Compositor_CreateHmdPoseConstantBuffer = 459,
+	Compositor_CreateHmdPoseStagingConstantBuffer = 460,
+	Compositor_CreateSharedFrameInfoConstantBuffer = 461,
+	Compositor_CreateOverlayConstantBuffer = 462,
+	Compositor_CreateSceneTextureIndexConstantBuffer = 463,
+	Compositor_CreateReadableSceneTextureIndexConstantBuffer = 464,
+	Compositor_CreateLayerGraphicsTextureIndexConstantBuffer = 465,
+	Compositor_CreateLayerComputeTextureIndexConstantBuffer = 466,
+	Compositor_CreateLayerComputeSceneTextureIndexConstantBuffer = 467,
+	Compositor_CreateComputeHmdPoseConstantBuffer = 468,
+	Compositor_CreateGeomConstantBuffer = 469,
+	Compositor_CreatePanelMaskConstantBuffer = 470,
+	Compositor_CreatePixelSimUBO = 471,
+	Compositor_CreateMSAARenderTextures = 472,
+	Compositor_CreateResolveRenderTextures = 473,
+	Compositor_CreateComputeResolveRenderTextures = 474,
+	Compositor_CreateDriverDirectModeResolveTextures = 475,
+	Compositor_OpenDriverDirectModeResolveTextures = 476,
+	Compositor_CreateFallbackSyncTexture = 477,
+	Compositor_ShareFallbackSyncTexture = 478,
+	Compositor_CreateOverlayIndexBuffer = 479,
+	Compositor_CreateOverlayVertextBuffer = 480,
+	Compositor_CreateTextVertexBuffer = 481,
+	Compositor_CreateTextIndexBuffer = 482,
+	Compositor_CreateMirrorTextures = 483,
+	Compositor_CreateLastFrameRenderTexture = 484,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	VendorSpecific_WindowsNotInDevMode = 1001,
 	VendorSpecific_HmdFound_CantOpenDevice = 1101,
@@ -4423,7 +4529,7 @@ public enum EVRDistortionFunctionType
 {
 	None = 0,
 	FTheta = 1,
-	VRDistortionFucntionType_Extended_FTheta = 2,
+	Extended_FTheta = 2,
 	MAX_DISTORTION_FUNCTION_TYPES = 3,
 }
 public enum EVSync
@@ -4561,7 +4667,7 @@ public enum VROverlayFlags
 	NoDashboardTab = 3,
 	AcceptsGamepadEvents = 4,
 	ShowGamepadFocus = 5,
-	SendVRScrollEvents = 6,
+	SendVRDiscreteScrollEvents = 6,
 	SendVRTouchpadEvents = 7,
 	ShowTouchPadScrollWheel = 8,
 	TransferOwnershipToInternalProcess = 9,
@@ -4572,6 +4678,7 @@ public enum VROverlayFlags
 	SortWithNonSceneOverlays = 14,
 	VisibleInDashboard = 15,
 	MakeOverlaysInteractiveIfVisible = 16,
+	SendVRSmoothScrollEvents = 17,
 }
 public enum VRMessageOverlayResponse
 {
@@ -4970,6 +5077,8 @@ public enum EIOBufferMode
 	public uint oldPid;
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bForced;
+	[MarshalAs(UnmanagedType.I1)]
+	public bool bConnectionLost;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Overlay_t
 {
@@ -5715,6 +5824,7 @@ public class OpenVR
 	public const uint k_unSkeletonPropertyTag = 36;
 	public const uint k_unSpatialAnchorPosePropertyTag = 40;
 	public const uint k_unJsonPropertyTag = 41;
+	public const uint k_unActiveActionSetPropertyTag = 42;
 	public const uint k_unOpenVRInternalReserved_Start = 1000;
 	public const uint k_unOpenVRInternalReserved_End = 10000;
 	public const uint k_unMaxPropertyStringSize = 32768;
@@ -5797,13 +5907,14 @@ public class OpenVR
 	public const string k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
 	public const string k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 	public const string k_pch_SteamVR_DebugInput = "debugInput";
-	public const string k_pch_SteamVR_LegacyInputRebinding = "legacyInputRebinding";
 	public const string k_pch_SteamVR_DebugInputBinding = "debugInputBinding";
 	public const string k_pch_SteamVR_InputBindingUIBlock = "inputBindingUI";
 	public const string k_pch_SteamVR_RenderCameraMode = "renderCameraMode";
 	public const string k_pch_SteamVR_EnableSharedResourceJournaling = "enableSharedResourceJournaling";
 	public const string k_pch_SteamVR_EnableSafeMode = "enableSafeMode";
 	public const string k_pch_SteamVR_PreferredRefreshRate = "preferredRefreshRate";
+	public const string k_pch_SteamVR_LastVersionNotice = "lastVersionNotice";
+	public const string k_pch_SteamVR_LastVersionNoticeDate = "lastVersionNoticeDate";
 	public const string k_pch_DirectMode_Section = "direct_mode";
 	public const string k_pch_DirectMode_Enable_Bool = "enable";
 	public const string k_pch_DirectMode_Count_Int32 = "count";
@@ -5906,12 +6017,12 @@ public class OpenVR
 	public const string k_pch_App_BindingAutosaveURLSuffix_String = "AutosaveURL";
 	public const string k_pch_App_BindingCurrentURLSuffix_String = "CurrentURL";
 	public const string k_pch_App_NeedToUpdateAutosaveSuffix_Bool = "NeedToUpdateAutosave";
-	public const string k_pch_App_ActionManifestURL_String = "ActionManifestURL";
 	public const string k_pch_Trackers_Section = "trackers";
 	public const string k_pch_DesktopUI_Section = "DesktopUI";
 	public const string k_pch_LastKnown_Section = "LastKnown";
 	public const string k_pch_LastKnown_HMDManufacturer_String = "HMDManufacturer";
 	public const string k_pch_LastKnown_HMDModel_String = "HMDModel";
+	public const string k_pch_DismissedWarnings_Section = "DismissedWarnings";
 	public const string IVRScreenshots_Version = "IVRScreenshots_001";
 	public const string IVRResources_Version = "IVRResources_001";
 	public const string IVRDriverManager_Version = "IVRDriverManager_001";
@@ -5921,7 +6032,7 @@ public class OpenVR
 	public const uint k_unMaxBoneNameLength = 32;
 	public const string IVRInput_Version = "IVRInput_005";
 	public const ulong k_ulInvalidIOBufferHandle = 0;
-	public const string IVRIOBuffer_Version = "IVRIOBuffer_001";
+	public const string IVRIOBuffer_Version = "IVRIOBuffer_002";
 	public const uint k_ulInvalidSpatialAnchorHandle = 0;
 	public const string IVRSpatialAnchors_Version = "IVRSpatialAnchors_001";
 

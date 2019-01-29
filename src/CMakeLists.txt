@@ -2,6 +2,7 @@
 project(openvr_api)
 
 set( LIBNAME "openvr_api" )
+set(OPENVR_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../headers)
 
 # Set some properies for specific files.
 if(APPLE)
@@ -50,6 +51,12 @@ set(SOURCE_FILES
 	${VRCOMMON_FILES}
 )
 
+set(PUBLIC_HEADER_FILES
+	${OPENVR_HEADER_DIR}/openvr_driver.h
+	${OPENVR_HEADER_DIR}/openvr_capi.h
+	${OPENVR_HEADER_DIR}/openvr.h
+)
+
 source_group("Src" FILES
 	${CORE_FILES}
 )
@@ -92,6 +99,18 @@ if(USE_CUSTOM_LIBCXX)
 endif()
 
 target_link_libraries(${LIBNAME} ${EXTRA_LIBS} ${CMAKE_DL_LIBS})
-target_include_directories(${LIBNAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/../headers)
+target_include_directories(${LIBNAME} PUBLIC ${OPENVR_HEADER_DIR})
 
 install(TARGETS ${LIBNAME} DESTINATION lib)
+install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/openvr)
+
+# Generate a .pc file for linux environments
+if(PLATFORM_NAME MATCHES "linux")
+    set(INSTALL_PKGCONFIG_DIR "${CMAKE_INSTALL_PREFIX}/share/pkgconfig" CACHE PATH "Installation directory for pkgconfig (.pc) files")
+    CONFIGURE_FILE("openvr.pc.in" "openvr.pc" @ONLY)
+
+    set(OPENVR_PC ${CMAKE_CURRENT_BINARY_DIR}/openvr.pc)
+    if(NOT SKIP_INSTALL_FILES AND NOT SKIP_INSTALL_ALL )
+        install(FILES ${OPENVR_PC} DESTINATION "${INSTALL_PKGCONFIG_DIR}")
+    endif()
+endif()

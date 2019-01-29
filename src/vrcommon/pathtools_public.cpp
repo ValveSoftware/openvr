@@ -209,7 +209,7 @@ bool Path_IsAbsolute( const std::string & sPath )
 std::string Path_MakeAbsolute( const std::string & sRelativePath, const std::string & sBasePath )
 {
 	if( Path_IsAbsolute( sRelativePath ) )
-		return sRelativePath;
+		return Path_Compact( sRelativePath );
 	else
 	{
 		if( !Path_IsAbsolute( sBasePath ) )

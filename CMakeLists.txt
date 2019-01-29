@@ -4,6 +4,23 @@ cmake_minimum_required(VERSION 2.8)
 # Set project name.
 project(OpenVRSDK)
 
+# Fetch the version from the headers
+set(VERSION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/headers/openvr.h")
+
+set(VERSION_MAJOR_REGEX "\tstatic const uint32_t k_nSteamVRVersionMajor = (.+);")
+set(VERSION_MINOR_REGEX "\tstatic const uint32_t k_nSteamVRVersionMinor = (.+);")
+set(VERSION_BUILD_REGEX "\tstatic const uint32_t k_nSteamVRVersionBuild = (.+);")
+
+file(STRINGS "${VERSION_FILE}" VERSION_MAJOR_STRING REGEX "${VERSION_MAJOR_REGEX}")
+file(STRINGS "${VERSION_FILE}" VERSION_MINOR_STRING REGEX "${VERSION_MINOR_REGEX}")
+file(STRINGS "${VERSION_FILE}" VERSION_BUILD_STRING REGEX "${VERSION_BUILD_REGEX}")
+
+string(REGEX REPLACE "${VERSION_MAJOR_REGEX}" "\\1" VERSION_MAJOR ${VERSION_MAJOR_STRING})
+string(REGEX REPLACE "${VERSION_MINOR_REGEX}" "\\1" VERSION_MINOR ${VERSION_MINOR_STRING})
+string(REGEX REPLACE "${VERSION_BUILD_REGEX}" "\\1" VERSION_BUILD ${VERSION_BUILD_STRING})
+
+set(OPENVR_VERSION "${VERSION_MAJOR}.${VERSION_MINOR}.${VERSION_BUILD}")
+
 # Setup some options.
 option(BUILD_SHARED "Builds the library as shared library" OFF)
 option(BUILD_FRAMEWORK "Builds the library as an apple Framework" OFF)
