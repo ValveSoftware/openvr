@@ -5740,6 +5740,7 @@ public enum EIOBufferMode
 	public IntPtr m_pVRInput; // class vr::IVRInput *
 	public IntPtr m_pVRIOBuffer; // class vr::IVRIOBuffer *
 	public IntPtr m_pVRSpatialAnchors; // class vr::IVRSpatialAnchors *
+	public IntPtr m_pVRNotifications; // class vr::IVRNotifications *
 }
 
 public class OpenVR
@@ -6058,7 +6059,9 @@ public class OpenVR
 			m_pVRScreenshots = null;
 			m_pVRTrackedCamera = null;
 			m_pVRInput = null;
+			m_pIOBuffer = null;
 			m_pVRSpatialAnchors = null;
+			m_pVRNotifications = null;
 		}
 
 		void CheckClear()
@@ -6226,6 +6229,19 @@ public class OpenVR
 			return m_pVRInput;
 		}
 
+		public CVRIOBuffer VRIOBuffer()
+		{
+			CheckClear();
+			if (m_pVRIOBuffer == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = OpenVRInterop.GetGenericInterface(FnTable_Prefix + IVRIOBuffer_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRIOBuffer = new CVRIOBuffer(pInterface);
+			}
+			return m_pVRIOBuffer;
+		}
+
 		public CVRSpatialAnchors VRSpatialAnchors()
 		{
 			CheckClear();
@@ -6237,6 +6253,19 @@ public class OpenVR
 					m_pVRSpatialAnchors = new CVRSpatialAnchors(pInterface);
 			}
 			return m_pVRSpatialAnchors;
+		}
+
+		public CVRNotifications VRNotifications()
+		{
+			CheckClear();
+			if (m_pVRNotifications == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = OpenVRInterop.GetGenericInterface(FnTable_Prefix + IVRNotifications_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRNotifications = new CVRNotifications(pInterface);
+			}
+			return m_pVRNotifications;
 		}
 
 		private CVRSystem m_pVRSystem;
@@ -6251,7 +6280,9 @@ public class OpenVR
 		private CVRScreenshots m_pVRScreenshots;
 		private CVRTrackedCamera m_pVRTrackedCamera;
 		private CVRInput m_pVRInput;
+		private CVRIOBuffer m_pVRIOBuffer;
 		private CVRSpatialAnchors m_pVRSpatialAnchors;
+		private CVRNotifications m_pVRNotifications;
 	};
 
 	private static COpenVRContext _OpenVRInternal_ModuleContext = null;
@@ -6277,7 +6308,9 @@ public class OpenVR
 	public static CVRScreenshots Screenshots { get { return OpenVRInternal_ModuleContext.VRScreenshots(); } }
 	public static CVRTrackedCamera TrackedCamera { get { return OpenVRInternal_ModuleContext.VRTrackedCamera(); } }
 	public static CVRInput Input { get { return OpenVRInternal_ModuleContext.VRInput(); } }
+	public static CVRIOBuffer IOBuffer { get { return OpenVRInternal_ModuleContext.VRIOBuffer(); } }
 	public static CVRSpatialAnchors SpatialAnchors { get { return OpenVRInternal_ModuleContext.VRSpatialAnchors(); } }
+	public static CVRNotifications Notifications { get { return OpenVRInternal_ModuleContext.VRNotifications(); } }
 
 	/** Finds the active installation of vrclient.dll and initializes it */
 	public static CVRSystem Init(ref EVRInitError peError, EVRApplicationType eApplicationType = EVRApplicationType.VRApplication_Scene, string pchStartupInfo= "")

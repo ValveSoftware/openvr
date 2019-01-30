@@ -2184,6 +2184,7 @@ typedef struct COpenVRContext
 	intptr_t m_pVRInput; // class vr::IVRInput *
 	intptr_t m_pVRIOBuffer; // class vr::IVRIOBuffer *
 	intptr_t m_pVRSpatialAnchors; // class vr::IVRSpatialAnchors *
+	intptr_t m_pVRNotifications; // class vr::IVRNotifications *
 } COpenVRContext;
 
 

@@ -4820,6 +4820,16 @@ namespace vr
 			return m_pVRInput;
 		}
 
+		IVRIOBuffer *VRIOBuffer()
+		{
+			if ( !m_pVRIOBuffer )
+			{
+				EVRInitError eError;
+				m_pVRIOBuffer = ( IVRIOBuffer * )VR_GetGenericInterface( IVRIOBuffer_Version, &eError );
+			}
+			return m_pVRIOBuffer;
+		}
+
 		IVRSpatialAnchors *VRSpatialAnchors()
 		{
 			CheckClear();
@@ -4831,14 +4841,15 @@ namespace vr
 			return m_pVRSpatialAnchors;
 		}
 
-		IVRIOBuffer *VRIOBuffer()
+		IVRNotifications *VRNotifications()
 		{
-			if ( !m_pVRIOBuffer )
+			CheckClear();
+			if ( !m_pVRNotifications )
 			{
 				EVRInitError eError;
-				m_pVRIOBuffer = ( IVRIOBuffer * )VR_GetGenericInterface( IVRIOBuffer_Version, &eError );
+				m_pVRNotifications = ( IVRNotifications * )VR_GetGenericInterface( IVRNotifications_Version, &eError );
 			}
-			return m_pVRIOBuffer;
+			return m_pVRNotifications;
 		}
 		
 	private:
@@ -4858,6 +4869,7 @@ namespace vr
 		IVRInput			*m_pVRInput;
 		IVRIOBuffer			*m_pVRIOBuffer;
 		IVRSpatialAnchors   *m_pVRSpatialAnchors;
+		IVRNotifications	*m_pVRNotifications;
 	};
 
 	inline COpenVRContext &OpenVRInternal_ModuleContext()
@@ -4882,6 +4894,7 @@ namespace vr
 	inline IVRInput *VR_CALLTYPE VRInput() { return OpenVRInternal_ModuleContext().VRInput(); }
 	inline IVRIOBuffer *VR_CALLTYPE VRIOBuffer() { return OpenVRInternal_ModuleContext().VRIOBuffer(); }
 	inline IVRSpatialAnchors *VR_CALLTYPE VRSpatialAnchors() { return OpenVRInternal_ModuleContext().VRSpatialAnchors(); }
+	inline IVRNotifications *VR_CALLTYPE VRNotifications() { return OpenVRInternal_ModuleContext().VRNotifications(); }
 
 	inline void COpenVRContext::Clear()
 	{
@@ -4901,6 +4914,7 @@ namespace vr
 		m_pVRInput = nullptr;
 		m_pVRIOBuffer = nullptr;
 		m_pVRSpatialAnchors = nullptr;
+		m_pVRNotifications = nullptr;
 	}
 	
 	VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2( EVRInitError *peError, EVRApplicationType eApplicationType, const char *pStartupInfo );

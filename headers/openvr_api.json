@@ -1999,7 +1999,8 @@
 { "fieldname": "m_pVRDriverManager", "fieldtype": "class vr::IVRDriverManager *"},
 { "fieldname": "m_pVRInput", "fieldtype": "class vr::IVRInput *"},
 { "fieldname": "m_pVRIOBuffer", "fieldtype": "class vr::IVRIOBuffer *"},
-{ "fieldname": "m_pVRSpatialAnchors", "fieldtype": "class vr::IVRSpatialAnchors *"}]}
+{ "fieldname": "m_pVRSpatialAnchors", "fieldtype": "class vr::IVRSpatialAnchors *"},
+{ "fieldname": "m_pVRNotifications", "fieldtype": "class vr::IVRNotifications *"}]}
 ],
 "methods":[{
 	"classname": "vr::IVRSystem",
