@@ -6059,7 +6059,7 @@ public class OpenVR
 			m_pVRScreenshots = null;
 			m_pVRTrackedCamera = null;
 			m_pVRInput = null;
-			m_pIOBuffer = null;
+			m_pVRIOBuffer = null;
 			m_pVRSpatialAnchors = null;
 			m_pVRNotifications = null;
 		}
