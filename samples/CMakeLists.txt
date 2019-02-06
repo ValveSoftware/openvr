@@ -17,19 +17,7 @@ message(STATUS "Compilation set for ${PLATFORM}bits architectures.")
 
 set(SDL_REQUIRED_LIBRARIES SDL2)
 
-if(${CMAKE_SYSTEM_NAME} MATCHES "Linux")
-  add_definitions(-DLINUX -DPOSIX)
-  set(ARCH_TARGET linux64)
-
-  if(${PLATFORM} MATCHES 32)
-    message(WARNING "OpenVR x86 binaries not provided on GNU/Linux.")
-  endif()
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-  set(CMAKE_MACOSX_RPATH 0)
-  add_definitions(-DOSX -DPOSIX)
-  set(ARCH_TARGET osx32)
-
-elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
+if(WIN32)
   set(SDL_REQUIRED_LIBRARIES ${SDL_REQUIRED_LIBRARIES} SDL2main)
   add_definitions(-D_WIN32)
   set(ARCH_TARGET win${PLATFORM})
@@ -39,6 +27,17 @@ elseif(${CMAKE_SYSTEM_NAME} MATCHES "Windows")
 
   if(${PLATFORM} MATCHES 64)
     message(WARNING "SDL x64 runtime binaries not provided on Windows.")
+  endif()
+elseif(APPLE)
+  set(CMAKE_MACOSX_RPATH 0)
+  add_definitions(-DOSX -DPOSIX)
+  set(ARCH_TARGET osx32)
+else() # Linux, BSDs, Solaris, etc.
+  add_definitions(-DLINUX -DPOSIX)
+  set(ARCH_TARGET linux64)
+
+  if(${PLATFORM} MATCHES 32)
+    message(WARNING "OpenVR x86 binaries not provided on GNU/Linux.")
   endif()
 endif()
 
@@ -153,7 +152,7 @@ endif()
 set(SDL2_INCLUDE_DIR ${THIRDPARTY_DIR}/sdl2-2.0.3/include)
 
 ## Vulkan
-if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+if(WIN32 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
   find_library(VULKAN_LIBRARY
       NAMES
         vulkan-1
@@ -234,7 +233,7 @@ include_directories(
   ${OPENVR_INCLUDE_DIR}
 )
 
-if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+if(WIN32 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
   include_directories(${VULKAN_INCLUDE_DIR})
 endif()
 
@@ -243,7 +242,7 @@ endif()
 
 add_subdirectory(driver_sample)
 add_subdirectory(hellovr_opengl)
-if(NOT (${CMAKE_SYSTEM_NAME} MATCHES "Darwin"))
+if(WIN32 OR (${CMAKE_SYSTEM_NAME} MATCHES "Linux"))
   add_subdirectory(hellovr_vulkan)
 endif()
 add_subdirectory(helloworldoverlay)
