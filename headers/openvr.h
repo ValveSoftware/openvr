@@ -1729,8 +1729,21 @@ struct ImuSample_t
 
 #pragma pack( pop )
 
+#define VR_ABI_WIN32 1
+#define VR_ABI_UNIX 2
+
+#ifndef VR_ABI
+# if defined(_WIN32)
+#  define VR_ABI VR_ABI_WIN32
+# elif defined(__GNUC__) || defined(COMPILER_GCC) || defined(__APPLE__)
+#  define VR_ABI VR_ABI_UNIX
+# else
+#  error "Unsupported Platform."
+# endif
+#endif
+
 // figure out how to import from the VR API dll
-#if defined(_WIN32)
+#if VR_ABI == VR_ABI_WIN32
 
 #ifdef VR_API_EXPORT
 #define VR_INTERFACE extern "C" __declspec( dllexport )
@@ -1738,7 +1751,7 @@ struct ImuSample_t
 #define VR_INTERFACE extern "C" __declspec( dllimport )
 #endif
 
-#elif defined(__GNUC__) || defined(COMPILER_GCC) || defined(__APPLE__)
+#elif VR_ABI == VR_ABI_UNIX
 
 #ifdef VR_API_EXPORT
 #define VR_INTERFACE extern "C" __attribute__((visibility("default")))
@@ -1751,7 +1764,7 @@ struct ImuSample_t
 #endif
 
 
-#if defined( _WIN32 )
+#if VR_ABI == VR_ABI_WIN32
 #define VR_CALLTYPE __cdecl
 #else
 #define VR_CALLTYPE 
