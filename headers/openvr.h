@@ -1384,7 +1384,7 @@ enum EVRSkeletalMotionRange
 
 enum EVRSkeletalTrackingLevel
 {
-	// body part location can’t be directly determined by the device. Any skeletal pose provided by 
+	// body part location can't be directly determined by the device. Any skeletal pose provided by 
 	// the device is estimated by assuming the position required to active buttons, triggers, joysticks, 
 	// or other input sensors. 
 	// E.g. Vive Controller, Gamepad
@@ -3178,7 +3178,7 @@ struct NotificationBitmap_t
 		, m_nHeight( 0 )
 		, m_nBytesPerPixel( 0 )
 	{
-	};
+	}
 
 	void *m_pImageData;
 	int32_t m_nWidth;
