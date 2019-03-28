@@ -199,6 +199,7 @@ static const char * k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 static const char * k_pch_Lighthouse_PowerManagedBaseStations_String = "PowerManagedBaseStations";
 static const char * k_pch_Lighthouse_PowerManagedBaseStations2_String = "PowerManagedBaseStations2";
 static const char * k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
+static const char * k_pch_Lighthouse_NewPairing_Bool = "newPairing";
 static const char * k_pch_Null_Section = "driver_null";
 static const char * k_pch_Null_SerialNumber_String = "serialNumber";
 static const char * k_pch_Null_ModelNumber_String = "modelNumber";
@@ -270,9 +271,10 @@ static const char * k_pch_Power_PauseCompositorOnStandby_Bool = "pauseCompositor
 static const char * k_pch_Dashboard_Section = "dashboard";
 static const char * k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 static const char * k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
-static const char * k_pch_Dashboard_EnableWebUI = "webUI";
-static const char * k_pch_Dashboard_EnableWebUIDevTools = "webUIDevTools";
-static const char * k_pch_Dashboard_EnableWebUIDashboardReplacement = "webUIDashboard";
+static const char * k_pch_Dashboard_UseWebDashboard = "useWebDashboard";
+static const char * k_pch_Dashboard_UseWebSettings = "useWebSettings";
+static const char * k_pch_Dashboard_UseWebIPD = "useWebIPD";
+static const char * k_pch_Dashboard_UseWebPowerMenu = "useWebPowerMenu";
 static const char * k_pch_modelskin_Section = "modelskins";
 static const char * k_pch_Driver_Enable_Bool = "enable";
 static const char * k_pch_WebInterface_Section = "WebInterface";
@@ -425,6 +427,8 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_AdditionalDeviceSettingsPath_String = 1042,
 	ETrackedDeviceProperty_Prop_Identifiable_Bool = 1043,
 	ETrackedDeviceProperty_Prop_BootloaderVersion_Uint64 = 1044,
+	ETrackedDeviceProperty_Prop_AdditionalSystemReportData_String = 1045,
+	ETrackedDeviceProperty_Prop_CompositeFirmwareVersion_String = 1046,
 	ETrackedDeviceProperty_Prop_ReportsTimeSinceVSync_Bool = 2000,
 	ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	ETrackedDeviceProperty_Prop_DisplayFrequency_Float = 2002,
@@ -521,6 +525,8 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_TrackingRangeMinimumMeters_Float = 4004,
 	ETrackedDeviceProperty_Prop_TrackingRangeMaximumMeters_Float = 4005,
 	ETrackedDeviceProperty_Prop_ModeLabel_String = 4006,
+	ETrackedDeviceProperty_Prop_CanWirelessIdentify_Bool = 4007,
+	ETrackedDeviceProperty_Prop_Nonce_Int32 = 4008,
 	ETrackedDeviceProperty_Prop_IconPathName_String = 5000,
 	ETrackedDeviceProperty_Prop_NamedIconPathDeviceOff_String = 5001,
 	ETrackedDeviceProperty_Prop_NamedIconPathDeviceSearching_String = 5002,
@@ -647,7 +653,6 @@ typedef enum EVREventType
 	EVREventType_VREvent_OverlayHidden = 501,
 	EVREventType_VREvent_DashboardActivated = 502,
 	EVREventType_VREvent_DashboardDeactivated = 503,
-	EVREventType_VREvent_DashboardThumbSelected = 504,
 	EVREventType_VREvent_DashboardRequested = 505,
 	EVREventType_VREvent_ResetDashboard = 506,
 	EVREventType_VREvent_RenderToast = 507,
@@ -670,6 +675,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_RoomViewShown = 526,
 	EVREventType_VREvent_RoomViewHidden = 527,
 	EVREventType_VREvent_ShowUI = 528,
+	EVREventType_VREvent_ShowDevTools = 529,
 	EVREventType_VREvent_Notification_Shown = 600,
 	EVREventType_VREvent_Notification_Hidden = 601,
 	EVREventType_VREvent_Notification_BeginInteraction = 602,
@@ -679,6 +685,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_QuitAborted_UserPrompt = 702,
 	EVREventType_VREvent_QuitAcknowledged = 703,
 	EVREventType_VREvent_DriverRequestedQuit = 704,
+	EVREventType_VREvent_RestartRequested = 705,
 	EVREventType_VREvent_ChaperoneDataHasChanged = 800,
 	EVREventType_VREvent_ChaperoneUniverseHasChanged = 801,
 	EVREventType_VREvent_ChaperoneTempDataHasChanged = 802,
@@ -725,6 +732,11 @@ typedef enum EVREventType
 	EVREventType_VREvent_Compositor_MirrorWindowHidden = 1401,
 	EVREventType_VREvent_Compositor_ChaperoneBoundsShown = 1410,
 	EVREventType_VREvent_Compositor_ChaperoneBoundsHidden = 1411,
+	EVREventType_VREvent_Compositor_DisplayDisconnected = 1412,
+	EVREventType_VREvent_Compositor_DisplayReconnected = 1413,
+	EVREventType_VREvent_Compositor_HDCPError = 1414,
+	EVREventType_VREvent_Compositor_ApplicationNotResponding = 1415,
+	EVREventType_VREvent_Compositor_ApplicationResumed = 1416,
 	EVREventType_VREvent_TrackedCamera_StartVideoStream = 1500,
 	EVREventType_VREvent_TrackedCamera_StopVideoStream = 1501,
 	EVREventType_VREvent_TrackedCamera_PauseVideoStream = 1502,
@@ -747,6 +759,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_SpatialAnchors_DescriptorUpdated = 1801,
 	EVREventType_VREvent_SpatialAnchors_RequestPoseUpdate = 1802,
 	EVREventType_VREvent_SpatialAnchors_RequestDescriptorUpdate = 1803,
+	EVREventType_VREvent_SystemReport_Started = 1900,
 	EVREventType_VREvent_VendorSpecific_Reserved_Start = 10000,
 	EVREventType_VREvent_VendorSpecific_Reserved_End = 19999,
 } EVREventType;
@@ -804,7 +817,17 @@ typedef enum EShowUIType
 	EShowUIType_ShowUI_ManageTrackers = 1,
 	EShowUIType_ShowUI_QuickStart = 2,
 	EShowUIType_ShowUI_Pairing = 3,
+	EShowUIType_ShowUI_Settings = 4,
 } EShowUIType;
+
+typedef enum EHDCPError
+{
+	EHDCPError_HDCPError_None = 0,
+	EHDCPError_HDCPError_LinkLost = 1,
+	EHDCPError_HDCPError_Tampered = 2,
+	EHDCPError_HDCPError_DeviceRevoked = 3,
+	EHDCPError_HDCPError_Unknown = 4,
+} EHDCPError;
 
 typedef enum EVRInputError
 {
@@ -998,6 +1021,7 @@ typedef enum EVRInitError
 	EVRInitError_VRInitError_Init_USBServiceBusy = 140,
 	EVRInitError_VRInitError_Init_VRWebHelperStartupFailed = 141,
 	EVRInitError_VRInitError_Init_TrackerManagerInitFailed = 142,
+	EVRInitError_VRInitError_Init_AlreadyRunning = 143,
 	EVRInitError_VRInitError_Driver_Failed = 200,
 	EVRInitError_VRInitError_Driver_Unknown = 201,
 	EVRInitError_VRInitError_Driver_HmdUnknown = 202,
@@ -1120,6 +1144,7 @@ typedef enum EVRInitError
 	EVRInitError_VRInitError_VendorSpecific_HmdFound_UserDataError = 1112,
 	EVRInitError_VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck = 1113,
 	EVRInitError_VRInitError_Steam_SteamInstallationNotFound = 2000,
+	EVRInitError_VRInitError_LastError = 2001,
 } EVRInitError;
 
 typedef enum EVRScreenshotType
@@ -1719,7 +1744,8 @@ typedef struct VREvent_Scroll_t
 {
 	float xdelta;
 	float ydelta;
-	uint32_t repeatCount;
+	uint32_t unused;
+	float viewportscale;
 } VREvent_Scroll_t;
 
 typedef struct VREvent_TouchPadMove_t
@@ -1886,6 +1912,16 @@ typedef struct VREvent_ShowUI_t
 {
 	enum EShowUIType eType;
 } VREvent_ShowUI_t;
+
+typedef struct VREvent_ShowDevTools_t
+{
+	int32_t nBrowserIdentifier;
+} VREvent_ShowDevTools_t;
+
+typedef struct VREvent_HDCPError_t
+{
+	enum EHDCPError eCode;
+} VREvent_HDCPError_t;
 
 typedef struct HiddenAreaMesh_t
 {
@@ -2627,6 +2663,7 @@ struct VR_IVRInput_FnTable
 	EVRInputError (OPENVR_FNTABLE_CALLTYPE *GetOriginTrackedDeviceInfo)(VRInputValueHandle_t origin, struct InputOriginInfo_t * pOriginInfo, uint32_t unOriginInfoSize);
 	EVRInputError (OPENVR_FNTABLE_CALLTYPE *ShowActionOrigins)(VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle);
 	EVRInputError (OPENVR_FNTABLE_CALLTYPE *ShowBindingsForActionSet)(struct VRActiveActionSet_t * pSets, uint32_t unSizeOfVRSelectedActionSet_t, uint32_t unSetCount, VRInputValueHandle_t originToHighlight);
+	bool (OPENVR_FNTABLE_CALLTYPE *IsUsingLegacyInput)();
 };
 
 struct VR_IVRIOBuffer_FnTable

@@ -700,6 +700,28 @@ std::string Path_ReadTextFile( const std::string &strFilename )
 }
 
 
+bool Path_MakeWritable( const std::string &strFilename )
+{
+#if defined ( _WIN32 )
+	std::wstring wstrFilename = UTF8to16( strFilename.c_str() );
+
+	DWORD dwAttrs = GetFileAttributesW( wstrFilename.c_str() );
+	if ( dwAttrs != INVALID_FILE_ATTRIBUTES && ( dwAttrs & FILE_ATTRIBUTE_READONLY ) )
+	{
+		return SetFileAttributesW( wstrFilename.c_str(), dwAttrs & ~FILE_ATTRIBUTE_READONLY );
+	}
+#else
+	struct stat sb;
+
+	if ( stat( strFilename.c_str(), &sb ) == 0 && !( sb.st_mode & S_IWUSR ) )
+	{
+		return ( chmod( strFilename.c_str(), sb.st_mode | S_IWUSR ) == 0 );
+	}
+#endif
+
+	return true;
+}
+
 bool Path_WriteStringToTextFile( const std::string &strFilename, const char *pchData )
 {
 	FILE *f;

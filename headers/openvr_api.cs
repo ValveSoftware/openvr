@@ -1660,6 +1660,11 @@ public struct IVRInput
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _ShowBindingsForActionSet ShowBindingsForActionSet;
 
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate bool _IsUsingLegacyInput();
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _IsUsingLegacyInput IsUsingLegacyInput;
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -3589,6 +3594,11 @@ public class CVRInput
 		EVRInputError result = FnTable.ShowBindingsForActionSet(pSets,unSizeOfVRSelectedActionSet_t,(uint) pSets.Length,originToHighlight);
 		return result;
 	}
+	public bool IsUsingLegacyInput()
+	{
+		bool result = FnTable.IsUsingLegacyInput();
+		return result;
+	}
 }
 
 
@@ -3803,6 +3813,8 @@ public enum ETrackedDeviceProperty
 	Prop_AdditionalDeviceSettingsPath_String = 1042,
 	Prop_Identifiable_Bool = 1043,
 	Prop_BootloaderVersion_Uint64 = 1044,
+	Prop_AdditionalSystemReportData_String = 1045,
+	Prop_CompositeFirmwareVersion_String = 1046,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -3899,6 +3911,8 @@ public enum ETrackedDeviceProperty
 	Prop_TrackingRangeMinimumMeters_Float = 4004,
 	Prop_TrackingRangeMaximumMeters_Float = 4005,
 	Prop_ModeLabel_String = 4006,
+	Prop_CanWirelessIdentify_Bool = 4007,
+	Prop_Nonce_Int32 = 4008,
 	Prop_IconPathName_String = 5000,
 	Prop_NamedIconPathDeviceOff_String = 5001,
 	Prop_NamedIconPathDeviceSearching_String = 5002,
@@ -4021,7 +4035,6 @@ public enum EVREventType
 	VREvent_OverlayHidden = 501,
 	VREvent_DashboardActivated = 502,
 	VREvent_DashboardDeactivated = 503,
-	VREvent_DashboardThumbSelected = 504,
 	VREvent_DashboardRequested = 505,
 	VREvent_ResetDashboard = 506,
 	VREvent_RenderToast = 507,
@@ -4044,6 +4057,7 @@ public enum EVREventType
 	VREvent_RoomViewShown = 526,
 	VREvent_RoomViewHidden = 527,
 	VREvent_ShowUI = 528,
+	VREvent_ShowDevTools = 529,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -4053,6 +4067,7 @@ public enum EVREventType
 	VREvent_QuitAborted_UserPrompt = 702,
 	VREvent_QuitAcknowledged = 703,
 	VREvent_DriverRequestedQuit = 704,
+	VREvent_RestartRequested = 705,
 	VREvent_ChaperoneDataHasChanged = 800,
 	VREvent_ChaperoneUniverseHasChanged = 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
@@ -4099,6 +4114,11 @@ public enum EVREventType
 	VREvent_Compositor_MirrorWindowHidden = 1401,
 	VREvent_Compositor_ChaperoneBoundsShown = 1410,
 	VREvent_Compositor_ChaperoneBoundsHidden = 1411,
+	VREvent_Compositor_DisplayDisconnected = 1412,
+	VREvent_Compositor_DisplayReconnected = 1413,
+	VREvent_Compositor_HDCPError = 1414,
+	VREvent_Compositor_ApplicationNotResponding = 1415,
+	VREvent_Compositor_ApplicationResumed = 1416,
 	VREvent_TrackedCamera_StartVideoStream = 1500,
 	VREvent_TrackedCamera_StopVideoStream = 1501,
 	VREvent_TrackedCamera_PauseVideoStream = 1502,
@@ -4121,6 +4141,7 @@ public enum EVREventType
 	VREvent_SpatialAnchors_DescriptorUpdated = 1801,
 	VREvent_SpatialAnchors_RequestPoseUpdate = 1802,
 	VREvent_SpatialAnchors_RequestDescriptorUpdate = 1803,
+	VREvent_SystemReport_Started = 1900,
 	VREvent_VendorSpecific_Reserved_Start = 10000,
 	VREvent_VendorSpecific_Reserved_End = 19999,
 }
@@ -4173,6 +4194,15 @@ public enum EShowUIType
 	ShowUI_ManageTrackers = 1,
 	ShowUI_QuickStart = 2,
 	ShowUI_Pairing = 3,
+	ShowUI_Settings = 4,
+}
+public enum EHDCPError
+{
+	None = 0,
+	LinkLost = 1,
+	Tampered = 2,
+	DeviceRevoked = 3,
+	Unknown = 4,
 }
 public enum EVRInputError
 {
@@ -4354,6 +4384,7 @@ public enum EVRInitError
 	Init_USBServiceBusy = 140,
 	Init_VRWebHelperStartupFailed = 141,
 	Init_TrackerManagerInitFailed = 142,
+	Init_AlreadyRunning = 143,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -4476,6 +4507,7 @@ public enum EVRInitError
 	VendorSpecific_HmdFound_UserDataError = 1112,
 	VendorSpecific_HmdFound_ConfigFailedSanityCheck = 1113,
 	Steam_SteamInstallationNotFound = 2000,
+	LastError = 2001,
 }
 public enum EVRScreenshotType
 {
@@ -4857,6 +4889,8 @@ public enum EIOBufferMode
 	[FieldOffset(0)] public VREvent_InputActionManifestLoad_t actionManifest;
 	[FieldOffset(0)] public VREvent_ProgressUpdate_t progressUpdate;
 	[FieldOffset(0)] public VREvent_ShowUI_t showUi;
+	[FieldOffset(0)] public VREvent_ShowDevTools_t showDevTools;
+	[FieldOffset(0)] public VREvent_HDCPError_t hdcpError;
 	[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 }
 
@@ -5054,7 +5088,8 @@ public enum EIOBufferMode
 {
 	public float xdelta;
 	public float ydelta;
-	public uint repeatCount;
+	public uint unused;
+	public float viewportscale;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_TouchPadMove_t
 {
@@ -5215,6 +5250,14 @@ public enum EIOBufferMode
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_ShowUI_t
 {
 	public EShowUIType eType;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_ShowDevTools_t
+{
+	public int nBrowserIdentifier;
+}
+[StructLayout(LayoutKind.Sequential)] public struct VREvent_HDCPError_t
+{
+	public EHDCPError eCode;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_t
 {
@@ -5932,6 +5975,7 @@ public class OpenVR
 	public const string k_pch_Lighthouse_PowerManagedBaseStations_String = "PowerManagedBaseStations";
 	public const string k_pch_Lighthouse_PowerManagedBaseStations2_String = "PowerManagedBaseStations2";
 	public const string k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
+	public const string k_pch_Lighthouse_NewPairing_Bool = "newPairing";
 	public const string k_pch_Null_Section = "driver_null";
 	public const string k_pch_Null_SerialNumber_String = "serialNumber";
 	public const string k_pch_Null_ModelNumber_String = "modelNumber";
@@ -6003,9 +6047,10 @@ public class OpenVR
 	public const string k_pch_Dashboard_Section = "dashboard";
 	public const string k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 	public const string k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
-	public const string k_pch_Dashboard_EnableWebUI = "webUI";
-	public const string k_pch_Dashboard_EnableWebUIDevTools = "webUIDevTools";
-	public const string k_pch_Dashboard_EnableWebUIDashboardReplacement = "webUIDashboard";
+	public const string k_pch_Dashboard_UseWebDashboard = "useWebDashboard";
+	public const string k_pch_Dashboard_UseWebSettings = "useWebSettings";
+	public const string k_pch_Dashboard_UseWebIPD = "useWebIPD";
+	public const string k_pch_Dashboard_UseWebPowerMenu = "useWebPowerMenu";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";
 	public const string k_pch_WebInterface_Section = "WebInterface";
@@ -6059,7 +6104,7 @@ public class OpenVR
 			m_pVRScreenshots = null;
 			m_pVRTrackedCamera = null;
 			m_pVRInput = null;
-			m_pIOBuffer = null;
+			m_pVRIOBuffer = null;
 			m_pVRSpatialAnchors = null;
 			m_pVRNotifications = null;
 		}
