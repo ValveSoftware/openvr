@@ -82,7 +82,7 @@
 	,{"name": "TrackedControllerRole_RightHand","value": "2"}
 	,{"name": "TrackedControllerRole_OptOut","value": "3"}
 	,{"name": "TrackedControllerRole_Treadmill","value": "4"}
-	,{"name": "TrackedControllerRole_Max","value": "4"}
+	,{"name": "TrackedControllerRole_Max","value": "5"}
 ]}
 ,	{"enumname": "vr::ETrackingUniverseOrigin","values": [ 
 	{"name": "TrackingUniverseSeated","value": "0"}

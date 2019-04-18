@@ -207,7 +207,7 @@ enum ETrackedControllerRole
 	TrackedControllerRole_RightHand = 2,				// Tracked device associated with the right hand
 	TrackedControllerRole_OptOut = 3,					// Tracked device is opting out of left/right hand selection
 	TrackedControllerRole_Treadmill = 4,				// Tracked device is a treadmill
-	TrackedControllerRole_Max = 4
+	TrackedControllerRole_Max = 5
 };
 
 

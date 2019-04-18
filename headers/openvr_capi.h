@@ -361,7 +361,7 @@ typedef enum ETrackedControllerRole
 	ETrackedControllerRole_TrackedControllerRole_RightHand = 2,
 	ETrackedControllerRole_TrackedControllerRole_OptOut = 3,
 	ETrackedControllerRole_TrackedControllerRole_Treadmill = 4,
-	ETrackedControllerRole_TrackedControllerRole_Max = 4,
+	ETrackedControllerRole_TrackedControllerRole_Max = 5,
 } ETrackedControllerRole;
 
 typedef enum ETrackingUniverseOrigin
