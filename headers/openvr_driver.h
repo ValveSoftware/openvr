@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 3;
-	static const uint32_t k_nSteamVRVersionBuild = 20;
+	static const uint32_t k_nSteamVRVersionMinor = 4;
+	static const uint32_t k_nSteamVRVersionBuild = 18;
 } // namespace vr
 
 // vrtypes.h
@@ -207,7 +207,7 @@ enum ETrackedControllerRole
 	TrackedControllerRole_RightHand = 2,				// Tracked device associated with the right hand
 	TrackedControllerRole_OptOut = 3,					// Tracked device is opting out of left/right hand selection
 	TrackedControllerRole_Treadmill = 4,				// Tracked device is a treadmill
-	TrackedControllerRole_Max = 4
+	TrackedControllerRole_Max = 5
 };
 
 
@@ -430,6 +430,11 @@ enum ETrackedDeviceProperty
 	Prop_CameraDistortionCoefficients_Float_Array = 2073, // Prop_NumCameras_Int32-sized array of double[vr::k_unMaxDistortionFunctionParameters] (max size is vr::k_unMaxCameras)
 	Prop_ExpectedControllerType_String			= 2074,
 
+	Prop_DisplayAvailableFrameRates_Float_Array = 2080, // populated by compositor from actual EDID list when available from GPU driver
+	Prop_DisplaySupportsMultipleFramerates_Bool = 2081, // if this is true but Prop_DisplayAvailableFrameRates_Float_Array is empty, explain to user
+
+	Prop_DashboardLayoutPathName_String			= 2090,
+
 	// Driver requested mura correction properties
 	Prop_DriverRequestedMuraCorrectionMode_Int32		= 2200,
 	Prop_DriverRequestedMuraFeather_InnerLeft_Int32		= 2201,
@@ -490,7 +495,7 @@ enum ETrackedDeviceProperty
 
 	// Properties that are set internally based on other information provided by drivers
 	Prop_ControllerType_String					= 7000,
-	Prop_LegacyInputProfile_String				= 7001,
+	//Prop_LegacyInputProfile_String				= 7001, // This is no longer used. See "legacy_binding" in the input profile instead.
 	Prop_ControllerHandSelectionPriority_Int32	= 7002, // Allows hand assignments to prefer some controllers over others. High numbers are selected over low numbers
 
 	// Vendors are free to expose private debug data in this reserved region
@@ -734,12 +739,14 @@ enum EVREventType
 	VREvent_DriverRequestedQuit				= 704, // The driver has requested that SteamVR shut down
 	VREvent_RestartRequested				= 705, // A driver or other component wants the user to restart SteamVR
 
-	VREvent_ChaperoneDataHasChanged			= 800, // Sent when the process needs to call VRChaperone()->ReloadInfo()
+	VREvent_ChaperoneDataHasChanged			= 800, // this will never happen with the new chaperone system
 	VREvent_ChaperoneUniverseHasChanged		= 801,
-	VREvent_ChaperoneTempDataHasChanged		= 802,
+	VREvent_ChaperoneTempDataHasChanged		= 802, // this will never happen with the new chaperone system
 	VREvent_ChaperoneSettingsHaveChanged	= 803,
 	VREvent_SeatedZeroPoseReset				= 804,
 	VREvent_ChaperoneFlushCache				= 805, // Sent when the process needs to reload any cached data it retrieved from VRChaperone()
+	VREvent_ChaperoneRoomSetupStarting	    = 806, // Triggered by CVRChaperoneClient::RoomSetupStarting
+	VREvent_ChaperoneRoomSetupFinished	    = 807, // Triggered by CVRChaperoneClient::CommitWorkingCopy
 
 	VREvent_AudioSettingsHaveChanged		= 820,
 
@@ -794,6 +801,7 @@ enum EVREventType
 	VREvent_Compositor_HDCPError				= 1414, // data is hdcpError
 	VREvent_Compositor_ApplicationNotResponding	= 1415,
 	VREvent_Compositor_ApplicationResumed		= 1416,
+	VREvent_Compositor_OutOfVideoMemory			= 1417,
 
 	VREvent_TrackedCamera_StartVideoStream  = 1500,
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
@@ -871,9 +879,9 @@ enum EVRButtonId
 
 	k_EButton_Dashboard_Back	= k_EButton_Grip,
 
-	k_EButton_Knuckles_A		= k_EButton_Grip,
-	k_EButton_Knuckles_B		= k_EButton_ApplicationMenu,
-	k_EButton_Knuckles_JoyStick	= k_EButton_Axis3,
+	k_EButton_IndexController_A		= k_EButton_Grip,
+	k_EButton_IndexController_B		= k_EButton_ApplicationMenu,
+	k_EButton_IndexController_JoyStick	= k_EButton_Axis3,
 
 	k_EButton_Max				= 64
 };
@@ -1099,7 +1107,7 @@ enum EShowUIType
 {
 	ShowUI_ControllerBinding = 0,
 	ShowUI_ManageTrackers = 1,
-	ShowUI_QuickStart = 2,
+	// ShowUI_QuickStart = 2, // Deprecated
 	ShowUI_Pairing = 3,
 	ShowUI_Settings = 4,
 };
@@ -1428,7 +1436,7 @@ enum EVRSkeletalTrackingLevel
 
 	// body part location can be measured directly but with fewer degrees of freedom than the actual body 
 	// part. Certain body part positions may be unmeasured by the device and estimated from other input data. 
-	// E.g. Knuckles, gloves that only measure finger curl
+	// E.g. Index Controllers, gloves that only measure finger curl
 	VRSkeletalTracking_Partial,
 
 	// Body part location can be measured directly throughout the entire range of motion of the body part. 
@@ -1505,6 +1513,7 @@ enum EVRInitError
 	VRInitError_Init_VRWebHelperStartupFailed		= 141,
 	VRInitError_Init_TrackerManagerInitFailed		= 142,
 	VRInitError_Init_AlreadyRunning					= 143,
+	VRInitError_Init_FailedForVrMonitor				= 144,
 
 	VRInitError_Driver_Failed						= 200,
 	VRInitError_Driver_Unknown						= 201,
@@ -1519,6 +1528,7 @@ enum EVRInitError
 	// VRInitError_Driver_HmdDisplayNotFoundAfterFix = 210, // not needed: here for historic reasons
 	VRInitError_Driver_HmdDriverIdOutOfBounds		= 211,
 	VRInitError_Driver_HmdDisplayMirrored			= 212,
+	VRInitError_Driver_HmdDisplayNotFoundLaptop		= 213,
 
 	VRInitError_IPC_ServerInitFailed				= 300,
 	VRInitError_IPC_ConnectFailed					= 301,
@@ -2106,6 +2116,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 	static const char * const k_pch_SteamVR_DebugInput = "debugInput";
 	static const char * const k_pch_SteamVR_DebugInputBinding = "debugInputBinding";
+	static const char * const k_pch_SteamVR_DoNotFadeToGrid = "doNotFadeToGrid";
 	static const char * const k_pch_SteamVR_InputBindingUIBlock = "inputBindingUI";
 	static const char * const k_pch_SteamVR_RenderCameraMode = "renderCameraMode";
 	static const char * const k_pch_SteamVR_EnableSharedResourceJournaling = "enableSharedResourceJournaling";
@@ -2134,6 +2145,7 @@ namespace vr
 	static const char * const k_pch_Lighthouse_EnableBluetooth_Bool = "enableBluetooth";
 	static const char * const k_pch_Lighthouse_PowerManagedBaseStations_String = "PowerManagedBaseStations";
 	static const char * const k_pch_Lighthouse_PowerManagedBaseStations2_String = "PowerManagedBaseStations2";
+	static const char * const k_pch_Lighthouse_InactivityTimeoutForBaseStations_Int32 = "InactivityTimeoutForBaseStations";
 	static const char * const k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
 	static const char * const k_pch_Lighthouse_NewPairing_Bool = "newPairing";
 
@@ -2183,7 +2195,7 @@ namespace vr
 	static const char * const k_pch_Perf_AllowTimingStore_Bool = "allowTimingStore";
 	static const char * const k_pch_Perf_SaveTimingsOnExit_Bool = "saveTimingsOnExit";
 	static const char * const k_pch_Perf_TestData_Float = "perfTestData";
-	static const char * const k_pch_Perf_LinuxGPUProfiling_Bool = "linuxGPUProfiling";
+	static const char * const k_pch_Perf_GPUProfiling_Bool = "GPUProfiling";
 
 	//-----------------------------------------------------------------------------
 	// collision bounds keys

@@ -773,7 +773,7 @@ bool CMainApplication::HandleInput()
 	for ( EHand eHand = Left; eHand <= Right; ((int&)eHand)++ )
 	{
 		vr::InputPoseActionData_t poseData;
-		if ( vr::VRInput()->GetPoseActionData( m_rHand[eHand].m_actionPose, vr::TrackingUniverseStanding, 0, &poseData, sizeof( poseData ), vr::k_ulInvalidInputValueHandle ) != vr::VRInputError_None
+		if ( vr::VRInput()->GetPoseActionDataForNextFrame( m_rHand[eHand].m_actionPose, vr::TrackingUniverseStanding, &poseData, sizeof( poseData ), vr::k_ulInvalidInputValueHandle ) != vr::VRInputError_None
 			|| !poseData.bActive || !poseData.pose.bPoseIsValid )
 		{
 			m_rHand[eHand].m_bShowController = false;

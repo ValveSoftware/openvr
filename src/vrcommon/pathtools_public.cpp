@@ -409,6 +409,20 @@ std::string Path_Compact( const std::string & sRawPath, char slash )
 }
 
 
+/** Returns true if these two paths are the same without respect for internal . or ..
+* sequences, slash type, or case (on case-insensitive platforms). */
+bool Path_IsSamePath( const std::string & sPath1, const std::string & sPath2 )
+{
+	std::string sCompact1 = Path_Compact( sPath1 );
+	std::string sCompact2 = Path_Compact( sPath2 );
+#if defined(WIN32)
+	return !stricmp( sCompact1.c_str(), sCompact2.c_str() );
+#else
+	return !strcmp( sCompact1.c_str(), sCompact2.c_str() );
+#endif
+}
+
+
 /** Returns the path to the current DLL or exe */
 std::string Path_GetThisModulePath()
 {

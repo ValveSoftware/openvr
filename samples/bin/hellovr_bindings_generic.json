@@ -1,0 +1,94 @@
+{
+   "bindings" : {
+      "/actions/demo" : {
+         "poses" : [
+            {
+               "output" : "/actions/demo/in/hand_left",
+               "path" : "/user/hand/left/pose/raw"
+            },
+            {
+               "output" : "/actions/demo/in/hand_right",
+               "path" : "/user/hand/right/pose/raw"
+            }
+         ],
+         "haptics" : [
+            {
+               "output" : "/actions/demo/out/haptic_right",
+               "path" : "/user/hand/right/output/haptic"
+            },
+            {
+               "output" : "/actions/demo/out/haptic_left",
+               "path" : "/user/hand/left/output/haptic"
+            }
+         ],
+         "sources" : [
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/demo/in/hidecubes"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "position" : {
+                     "output" : "/actions/demo/in/analoginput"
+                  }
+               },
+               "mode" : "trackpad",
+               "path" : "/user/hand/right/input/trackpad"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/demo/in/triggerhaptic"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/grip"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/demo/in/hidecubes"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/trigger"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/demo/in/triggerhaptic"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/grip"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/demo/in/hidethiscontroller"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/left/input/application_menu"
+            },
+            {
+               "inputs" : {
+                  "click" : {
+                     "output" : "/actions/demo/in/hidethiscontroller"
+                  }
+               },
+               "mode" : "button",
+               "path" : "/user/hand/right/input/application_menu"
+            }
+         ]
+      }
+   },
+   "controller_type" : "generic",
+   "description" : "Bindings for the OpenVR SDK \"hellovr_opengl\" demo for a generic controller",
+   "name" : "HelloVR bindings for a generic controller"
+}

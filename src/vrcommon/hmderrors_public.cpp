@@ -70,6 +70,7 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	// case VRInitError_Driver_HmdDisplayNotFoundAfterFix:	return "HMD detected over USB, but Monitor not found after attempt to fix (210)"; // taken out upon Ben's request: He thinks that there is no need to separate that error from 208
 	case VRInitError_Driver_HmdDriverIdOutOfBounds:			return "Hmd DriverId is our of bounds (211)";
 	case VRInitError_Driver_HmdDisplayMirrored:				return "HMD detected over USB, but Monitor may be mirrored instead of extended (212)";
+	case VRInitError_Driver_HmdDisplayNotFoundLaptop:		return "On laptop, HMD detected over USB, but Monitor not found (213)";
 
 	case VRInitError_IPC_ServerInitFailed:						return "VR Server Init Failed (300)";
 	case VRInitError_IPC_ConnectFailed:							return "Connect to VR Server Failed (301)";
@@ -166,6 +167,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_VRWebHelperStartupFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_TrackerManagerInitFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_AlreadyRunning );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_FailedForVrMonitor);
 
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Unknown );
@@ -180,6 +182,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		// RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDisplayNotFoundAfterFix );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDriverIdOutOfBounds );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDisplayMirrored );
+		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDisplayNotFoundLaptop );
 
 		RETURN_ENUM_AS_STRING( VRInitError_IPC_ServerInitFailed);
 		RETURN_ENUM_AS_STRING( VRInitError_IPC_ConnectFailed);
