@@ -409,6 +409,20 @@ std::string Path_Compact( const std::string & sRawPath, char slash )
 }
 
 
+/** Returns true if these two paths are the same without respect for internal . or ..
+* sequences, slash type, or case (on case-insensitive platforms). */
+bool Path_IsSamePath( const std::string & sPath1, const std::string & sPath2 )
+{
+	std::string sCompact1 = Path_Compact( sPath1 );
+	std::string sCompact2 = Path_Compact( sPath2 );
+#if defined(WIN32)
+	return !stricmp( sCompact1.c_str(), sCompact2.c_str() );
+#else
+	return !strcmp( sCompact1.c_str(), sCompact2.c_str() );
+#endif
+}
+
+
 /** Returns the path to the current DLL or exe */
 std::string Path_GetThisModulePath()
 {
@@ -699,6 +713,28 @@ std::string Path_ReadTextFile( const std::string &strFilename )
 	return ret;
 }
 
+
+bool Path_MakeWritable( const std::string &strFilename )
+{
+#if defined ( _WIN32 )
+	std::wstring wstrFilename = UTF8to16( strFilename.c_str() );
+
+	DWORD dwAttrs = GetFileAttributesW( wstrFilename.c_str() );
+	if ( dwAttrs != INVALID_FILE_ATTRIBUTES && ( dwAttrs & FILE_ATTRIBUTE_READONLY ) )
+	{
+		return SetFileAttributesW( wstrFilename.c_str(), dwAttrs & ~FILE_ATTRIBUTE_READONLY );
+	}
+#else
+	struct stat sb;
+
+	if ( stat( strFilename.c_str(), &sb ) == 0 && !( sb.st_mode & S_IWUSR ) )
+	{
+		return ( chmod( strFilename.c_str(), sb.st_mode | S_IWUSR ) == 0 );
+	}
+#endif
+
+	return true;
+}
 
 bool Path_WriteStringToTextFile( const std::string &strFilename, const char *pchData )
 {
