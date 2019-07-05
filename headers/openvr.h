@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 4;
-	static const uint32_t k_nSteamVRVersionBuild = 18;
+	static const uint32_t k_nSteamVRVersionMinor = 5;
+	static const uint32_t k_nSteamVRVersionBuild = 17;
 } // namespace vr
 
 // vrtypes.h
@@ -354,6 +354,7 @@ enum ETrackedDeviceProperty
 	Prop_BootloaderVersion_Uint64			    = 1044,
 	Prop_AdditionalSystemReportData_String		= 1045, // additional string to include in system reports about a tracked device
 	Prop_CompositeFirmwareVersion_String        = 1046, // additional FW components from a device that gets propagated into reports
+	Prop_Firmware_RemindUpdate_Bool             = 1047,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -408,7 +409,7 @@ enum ETrackedDeviceProperty
 	Prop_NamedIconPathControllerLeftDeviceOff_String	= 2051, // placeholder icon for "left" controller if not yet detected/loaded
 	Prop_NamedIconPathControllerRightDeviceOff_String	= 2052, // placeholder icon for "right" controller if not yet detected/loaded
 	Prop_NamedIconPathTrackingReferenceDeviceOff_String	= 2053, // placeholder icon for sensor/base if not yet detected/loaded
-	Prop_DoNotApplyPrediction_Bool				= 2054,
+	Prop_DoNotApplyPrediction_Bool				= 2054, // currently no effect. was used to disable HMD pose prediction on MR, which is now done by MR driver setting velocity=0
 	Prop_CameraToHeadTransforms_Matrix34_Array	= 2055,
 	Prop_DistortionMeshResolution_Int32			= 2056, // custom resolution of compositor calls to IVRSystem::ComputeDistortion
 	Prop_DriverIsDrawingControllers_Bool		= 2057,
@@ -429,6 +430,9 @@ enum ETrackedDeviceProperty
 	Prop_CameraDistortionFunction_Int32_Array	= 2072, // Prop_NumCameras_Int32-sized array of vr::EVRDistortionFunctionType values (max size is vr::k_unMaxCameras)
 	Prop_CameraDistortionCoefficients_Float_Array = 2073, // Prop_NumCameras_Int32-sized array of double[vr::k_unMaxDistortionFunctionParameters] (max size is vr::k_unMaxCameras)
 	Prop_ExpectedControllerType_String			= 2074,
+	Prop_HmdTrackingStyle_Int32					= 2075, // one of EHmdTrackingStyle
+	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
+
 
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080, // populated by compositor from actual EDID list when available from GPU driver
 	Prop_DisplaySupportsMultipleFramerates_Bool = 2081, // if this is true but Prop_DisplayAvailableFrameRates_Float_Array is empty, explain to user
@@ -527,6 +531,15 @@ enum ETrackedPropertyError
 	TrackedProp_IPCReadFailure				= 13,
 };
 
+/** Used to drive certain text in the UI when talking about the tracking system for the HMD */
+enum EHmdTrackingStyle
+{
+	HmdTrackingStyle_Unknown				= 0,
+
+	HmdTrackingStyle_Lighthouse				= 1, // base stations and lasers
+	HmdTrackingStyle_OutsideInCameras		= 2, // Cameras and LED, Rift 1 style
+	HmdTrackingStyle_InsideOutCameras		= 3, // Cameras on HMD looking at the world
+};
 
 typedef uint64_t VRActionHandle_t;
 typedef uint64_t VRActionSetHandle_t;
@@ -1110,6 +1123,7 @@ enum EShowUIType
 	// ShowUI_QuickStart = 2, // Deprecated
 	ShowUI_Pairing = 3,
 	ShowUI_Settings = 4,
+	ShowUI_DebugCommands = 5,
 };
 
 struct VREvent_ShowUI_t
@@ -1625,6 +1639,8 @@ enum EVRInitError
 	VRInitError_Compositor_CreateTextIndexBuffer								= 482,
 	VRInitError_Compositor_CreateMirrorTextures									= 483,
 	VRInitError_Compositor_CreateLastFrameRenderTexture							= 484,
+	VRInitError_Compositor_CreateMirrorOverlay									= 485,
+	VRInitError_Compositor_FailedToCreateVirtualDisplayBackbuffer				= 486,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime		= 1000,
 	VRInitError_VendorSpecific_WindowsNotInDevMode					= 1001,
@@ -1642,6 +1658,7 @@ enum EVRInitError
 	VRInitError_VendorSpecific_HmdFound_UserDataAddressRange		= 1111,
 	VRInitError_VendorSpecific_HmdFound_UserDataError				= 1112,
 	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck		= 1113,
+	VRInitError_VendorSpecific_OculusRuntimeBadInstall				= 1114,
 
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
 
@@ -2102,15 +2119,6 @@ public:
 	virtual bool ShouldApplicationReduceRenderingWork() = 0;
 
 	// ------------------------------------
-	// Debug Methods
-	// ------------------------------------
-
-	/** Sends a request to the driver for the specified device and returns the response. The maximum response size is 32k,
-	* but this method can be called with a smaller buffer. If the response exceeds the size of the buffer, it is truncated. 
-	* The size of the response including its terminating null is returned. */
-	virtual uint32_t DriverDebugRequest( vr::TrackedDeviceIndex_t unDeviceIndex, const char *pchRequest, VR_OUT_STRING() char *pchResponseBuffer, uint32_t unResponseBufferSize ) = 0;
-
-	// ------------------------------------
 	// Firmware methods
 	// ------------------------------------
 	
@@ -2136,7 +2144,7 @@ public:
 
 };
 
-static const char * const IVRSystem_Version = "IVRSystem_019";
+static const char * const IVRSystem_Version = "IVRSystem_020";
 
 }
 
@@ -2678,6 +2686,7 @@ namespace vr
 	//-----------------------------------------------------------------------------
 	// driver keys - These could be checked in any driver_<name> section
 	static const char * const k_pch_Driver_Enable_Bool = "enable";
+	static const char * const k_pch_Driver_LoadPriority_Int32 = "loadPriority";
 
 	//-----------------------------------------------------------------------------
 	// web interface keys
@@ -3141,13 +3150,14 @@ public:
 	/** Returns true if the current process has the scene focus */
 	virtual bool CanRenderScene() = 0;
 
-	/** Creates a window on the primary monitor to display what is being shown in the headset. */
+	/** Opens the headset view (as either a window or docked widget depending on user's preferences) that displays what the user
+	* sees in the headset. */
 	virtual void ShowMirrorWindow() = 0;
 
-	/** Closes the mirror window. */
+	/** Closes the headset view, either as a window or docked widget. */
 	virtual void HideMirrorWindow() = 0;
 
-	/** Returns true if the mirror window is shown. */
+	/** Returns true if the headset view (either as a window or docked widget) is shown. */
 	virtual bool IsMirrorWindowVisible() = 0;
 
 	/** Writes back buffer and stereo left/right pair from the application to a 'screenshots' folder in the SteamVR runtime root. */
@@ -4271,6 +4281,8 @@ public:
 	virtual uint32_t GetDriverName( vr::DriverId_t nDriver, VR_OUT_STRING() char *pchValue, uint32_t unBufferSize ) = 0;
 
 	virtual DriverHandle_t GetDriverHandle( const char *pchDriverName ) = 0;
+
+	virtual bool IsEnabled( vr::DriverId_t nDriver ) const = 0;
 };
 
 static const char * const IVRDriverManager_Version = "IVRDriverManager_001";
@@ -4409,6 +4421,14 @@ namespace vr
 		char rchRenderModelComponentName[128];
 	};
 
+	struct InputBindingInfo_t
+	{
+		char rchDevicePathName[128];
+		char rchInputPathName[128];
+		char rchModeName[128];
+		char rchSlotName[128];
+	};
+
 	struct VRActiveActionSet_t
 	{
 		/** This is the handle of the action set to activate for this frame. */
@@ -4543,6 +4563,9 @@ namespace vr
 		/** Retrieves useful information for the origin of this action */
 		virtual EVRInputError GetOriginTrackedDeviceInfo( VRInputValueHandle_t origin, InputOriginInfo_t *pOriginInfo, uint32_t unOriginInfoSize ) = 0;
 
+		/** Retrieves useful information about the bindings for an action */
+		virtual EVRInputError GetActionBindingInfo( VRActionHandle_t action, InputBindingInfo_t *pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t *punReturnedBindingInfoCount ) = 0;
+
 		/** Shows the current binding for the action in-headset */
 		virtual EVRInputError ShowActionOrigins( VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle ) = 0;
 
@@ -4553,7 +4576,7 @@ namespace vr
 		virtual bool IsUsingLegacyInput() = 0;
 	};
 
-	static const char * const IVRInput_Version = "IVRInput_006";
+	static const char * const IVRInput_Version = "IVRInput_007";
 
 } // namespace vr
 
@@ -4659,6 +4682,49 @@ namespace vr
 	};
 
 	static const char * const IVRSpatialAnchors_Version = "IVRSpatialAnchors_001";
+
+} // namespace vr
+
+// ivrdebug.h
+namespace vr
+{
+	enum EVRDebugError
+	{
+		VRDebugError_Success = 0,
+		VRDebugError_BadParameter
+	};
+
+	/** Handle for vr profiler events */
+	typedef uint64_t VrProfilerEventHandle_t;
+
+	class IVRDebug
+	{
+	public:
+
+		/** Create a vr profiler discrete event (point)
+		* The event will be associated with the message provided in pchMessage, and the current
+		* time will be used as the event timestamp. */
+		virtual EVRDebugError EmitVrProfilerEvent( const char *pchMessage ) = 0;
+
+		/** Create an vr profiler duration event (line)
+		* The current time will be used as the timestamp for the start of the line.
+		* On success, pHandleOut will contain a handle valid for terminating this event. */
+		virtual EVRDebugError BeginVrProfilerEvent( VrProfilerEventHandle_t *pHandleOut ) = 0;
+
+		/** Terminate a vr profiler event
+		* The event associated with hHandle will be considered completed when this method is called.
+		* The current time will be used assocaited to the termination time of the event, and
+		* pchMessage will be used as the event title. */
+		virtual EVRDebugError FinishVrProfilerEvent( VrProfilerEventHandle_t hHandle, const char *pchMessage ) = 0;
+
+		/** Sends a request to the driver for the specified device and returns the response. The maximum response size is 32k,
+		* but this method can be called with a smaller buffer. If the response exceeds the size of the buffer, it is truncated.
+		* The size of the response including its terminating null is returned. */
+		virtual uint32_t DriverDebugRequest( vr::TrackedDeviceIndex_t unDeviceIndex, const char *pchRequest, VR_OUT_STRING() char *pchResponseBuffer, uint32_t unResponseBufferSize ) = 0;
+
+	};
+
+	static const char * const IVRDebug_Version = "IVRDebug_001";
 
 } // namespace vr
 // End
@@ -4929,6 +4995,17 @@ namespace vr
 			return m_pVRSpatialAnchors;
 		}
 
+		IVRDebug *VRDebug()
+		{
+			CheckClear();
+			if ( !m_pVRDebug )
+			{
+				EVRInitError eError;
+				m_pVRDebug = (IVRDebug *)VR_GetGenericInterface( IVRDebug_Version, &eError );
+			}
+			return m_pVRDebug;
+		}
+
 		IVRNotifications *VRNotifications()
 		{
 			CheckClear();
@@ -4957,6 +5034,7 @@ namespace vr
 		IVRInput			*m_pVRInput;
 		IVRIOBuffer			*m_pVRIOBuffer;
 		IVRSpatialAnchors   *m_pVRSpatialAnchors;
+		IVRDebug			*m_pVRDebug;
 		IVRNotifications	*m_pVRNotifications;
 	};
 
@@ -4983,6 +5061,7 @@ namespace vr
 	inline IVRIOBuffer *VR_CALLTYPE VRIOBuffer() { return OpenVRInternal_ModuleContext().VRIOBuffer(); }
 	inline IVRSpatialAnchors *VR_CALLTYPE VRSpatialAnchors() { return OpenVRInternal_ModuleContext().VRSpatialAnchors(); }
 	inline IVRNotifications *VR_CALLTYPE VRNotifications() { return OpenVRInternal_ModuleContext().VRNotifications(); }
+	inline IVRDebug *VR_CALLTYPE VRDebug() { return OpenVRInternal_ModuleContext().VRDebug(); }
 
 	inline void COpenVRContext::Clear()
 	{
@@ -5003,6 +5082,7 @@ namespace vr
 		m_pVRIOBuffer = nullptr;
 		m_pVRSpatialAnchors = nullptr;
 		m_pVRNotifications = nullptr;
+		m_pVRDebug = nullptr;
 	}
 	
 	VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2( EVRInitError *peError, EVRApplicationType eApplicationType, const char *pStartupInfo );
