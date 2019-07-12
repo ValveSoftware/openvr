@@ -91,6 +91,7 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 
 	// Oculus
 	case VRInitError_VendorSpecific_UnableToConnectToOculusRuntime:	return "Unable to connect to Oculus Runtime (1000)";
+	case VRInitError_VendorSpecific_OculusRuntimeBadInstall:		return "Unable to connect to Oculus Runtime, possible bad install (1114)";
 
 	// Lighthouse
 	case VRInitError_VendorSpecific_HmdFound_CantOpenDevice:				return "HMD found, but can not open device (1101)";
@@ -279,10 +280,13 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateTextIndexBuffer );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateMirrorTextures );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateLastFrameRenderTexture );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateMirrorOverlay );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToCreateVirtualDisplayBackbuffer );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_WindowsNotInDevMode );
+		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_OculusRuntimeBadInstall );
 
 		// Lighthouse
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_HmdFound_CantOpenDevice);

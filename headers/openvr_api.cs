@@ -231,11 +231,6 @@ public struct IVRSystem
 	internal _ShouldApplicationReduceRenderingWork ShouldApplicationReduceRenderingWork;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate uint _DriverDebugRequest(uint unDeviceIndex, string pchRequest, System.Text.StringBuilder pchResponseBuffer, uint unResponseBufferSize);
-	[MarshalAs(UnmanagedType.FunctionPtr)]
-	internal _DriverDebugRequest DriverDebugRequest;
-
-	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRFirmwareError _PerformFirmwareUpdate(uint unDeviceIndex);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _PerformFirmwareUpdate PerformFirmwareUpdate;
@@ -1550,6 +1545,11 @@ public struct IVRDriverManager
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _GetDriverHandle GetDriverHandle;
 
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate bool _IsEnabled(uint nDriver);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _IsEnabled IsEnabled;
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -1671,6 +1671,11 @@ public struct IVRInput
 	internal _GetOriginTrackedDeviceInfo GetOriginTrackedDeviceInfo;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRInputError _GetActionBindingInfo(ulong action, ref InputBindingInfo_t pOriginInfo, uint unBindingInfoSize, uint unBindingInfoCount, ref uint punReturnedBindingInfoCount);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetActionBindingInfo GetActionBindingInfo;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRInputError _ShowActionOrigins(ulong actionSetHandle, ulong ulActionHandle);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _ShowActionOrigins ShowActionOrigins;
@@ -1744,6 +1749,31 @@ public struct IVRSpatialAnchors
 	internal delegate EVRSpatialAnchorError _GetSpatialAnchorDescriptor(uint unHandle, System.Text.StringBuilder pchDescriptorOut, ref uint punDescriptorBufferLenInOut);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _GetSpatialAnchorDescriptor GetSpatialAnchorDescriptor;
+
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct IVRDebug
+{
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRDebugError _EmitVrProfilerEvent(string pchMessage);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _EmitVrProfilerEvent EmitVrProfilerEvent;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRDebugError _BeginVrProfilerEvent(ref ulong pHandleOut);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _BeginVrProfilerEvent BeginVrProfilerEvent;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVRDebugError _FinishVrProfilerEvent(ulong hHandle, string pchMessage);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _FinishVrProfilerEvent FinishVrProfilerEvent;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate uint _DriverDebugRequest(uint unDeviceIndex, string pchRequest, System.Text.StringBuilder pchResponseBuffer, uint unResponseBufferSize);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _DriverDebugRequest DriverDebugRequest;
 
 }
 
@@ -2048,11 +2078,6 @@ public class CVRSystem
 	public bool ShouldApplicationReduceRenderingWork()
 	{
 		bool result = FnTable.ShouldApplicationReduceRenderingWork();
-		return result;
-	}
-	public uint DriverDebugRequest(uint unDeviceIndex,string pchRequest,System.Text.StringBuilder pchResponseBuffer,uint unResponseBufferSize)
-	{
-		uint result = FnTable.DriverDebugRequest(unDeviceIndex,pchRequest,pchResponseBuffer,unResponseBufferSize);
 		return result;
 	}
 	public EVRFirmwareError PerformFirmwareUpdate(uint unDeviceIndex)
@@ -3493,6 +3518,11 @@ public class CVRDriverManager
 		ulong result = FnTable.GetDriverHandle(pchDriverName);
 		return result;
 	}
+	public bool IsEnabled(uint nDriver)
+	{
+		bool result = FnTable.IsEnabled(nDriver);
+		return result;
+	}
 }
 
 
@@ -3623,6 +3653,12 @@ public class CVRInput
 		EVRInputError result = FnTable.GetOriginTrackedDeviceInfo(origin,ref pOriginInfo,unOriginInfoSize);
 		return result;
 	}
+	public EVRInputError GetActionBindingInfo(ulong action,ref InputBindingInfo_t pOriginInfo,uint unBindingInfoSize,uint unBindingInfoCount,ref uint punReturnedBindingInfoCount)
+	{
+		punReturnedBindingInfoCount = 0;
+		EVRInputError result = FnTable.GetActionBindingInfo(action,ref pOriginInfo,unBindingInfoSize,unBindingInfoCount,ref punReturnedBindingInfoCount);
+		return result;
+	}
 	public EVRInputError ShowActionOrigins(ulong actionSetHandle,ulong ulActionHandle)
 	{
 		EVRInputError result = FnTable.ShowActionOrigins(actionSetHandle,ulActionHandle);
@@ -3711,6 +3747,37 @@ public class CVRSpatialAnchors
 	{
 		punDescriptorBufferLenInOut = 0;
 		EVRSpatialAnchorError result = FnTable.GetSpatialAnchorDescriptor(unHandle,pchDescriptorOut,ref punDescriptorBufferLenInOut);
+		return result;
+	}
+}
+
+
+public class CVRDebug
+{
+	IVRDebug FnTable;
+	internal CVRDebug(IntPtr pInterface)
+	{
+		FnTable = (IVRDebug)Marshal.PtrToStructure(pInterface, typeof(IVRDebug));
+	}
+	public EVRDebugError EmitVrProfilerEvent(string pchMessage)
+	{
+		EVRDebugError result = FnTable.EmitVrProfilerEvent(pchMessage);
+		return result;
+	}
+	public EVRDebugError BeginVrProfilerEvent(ref ulong pHandleOut)
+	{
+		pHandleOut = 0;
+		EVRDebugError result = FnTable.BeginVrProfilerEvent(ref pHandleOut);
+		return result;
+	}
+	public EVRDebugError FinishVrProfilerEvent(ulong hHandle,string pchMessage)
+	{
+		EVRDebugError result = FnTable.FinishVrProfilerEvent(hHandle,pchMessage);
+		return result;
+	}
+	public uint DriverDebugRequest(uint unDeviceIndex,string pchRequest,System.Text.StringBuilder pchResponseBuffer,uint unResponseBufferSize)
+	{
+		uint result = FnTable.DriverDebugRequest(unDeviceIndex,pchRequest,pchResponseBuffer,unResponseBufferSize);
 		return result;
 	}
 }
@@ -3854,6 +3921,7 @@ public enum ETrackedDeviceProperty
 	Prop_BootloaderVersion_Uint64 = 1044,
 	Prop_AdditionalSystemReportData_String = 1045,
 	Prop_CompositeFirmwareVersion_String = 1046,
+	Prop_Firmware_RemindUpdate_Bool = 1047,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -3926,6 +3994,8 @@ public enum ETrackedDeviceProperty
 	Prop_CameraDistortionFunction_Int32_Array = 2072,
 	Prop_CameraDistortionCoefficients_Float_Array = 2073,
 	Prop_ExpectedControllerType_String = 2074,
+	Prop_HmdTrackingStyle_Int32 = 2075,
+	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080,
 	Prop_DisplaySupportsMultipleFramerates_Bool = 2081,
 	Prop_DashboardLayoutPathName_String = 2090,
@@ -3997,6 +4067,13 @@ public enum ETrackedPropertyError
 	TrackedProp_InvalidOperation = 11,
 	TrackedProp_CannotWriteToWildcards = 12,
 	TrackedProp_IPCReadFailure = 13,
+}
+public enum EHmdTrackingStyle
+{
+	Unknown = 0,
+	Lighthouse = 1,
+	OutsideInCameras = 2,
+	InsideOutCameras = 3,
 }
 public enum EVRSubmitFlags
 {
@@ -4238,6 +4315,7 @@ public enum EShowUIType
 	ShowUI_ManageTrackers = 1,
 	ShowUI_Pairing = 3,
 	ShowUI_Settings = 4,
+	ShowUI_DebugCommands = 5,
 }
 public enum EHDCPError
 {
@@ -4536,6 +4614,8 @@ public enum EVRInitError
 	Compositor_CreateTextIndexBuffer = 482,
 	Compositor_CreateMirrorTextures = 483,
 	Compositor_CreateLastFrameRenderTexture = 484,
+	Compositor_CreateMirrorOverlay = 485,
+	Compositor_FailedToCreateVirtualDisplayBackbuffer = 486,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	VendorSpecific_WindowsNotInDevMode = 1001,
 	VendorSpecific_HmdFound_CantOpenDevice = 1101,
@@ -4551,6 +4631,7 @@ public enum EVRInitError
 	VendorSpecific_HmdFound_UserDataAddressRange = 1111,
 	VendorSpecific_HmdFound_UserDataError = 1112,
 	VendorSpecific_HmdFound_ConfigFailedSanityCheck = 1113,
+	VendorSpecific_OculusRuntimeBadInstall = 1114,
 	Steam_SteamInstallationNotFound = 2000,
 	LastError = 2001,
 }
@@ -4908,6 +4989,11 @@ public enum EIOBufferMode
 	Read = 1,
 	Write = 2,
 	Create = 512,
+}
+public enum EVRDebugError
+{
+	Success = 0,
+	BadParameter = 1,
 }
 
 [StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
@@ -5791,6 +5877,557 @@ public enum EIOBufferMode
 		}
 	}
 }
+[StructLayout(LayoutKind.Sequential)] public struct InputBindingInfo_t
+{
+	public byte rchDevicePathName0,rchDevicePathName1,rchDevicePathName2,rchDevicePathName3,rchDevicePathName4,rchDevicePathName5,rchDevicePathName6,rchDevicePathName7,rchDevicePathName8,rchDevicePathName9,rchDevicePathName10,rchDevicePathName11,rchDevicePathName12,rchDevicePathName13,rchDevicePathName14,rchDevicePathName15,rchDevicePathName16,rchDevicePathName17,rchDevicePathName18,rchDevicePathName19,rchDevicePathName20,rchDevicePathName21,rchDevicePathName22,rchDevicePathName23,rchDevicePathName24,rchDevicePathName25,rchDevicePathName26,rchDevicePathName27,rchDevicePathName28,rchDevicePathName29,rchDevicePathName30,rchDevicePathName31,rchDevicePathName32,rchDevicePathName33,rchDevicePathName34,rchDevicePathName35,rchDevicePathName36,rchDevicePathName37,rchDevicePathName38,rchDevicePathName39,rchDevicePathName40,rchDevicePathName41,rchDevicePathName42,rchDevicePathName43,rchDevicePathName44,rchDevicePathName45,rchDevicePathName46,rchDevicePathName47,rchDevicePathName48,rchDevicePathName49,rchDevicePathName50,rchDevicePathName51,rchDevicePathName52,rchDevicePathName53,rchDevicePathName54,rchDevicePathName55,rchDevicePathName56,rchDevicePathName57,rchDevicePathName58,rchDevicePathName59,rchDevicePathName60,rchDevicePathName61,rchDevicePathName62,rchDevicePathName63,rchDevicePathName64,rchDevicePathName65,rchDevicePathName66,rchDevicePathName67,rchDevicePathName68,rchDevicePathName69,rchDevicePathName70,rchDevicePathName71,rchDevicePathName72,rchDevicePathName73,rchDevicePathName74,rchDevicePathName75,rchDevicePathName76,rchDevicePathName77,rchDevicePathName78,rchDevicePathName79,rchDevicePathName80,rchDevicePathName81,rchDevicePathName82,rchDevicePathName83,rchDevicePathName84,rchDevicePathName85,rchDevicePathName86,rchDevicePathName87,rchDevicePathName88,rchDevicePathName89,rchDevicePathName90,rchDevicePathName91,rchDevicePathName92,rchDevicePathName93,rchDevicePathName94,rchDevicePathName95,rchDevicePathName96,rchDevicePathName97,rchDevicePathName98,rchDevicePathName99,rchDevicePathName100,rchDevicePathName101,rchDevicePathName102,rchDevicePathName103,rchDevicePathName104,rchDevicePathName105,rchDevicePathName106,rchDevicePathName107,rchDevicePathName108,rchDevicePathName109,rchDevicePathName110,rchDevicePathName111,rchDevicePathName112,rchDevicePathName113,rchDevicePathName114,rchDevicePathName115,rchDevicePathName116,rchDevicePathName117,rchDevicePathName118,rchDevicePathName119,rchDevicePathName120,rchDevicePathName121,rchDevicePathName122,rchDevicePathName123,rchDevicePathName124,rchDevicePathName125,rchDevicePathName126,rchDevicePathName127;
+	public string rchDevicePathName
+	{
+		get
+		{
+			return new string(new char[] {
+				(char)rchDevicePathName0,
+				(char)rchDevicePathName1,
+				(char)rchDevicePathName2,
+				(char)rchDevicePathName3,
+				(char)rchDevicePathName4,
+				(char)rchDevicePathName5,
+				(char)rchDevicePathName6,
+				(char)rchDevicePathName7,
+				(char)rchDevicePathName8,
+				(char)rchDevicePathName9,
+				(char)rchDevicePathName10,
+				(char)rchDevicePathName11,
+				(char)rchDevicePathName12,
+				(char)rchDevicePathName13,
+				(char)rchDevicePathName14,
+				(char)rchDevicePathName15,
+				(char)rchDevicePathName16,
+				(char)rchDevicePathName17,
+				(char)rchDevicePathName18,
+				(char)rchDevicePathName19,
+				(char)rchDevicePathName20,
+				(char)rchDevicePathName21,
+				(char)rchDevicePathName22,
+				(char)rchDevicePathName23,
+				(char)rchDevicePathName24,
+				(char)rchDevicePathName25,
+				(char)rchDevicePathName26,
+				(char)rchDevicePathName27,
+				(char)rchDevicePathName28,
+				(char)rchDevicePathName29,
+				(char)rchDevicePathName30,
+				(char)rchDevicePathName31,
+				(char)rchDevicePathName32,
+				(char)rchDevicePathName33,
+				(char)rchDevicePathName34,
+				(char)rchDevicePathName35,
+				(char)rchDevicePathName36,
+				(char)rchDevicePathName37,
+				(char)rchDevicePathName38,
+				(char)rchDevicePathName39,
+				(char)rchDevicePathName40,
+				(char)rchDevicePathName41,
+				(char)rchDevicePathName42,
+				(char)rchDevicePathName43,
+				(char)rchDevicePathName44,
+				(char)rchDevicePathName45,
+				(char)rchDevicePathName46,
+				(char)rchDevicePathName47,
+				(char)rchDevicePathName48,
+				(char)rchDevicePathName49,
+				(char)rchDevicePathName50,
+				(char)rchDevicePathName51,
+				(char)rchDevicePathName52,
+				(char)rchDevicePathName53,
+				(char)rchDevicePathName54,
+				(char)rchDevicePathName55,
+				(char)rchDevicePathName56,
+				(char)rchDevicePathName57,
+				(char)rchDevicePathName58,
+				(char)rchDevicePathName59,
+				(char)rchDevicePathName60,
+				(char)rchDevicePathName61,
+				(char)rchDevicePathName62,
+				(char)rchDevicePathName63,
+				(char)rchDevicePathName64,
+				(char)rchDevicePathName65,
+				(char)rchDevicePathName66,
+				(char)rchDevicePathName67,
+				(char)rchDevicePathName68,
+				(char)rchDevicePathName69,
+				(char)rchDevicePathName70,
+				(char)rchDevicePathName71,
+				(char)rchDevicePathName72,
+				(char)rchDevicePathName73,
+				(char)rchDevicePathName74,
+				(char)rchDevicePathName75,
+				(char)rchDevicePathName76,
+				(char)rchDevicePathName77,
+				(char)rchDevicePathName78,
+				(char)rchDevicePathName79,
+				(char)rchDevicePathName80,
+				(char)rchDevicePathName81,
+				(char)rchDevicePathName82,
+				(char)rchDevicePathName83,
+				(char)rchDevicePathName84,
+				(char)rchDevicePathName85,
+				(char)rchDevicePathName86,
+				(char)rchDevicePathName87,
+				(char)rchDevicePathName88,
+				(char)rchDevicePathName89,
+				(char)rchDevicePathName90,
+				(char)rchDevicePathName91,
+				(char)rchDevicePathName92,
+				(char)rchDevicePathName93,
+				(char)rchDevicePathName94,
+				(char)rchDevicePathName95,
+				(char)rchDevicePathName96,
+				(char)rchDevicePathName97,
+				(char)rchDevicePathName98,
+				(char)rchDevicePathName99,
+				(char)rchDevicePathName100,
+				(char)rchDevicePathName101,
+				(char)rchDevicePathName102,
+				(char)rchDevicePathName103,
+				(char)rchDevicePathName104,
+				(char)rchDevicePathName105,
+				(char)rchDevicePathName106,
+				(char)rchDevicePathName107,
+				(char)rchDevicePathName108,
+				(char)rchDevicePathName109,
+				(char)rchDevicePathName110,
+				(char)rchDevicePathName111,
+				(char)rchDevicePathName112,
+				(char)rchDevicePathName113,
+				(char)rchDevicePathName114,
+				(char)rchDevicePathName115,
+				(char)rchDevicePathName116,
+				(char)rchDevicePathName117,
+				(char)rchDevicePathName118,
+				(char)rchDevicePathName119,
+				(char)rchDevicePathName120,
+				(char)rchDevicePathName121,
+				(char)rchDevicePathName122,
+				(char)rchDevicePathName123,
+				(char)rchDevicePathName124,
+				(char)rchDevicePathName125,
+				(char)rchDevicePathName126,
+				(char)rchDevicePathName127
+			}).TrimEnd('\0');
+		}
+	}
+	public byte rchInputPathName0,rchInputPathName1,rchInputPathName2,rchInputPathName3,rchInputPathName4,rchInputPathName5,rchInputPathName6,rchInputPathName7,rchInputPathName8,rchInputPathName9,rchInputPathName10,rchInputPathName11,rchInputPathName12,rchInputPathName13,rchInputPathName14,rchInputPathName15,rchInputPathName16,rchInputPathName17,rchInputPathName18,rchInputPathName19,rchInputPathName20,rchInputPathName21,rchInputPathName22,rchInputPathName23,rchInputPathName24,rchInputPathName25,rchInputPathName26,rchInputPathName27,rchInputPathName28,rchInputPathName29,rchInputPathName30,rchInputPathName31,rchInputPathName32,rchInputPathName33,rchInputPathName34,rchInputPathName35,rchInputPathName36,rchInputPathName37,rchInputPathName38,rchInputPathName39,rchInputPathName40,rchInputPathName41,rchInputPathName42,rchInputPathName43,rchInputPathName44,rchInputPathName45,rchInputPathName46,rchInputPathName47,rchInputPathName48,rchInputPathName49,rchInputPathName50,rchInputPathName51,rchInputPathName52,rchInputPathName53,rchInputPathName54,rchInputPathName55,rchInputPathName56,rchInputPathName57,rchInputPathName58,rchInputPathName59,rchInputPathName60,rchInputPathName61,rchInputPathName62,rchInputPathName63,rchInputPathName64,rchInputPathName65,rchInputPathName66,rchInputPathName67,rchInputPathName68,rchInputPathName69,rchInputPathName70,rchInputPathName71,rchInputPathName72,rchInputPathName73,rchInputPathName74,rchInputPathName75,rchInputPathName76,rchInputPathName77,rchInputPathName78,rchInputPathName79,rchInputPathName80,rchInputPathName81,rchInputPathName82,rchInputPathName83,rchInputPathName84,rchInputPathName85,rchInputPathName86,rchInputPathName87,rchInputPathName88,rchInputPathName89,rchInputPathName90,rchInputPathName91,rchInputPathName92,rchInputPathName93,rchInputPathName94,rchInputPathName95,rchInputPathName96,rchInputPathName97,rchInputPathName98,rchInputPathName99,rchInputPathName100,rchInputPathName101,rchInputPathName102,rchInputPathName103,rchInputPathName104,rchInputPathName105,rchInputPathName106,rchInputPathName107,rchInputPathName108,rchInputPathName109,rchInputPathName110,rchInputPathName111,rchInputPathName112,rchInputPathName113,rchInputPathName114,rchInputPathName115,rchInputPathName116,rchInputPathName117,rchInputPathName118,rchInputPathName119,rchInputPathName120,rchInputPathName121,rchInputPathName122,rchInputPathName123,rchInputPathName124,rchInputPathName125,rchInputPathName126,rchInputPathName127;
+	public string rchInputPathName
+	{
+		get
+		{
+			return new string(new char[] {
+				(char)rchInputPathName0,
+				(char)rchInputPathName1,
+				(char)rchInputPathName2,
+				(char)rchInputPathName3,
+				(char)rchInputPathName4,
+				(char)rchInputPathName5,
+				(char)rchInputPathName6,
+				(char)rchInputPathName7,
+				(char)rchInputPathName8,
+				(char)rchInputPathName9,
+				(char)rchInputPathName10,
+				(char)rchInputPathName11,
+				(char)rchInputPathName12,
+				(char)rchInputPathName13,
+				(char)rchInputPathName14,
+				(char)rchInputPathName15,
+				(char)rchInputPathName16,
+				(char)rchInputPathName17,
+				(char)rchInputPathName18,
+				(char)rchInputPathName19,
+				(char)rchInputPathName20,
+				(char)rchInputPathName21,
+				(char)rchInputPathName22,
+				(char)rchInputPathName23,
+				(char)rchInputPathName24,
+				(char)rchInputPathName25,
+				(char)rchInputPathName26,
+				(char)rchInputPathName27,
+				(char)rchInputPathName28,
+				(char)rchInputPathName29,
+				(char)rchInputPathName30,
+				(char)rchInputPathName31,
+				(char)rchInputPathName32,
+				(char)rchInputPathName33,
+				(char)rchInputPathName34,
+				(char)rchInputPathName35,
+				(char)rchInputPathName36,
+				(char)rchInputPathName37,
+				(char)rchInputPathName38,
+				(char)rchInputPathName39,
+				(char)rchInputPathName40,
+				(char)rchInputPathName41,
+				(char)rchInputPathName42,
+				(char)rchInputPathName43,
+				(char)rchInputPathName44,
+				(char)rchInputPathName45,
+				(char)rchInputPathName46,
+				(char)rchInputPathName47,
+				(char)rchInputPathName48,
+				(char)rchInputPathName49,
+				(char)rchInputPathName50,
+				(char)rchInputPathName51,
+				(char)rchInputPathName52,
+				(char)rchInputPathName53,
+				(char)rchInputPathName54,
+				(char)rchInputPathName55,
+				(char)rchInputPathName56,
+				(char)rchInputPathName57,
+				(char)rchInputPathName58,
+				(char)rchInputPathName59,
+				(char)rchInputPathName60,
+				(char)rchInputPathName61,
+				(char)rchInputPathName62,
+				(char)rchInputPathName63,
+				(char)rchInputPathName64,
+				(char)rchInputPathName65,
+				(char)rchInputPathName66,
+				(char)rchInputPathName67,
+				(char)rchInputPathName68,
+				(char)rchInputPathName69,
+				(char)rchInputPathName70,
+				(char)rchInputPathName71,
+				(char)rchInputPathName72,
+				(char)rchInputPathName73,
+				(char)rchInputPathName74,
+				(char)rchInputPathName75,
+				(char)rchInputPathName76,
+				(char)rchInputPathName77,
+				(char)rchInputPathName78,
+				(char)rchInputPathName79,
+				(char)rchInputPathName80,
+				(char)rchInputPathName81,
+				(char)rchInputPathName82,
+				(char)rchInputPathName83,
+				(char)rchInputPathName84,
+				(char)rchInputPathName85,
+				(char)rchInputPathName86,
+				(char)rchInputPathName87,
+				(char)rchInputPathName88,
+				(char)rchInputPathName89,
+				(char)rchInputPathName90,
+				(char)rchInputPathName91,
+				(char)rchInputPathName92,
+				(char)rchInputPathName93,
+				(char)rchInputPathName94,
+				(char)rchInputPathName95,
+				(char)rchInputPathName96,
+				(char)rchInputPathName97,
+				(char)rchInputPathName98,
+				(char)rchInputPathName99,
+				(char)rchInputPathName100,
+				(char)rchInputPathName101,
+				(char)rchInputPathName102,
+				(char)rchInputPathName103,
+				(char)rchInputPathName104,
+				(char)rchInputPathName105,
+				(char)rchInputPathName106,
+				(char)rchInputPathName107,
+				(char)rchInputPathName108,
+				(char)rchInputPathName109,
+				(char)rchInputPathName110,
+				(char)rchInputPathName111,
+				(char)rchInputPathName112,
+				(char)rchInputPathName113,
+				(char)rchInputPathName114,
+				(char)rchInputPathName115,
+				(char)rchInputPathName116,
+				(char)rchInputPathName117,
+				(char)rchInputPathName118,
+				(char)rchInputPathName119,
+				(char)rchInputPathName120,
+				(char)rchInputPathName121,
+				(char)rchInputPathName122,
+				(char)rchInputPathName123,
+				(char)rchInputPathName124,
+				(char)rchInputPathName125,
+				(char)rchInputPathName126,
+				(char)rchInputPathName127
+			}).TrimEnd('\0');
+		}
+	}
+	public byte rchModeName0,rchModeName1,rchModeName2,rchModeName3,rchModeName4,rchModeName5,rchModeName6,rchModeName7,rchModeName8,rchModeName9,rchModeName10,rchModeName11,rchModeName12,rchModeName13,rchModeName14,rchModeName15,rchModeName16,rchModeName17,rchModeName18,rchModeName19,rchModeName20,rchModeName21,rchModeName22,rchModeName23,rchModeName24,rchModeName25,rchModeName26,rchModeName27,rchModeName28,rchModeName29,rchModeName30,rchModeName31,rchModeName32,rchModeName33,rchModeName34,rchModeName35,rchModeName36,rchModeName37,rchModeName38,rchModeName39,rchModeName40,rchModeName41,rchModeName42,rchModeName43,rchModeName44,rchModeName45,rchModeName46,rchModeName47,rchModeName48,rchModeName49,rchModeName50,rchModeName51,rchModeName52,rchModeName53,rchModeName54,rchModeName55,rchModeName56,rchModeName57,rchModeName58,rchModeName59,rchModeName60,rchModeName61,rchModeName62,rchModeName63,rchModeName64,rchModeName65,rchModeName66,rchModeName67,rchModeName68,rchModeName69,rchModeName70,rchModeName71,rchModeName72,rchModeName73,rchModeName74,rchModeName75,rchModeName76,rchModeName77,rchModeName78,rchModeName79,rchModeName80,rchModeName81,rchModeName82,rchModeName83,rchModeName84,rchModeName85,rchModeName86,rchModeName87,rchModeName88,rchModeName89,rchModeName90,rchModeName91,rchModeName92,rchModeName93,rchModeName94,rchModeName95,rchModeName96,rchModeName97,rchModeName98,rchModeName99,rchModeName100,rchModeName101,rchModeName102,rchModeName103,rchModeName104,rchModeName105,rchModeName106,rchModeName107,rchModeName108,rchModeName109,rchModeName110,rchModeName111,rchModeName112,rchModeName113,rchModeName114,rchModeName115,rchModeName116,rchModeName117,rchModeName118,rchModeName119,rchModeName120,rchModeName121,rchModeName122,rchModeName123,rchModeName124,rchModeName125,rchModeName126,rchModeName127;
+	public string rchModeName
+	{
+		get
+		{
+			return new string(new char[] {
+				(char)rchModeName0,
+				(char)rchModeName1,
+				(char)rchModeName2,
+				(char)rchModeName3,
+				(char)rchModeName4,
+				(char)rchModeName5,
+				(char)rchModeName6,
+				(char)rchModeName7,
+				(char)rchModeName8,
+				(char)rchModeName9,
+				(char)rchModeName10,
+				(char)rchModeName11,
+				(char)rchModeName12,
+				(char)rchModeName13,
+				(char)rchModeName14,
+				(char)rchModeName15,
+				(char)rchModeName16,
+				(char)rchModeName17,
+				(char)rchModeName18,
+				(char)rchModeName19,
+				(char)rchModeName20,
+				(char)rchModeName21,
+				(char)rchModeName22,
+				(char)rchModeName23,
+				(char)rchModeName24,
+				(char)rchModeName25,
+				(char)rchModeName26,
+				(char)rchModeName27,
+				(char)rchModeName28,
+				(char)rchModeName29,
+				(char)rchModeName30,
+				(char)rchModeName31,
+				(char)rchModeName32,
+				(char)rchModeName33,
+				(char)rchModeName34,
+				(char)rchModeName35,
+				(char)rchModeName36,
+				(char)rchModeName37,
+				(char)rchModeName38,
+				(char)rchModeName39,
+				(char)rchModeName40,
+				(char)rchModeName41,
+				(char)rchModeName42,
+				(char)rchModeName43,
+				(char)rchModeName44,
+				(char)rchModeName45,
+				(char)rchModeName46,
+				(char)rchModeName47,
+				(char)rchModeName48,
+				(char)rchModeName49,
+				(char)rchModeName50,
+				(char)rchModeName51,
+				(char)rchModeName52,
+				(char)rchModeName53,
+				(char)rchModeName54,
+				(char)rchModeName55,
+				(char)rchModeName56,
+				(char)rchModeName57,
+				(char)rchModeName58,
+				(char)rchModeName59,
+				(char)rchModeName60,
+				(char)rchModeName61,
+				(char)rchModeName62,
+				(char)rchModeName63,
+				(char)rchModeName64,
+				(char)rchModeName65,
+				(char)rchModeName66,
+				(char)rchModeName67,
+				(char)rchModeName68,
+				(char)rchModeName69,
+				(char)rchModeName70,
+				(char)rchModeName71,
+				(char)rchModeName72,
+				(char)rchModeName73,
+				(char)rchModeName74,
+				(char)rchModeName75,
+				(char)rchModeName76,
+				(char)rchModeName77,
+				(char)rchModeName78,
+				(char)rchModeName79,
+				(char)rchModeName80,
+				(char)rchModeName81,
+				(char)rchModeName82,
+				(char)rchModeName83,
+				(char)rchModeName84,
+				(char)rchModeName85,
+				(char)rchModeName86,
+				(char)rchModeName87,
+				(char)rchModeName88,
+				(char)rchModeName89,
+				(char)rchModeName90,
+				(char)rchModeName91,
+				(char)rchModeName92,
+				(char)rchModeName93,
+				(char)rchModeName94,
+				(char)rchModeName95,
+				(char)rchModeName96,
+				(char)rchModeName97,
+				(char)rchModeName98,
+				(char)rchModeName99,
+				(char)rchModeName100,
+				(char)rchModeName101,
+				(char)rchModeName102,
+				(char)rchModeName103,
+				(char)rchModeName104,
+				(char)rchModeName105,
+				(char)rchModeName106,
+				(char)rchModeName107,
+				(char)rchModeName108,
+				(char)rchModeName109,
+				(char)rchModeName110,
+				(char)rchModeName111,
+				(char)rchModeName112,
+				(char)rchModeName113,
+				(char)rchModeName114,
+				(char)rchModeName115,
+				(char)rchModeName116,
+				(char)rchModeName117,
+				(char)rchModeName118,
+				(char)rchModeName119,
+				(char)rchModeName120,
+				(char)rchModeName121,
+				(char)rchModeName122,
+				(char)rchModeName123,
+				(char)rchModeName124,
+				(char)rchModeName125,
+				(char)rchModeName126,
+				(char)rchModeName127
+			}).TrimEnd('\0');
+		}
+	}
+	public byte rchSlotName0,rchSlotName1,rchSlotName2,rchSlotName3,rchSlotName4,rchSlotName5,rchSlotName6,rchSlotName7,rchSlotName8,rchSlotName9,rchSlotName10,rchSlotName11,rchSlotName12,rchSlotName13,rchSlotName14,rchSlotName15,rchSlotName16,rchSlotName17,rchSlotName18,rchSlotName19,rchSlotName20,rchSlotName21,rchSlotName22,rchSlotName23,rchSlotName24,rchSlotName25,rchSlotName26,rchSlotName27,rchSlotName28,rchSlotName29,rchSlotName30,rchSlotName31,rchSlotName32,rchSlotName33,rchSlotName34,rchSlotName35,rchSlotName36,rchSlotName37,rchSlotName38,rchSlotName39,rchSlotName40,rchSlotName41,rchSlotName42,rchSlotName43,rchSlotName44,rchSlotName45,rchSlotName46,rchSlotName47,rchSlotName48,rchSlotName49,rchSlotName50,rchSlotName51,rchSlotName52,rchSlotName53,rchSlotName54,rchSlotName55,rchSlotName56,rchSlotName57,rchSlotName58,rchSlotName59,rchSlotName60,rchSlotName61,rchSlotName62,rchSlotName63,rchSlotName64,rchSlotName65,rchSlotName66,rchSlotName67,rchSlotName68,rchSlotName69,rchSlotName70,rchSlotName71,rchSlotName72,rchSlotName73,rchSlotName74,rchSlotName75,rchSlotName76,rchSlotName77,rchSlotName78,rchSlotName79,rchSlotName80,rchSlotName81,rchSlotName82,rchSlotName83,rchSlotName84,rchSlotName85,rchSlotName86,rchSlotName87,rchSlotName88,rchSlotName89,rchSlotName90,rchSlotName91,rchSlotName92,rchSlotName93,rchSlotName94,rchSlotName95,rchSlotName96,rchSlotName97,rchSlotName98,rchSlotName99,rchSlotName100,rchSlotName101,rchSlotName102,rchSlotName103,rchSlotName104,rchSlotName105,rchSlotName106,rchSlotName107,rchSlotName108,rchSlotName109,rchSlotName110,rchSlotName111,rchSlotName112,rchSlotName113,rchSlotName114,rchSlotName115,rchSlotName116,rchSlotName117,rchSlotName118,rchSlotName119,rchSlotName120,rchSlotName121,rchSlotName122,rchSlotName123,rchSlotName124,rchSlotName125,rchSlotName126,rchSlotName127;
+	public string rchSlotName
+	{
+		get
+		{
+			return new string(new char[] {
+				(char)rchSlotName0,
+				(char)rchSlotName1,
+				(char)rchSlotName2,
+				(char)rchSlotName3,
+				(char)rchSlotName4,
+				(char)rchSlotName5,
+				(char)rchSlotName6,
+				(char)rchSlotName7,
+				(char)rchSlotName8,
+				(char)rchSlotName9,
+				(char)rchSlotName10,
+				(char)rchSlotName11,
+				(char)rchSlotName12,
+				(char)rchSlotName13,
+				(char)rchSlotName14,
+				(char)rchSlotName15,
+				(char)rchSlotName16,
+				(char)rchSlotName17,
+				(char)rchSlotName18,
+				(char)rchSlotName19,
+				(char)rchSlotName20,
+				(char)rchSlotName21,
+				(char)rchSlotName22,
+				(char)rchSlotName23,
+				(char)rchSlotName24,
+				(char)rchSlotName25,
+				(char)rchSlotName26,
+				(char)rchSlotName27,
+				(char)rchSlotName28,
+				(char)rchSlotName29,
+				(char)rchSlotName30,
+				(char)rchSlotName31,
+				(char)rchSlotName32,
+				(char)rchSlotName33,
+				(char)rchSlotName34,
+				(char)rchSlotName35,
+				(char)rchSlotName36,
+				(char)rchSlotName37,
+				(char)rchSlotName38,
+				(char)rchSlotName39,
+				(char)rchSlotName40,
+				(char)rchSlotName41,
+				(char)rchSlotName42,
+				(char)rchSlotName43,
+				(char)rchSlotName44,
+				(char)rchSlotName45,
+				(char)rchSlotName46,
+				(char)rchSlotName47,
+				(char)rchSlotName48,
+				(char)rchSlotName49,
+				(char)rchSlotName50,
+				(char)rchSlotName51,
+				(char)rchSlotName52,
+				(char)rchSlotName53,
+				(char)rchSlotName54,
+				(char)rchSlotName55,
+				(char)rchSlotName56,
+				(char)rchSlotName57,
+				(char)rchSlotName58,
+				(char)rchSlotName59,
+				(char)rchSlotName60,
+				(char)rchSlotName61,
+				(char)rchSlotName62,
+				(char)rchSlotName63,
+				(char)rchSlotName64,
+				(char)rchSlotName65,
+				(char)rchSlotName66,
+				(char)rchSlotName67,
+				(char)rchSlotName68,
+				(char)rchSlotName69,
+				(char)rchSlotName70,
+				(char)rchSlotName71,
+				(char)rchSlotName72,
+				(char)rchSlotName73,
+				(char)rchSlotName74,
+				(char)rchSlotName75,
+				(char)rchSlotName76,
+				(char)rchSlotName77,
+				(char)rchSlotName78,
+				(char)rchSlotName79,
+				(char)rchSlotName80,
+				(char)rchSlotName81,
+				(char)rchSlotName82,
+				(char)rchSlotName83,
+				(char)rchSlotName84,
+				(char)rchSlotName85,
+				(char)rchSlotName86,
+				(char)rchSlotName87,
+				(char)rchSlotName88,
+				(char)rchSlotName89,
+				(char)rchSlotName90,
+				(char)rchSlotName91,
+				(char)rchSlotName92,
+				(char)rchSlotName93,
+				(char)rchSlotName94,
+				(char)rchSlotName95,
+				(char)rchSlotName96,
+				(char)rchSlotName97,
+				(char)rchSlotName98,
+				(char)rchSlotName99,
+				(char)rchSlotName100,
+				(char)rchSlotName101,
+				(char)rchSlotName102,
+				(char)rchSlotName103,
+				(char)rchSlotName104,
+				(char)rchSlotName105,
+				(char)rchSlotName106,
+				(char)rchSlotName107,
+				(char)rchSlotName108,
+				(char)rchSlotName109,
+				(char)rchSlotName110,
+				(char)rchSlotName111,
+				(char)rchSlotName112,
+				(char)rchSlotName113,
+				(char)rchSlotName114,
+				(char)rchSlotName115,
+				(char)rchSlotName116,
+				(char)rchSlotName117,
+				(char)rchSlotName118,
+				(char)rchSlotName119,
+				(char)rchSlotName120,
+				(char)rchSlotName121,
+				(char)rchSlotName122,
+				(char)rchSlotName123,
+				(char)rchSlotName124,
+				(char)rchSlotName125,
+				(char)rchSlotName126,
+				(char)rchSlotName127
+			}).TrimEnd('\0');
+		}
+	}
+}
 [StructLayout(LayoutKind.Sequential)] public struct VRActiveActionSet_t
 {
 	public ulong ulActionSet;
@@ -5833,6 +6470,7 @@ public enum EIOBufferMode
 	public IntPtr m_pVRInput; // class vr::IVRInput *
 	public IntPtr m_pVRIOBuffer; // class vr::IVRIOBuffer *
 	public IntPtr m_pVRSpatialAnchors; // class vr::IVRSpatialAnchors *
+	public IntPtr m_pVRDebug; // class vr::IVRDebug *
 	public IntPtr m_pVRNotifications; // class vr::IVRNotifications *
 }
 
@@ -5929,7 +6567,7 @@ public class OpenVR
 	public const ulong k_ulOverlayHandleInvalid = 0;
 	public const uint k_unMaxDistortionFunctionParameters = 8;
 	public const uint k_unScreenshotHandleInvalid = 0;
-	public const string IVRSystem_Version = "IVRSystem_019";
+	public const string IVRSystem_Version = "IVRSystem_020";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
 	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_005";
 	public const uint k_unMaxApplicationKeyLength = 128;
@@ -6105,6 +6743,7 @@ public class OpenVR
 	public const string k_pch_Dashboard_UseWebPowerMenu = "useWebPowerMenu";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";
+	public const string k_pch_Driver_LoadPriority_Int32 = "loadPriority";
 	public const string k_pch_WebInterface_Section = "WebInterface";
 	public const string k_pch_WebInterface_WebEnable_Bool = "WebEnable";
 	public const string k_pch_WebInterface_WebPort_String = "WebPort";
@@ -6128,11 +6767,12 @@ public class OpenVR
 	public const uint k_unMaxActionSetNameLength = 64;
 	public const uint k_unMaxActionOriginCount = 16;
 	public const uint k_unMaxBoneNameLength = 32;
-	public const string IVRInput_Version = "IVRInput_006";
+	public const string IVRInput_Version = "IVRInput_007";
 	public const ulong k_ulInvalidIOBufferHandle = 0;
 	public const string IVRIOBuffer_Version = "IVRIOBuffer_002";
 	public const uint k_ulInvalidSpatialAnchorHandle = 0;
 	public const string IVRSpatialAnchors_Version = "IVRSpatialAnchors_001";
+	public const string IVRDebug_Version = "IVRDebug_001";
 
 	static uint VRToken { get; set; }
 
@@ -6159,6 +6799,7 @@ public class OpenVR
 			m_pVRIOBuffer = null;
 			m_pVRSpatialAnchors = null;
 			m_pVRNotifications = null;
+			m_pVRDebug = null;
 		}
 
 		void CheckClear()
@@ -6352,6 +6993,19 @@ public class OpenVR
 			return m_pVRSpatialAnchors;
 		}
 
+		public CVRDebug VRDebug()
+		{
+			CheckClear();
+			if (m_pVRDebug == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = OpenVRInterop.GetGenericInterface(FnTable_Prefix + IVRDebug_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRDebug = new CVRDebug(pInterface);
+			}
+			return m_pVRDebug;
+		}
+
 		public CVRNotifications VRNotifications()
 		{
 			CheckClear();
@@ -6380,6 +7034,7 @@ public class OpenVR
 		private CVRIOBuffer m_pVRIOBuffer;
 		private CVRSpatialAnchors m_pVRSpatialAnchors;
 		private CVRNotifications m_pVRNotifications;
+		private CVRDebug m_pVRDebug;
 	};
 
 	private static COpenVRContext _OpenVRInternal_ModuleContext = null;
@@ -6408,6 +7063,8 @@ public class OpenVR
 	public static CVRIOBuffer IOBuffer { get { return OpenVRInternal_ModuleContext.VRIOBuffer(); } }
 	public static CVRSpatialAnchors SpatialAnchors { get { return OpenVRInternal_ModuleContext.VRSpatialAnchors(); } }
 	public static CVRNotifications Notifications { get { return OpenVRInternal_ModuleContext.VRNotifications(); } }
+	public static CVRDebug Debug { get { return OpenVRInternal_ModuleContext.VRDebug(); } }
+
 
 	/** Finds the active installation of vrclient.dll and initializes it */
 	public static CVRSystem Init(ref EVRInitError peError, EVRApplicationType eApplicationType = EVRApplicationType.VRApplication_Scene, string pchStartupInfo= "")
