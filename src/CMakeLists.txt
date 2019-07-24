@@ -92,6 +92,7 @@ elseif(BUILD_FRAMEWORK)
 	)
 else()
 	add_library(${LIBNAME} STATIC ${SOURCE_FILES})
+	set_target_properties(${LIBNAME} PROPERTIES ARCHIVE_OUTPUT_NAME "${LIBNAME}$<$<CONFIG:Debug>:d>")
 endif()
 
 if(USE_CUSTOM_LIBCXX)
