@@ -401,6 +401,12 @@ void V_URLEncode( char *pchDest, int nDestLen, const char *pchSource, int nSourc
 }
 
 
+void V_URLEncodeNoPlusForSpace( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen )
+{
+	return V_URLEncodeInternal( pchDest, nDestLen, pchSource, nSourceLen, false );
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
 //          This version of the call isn't a strict RFC implementation, but uses + for space as is
@@ -412,6 +418,11 @@ void V_URLEncode( char *pchDest, int nDestLen, const char *pchSource, int nSourc
 size_t V_URLDecode( char *pchDecodeDest, int nDecodeDestLen, const char *pchEncodedSource, int nEncodedSourceLen )
 {
 	return V_URLDecodeInternal( pchDecodeDest, nDecodeDestLen, pchEncodedSource, nEncodedSourceLen, true );
+}
+
+size_t V_URLDecodeNoPlusForSpace( char *pchDecodeDest, int nDecodeDestLen, const char *pchEncodedSource, int nEncodedSourceLen )
+{
+	return V_URLDecodeInternal( pchDecodeDest, nDecodeDestLen, pchEncodedSource, nEncodedSourceLen, false );
 }
 
 //-----------------------------------------------------------------------------

@@ -132,6 +132,10 @@ std::string CVRPathRegistry_Public::GetOpenVRConfigPath()
 //-----------------------------------------------------------------------------
 std::string CVRPathRegistry_Public::GetVRPathRegistryFilename()
 {
+	std::string sOverridePath = GetEnvironmentVariable( "VR_PATHREG_OVERRIDE" );
+	if ( !sOverridePath.empty() )
+		return sOverridePath;
+
 	std::string sPath = GetOpenVRConfigPath();
 	if ( sPath.empty() )
 		return "";

@@ -245,6 +245,16 @@ public struct IVRSystem
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _AcknowledgeQuit_UserPrompt AcknowledgeQuit_UserPrompt;
 
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate uint _GetAppContainerFilePaths(System.Text.StringBuilder pchBuffer, uint unBufferSize);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetAppContainerFilePaths GetAppContainerFilePaths;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate IntPtr _GetRuntimeVersion();
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetRuntimeVersion GetRuntimeVersion;
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -2092,6 +2102,16 @@ public class CVRSystem
 	public void AcknowledgeQuit_UserPrompt()
 	{
 		FnTable.AcknowledgeQuit_UserPrompt();
+	}
+	public uint GetAppContainerFilePaths(System.Text.StringBuilder pchBuffer,uint unBufferSize)
+	{
+		uint result = FnTable.GetAppContainerFilePaths(pchBuffer,unBufferSize);
+		return result;
+	}
+	public string GetRuntimeVersion()
+	{
+		IntPtr result = FnTable.GetRuntimeVersion();
+		return Marshal.PtrToStringAnsi(result);
 	}
 }
 
@@ -3998,6 +4018,8 @@ public enum ETrackedDeviceProperty
 	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080,
 	Prop_DisplaySupportsMultipleFramerates_Bool = 2081,
+	Prop_DisplayColorMultLeft_Vector3 = 2082,
+	Prop_DisplayColorMultRight_Vector3 = 2083,
 	Prop_DashboardLayoutPathName_String = 2090,
 	Prop_DriverRequestedMuraCorrectionMode_Int32 = 2200,
 	Prop_DriverRequestedMuraFeather_InnerLeft_Int32 = 2201,
@@ -4507,6 +4529,7 @@ public enum EVRInitError
 	Init_TrackerManagerInitFailed = 142,
 	Init_AlreadyRunning = 143,
 	Init_FailedForVrMonitor = 144,
+	Init_PropertyManagerInitFailed = 145,
 	Driver_Failed = 200,
 	Driver_Unknown = 201,
 	Driver_HmdUnknown = 202,
@@ -4529,6 +4552,8 @@ public enum EVRInitError
 	IPC_CompositorConnectFailed = 306,
 	IPC_CompositorInvalidConnectResponse = 307,
 	IPC_ConnectFailedAfterMultipleAttempts = 308,
+	IPC_ConnectFailedAfterTargetExited = 309,
+	IPC_NamespaceUnavailable = 310,
 	Compositor_Failed = 400,
 	Compositor_D3D11HardwareRequired = 401,
 	Compositor_FirmwareRequiresUpdate = 402,
@@ -4837,6 +4862,7 @@ public enum VROverlayFlags
 	VisibleInDashboard = 15,
 	MakeOverlaysInteractiveIfVisible = 16,
 	SendVRSmoothScrollEvents = 17,
+	ProtectedContent = 18,
 }
 public enum VRMessageOverlayResponse
 {
@@ -5513,26 +5539,6 @@ public enum EVRDebugError
 	public TrackedDevicePose_t standingTrackedDevicePose;
 	public ulong ulFrameExposureTime;
 }
-[StructLayout(LayoutKind.Sequential)] public struct DriverDirectMode_FrameTiming
-{
-	public uint m_nSize;
-	public uint m_nNumFramePresents;
-	public uint m_nNumMisPresented;
-	public uint m_nNumDroppedFrames;
-	public uint m_nReprojectionFlags;
-}
-[StructLayout(LayoutKind.Sequential)] public struct ImuSample_t
-{
-	public double fSampleTime;
-	public HmdVector3d_t vAccel;
-	public HmdVector3d_t vGyro;
-	public uint unOffScaleFlags;
-}
-[StructLayout(LayoutKind.Sequential)] public struct AppOverrideKeys_t
-{
-	public IntPtr pchKey; // const char *
-	public IntPtr pchValue; // const char *
-}
 [StructLayout(LayoutKind.Sequential)] public struct Compositor_FrameTiming
 {
 	public uint m_nSize;
@@ -5561,6 +5567,26 @@ public enum EVRDebugError
 	public TrackedDevicePose_t m_HmdPose;
 	public uint m_nNumVSyncsReadyForUse;
 	public uint m_nNumVSyncsToFirstView;
+}
+[StructLayout(LayoutKind.Sequential)] public struct DriverDirectMode_FrameTiming
+{
+	public uint m_nSize;
+	public uint m_nNumFramePresents;
+	public uint m_nNumMisPresented;
+	public uint m_nNumDroppedFrames;
+	public uint m_nReprojectionFlags;
+}
+[StructLayout(LayoutKind.Sequential)] public struct ImuSample_t
+{
+	public double fSampleTime;
+	public HmdVector3d_t vAccel;
+	public HmdVector3d_t vGyro;
+	public uint unOffScaleFlags;
+}
+[StructLayout(LayoutKind.Sequential)] public struct AppOverrideKeys_t
+{
+	public IntPtr pchKey; // const char *
+	public IntPtr pchValue; // const char *
 }
 [StructLayout(LayoutKind.Sequential)] public struct Compositor_CumulativeStats
 {
@@ -6613,7 +6639,7 @@ public class OpenVR
 	public const string k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
 	public const string k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
 	public const string k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
-	public const string k_pch_SteamVR_BaseStationPowerManagement_Bool = "basestationPowerManagement";
+	public const string k_pch_SteamVR_BaseStationPowerManagement_Int32 = "basestationPowerManagement";
 	public const string k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 	public const string k_pch_SteamVR_SupersampleScale_Float = "supersampleScale";
 	public const string k_pch_SteamVR_MaxRecommendedResolution_Int32 = "maxRecommendedResolution";
@@ -6641,13 +6667,15 @@ public class OpenVR
 	public const string k_pch_SteamVR_DebugInput = "debugInput";
 	public const string k_pch_SteamVR_DebugInputBinding = "debugInputBinding";
 	public const string k_pch_SteamVR_DoNotFadeToGrid = "doNotFadeToGrid";
-	public const string k_pch_SteamVR_InputBindingUIBlock = "inputBindingUI";
 	public const string k_pch_SteamVR_RenderCameraMode = "renderCameraMode";
 	public const string k_pch_SteamVR_EnableSharedResourceJournaling = "enableSharedResourceJournaling";
 	public const string k_pch_SteamVR_EnableSafeMode = "enableSafeMode";
 	public const string k_pch_SteamVR_PreferredRefreshRate = "preferredRefreshRate";
 	public const string k_pch_SteamVR_LastVersionNotice = "lastVersionNotice";
 	public const string k_pch_SteamVR_LastVersionNoticeDate = "lastVersionNoticeDate";
+	public const string k_pch_SteamVR_HmdDisplayColorGainR_Float = "hmdDisplayColorGainR";
+	public const string k_pch_SteamVR_HmdDisplayColorGainG_Float = "hmdDisplayColorGainG";
+	public const string k_pch_SteamVR_HmdDisplayColorGainB_Float = "hmdDisplayColorGainB";
 	public const string k_pch_DirectMode_Section = "direct_mode";
 	public const string k_pch_DirectMode_Enable_Bool = "enable";
 	public const string k_pch_DirectMode_Count_Int32 = "count";
@@ -6760,6 +6788,10 @@ public class OpenVR
 	public const string k_pch_LastKnown_HMDManufacturer_String = "HMDManufacturer";
 	public const string k_pch_LastKnown_HMDModel_String = "HMDModel";
 	public const string k_pch_DismissedWarnings_Section = "DismissedWarnings";
+	public const string k_pch_Input_Section = "input";
+	public const string k_pch_Input_LeftThumbstickRotation_Float = "leftThumbstickRotation";
+	public const string k_pch_Input_RightThumbstickRotation_Float = "rightThumbstickRotation";
+	public const string k_pch_Input_ThumbstickDeadzone_Float = "thumbstickDeadzone";
 	public const string IVRScreenshots_Version = "IVRScreenshots_001";
 	public const string IVRResources_Version = "IVRResources_001";
 	public const string IVRDriverManager_Version = "IVRDriverManager_001";
