@@ -97,7 +97,7 @@ void WatchdogThreadFunction(  )
 		if ( (0x01 & GetAsyncKeyState( 'Y' )) != 0 )
 		{
 			// Y key was pressed. 
-			vr::VRWatchdogHost()->WatchdogWakeUp();
+			vr::VRWatchdogHost()->WatchdogWakeUp(vr::ETrackedDeviceClass::TrackedDeviceClass_HMD);
 		}
 		std::this_thread::sleep_for( std::chrono::microseconds( 500 ) );
 #else
