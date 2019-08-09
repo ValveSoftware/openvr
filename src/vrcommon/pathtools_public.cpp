@@ -16,7 +16,9 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
+#include <alloca.h>
 #endif
+
 #if defined OSX
 #include <Foundation/Foundation.h>
 #include <AppKit/AppKit.h>
@@ -814,7 +816,12 @@ std::string Path_FilePathToUrl( const std::string & sRelativePath, const std::st
 		if ( sAbsolute.empty() )
 			return sAbsolute;
 		sAbsolute = Path_FixSlashes( sAbsolute, '/' );
-		return std::string( FILE_URL_PREFIX ) + sAbsolute;
+
+		size_t unBufferSize = sAbsolute.length() * 3;
+		char *pchBuffer = (char *)alloca( unBufferSize );
+		V_URLEncodeNoPlusForSpace( pchBuffer, (int)unBufferSize, sAbsolute.c_str(), (int)sAbsolute.length() );
+
+		return std::string( FILE_URL_PREFIX ) + pchBuffer;
 	}
 }
 
@@ -825,9 +832,11 @@ std::string Path_UrlToFilePath( const std::string & sFileUrl )
 {
 	if ( !strnicmp( sFileUrl.c_str(), FILE_URL_PREFIX, strlen( FILE_URL_PREFIX ) ) )
 	{
-		std::string sRet = sFileUrl.c_str() + strlen( FILE_URL_PREFIX );
-		sRet = Path_FixSlashes( sRet );
-		return sRet;
+		char *pchBuffer = (char *)alloca( sFileUrl.length() );
+		V_URLDecodeNoPlusForSpace( pchBuffer, (int)sFileUrl.length(), 
+			sFileUrl.c_str() + strlen( FILE_URL_PREFIX ), (int)( sFileUrl.length() - strlen( FILE_URL_PREFIX ) ) );
+
+		return Path_FixSlashes( pchBuffer );
 	}
 	else
 	{

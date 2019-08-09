@@ -222,6 +222,8 @@
 	,{"name": "Prop_DriverProvidedChaperoneVisibility_Bool","value": "2076"}
 	,{"name": "Prop_DisplayAvailableFrameRates_Float_Array","value": "2080"}
 	,{"name": "Prop_DisplaySupportsMultipleFramerates_Bool","value": "2081"}
+	,{"name": "Prop_DisplayColorMultLeft_Vector3","value": "2082"}
+	,{"name": "Prop_DisplayColorMultRight_Vector3","value": "2083"}
 	,{"name": "Prop_DashboardLayoutPathName_String","value": "2090"}
 	,{"name": "Prop_DriverRequestedMuraCorrectionMode_Int32","value": "2200"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerLeft_Int32","value": "2201"}
@@ -707,6 +709,7 @@
 	,{"name": "VRInitError_Init_TrackerManagerInitFailed","value": "142"}
 	,{"name": "VRInitError_Init_AlreadyRunning","value": "143"}
 	,{"name": "VRInitError_Init_FailedForVrMonitor","value": "144"}
+	,{"name": "VRInitError_Init_PropertyManagerInitFailed","value": "145"}
 	,{"name": "VRInitError_Driver_Failed","value": "200"}
 	,{"name": "VRInitError_Driver_Unknown","value": "201"}
 	,{"name": "VRInitError_Driver_HmdUnknown","value": "202"}
@@ -729,6 +732,8 @@
 	,{"name": "VRInitError_IPC_CompositorConnectFailed","value": "306"}
 	,{"name": "VRInitError_IPC_CompositorInvalidConnectResponse","value": "307"}
 	,{"name": "VRInitError_IPC_ConnectFailedAfterMultipleAttempts","value": "308"}
+	,{"name": "VRInitError_IPC_ConnectFailedAfterTargetExited","value": "309"}
+	,{"name": "VRInitError_IPC_NamespaceUnavailable","value": "310"}
 	,{"name": "VRInitError_Compositor_Failed","value": "400"}
 	,{"name": "VRInitError_Compositor_D3D11HardwareRequired","value": "401"}
 	,{"name": "VRInitError_Compositor_FirmwareRequiresUpdate","value": "402"}
@@ -1017,6 +1022,7 @@
 	,{"name": "VROverlayFlags_VisibleInDashboard","value": "15"}
 	,{"name": "VROverlayFlags_MakeOverlaysInteractiveIfVisible","value": "16"}
 	,{"name": "VROverlayFlags_SendVRSmoothScrollEvents","value": "17"}
+	,{"name": "VROverlayFlags_ProtectedContent","value": "18"}
 ]}
 ,	{"enumname": "vr::VRMessageOverlayResponse","values": [ 
 	{"name": "VRMessageOverlayResponse_ButtonPress_0","value": "0"}
@@ -1328,7 +1334,7 @@
 ,{
 	"constname": "k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float","consttype": "const char *const", "constval": "speakersForwardYawOffsetDegrees"}
 ,{
-	"constname": "k_pch_SteamVR_BaseStationPowerManagement_Bool","consttype": "const char *const", "constval": "basestationPowerManagement"}
+	"constname": "k_pch_SteamVR_BaseStationPowerManagement_Int32","consttype": "const char *const", "constval": "basestationPowerManagement"}
 ,{
 	"constname": "k_pch_SteamVR_NeverKillProcesses_Bool","consttype": "const char *const", "constval": "neverKillProcesses"}
 ,{
@@ -1384,8 +1390,6 @@
 ,{
 	"constname": "k_pch_SteamVR_DoNotFadeToGrid","consttype": "const char *const", "constval": "doNotFadeToGrid"}
 ,{
-	"constname": "k_pch_SteamVR_InputBindingUIBlock","consttype": "const char *const", "constval": "inputBindingUI"}
-,{
 	"constname": "k_pch_SteamVR_RenderCameraMode","consttype": "const char *const", "constval": "renderCameraMode"}
 ,{
 	"constname": "k_pch_SteamVR_EnableSharedResourceJournaling","consttype": "const char *const", "constval": "enableSharedResourceJournaling"}
@@ -1397,6 +1401,12 @@
 	"constname": "k_pch_SteamVR_LastVersionNotice","consttype": "const char *const", "constval": "lastVersionNotice"}
 ,{
 	"constname": "k_pch_SteamVR_LastVersionNoticeDate","consttype": "const char *const", "constval": "lastVersionNoticeDate"}
+,{
+	"constname": "k_pch_SteamVR_HmdDisplayColorGainR_Float","consttype": "const char *const", "constval": "hmdDisplayColorGainR"}
+,{
+	"constname": "k_pch_SteamVR_HmdDisplayColorGainG_Float","consttype": "const char *const", "constval": "hmdDisplayColorGainG"}
+,{
+	"constname": "k_pch_SteamVR_HmdDisplayColorGainB_Float","consttype": "const char *const", "constval": "hmdDisplayColorGainB"}
 ,{
 	"constname": "k_pch_DirectMode_Section","consttype": "const char *const", "constval": "direct_mode"}
 ,{
@@ -1621,6 +1631,14 @@
 	"constname": "k_pch_LastKnown_HMDModel_String","consttype": "const char *const", "constval": "HMDModel"}
 ,{
 	"constname": "k_pch_DismissedWarnings_Section","consttype": "const char *const", "constval": "DismissedWarnings"}
+,{
+	"constname": "k_pch_Input_Section","consttype": "const char *const", "constval": "input"}
+,{
+	"constname": "k_pch_Input_LeftThumbstickRotation_Float","consttype": "const char *const", "constval": "leftThumbstickRotation"}
+,{
+	"constname": "k_pch_Input_RightThumbstickRotation_Float","consttype": "const char *const", "constval": "rightThumbstickRotation"}
+,{
+	"constname": "k_pch_Input_ThumbstickDeadzone_Float","consttype": "const char *const", "constval": "thumbstickDeadzone"}
 ,{
 	"constname": "IVRScreenshots_Version","consttype": "const char *const", "constval": "IVRScreenshots_001"}
 ,{
@@ -1905,20 +1923,6 @@
 { "fieldname": "nFrameSequence", "fieldtype": "uint32_t"},
 { "fieldname": "standingTrackedDevicePose", "fieldtype": "struct vr::TrackedDevicePose_t"},
 { "fieldname": "ulFrameExposureTime", "fieldtype": "uint64_t"}]}
-,{"struct": "vr::DriverDirectMode_FrameTiming","fields": [
-{ "fieldname": "m_nSize", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nNumFramePresents", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nNumMisPresented", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nNumDroppedFrames", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nReprojectionFlags", "fieldtype": "uint32_t"}]}
-,{"struct": "vr::ImuSample_t","fields": [
-{ "fieldname": "fSampleTime", "fieldtype": "double"},
-{ "fieldname": "vAccel", "fieldtype": "struct vr::HmdVector3d_t"},
-{ "fieldname": "vGyro", "fieldtype": "struct vr::HmdVector3d_t"},
-{ "fieldname": "unOffScaleFlags", "fieldtype": "uint32_t"}]}
-,{"struct": "vr::AppOverrideKeys_t","fields": [
-{ "fieldname": "pchKey", "fieldtype": "const char *"},
-{ "fieldname": "pchValue", "fieldtype": "const char *"}]}
 ,{"struct": "vr::Compositor_FrameTiming","fields": [
 { "fieldname": "m_nSize", "fieldtype": "uint32_t"},
 { "fieldname": "m_nFrameIndex", "fieldtype": "uint32_t"},
@@ -1946,6 +1950,20 @@
 { "fieldname": "m_HmdPose", "fieldtype": "vr::TrackedDevicePose_t"},
 { "fieldname": "m_nNumVSyncsReadyForUse", "fieldtype": "uint32_t"},
 { "fieldname": "m_nNumVSyncsToFirstView", "fieldtype": "uint32_t"}]}
+,{"struct": "vr::DriverDirectMode_FrameTiming","fields": [
+{ "fieldname": "m_nSize", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nNumFramePresents", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nNumMisPresented", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nNumDroppedFrames", "fieldtype": "uint32_t"},
+{ "fieldname": "m_nReprojectionFlags", "fieldtype": "uint32_t"}]}
+,{"struct": "vr::ImuSample_t","fields": [
+{ "fieldname": "fSampleTime", "fieldtype": "double"},
+{ "fieldname": "vAccel", "fieldtype": "struct vr::HmdVector3d_t"},
+{ "fieldname": "vGyro", "fieldtype": "struct vr::HmdVector3d_t"},
+{ "fieldname": "unOffScaleFlags", "fieldtype": "uint32_t"}]}
+,{"struct": "vr::AppOverrideKeys_t","fields": [
+{ "fieldname": "pchKey", "fieldtype": "const char *"},
+{ "fieldname": "pchValue", "fieldtype": "const char *"}]}
 ,{"struct": "vr::Compositor_CumulativeStats","fields": [
 { "fieldname": "m_nPid", "fieldtype": "uint32_t"},
 { "fieldname": "m_nNumFramePresents", "fieldtype": "uint32_t"},
@@ -2463,6 +2481,20 @@
 	"classname": "vr::IVRSystem",
 	"methodname": "AcknowledgeQuit_UserPrompt",
 	"returntype": "void"
+}
+,{
+	"classname": "vr::IVRSystem",
+	"methodname": "GetAppContainerFilePaths",
+	"returntype": "uint32_t",
+	"params": [ 
+{	"paramname": "pchBuffer" ,"out_string": " " ,"paramtype": "char *"},
+{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRSystem",
+	"methodname": "GetRuntimeVersion",
+	"returntype": "const char *"
 }
 ,{
 	"classname": "vr::IVRExtendedDisplay",
