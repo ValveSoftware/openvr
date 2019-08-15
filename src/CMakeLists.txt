@@ -37,7 +37,9 @@ set(CORE_FILES
 )
 
 if(NOT USE_SYSTEM_JSONCPP)
-	set(CORE_FILES ${CORE_FILES} jsoncpp.cpp)
+	set(JSON_CPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/jsoncpp)
+	include_directories(${JSON_CPP_DIR})
+	list(APPEND CORE_FILES ${JSON_CPP_DIR}/jsoncpp.cpp)
 endif()
 
 set(VRCOMMON_FILES
