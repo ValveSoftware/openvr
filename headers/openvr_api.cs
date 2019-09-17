@@ -340,6 +340,16 @@ public struct IVRTrackedCamera
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _ReleaseVideoStreamTextureGL ReleaseVideoStreamTextureGL;
 
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate void _SetCameraTrackingSpace(ETrackingUniverseOrigin eUniverse);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _SetCameraTrackingSpace SetCameraTrackingSpace;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate ETrackingUniverseOrigin _GetCameraTrackingSpace();
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetCameraTrackingSpace GetCameraTrackingSpace;
+
 }
 
 [StructLayout(LayoutKind.Sequential)]
@@ -904,16 +914,6 @@ public struct IVROverlay
 	internal delegate EVROverlayError _DestroyOverlay(ulong ulOverlayHandle);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _DestroyOverlay DestroyOverlay;
-
-	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate EVROverlayError _SetHighQualityOverlay(ulong ulOverlayHandle);
-	[MarshalAs(UnmanagedType.FunctionPtr)]
-	internal _SetHighQualityOverlay SetHighQualityOverlay;
-
-	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate ulong _GetHighQualityOverlay();
-	[MarshalAs(UnmanagedType.FunctionPtr)]
-	internal _GetHighQualityOverlay GetHighQualityOverlay;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate uint _GetOverlayKey(ulong ulOverlayHandle, System.Text.StringBuilder pchValue, uint unBufferSize, ref EVROverlayError pError);
@@ -2223,6 +2223,15 @@ public class CVRTrackedCamera
 		EVRTrackedCameraError result = FnTable.ReleaseVideoStreamTextureGL(hTrackedCamera,glTextureId);
 		return result;
 	}
+	public void SetCameraTrackingSpace(ETrackingUniverseOrigin eUniverse)
+	{
+		FnTable.SetCameraTrackingSpace(eUniverse);
+	}
+	public ETrackingUniverseOrigin GetCameraTrackingSpace()
+	{
+		ETrackingUniverseOrigin result = FnTable.GetCameraTrackingSpace();
+		return result;
+	}
 }
 
 
@@ -2791,16 +2800,6 @@ public class CVROverlay
 	public EVROverlayError DestroyOverlay(ulong ulOverlayHandle)
 	{
 		EVROverlayError result = FnTable.DestroyOverlay(ulOverlayHandle);
-		return result;
-	}
-	public EVROverlayError SetHighQualityOverlay(ulong ulOverlayHandle)
-	{
-		EVROverlayError result = FnTable.SetHighQualityOverlay(ulOverlayHandle);
-		return result;
-	}
-	public ulong GetHighQualityOverlay()
-	{
-		ulong result = FnTable.GetHighQualityOverlay();
 		return result;
 	}
 	public uint GetOverlayKey(ulong ulOverlayHandle,System.Text.StringBuilder pchValue,uint unBufferSize,ref EVROverlayError pError)
@@ -4016,6 +4015,7 @@ public enum ETrackedDeviceProperty
 	Prop_ExpectedControllerType_String = 2074,
 	Prop_HmdTrackingStyle_Int32 = 2075,
 	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
+	Prop_HmdProvidesDisplaySettings_Bool = 2077,
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080,
 	Prop_DisplaySupportsMultipleFramerates_Bool = 2081,
 	Prop_DisplayColorMultLeft_Vector3 = 2082,
@@ -4056,9 +4056,11 @@ public enum ETrackedDeviceProperty
 	Prop_NamedIconPathDeviceNotReady_String = 5006,
 	Prop_NamedIconPathDeviceStandby_String = 5007,
 	Prop_NamedIconPathDeviceAlertLow_String = 5008,
+	Prop_NamedIconPathDeviceStandbyAlert_String = 5009,
 	Prop_DisplayHiddenArea_Binary_Start = 5100,
 	Prop_DisplayHiddenArea_Binary_End = 5150,
 	Prop_ParentContainer = 5151,
+	Prop_OverrideContainer_Uint64 = 5152,
 	Prop_UserConfigPath_String = 6000,
 	Prop_InstallPath_String = 6001,
 	Prop_HasDisplayComponent_Bool = 6002,
@@ -4252,8 +4254,6 @@ public enum EVREventType
 	VREvent_ApplicationTransitionNewAppLaunchComplete = 1305,
 	VREvent_ProcessConnected = 1306,
 	VREvent_ProcessDisconnected = 1307,
-	VREvent_Compositor_MirrorWindowShown = 1400,
-	VREvent_Compositor_MirrorWindowHidden = 1401,
 	VREvent_Compositor_ChaperoneBoundsShown = 1410,
 	VREvent_Compositor_ChaperoneBoundsHidden = 1411,
 	VREvent_Compositor_DisplayDisconnected = 1412,
@@ -4285,6 +4285,8 @@ public enum EVREventType
 	VREvent_SpatialAnchors_RequestPoseUpdate = 1802,
 	VREvent_SpatialAnchors_RequestDescriptorUpdate = 1803,
 	VREvent_SystemReport_Started = 1900,
+	VREvent_Monitor_ShowHeadsetView = 2000,
+	VREvent_Monitor_HideHeadsetView = 2001,
 	VREvent_VendorSpecific_Reserved_Start = 10000,
 	VREvent_VendorSpecific_Reserved_End = 19999,
 }
@@ -4777,6 +4779,7 @@ public enum EVRApplicationProperty
 	IsInstanced_Bool = 62,
 	IsInternal_Bool = 63,
 	WantsCompositorPauseInStandby_Bool = 64,
+	IsHidden_Bool = 65,
 	LastLaunchTime_Uint64 = 70,
 }
 public enum EVRApplicationTransitionState
@@ -4845,8 +4848,6 @@ public enum VROverlayTransformType
 public enum VROverlayFlags
 {
 	None = 0,
-	Curved = 1,
-	RGSS4X = 2,
 	NoDashboardTab = 3,
 	AcceptsGamepadEvents = 4,
 	ShowGamepadFocus = 5,
@@ -4863,6 +4864,7 @@ public enum VROverlayFlags
 	MakeOverlaysInteractiveIfVisible = 16,
 	SendVRSmoothScrollEvents = 17,
 	ProtectedContent = 18,
+	Max = 19,
 }
 public enum VRMessageOverlayResponse
 {
@@ -5536,7 +5538,7 @@ public enum EVRDebugError
 	public uint nHeight;
 	public uint nBytesPerPixel;
 	public uint nFrameSequence;
-	public TrackedDevicePose_t standingTrackedDevicePose;
+	public TrackedDevicePose_t trackedDevicePose;
 	public ulong ulFrameExposureTime;
 }
 [StructLayout(LayoutKind.Sequential)] public struct Compositor_FrameTiming
@@ -6595,7 +6597,7 @@ public class OpenVR
 	public const uint k_unScreenshotHandleInvalid = 0;
 	public const string IVRSystem_Version = "IVRSystem_020";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
-	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_005";
+	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_006";
 	public const uint k_unMaxApplicationKeyLength = 128;
 	public const string k_pch_MimeType_HomeApp = "vr/home";
 	public const string k_pch_MimeType_GameTheater = "vr/game_theater";
@@ -6607,7 +6609,7 @@ public class OpenVR
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 64;
 	public const uint k_unMaxOverlayIntersectionMaskPrimitivesCount = 32;
-	public const string IVROverlay_Version = "IVROverlay_019";
+	public const string IVROverlay_Version = "IVROverlay_020";
 	public const string k_pch_Controller_Component_GDC2015 = "gdc2015";
 	public const string k_pch_Controller_Component_Base = "base";
 	public const string k_pch_Controller_Component_Tip = "tip";
@@ -6647,7 +6649,10 @@ public class OpenVR
 	public const string k_pch_SteamVR_MotionSmoothingOverride_Int32 = "motionSmoothingOverride";
 	public const string k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	public const string k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
-	public const string k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
+	public const string k_pch_SteamVR_ShowLegacyMirrorView_Bool = "showLegacyMirrorView";
+	public const string k_pch_SteamVR_MirrorViewVisibility_Bool = "showMirrorView";
+	public const string k_pch_SteamVR_MirrorViewDisplayMode_Int32 = "mirrorViewDisplayMode";
+	public const string k_pch_SteamVR_MirrorViewEye_Int32 = "mirrorViewEye";
 	public const string k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
 	public const string k_pch_SteamVR_MirrorViewGeometryMaximized_String = "mirrorViewGeometryMaximized";
 	public const string k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
@@ -6676,6 +6681,9 @@ public class OpenVR
 	public const string k_pch_SteamVR_HmdDisplayColorGainR_Float = "hmdDisplayColorGainR";
 	public const string k_pch_SteamVR_HmdDisplayColorGainG_Float = "hmdDisplayColorGainG";
 	public const string k_pch_SteamVR_HmdDisplayColorGainB_Float = "hmdDisplayColorGainB";
+	public const string k_pch_SteamVR_CustomIconStyle_String = "customIconStyle";
+	public const string k_pch_SteamVR_CustomOffIconStyle_String = "customOffIconStyle";
+	public const string k_pch_SteamVR_CustomIconForceUpdate_String = "customIconForceUpdate";
 	public const string k_pch_DirectMode_Section = "direct_mode";
 	public const string k_pch_DirectMode_Enable_Bool = "enable";
 	public const string k_pch_DirectMode_Count_Int32 = "count";
@@ -6769,6 +6777,7 @@ public class OpenVR
 	public const string k_pch_Dashboard_UseWebSettings = "useWebSettings";
 	public const string k_pch_Dashboard_UseWebIPD = "useWebIPD";
 	public const string k_pch_Dashboard_UseWebPowerMenu = "useWebPowerMenu";
+	public const string k_pch_Dashboard_UseWebNotifications = "useWebNotifications";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";
 	public const string k_pch_Driver_LoadPriority_Int32 = "loadPriority";

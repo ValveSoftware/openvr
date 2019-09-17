@@ -220,6 +220,7 @@
 	,{"name": "Prop_ExpectedControllerType_String","value": "2074"}
 	,{"name": "Prop_HmdTrackingStyle_Int32","value": "2075"}
 	,{"name": "Prop_DriverProvidedChaperoneVisibility_Bool","value": "2076"}
+	,{"name": "Prop_HmdProvidesDisplaySettings_Bool","value": "2077"}
 	,{"name": "Prop_DisplayAvailableFrameRates_Float_Array","value": "2080"}
 	,{"name": "Prop_DisplaySupportsMultipleFramerates_Bool","value": "2081"}
 	,{"name": "Prop_DisplayColorMultLeft_Vector3","value": "2082"}
@@ -260,9 +261,11 @@
 	,{"name": "Prop_NamedIconPathDeviceNotReady_String","value": "5006"}
 	,{"name": "Prop_NamedIconPathDeviceStandby_String","value": "5007"}
 	,{"name": "Prop_NamedIconPathDeviceAlertLow_String","value": "5008"}
+	,{"name": "Prop_NamedIconPathDeviceStandbyAlert_String","value": "5009"}
 	,{"name": "Prop_DisplayHiddenArea_Binary_Start","value": "5100"}
 	,{"name": "Prop_DisplayHiddenArea_Binary_End","value": "5150"}
 	,{"name": "Prop_ParentContainer","value": "5151"}
+	,{"name": "Prop_OverrideContainer_Uint64","value": "5152"}
 	,{"name": "Prop_UserConfigPath_String","value": "6000"}
 	,{"name": "Prop_InstallPath_String","value": "6001"}
 	,{"name": "Prop_HasDisplayComponent_Bool","value": "6002"}
@@ -451,8 +454,6 @@
 	,{"name": "VREvent_ApplicationTransitionNewAppLaunchComplete","value": "1305"}
 	,{"name": "VREvent_ProcessConnected","value": "1306"}
 	,{"name": "VREvent_ProcessDisconnected","value": "1307"}
-	,{"name": "VREvent_Compositor_MirrorWindowShown","value": "1400"}
-	,{"name": "VREvent_Compositor_MirrorWindowHidden","value": "1401"}
 	,{"name": "VREvent_Compositor_ChaperoneBoundsShown","value": "1410"}
 	,{"name": "VREvent_Compositor_ChaperoneBoundsHidden","value": "1411"}
 	,{"name": "VREvent_Compositor_DisplayDisconnected","value": "1412"}
@@ -484,6 +485,8 @@
 	,{"name": "VREvent_SpatialAnchors_RequestPoseUpdate","value": "1802"}
 	,{"name": "VREvent_SpatialAnchors_RequestDescriptorUpdate","value": "1803"}
 	,{"name": "VREvent_SystemReport_Started","value": "1900"}
+	,{"name": "VREvent_Monitor_ShowHeadsetView","value": "2000"}
+	,{"name": "VREvent_Monitor_HideHeadsetView","value": "2001"}
 	,{"name": "VREvent_VendorSpecific_Reserved_Start","value": "10000"}
 	,{"name": "VREvent_VendorSpecific_Reserved_End","value": "19999"}
 ]}
@@ -946,6 +949,7 @@
 	,{"name": "VRApplicationProperty_IsInstanced_Bool","value": "62"}
 	,{"name": "VRApplicationProperty_IsInternal_Bool","value": "63"}
 	,{"name": "VRApplicationProperty_WantsCompositorPauseInStandby_Bool","value": "64"}
+	,{"name": "VRApplicationProperty_IsHidden_Bool","value": "65"}
 	,{"name": "VRApplicationProperty_LastLaunchTime_Uint64","value": "70"}
 ]}
 ,	{"enumname": "vr::EVRApplicationTransitionState","values": [ 
@@ -1005,8 +1009,6 @@
 ]}
 ,	{"enumname": "vr::VROverlayFlags","values": [ 
 	{"name": "VROverlayFlags_None","value": "0"}
-	,{"name": "VROverlayFlags_Curved","value": "1"}
-	,{"name": "VROverlayFlags_RGSS4X","value": "2"}
 	,{"name": "VROverlayFlags_NoDashboardTab","value": "3"}
 	,{"name": "VROverlayFlags_AcceptsGamepadEvents","value": "4"}
 	,{"name": "VROverlayFlags_ShowGamepadFocus","value": "5"}
@@ -1023,6 +1025,7 @@
 	,{"name": "VROverlayFlags_MakeOverlaysInteractiveIfVisible","value": "16"}
 	,{"name": "VROverlayFlags_SendVRSmoothScrollEvents","value": "17"}
 	,{"name": "VROverlayFlags_ProtectedContent","value": "18"}
+	,{"name": "VROverlayFlags_Max","value": "19"}
 ]}
 ,	{"enumname": "vr::VRMessageOverlayResponse","values": [ 
 	{"name": "VRMessageOverlayResponse_ButtonPress_0","value": "0"}
@@ -1246,7 +1249,7 @@
 ,{
 	"constname": "IVRExtendedDisplay_Version","consttype": "const char *const", "constval": "IVRExtendedDisplay_001"}
 ,{
-	"constname": "IVRTrackedCamera_Version","consttype": "const char *const", "constval": "IVRTrackedCamera_005"}
+	"constname": "IVRTrackedCamera_Version","consttype": "const char *const", "constval": "IVRTrackedCamera_006"}
 ,{
 	"constname": "k_unMaxApplicationKeyLength","consttype": "const uint32_t", "constval": "128"}
 ,{
@@ -1270,7 +1273,7 @@
 ,{
 	"constname": "k_unMaxOverlayIntersectionMaskPrimitivesCount","consttype": "const uint32_t", "constval": "32"}
 ,{
-	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_019"}
+	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_020"}
 ,{
 	"constname": "k_pch_Controller_Component_GDC2015","consttype": "const char *const", "constval": "gdc2015"}
 ,{
@@ -1350,7 +1353,13 @@
 ,{
 	"constname": "k_pch_SteamVR_DefaultMirrorView_Int32","consttype": "const char *const", "constval": "mirrorView"}
 ,{
-	"constname": "k_pch_SteamVR_ShowMirrorView_Bool","consttype": "const char *const", "constval": "showMirrorView"}
+	"constname": "k_pch_SteamVR_ShowLegacyMirrorView_Bool","consttype": "const char *const", "constval": "showLegacyMirrorView"}
+,{
+	"constname": "k_pch_SteamVR_MirrorViewVisibility_Bool","consttype": "const char *const", "constval": "showMirrorView"}
+,{
+	"constname": "k_pch_SteamVR_MirrorViewDisplayMode_Int32","consttype": "const char *const", "constval": "mirrorViewDisplayMode"}
+,{
+	"constname": "k_pch_SteamVR_MirrorViewEye_Int32","consttype": "const char *const", "constval": "mirrorViewEye"}
 ,{
 	"constname": "k_pch_SteamVR_MirrorViewGeometry_String","consttype": "const char *const", "constval": "mirrorViewGeometry"}
 ,{
@@ -1407,6 +1416,12 @@
 	"constname": "k_pch_SteamVR_HmdDisplayColorGainG_Float","consttype": "const char *const", "constval": "hmdDisplayColorGainG"}
 ,{
 	"constname": "k_pch_SteamVR_HmdDisplayColorGainB_Float","consttype": "const char *const", "constval": "hmdDisplayColorGainB"}
+,{
+	"constname": "k_pch_SteamVR_CustomIconStyle_String","consttype": "const char *const", "constval": "customIconStyle"}
+,{
+	"constname": "k_pch_SteamVR_CustomOffIconStyle_String","consttype": "const char *const", "constval": "customOffIconStyle"}
+,{
+	"constname": "k_pch_SteamVR_CustomIconForceUpdate_String","consttype": "const char *const", "constval": "customIconForceUpdate"}
 ,{
 	"constname": "k_pch_DirectMode_Section","consttype": "const char *const", "constval": "direct_mode"}
 ,{
@@ -1593,6 +1608,8 @@
 	"constname": "k_pch_Dashboard_UseWebIPD","consttype": "const char *const", "constval": "useWebIPD"}
 ,{
 	"constname": "k_pch_Dashboard_UseWebPowerMenu","consttype": "const char *const", "constval": "useWebPowerMenu"}
+,{
+	"constname": "k_pch_Dashboard_UseWebNotifications","consttype": "const char *const", "constval": "useWebNotifications"}
 ,{
 	"constname": "k_pch_modelskin_Section","consttype": "const char *const", "constval": "modelskins"}
 ,{
@@ -1921,7 +1938,7 @@
 { "fieldname": "nHeight", "fieldtype": "uint32_t"},
 { "fieldname": "nBytesPerPixel", "fieldtype": "uint32_t"},
 { "fieldname": "nFrameSequence", "fieldtype": "uint32_t"},
-{ "fieldname": "standingTrackedDevicePose", "fieldtype": "struct vr::TrackedDevicePose_t"},
+{ "fieldname": "trackedDevicePose", "fieldtype": "struct vr::TrackedDevicePose_t"},
 { "fieldname": "ulFrameExposureTime", "fieldtype": "uint64_t"}]}
 ,{"struct": "vr::Compositor_FrameTiming","fields": [
 { "fieldname": "m_nSize", "fieldtype": "uint32_t"},
@@ -2657,6 +2674,19 @@
 {	"paramname": "hTrackedCamera" ,"paramtype": "vr::TrackedCameraHandle_t"},
 {	"paramname": "glTextureId" ,"paramtype": "vr::glUInt_t"}
 	 ]
+}
+,{
+	"classname": "vr::IVRTrackedCamera",
+	"methodname": "SetCameraTrackingSpace",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "eUniverse" ,"paramtype": "vr::ETrackingUniverseOrigin"}
+	 ]
+}
+,{
+	"classname": "vr::IVRTrackedCamera",
+	"methodname": "GetCameraTrackingSpace",
+	"returntype": "vr::ETrackingUniverseOrigin"
 }
 ,{
 	"classname": "vr::IVRApplications",
@@ -3494,19 +3524,6 @@
 	"params": [ 
 {	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"}
 	 ]
-}
-,{
-	"classname": "vr::IVROverlay",
-	"methodname": "SetHighQualityOverlay",
-	"returntype": "vr::EVROverlayError",
-	"params": [ 
-{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVROverlay",
-	"methodname": "GetHighQualityOverlay",
-	"returntype": "vr::VROverlayHandle_t"
 }
 ,{
 	"classname": "vr::IVROverlay",

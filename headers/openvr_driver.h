@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 6;
-	static const uint32_t k_nSteamVRVersionBuild = 10;
+	static const uint32_t k_nSteamVRVersionMinor = 7;
+	static const uint32_t k_nSteamVRVersionBuild = 15;
 } // namespace vr
 
 // vrtypes.h
@@ -432,6 +432,7 @@ enum ETrackedDeviceProperty
 	Prop_ExpectedControllerType_String			= 2074,
 	Prop_HmdTrackingStyle_Int32					= 2075, // one of EHmdTrackingStyle
 	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
+	Prop_HmdProvidesDisplaySettings_Bool		= 2077,
 
 
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080, // populated by compositor from actual EDID list when available from GPU driver
@@ -483,11 +484,13 @@ enum ETrackedDeviceProperty
 	Prop_NamedIconPathDeviceNotReady_String			= 5006, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
 	Prop_NamedIconPathDeviceStandby_String			= 5007, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
 	Prop_NamedIconPathDeviceAlertLow_String			= 5008, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceStandbyAlert_String		= 5009, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
 
 	// Properties that are used by helpers, but are opaque to applications
 	Prop_DisplayHiddenArea_Binary_Start				= 5100,
 	Prop_DisplayHiddenArea_Binary_End				= 5150,
 	Prop_ParentContainer							= 5151,
+	Prop_OverrideContainer_Uint64					= 5152,
 
 	// Properties that are unique to drivers
 	Prop_UserConfigPath_String					= 6000,
@@ -807,8 +810,8 @@ enum EVREventType
 	VREvent_ProcessConnected					= 1306,
 	VREvent_ProcessDisconnected					= 1307,
 
-	VREvent_Compositor_MirrorWindowShown		= 1400,
-	VREvent_Compositor_MirrorWindowHidden		= 1401,
+	//VREvent_Compositor_MirrorWindowShown		= 1400, // DEPRECATED
+	//VREvent_Compositor_MirrorWindowHidden		= 1401, // DEPRECATED
 	VREvent_Compositor_ChaperoneBoundsShown		= 1410,
 	VREvent_Compositor_ChaperoneBoundsHidden	= 1411,
 	VREvent_Compositor_DisplayDisconnected		= 1412,
@@ -846,6 +849,9 @@ enum EVREventType
 	VREvent_SpatialAnchors_RequestDescriptorUpdate = 1803, // data is spatialAnchor. sent to specific driver
 
 	VREvent_SystemReport_Started			= 1900, // user or system initiated generation of a system report. broadcast
+
+	VREvent_Monitor_ShowHeadsetView			= 2000, // data is process
+	VREvent_Monitor_HideHeadsetView			= 2001, // data is process
 
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start	= 10000,
@@ -1546,6 +1552,7 @@ enum EVRInitError
 	VRInitError_Driver_HmdDriverIdOutOfBounds		= 211,
 	VRInitError_Driver_HmdDisplayMirrored			= 212,
 	VRInitError_Driver_HmdDisplayNotFoundLaptop		= 213,
+	// Never make error 259 because we return it from main and it would conflict with STILL_ACTIVE
 
 	VRInitError_IPC_ServerInitFailed				= 300,
 	VRInitError_IPC_ConnectFailed					= 301,
@@ -1747,7 +1754,7 @@ struct CameraVideoStreamFrameHeader_t
 
 	uint32_t nFrameSequence;
 
-	TrackedDevicePose_t standingTrackedDevicePose;
+	TrackedDevicePose_t trackedDevicePose;
 	
 	uint64_t ulFrameExposureTime;						// mid-point of the exposure of the image in host system ticks
 };
@@ -1963,6 +1970,7 @@ enum ECameraCompatibilityMode
 	CAMERA_COMPAT_MODE_ISO_40FPS,
 	CAMERA_COMPAT_MODE_ISO_35FPS,
 	CAMERA_COMPAT_MODE_ISO_30FPS,
+	CAMERA_COMPAT_MODE_ISO_15FPS,
 	MAX_CAMERA_COMPAT_MODES
 };
 
@@ -2020,7 +2028,7 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 
 	double m_flSyncMarkerError;
 
-	TrackedDevicePose_t m_StandingTrackedDevicePose;	// Supplied by HMD layer when used as a tracked camera
+	TrackedDevicePose_t m_RawTrackedDevicePose;	// Raw-and-uncalibrated pose, supplied by HMD layer when used as a tracked camera
 
 	uint64_t m_pImageData;
 };
@@ -2188,7 +2196,10 @@ namespace vr
 	static const char * const k_pch_SteamVR_MotionSmoothingOverride_Int32 = "motionSmoothingOverride";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
-	static const char * const k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
+	static const char * const k_pch_SteamVR_ShowLegacyMirrorView_Bool = "showLegacyMirrorView";
+	static const char * const k_pch_SteamVR_MirrorViewVisibility_Bool = "showMirrorView";
+	static const char * const k_pch_SteamVR_MirrorViewDisplayMode_Int32 = "mirrorViewDisplayMode";
+	static const char * const k_pch_SteamVR_MirrorViewEye_Int32 = "mirrorViewEye";
 	static const char * const k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
 	static const char * const k_pch_SteamVR_MirrorViewGeometryMaximized_String = "mirrorViewGeometryMaximized";
 	static const char * const k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
@@ -2217,6 +2228,9 @@ namespace vr
 	static const char * const k_pch_SteamVR_HmdDisplayColorGainR_Float = "hmdDisplayColorGainR";
 	static const char * const k_pch_SteamVR_HmdDisplayColorGainG_Float = "hmdDisplayColorGainG";
 	static const char * const k_pch_SteamVR_HmdDisplayColorGainB_Float = "hmdDisplayColorGainB";
+	static const char * const k_pch_SteamVR_CustomIconStyle_String = "customIconStyle";
+	static const char * const k_pch_SteamVR_CustomOffIconStyle_String = "customOffIconStyle";
+	static const char * const k_pch_SteamVR_CustomIconForceUpdate_String = "customIconForceUpdate";
 
 	//-----------------------------------------------------------------------------
 	// direct mode keys
@@ -2346,6 +2360,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_UseWebSettings = "useWebSettings";
 	static const char * const k_pch_Dashboard_UseWebIPD = "useWebIPD";
 	static const char * const k_pch_Dashboard_UseWebPowerMenu = "useWebPowerMenu";
+	static const char * const k_pch_Dashboard_UseWebNotifications = "useWebNotifications";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
@@ -2798,6 +2813,11 @@ static const char *IVRCompositorPluginProvider_Version = "IVRCompositorPluginPro
 
 namespace vr
 {
+
+	/** This container is automatically created before a display redirect device is activated.
+	* Any properties in this container will be returned when that property is read from the HMD's
+	* property container. */
+	static const PropertyContainerHandle_t k_ulDisplayRedirectContainer = 0x600000003;
 
 	enum EPropertyWriteType
 	{
