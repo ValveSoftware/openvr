@@ -126,7 +126,7 @@ EVRInitError VR_LoadHmdSystemInternal()
 
 	// Because we don't have a way to select debug vs. release yet we'll just
 	// use debug if it's there
-#if defined( LINUX64 )
+#if defined( LINUX64 ) || defined( LINUXARM64 )
 	std::string sTestPath = Path_Join( sRuntimePath, "bin", PLATSUBDIR );
 #else
 	std::string sTestPath = Path_Join( sRuntimePath, "bin" );

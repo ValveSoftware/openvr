@@ -231,18 +231,25 @@ bool CVRPathRegistry_Public::BLoadFromFile()
 	Json::Value root;
 	Json::Reader reader;
 
-	if( !reader.parse( sRegistryContents, root ) )
-	{
-		VRLog( "Unable to parse %s: %s\n", sRegPath.c_str(), reader.getFormattedErrorMessages().c_str() );
-		return false;
-	}
+	try {
+		if ( !reader.parse( sRegistryContents, root ) )
+		{
+			VRLog( "Unable to parse %s: %s\n", sRegPath.c_str(), reader.getFormattedErrorMessages().c_str() );
+			return false;
+		}
 
-	ParseStringListFromJson( &m_vecRuntimePath, root, "runtime" );
-	ParseStringListFromJson( &m_vecConfigPath, root, "config" );
-	ParseStringListFromJson( &m_vecLogPath, root, "log" );
-	if (root.isMember( "external_drivers" ) && root[ "external_drivers" ].isArray() )
+		ParseStringListFromJson( &m_vecRuntimePath, root, "runtime" );
+		ParseStringListFromJson( &m_vecConfigPath, root, "config" );
+		ParseStringListFromJson( &m_vecLogPath, root, "log" );
+		if ( root.isMember( "external_drivers" ) && root["external_drivers"].isArray() )
+		{
+			ParseStringListFromJson( &m_vecExternalDrivers, root, "external_drivers" );
+		}
+	}
+	catch ( ... )
 	{
-		ParseStringListFromJson( &m_vecExternalDrivers, root, "external_drivers" );
+		VRLog( "Unable to parse %s: %s\n", sRegPath.c_str(), "exception thrown in JSON library" );
+		return false;
 	}
 
 	return true;

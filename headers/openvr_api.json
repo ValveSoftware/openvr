@@ -226,6 +226,9 @@
 	,{"name": "Prop_DisplayColorMultLeft_Vector3","value": "2082"}
 	,{"name": "Prop_DisplayColorMultRight_Vector3","value": "2083"}
 	,{"name": "Prop_DashboardLayoutPathName_String","value": "2090"}
+	,{"name": "Prop_DashboardScale_Float","value": "2091"}
+	,{"name": "Prop_IpdUIRangeMinMeters_Float","value": "2100"}
+	,{"name": "Prop_IpdUIRangeMaxMeters_Float","value": "2101"}
 	,{"name": "Prop_DriverRequestedMuraCorrectionMode_Int32","value": "2200"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerLeft_Int32","value": "2201"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerRight_Int32","value": "2202"}
@@ -235,6 +238,9 @@
 	,{"name": "Prop_DriverRequestedMuraFeather_OuterRight_Int32","value": "2206"}
 	,{"name": "Prop_DriverRequestedMuraFeather_OuterTop_Int32","value": "2207"}
 	,{"name": "Prop_DriverRequestedMuraFeather_OuterBottom_Int32","value": "2208"}
+	,{"name": "Prop_Audio_DefaultPlaybackDeviceId_String","value": "2300"}
+	,{"name": "Prop_Audio_DefaultRecordingDeviceId_String","value": "2301"}
+	,{"name": "Prop_Audio_DefaultPlaybackDeviceVolume_Float","value": "2302"}
 	,{"name": "Prop_AttachedDeviceId_String","value": "3000"}
 	,{"name": "Prop_SupportedButtons_Uint64","value": "3001"}
 	,{"name": "Prop_Axis0Type_Int32","value": "3002"}
@@ -361,16 +367,14 @@
 	,{"name": "VREvent_ScrollSmooth","value": "309"}
 	,{"name": "VREvent_InputFocusCaptured","value": "400"}
 	,{"name": "VREvent_InputFocusReleased","value": "401"}
-	,{"name": "VREvent_SceneFocusLost","value": "402"}
-	,{"name": "VREvent_SceneFocusGained","value": "403"}
 	,{"name": "VREvent_SceneApplicationChanged","value": "404"}
 	,{"name": "VREvent_SceneFocusChanged","value": "405"}
 	,{"name": "VREvent_InputFocusChanged","value": "406"}
-	,{"name": "VREvent_SceneApplicationSecondaryRenderingStarted","value": "407"}
 	,{"name": "VREvent_SceneApplicationUsingWrongGraphicsAdapter","value": "408"}
 	,{"name": "VREvent_ActionBindingReloaded","value": "409"}
 	,{"name": "VREvent_HideRenderModels","value": "410"}
 	,{"name": "VREvent_ShowRenderModels","value": "411"}
+	,{"name": "VREvent_SceneApplicationStateChanged","value": "412"}
 	,{"name": "VREvent_ConsoleOpened","value": "420"}
 	,{"name": "VREvent_ConsoleClosed","value": "421"}
 	,{"name": "VREvent_OverlayShown","value": "500"}
@@ -406,7 +410,6 @@
 	,{"name": "VREvent_Notification_Destroyed","value": "603"}
 	,{"name": "VREvent_Quit","value": "700"}
 	,{"name": "VREvent_ProcessQuit","value": "701"}
-	,{"name": "VREvent_QuitAborted_UserPrompt","value": "702"}
 	,{"name": "VREvent_QuitAcknowledged","value": "703"}
 	,{"name": "VREvent_DriverRequestedQuit","value": "704"}
 	,{"name": "VREvent_RestartRequested","value": "705"}
@@ -446,12 +449,8 @@
 	,{"name": "VREvent_KeyboardClosed","value": "1200"}
 	,{"name": "VREvent_KeyboardCharInput","value": "1201"}
 	,{"name": "VREvent_KeyboardDone","value": "1202"}
-	,{"name": "VREvent_ApplicationTransitionStarted","value": "1300"}
-	,{"name": "VREvent_ApplicationTransitionAborted","value": "1301"}
-	,{"name": "VREvent_ApplicationTransitionNewAppStarted","value": "1302"}
 	,{"name": "VREvent_ApplicationListUpdated","value": "1303"}
 	,{"name": "VREvent_ApplicationMimeTypeLoad","value": "1304"}
-	,{"name": "VREvent_ApplicationTransitionNewAppLaunchComplete","value": "1305"}
 	,{"name": "VREvent_ProcessConnected","value": "1306"}
 	,{"name": "VREvent_ProcessDisconnected","value": "1307"}
 	,{"name": "VREvent_Compositor_ChaperoneBoundsShown","value": "1410"}
@@ -462,6 +461,7 @@
 	,{"name": "VREvent_Compositor_ApplicationNotResponding","value": "1415"}
 	,{"name": "VREvent_Compositor_ApplicationResumed","value": "1416"}
 	,{"name": "VREvent_Compositor_OutOfVideoMemory","value": "1417"}
+	,{"name": "VREvent_Compositor_DisplayModeNotSupported","value": "1418"}
 	,{"name": "VREvent_TrackedCamera_StartVideoStream","value": "1500"}
 	,{"name": "VREvent_TrackedCamera_StopVideoStream","value": "1501"}
 	,{"name": "VREvent_TrackedCamera_PauseVideoStream","value": "1502"}
@@ -496,6 +496,7 @@
 	,{"name": "k_EDeviceActivityLevel_UserInteraction","value": "1"}
 	,{"name": "k_EDeviceActivityLevel_UserInteraction_Timeout","value": "2"}
 	,{"name": "k_EDeviceActivityLevel_Standby","value": "3"}
+	,{"name": "k_EDeviceActivityLevel_Idle_Timeout","value": "4"}
 ]}
 ,	{"enumname": "vr::EVRButtonId","values": [ 
 	{"name": "k_EButton_System","value": "0"}
@@ -713,6 +714,7 @@
 	,{"name": "VRInitError_Init_AlreadyRunning","value": "143"}
 	,{"name": "VRInitError_Init_FailedForVrMonitor","value": "144"}
 	,{"name": "VRInitError_Init_PropertyManagerInitFailed","value": "145"}
+	,{"name": "VRInitError_Init_WebServerFailed","value": "146"}
 	,{"name": "VRInitError_Driver_Failed","value": "200"}
 	,{"name": "VRInitError_Driver_Unknown","value": "201"}
 	,{"name": "VRInitError_Driver_HmdUnknown","value": "202"}
@@ -824,6 +826,7 @@
 	,{"name": "VRInitError_Compositor_CreateLastFrameRenderTexture","value": "484"}
 	,{"name": "VRInitError_Compositor_CreateMirrorOverlay","value": "485"}
 	,{"name": "VRInitError_Compositor_FailedToCreateVirtualDisplayBackbuffer","value": "486"}
+	,{"name": "VRInitError_Compositor_DisplayModeNotSupported","value": "487"}
 	,{"name": "VRInitError_VendorSpecific_UnableToConnectToOculusRuntime","value": "1000"}
 	,{"name": "VRInitError_VendorSpecific_WindowsNotInDevMode","value": "1001"}
 	,{"name": "VRInitError_VendorSpecific_HmdFound_CantOpenDevice","value": "1101"}
@@ -952,11 +955,12 @@
 	,{"name": "VRApplicationProperty_IsHidden_Bool","value": "65"}
 	,{"name": "VRApplicationProperty_LastLaunchTime_Uint64","value": "70"}
 ]}
-,	{"enumname": "vr::EVRApplicationTransitionState","values": [ 
-	{"name": "VRApplicationTransition_None","value": "0"}
-	,{"name": "VRApplicationTransition_OldAppQuitSent","value": "10"}
-	,{"name": "VRApplicationTransition_WaitingForExternalLaunch","value": "11"}
-	,{"name": "VRApplicationTransition_NewAppLaunched","value": "20"}
+,	{"enumname": "vr::EVRSceneApplicationState","values": [ 
+	{"name": "EVRSceneApplicationState_None","value": "0"}
+	,{"name": "EVRSceneApplicationState_Starting","value": "1"}
+	,{"name": "EVRSceneApplicationState_Quitting","value": "2"}
+	,{"name": "EVRSceneApplicationState_Running","value": "3"}
+	,{"name": "EVRSceneApplicationState_Waiting","value": "4"}
 ]}
 ,	{"enumname": "vr::ChaperoneCalibrationState","values": [ 
 	{"name": "ChaperoneCalibrationState_OK","value": "1"}
@@ -1008,24 +1012,21 @@
 	,{"name": "VROverlayTransform_TrackedComponent","value": "3"}
 ]}
 ,	{"enumname": "vr::VROverlayFlags","values": [ 
-	{"name": "VROverlayFlags_None","value": "0"}
-	,{"name": "VROverlayFlags_NoDashboardTab","value": "3"}
-	,{"name": "VROverlayFlags_AcceptsGamepadEvents","value": "4"}
-	,{"name": "VROverlayFlags_ShowGamepadFocus","value": "5"}
-	,{"name": "VROverlayFlags_SendVRDiscreteScrollEvents","value": "6"}
-	,{"name": "VROverlayFlags_SendVRTouchpadEvents","value": "7"}
-	,{"name": "VROverlayFlags_ShowTouchPadScrollWheel","value": "8"}
-	,{"name": "VROverlayFlags_TransferOwnershipToInternalProcess","value": "9"}
-	,{"name": "VROverlayFlags_SideBySide_Parallel","value": "10"}
-	,{"name": "VROverlayFlags_SideBySide_Crossed","value": "11"}
-	,{"name": "VROverlayFlags_Panorama","value": "12"}
-	,{"name": "VROverlayFlags_StereoPanorama","value": "13"}
-	,{"name": "VROverlayFlags_SortWithNonSceneOverlays","value": "14"}
-	,{"name": "VROverlayFlags_VisibleInDashboard","value": "15"}
-	,{"name": "VROverlayFlags_MakeOverlaysInteractiveIfVisible","value": "16"}
-	,{"name": "VROverlayFlags_SendVRSmoothScrollEvents","value": "17"}
-	,{"name": "VROverlayFlags_ProtectedContent","value": "18"}
-	,{"name": "VROverlayFlags_Max","value": "19"}
+	{"name": "VROverlayFlags_NoDashboardTab","value": "8"}
+	,{"name": "VROverlayFlags_SendVRDiscreteScrollEvents","value": "64"}
+	,{"name": "VROverlayFlags_SendVRTouchpadEvents","value": "128"}
+	,{"name": "VROverlayFlags_ShowTouchPadScrollWheel","value": "256"}
+	,{"name": "VROverlayFlags_TransferOwnershipToInternalProcess","value": "512"}
+	,{"name": "VROverlayFlags_SideBySide_Parallel","value": "1024"}
+	,{"name": "VROverlayFlags_SideBySide_Crossed","value": "2048"}
+	,{"name": "VROverlayFlags_Panorama","value": "4096"}
+	,{"name": "VROverlayFlags_StereoPanorama","value": "8192"}
+	,{"name": "VROverlayFlags_SortWithNonSceneOverlays","value": "16384"}
+	,{"name": "VROverlayFlags_VisibleInDashboard","value": "32768"}
+	,{"name": "VROverlayFlags_MakeOverlaysInteractiveIfVisible","value": "65536"}
+	,{"name": "VROverlayFlags_SendVRSmoothScrollEvents","value": "131072"}
+	,{"name": "VROverlayFlags_ProtectedContent","value": "262144"}
+	,{"name": "VROverlayFlags_HideLaserIntersection","value": "524288"}
 ]}
 ,	{"enumname": "vr::VRMessageOverlayResponse","values": [ 
 	{"name": "VRMessageOverlayResponse_ButtonPress_0","value": "0"}
@@ -1044,13 +1045,6 @@
 ,	{"enumname": "vr::EGamepadTextInputLineMode","values": [ 
 	{"name": "k_EGamepadTextInputLineModeSingleLine","value": "0"}
 	,{"name": "k_EGamepadTextInputLineModeMultipleLines","value": "1"}
-]}
-,	{"enumname": "vr::EOverlayDirection","values": [ 
-	{"name": "OverlayDirection_Up","value": "0"}
-	,{"name": "OverlayDirection_Down","value": "1"}
-	,{"name": "OverlayDirection_Left","value": "2"}
-	,{"name": "OverlayDirection_Right","value": "3"}
-	,{"name": "OverlayDirection_Count","value": "4"}
 ]}
 ,	{"enumname": "vr::EVROverlayIntersectionMaskPrimitiveType","values": [ 
 	{"name": "OverlayIntersectionPrimitiveType_Rectangle","value": "0"}
@@ -1245,7 +1239,7 @@
 ,{
 	"constname": "k_unScreenshotHandleInvalid","consttype": "const uint32_t", "constval": "0"}
 ,{
-	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_020"}
+	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_021"}
 ,{
 	"constname": "IVRExtendedDisplay_Version","consttype": "const char *const", "constval": "IVRExtendedDisplay_001"}
 ,{
@@ -1257,7 +1251,7 @@
 ,{
 	"constname": "k_pch_MimeType_GameTheater","consttype": "const char *const", "constval": "vr/game_theater"}
 ,{
-	"constname": "IVRApplications_Version","consttype": "const char *const", "constval": "IVRApplications_006"}
+	"constname": "IVRApplications_Version","consttype": "const char *const", "constval": "IVRApplications_007"}
 ,{
 	"constname": "IVRChaperone_Version","consttype": "const char *const", "constval": "IVRChaperone_003"}
 ,{
@@ -1273,7 +1267,7 @@
 ,{
 	"constname": "k_unMaxOverlayIntersectionMaskPrimitivesCount","consttype": "const uint32_t", "constval": "32"}
 ,{
-	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_020"}
+	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_021"}
 ,{
 	"constname": "k_pch_Controller_Component_GDC2015","consttype": "const char *const", "constval": "gdc2015"}
 ,{
@@ -1329,6 +1323,8 @@
 ,{
 	"constname": "k_pch_SteamVR_PlayAreaColor_String","consttype": "const char *const", "constval": "playAreaColor"}
 ,{
+	"constname": "k_pch_SteamVR_TrackingLossColor_String","consttype": "const char *const", "constval": "trackingLossColor"}
+,{
 	"constname": "k_pch_SteamVR_ShowStage_Bool","consttype": "const char *const", "constval": "showStage"}
 ,{
 	"constname": "k_pch_SteamVR_ActivateMultipleDrivers_Bool","consttype": "const char *const", "constval": "activateMultipleDrivers"}
@@ -1339,6 +1335,8 @@
 ,{
 	"constname": "k_pch_SteamVR_BaseStationPowerManagement_Int32","consttype": "const char *const", "constval": "basestationPowerManagement"}
 ,{
+	"constname": "k_pch_SteamVR_ShowBaseStationPowerManagementTip_Int32","consttype": "const char *const", "constval": "ShowBaseStationPowerManagementTip"}
+,{
 	"constname": "k_pch_SteamVR_NeverKillProcesses_Bool","consttype": "const char *const", "constval": "neverKillProcesses"}
 ,{
 	"constname": "k_pch_SteamVR_SupersampleScale_Float","consttype": "const char *const", "constval": "supersampleScale"}
@@ -1348,6 +1346,8 @@
 	"constname": "k_pch_SteamVR_MotionSmoothing_Bool","consttype": "const char *const", "constval": "motionSmoothing"}
 ,{
 	"constname": "k_pch_SteamVR_MotionSmoothingOverride_Int32","consttype": "const char *const", "constval": "motionSmoothingOverride"}
+,{
+	"constname": "k_pch_SteamVR_DisableAsyncReprojection_Bool","consttype": "const char *const", "constval": "disableAsync"}
 ,{
 	"constname": "k_pch_SteamVR_ForceFadeOnBadTracking_Bool","consttype": "const char *const", "constval": "forceFadeOnBadTracking"}
 ,{
@@ -1457,8 +1457,6 @@
 ,{
 	"constname": "k_pch_Lighthouse_EnableImuFallback_Bool","consttype": "const char *const", "constval": "enableImuFallback"}
 ,{
-	"constname": "k_pch_Lighthouse_NewPairing_Bool","consttype": "const char *const", "constval": "newPairing"}
-,{
 	"constname": "k_pch_Null_Section","consttype": "const char *const", "constval": "driver_null"}
 ,{
 	"constname": "k_pch_Null_SerialNumber_String","consttype": "const char *const", "constval": "serialNumber"}
@@ -1545,6 +1543,8 @@
 ,{
 	"constname": "k_pch_CollisionBounds_ColorGammaA_Int32","consttype": "const char *const", "constval": "CollisionBoundsColorGammaA"}
 ,{
+	"constname": "k_pch_CollisionBounds_EnableDriverImport","consttype": "const char *const", "constval": "enableDriverBoundsImport"}
+,{
 	"constname": "k_pch_Camera_Section","consttype": "const char *const", "constval": "camera"}
 ,{
 	"constname": "k_pch_Camera_EnableCamera_Bool","consttype": "const char *const", "constval": "enableCamera"}
@@ -1569,15 +1569,31 @@
 ,{
 	"constname": "k_pch_audio_Section","consttype": "const char *const", "constval": "audio"}
 ,{
-	"constname": "k_pch_audio_OnPlaybackDevice_String","consttype": "const char *const", "constval": "onPlaybackDevice"}
+	"constname": "k_pch_audio_SetOsDefaultPlaybackDevice_Bool","consttype": "const char *const", "constval": "setOsDefaultPlaybackDevice"}
 ,{
-	"constname": "k_pch_audio_OnRecordDevice_String","consttype": "const char *const", "constval": "onRecordDevice"}
+	"constname": "k_pch_audio_EnablePlaybackDeviceOverride_Bool","consttype": "const char *const", "constval": "enablePlaybackDeviceOverride"}
 ,{
-	"constname": "k_pch_audio_OnPlaybackMirrorDevice_String","consttype": "const char *const", "constval": "onPlaybackMirrorDevice"}
+	"constname": "k_pch_audio_PlaybackDeviceOverride_String","consttype": "const char *const", "constval": "playbackDeviceOverride"}
 ,{
-	"constname": "k_pch_audio_OffPlaybackDevice_String","consttype": "const char *const", "constval": "offPlaybackDevice"}
+	"constname": "k_pch_audio_PlaybackDeviceOverrideName_String","consttype": "const char *const", "constval": "playbackDeviceOverrideName"}
 ,{
-	"constname": "k_pch_audio_OffRecordDevice_String","consttype": "const char *const", "constval": "offRecordDevice"}
+	"constname": "k_pch_audio_SetOsDefaultRecordingDevice_Bool","consttype": "const char *const", "constval": "setOsDefaultRecordingDevice"}
+,{
+	"constname": "k_pch_audio_EnableRecordingDeviceOverride_Bool","consttype": "const char *const", "constval": "enableRecordingDeviceOverride"}
+,{
+	"constname": "k_pch_audio_RecordingDeviceOverride_String","consttype": "const char *const", "constval": "recordingDeviceOverride"}
+,{
+	"constname": "k_pch_audio_RecordingDeviceOverrideName_String","consttype": "const char *const", "constval": "recordingDeviceOverrideName"}
+,{
+	"constname": "k_pch_audio_EnablePlaybackMirror_Bool","consttype": "const char *const", "constval": "enablePlaybackMirror"}
+,{
+	"constname": "k_pch_audio_PlaybackMirrorDevice_String","consttype": "const char *const", "constval": "playbackMirrorDevice"}
+,{
+	"constname": "k_pch_audio_PlaybackMirrorDeviceName_String","consttype": "const char *const", "constval": "playbackMirrorDeviceName"}
+,{
+	"constname": "k_pch_audio_OldPlaybackMirrorDevice_String","consttype": "const char *const", "constval": "onPlaybackMirrorDevice"}
+,{
+	"constname": "k_pch_audio_LastHmdPlaybackDeviceId_String","consttype": "const char *const", "constval": "lastHmdPlaybackDeviceId"}
 ,{
 	"constname": "k_pch_audio_VIVEHDMIGain","consttype": "const char *const", "constval": "viveHDMIGain"}
 ,{
@@ -1601,15 +1617,9 @@
 ,{
 	"constname": "k_pch_Dashboard_ArcadeMode_Bool","consttype": "const char *const", "constval": "arcadeMode"}
 ,{
-	"constname": "k_pch_Dashboard_UseWebDashboard","consttype": "const char *const", "constval": "useWebDashboard"}
+	"constname": "k_pch_Dashboard_UseWebKeyboard","consttype": "const char *const", "constval": "useWebKeyboard"}
 ,{
 	"constname": "k_pch_Dashboard_UseWebSettings","consttype": "const char *const", "constval": "useWebSettings"}
-,{
-	"constname": "k_pch_Dashboard_UseWebIPD","consttype": "const char *const", "constval": "useWebIPD"}
-,{
-	"constname": "k_pch_Dashboard_UseWebPowerMenu","consttype": "const char *const", "constval": "useWebPowerMenu"}
-,{
-	"constname": "k_pch_Dashboard_UseWebNotifications","consttype": "const char *const", "constval": "useWebNotifications"}
 ,{
 	"constname": "k_pch_modelskin_Section","consttype": "const char *const", "constval": "modelskins"}
 ,{
@@ -1618,10 +1628,6 @@
 	"constname": "k_pch_Driver_LoadPriority_Int32","consttype": "const char *const", "constval": "loadPriority"}
 ,{
 	"constname": "k_pch_WebInterface_Section","consttype": "const char *const", "constval": "WebInterface"}
-,{
-	"constname": "k_pch_WebInterface_WebEnable_Bool","consttype": "const char *const", "constval": "WebEnable"}
-,{
-	"constname": "k_pch_WebInterface_WebPort_String","consttype": "const char *const", "constval": "WebPort"}
 ,{
 	"constname": "k_pch_VRWebHelper_Section","consttype": "const char *const", "constval": "VRWebHelper"}
 ,{
@@ -2496,11 +2502,6 @@
 }
 ,{
 	"classname": "vr::IVRSystem",
-	"methodname": "AcknowledgeQuit_UserPrompt",
-	"returntype": "void"
-}
-,{
-	"classname": "vr::IVRSystem",
 	"methodname": "GetAppContainerFilePaths",
 	"returntype": "uint32_t",
 	"params": [ 
@@ -2916,8 +2917,8 @@
 }
 ,{
 	"classname": "vr::IVRApplications",
-	"methodname": "GetTransitionState",
-	"returntype": "vr::EVRApplicationTransitionState"
+	"methodname": "GetSceneApplicationState",
+	"returntype": "vr::EVRSceneApplicationState"
 }
 ,{
 	"classname": "vr::IVRApplications",
@@ -2929,16 +2930,11 @@
 }
 ,{
 	"classname": "vr::IVRApplications",
-	"methodname": "GetApplicationsTransitionStateNameFromEnum",
+	"methodname": "GetSceneApplicationStateNameFromEnum",
 	"returntype": "const char *",
 	"params": [ 
-{	"paramname": "state" ,"paramtype": "vr::EVRApplicationTransitionState"}
+{	"paramname": "state" ,"paramtype": "vr::EVRSceneApplicationState"}
 	 ]
-}
-,{
-	"classname": "vr::IVRApplications",
-	"methodname": "IsQuitUserPromptRequested",
-	"returntype": "bool"
 }
 ,{
 	"classname": "vr::IVRApplications",
@@ -3709,22 +3705,20 @@
 }
 ,{
 	"classname": "vr::IVROverlay",
-	"methodname": "SetOverlayAutoCurveDistanceRangeInMeters",
+	"methodname": "SetOverlayCurvature",
 	"returntype": "vr::EVROverlayError",
 	"params": [ 
 {	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
-{	"paramname": "fMinDistanceInMeters" ,"paramtype": "float"},
-{	"paramname": "fMaxDistanceInMeters" ,"paramtype": "float"}
+{	"paramname": "fCurvature" ,"paramtype": "float"}
 	 ]
 }
 ,{
 	"classname": "vr::IVROverlay",
-	"methodname": "GetOverlayAutoCurveDistanceRangeInMeters",
+	"methodname": "GetOverlayCurvature",
 	"returntype": "vr::EVROverlayError",
 	"params": [ 
 {	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
-{	"paramname": "pfMinDistanceInMeters" ,"paramtype": "float *"},
-{	"paramname": "pfMaxDistanceInMeters" ,"paramtype": "float *"}
+{	"paramname": "pfCurvature" ,"paramtype": "float *"}
 	 ]
 }
 ,{
@@ -3972,38 +3966,6 @@
 	"returntype": "bool",
 	"params": [ 
 {	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVROverlay",
-	"methodname": "GetGamepadFocusOverlay",
-	"returntype": "vr::VROverlayHandle_t"
-}
-,{
-	"classname": "vr::IVROverlay",
-	"methodname": "SetGamepadFocusOverlay",
-	"returntype": "vr::EVROverlayError",
-	"params": [ 
-{	"paramname": "ulNewFocusOverlay" ,"paramtype": "vr::VROverlayHandle_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVROverlay",
-	"methodname": "SetOverlayNeighbor",
-	"returntype": "vr::EVROverlayError",
-	"params": [ 
-{	"paramname": "eDirection" ,"paramtype": "vr::EOverlayDirection"},
-{	"paramname": "ulFrom" ,"paramtype": "vr::VROverlayHandle_t"},
-{	"paramname": "ulTo" ,"paramtype": "vr::VROverlayHandle_t"}
-	 ]
-}
-,{
-	"classname": "vr::IVROverlay",
-	"methodname": "MoveGamepadFocusToNeighbor",
-	"returntype": "vr::EVROverlayError",
-	"params": [ 
-{	"paramname": "eDirection" ,"paramtype": "vr::EOverlayDirection"},
-{	"paramname": "ulFrom" ,"paramtype": "vr::VROverlayHandle_t"}
 	 ]
 }
 ,{
@@ -4980,6 +4942,17 @@
 	"classname": "vr::IVRInput",
 	"methodname": "IsUsingLegacyInput",
 	"returntype": "bool"
+}
+,{
+	"classname": "vr::IVRInput",
+	"methodname": "OpenBindingUI",
+	"returntype": "vr::EVRInputError",
+	"params": [ 
+{	"paramname": "pchAppKey" ,"paramtype": "const char *"},
+{	"paramname": "ulActionSetHandle" ,"paramtype": "vr::VRActionSetHandle_t"},
+{	"paramname": "ulDeviceHandle" ,"paramtype": "vr::VRInputValueHandle_t"},
+{	"paramname": "bShowOnDesktop" ,"paramtype": "bool"}
+	 ]
 }
 ,{
 	"classname": "vr::IVRIOBuffer",
