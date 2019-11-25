@@ -172,7 +172,8 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_AlreadyRunning );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FailedForVrMonitor);
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PropertyManagerInitFailed );
-
+		RETURN_ENUM_AS_STRING( VRInitError_Init_WebServerFailed );
+		
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Unknown );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdUnknown);
@@ -287,6 +288,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateLastFrameRenderTexture );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateMirrorOverlay );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToCreateVirtualDisplayBackbuffer );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_DisplayModeNotSupported );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);

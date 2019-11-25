@@ -136,6 +136,10 @@ bool Path_UnlinkFile( const std::string &strFilename );
 #define PROGRAM_EXT ""
 #if defined( LINUX32 )
 #define PLATSUBDIR	"linux32"
+#elif defined( ANDROIDARM64 )
+#define PLATSUBDIR	"androidarm64" 
+#elif defined( LINUXARM64 )
+#define PLATSUBDIR	"linuxarm64" 
 #else
 #define PLATSUBDIR	"linux64"
 #endif

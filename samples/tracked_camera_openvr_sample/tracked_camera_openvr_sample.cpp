@@ -60,7 +60,7 @@ void CQCameraPreviewImage::paintEvent( QPaintEvent *pEvent )
     painter.drawText( 0, nLabelY, contentsRect().width(), contentsRect().height(), Qt::AlignRight|Qt::AlignTop, QString( "Frame Sequence: %1" ).arg( m_CurrentFrameHeader.nFrameSequence ) );
     nLabelY += 30;
 
-    if ( m_CurrentFrameHeader.standingTrackedDevicePose.bPoseIsValid )
+    if ( m_CurrentFrameHeader.trackedDevicePose.bPoseIsValid )
     {
         painter.setPen( QColor( 0, 255, 0 ) );
     }
@@ -69,13 +69,13 @@ void CQCameraPreviewImage::paintEvent( QPaintEvent *pEvent )
         painter.setPen( QColor( 255, 255, 0 ) );
     }
 
-    painter.drawText( 0, nLabelY, contentsRect().width(), contentsRect().height(), Qt::AlignRight|Qt::AlignTop, QString( "Pose: %1" ).arg( m_CurrentFrameHeader.standingTrackedDevicePose.bPoseIsValid ? "Valid" : "Invalid" ) );
+    painter.drawText( 0, nLabelY, contentsRect().width(), contentsRect().height(), Qt::AlignRight|Qt::AlignTop, QString( "Pose: %1" ).arg( m_CurrentFrameHeader.trackedDevicePose.bPoseIsValid ? "Valid" : "Invalid" ) );
     nLabelY += 20;
 
     for ( int i = 0; i < 3; i++ )
     {
         // emit the matrix
-        vr::HmdMatrix34_t *pMatrix = &m_CurrentFrameHeader.standingTrackedDevicePose.mDeviceToAbsoluteTracking;
+        vr::HmdMatrix34_t *pMatrix = &m_CurrentFrameHeader.trackedDevicePose.mDeviceToAbsoluteTracking;
         painter.drawText(
             0,
             nLabelY,
@@ -90,7 +90,7 @@ void CQCameraPreviewImage::paintEvent( QPaintEvent *pEvent )
     painter.drawText( 0, nLabelY, contentsRect().width(), contentsRect().height(), Qt::AlignRight|Qt::AlignTop, QString( "Pose Velocity:" ) );
     nLabelY += 20;
 
-    vr::HmdVector3_t *pVelocity = &m_CurrentFrameHeader.standingTrackedDevicePose.vVelocity;
+    vr::HmdVector3_t *pVelocity = &m_CurrentFrameHeader.trackedDevicePose.vVelocity;
     painter.drawText(
             0,
             nLabelY,
@@ -103,7 +103,7 @@ void CQCameraPreviewImage::paintEvent( QPaintEvent *pEvent )
     painter.drawText( 0, nLabelY, contentsRect().width(), contentsRect().height(), Qt::AlignRight|Qt::AlignTop, QString( "Pose Angular Velocity:" ) );
     nLabelY += 20;
 
-    vr::HmdVector3_t *pAngularVelocity = &m_CurrentFrameHeader.standingTrackedDevicePose.vVelocity;
+    vr::HmdVector3_t *pAngularVelocity = &m_CurrentFrameHeader.trackedDevicePose.vVelocity;
     painter.drawText(
             0,
             nLabelY,

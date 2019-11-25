@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 6;
-	static const uint32_t k_nSteamVRVersionBuild = 10;
+	static const uint32_t k_nSteamVRVersionMinor = 8;
+	static const uint32_t k_nSteamVRVersionBuild = 19;
 } // namespace vr
 
 // vrtypes.h
@@ -432,6 +432,7 @@ enum ETrackedDeviceProperty
 	Prop_ExpectedControllerType_String			= 2074,
 	Prop_HmdTrackingStyle_Int32					= 2075, // one of EHmdTrackingStyle
 	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
+	Prop_HmdProvidesDisplaySettings_Bool		= 2077,
 
 
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080, // populated by compositor from actual EDID list when available from GPU driver
@@ -439,7 +440,10 @@ enum ETrackedDeviceProperty
 	Prop_DisplayColorMultLeft_Vector3			= 2082,
 	Prop_DisplayColorMultRight_Vector3			= 2083,
 
-	Prop_DashboardLayoutPathName_String			= 2090,
+	Prop_DashboardLayoutPathName_String 		= 2090,
+	Prop_DashboardScale_Float 					= 2091,
+	Prop_IpdUIRangeMinMeters_Float 				= 2100,
+	Prop_IpdUIRangeMaxMeters_Float 				= 2101,
 
 	// Driver requested mura correction properties
 	Prop_DriverRequestedMuraCorrectionMode_Int32		= 2200,
@@ -451,6 +455,10 @@ enum ETrackedDeviceProperty
 	Prop_DriverRequestedMuraFeather_OuterRight_Int32	= 2206,
 	Prop_DriverRequestedMuraFeather_OuterTop_Int32		= 2207,
 	Prop_DriverRequestedMuraFeather_OuterBottom_Int32	= 2208,
+
+	Prop_Audio_DefaultPlaybackDeviceId_String		= 2300,
+	Prop_Audio_DefaultRecordingDeviceId_String		= 2301,
+	Prop_Audio_DefaultPlaybackDeviceVolume_Float	= 2302,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -483,11 +491,13 @@ enum ETrackedDeviceProperty
 	Prop_NamedIconPathDeviceNotReady_String			= 5006, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
 	Prop_NamedIconPathDeviceStandby_String			= 5007, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
 	Prop_NamedIconPathDeviceAlertLow_String			= 5008, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
+	Prop_NamedIconPathDeviceStandbyAlert_String		= 5009, // {driver}/icons/icon_filename - PNG for static icon, or GIF for animation, 50x32 for headsets and 32x32 for others
 
 	// Properties that are used by helpers, but are opaque to applications
 	Prop_DisplayHiddenArea_Binary_Start				= 5100,
 	Prop_DisplayHiddenArea_Binary_End				= 5150,
 	Prop_ParentContainer							= 5151,
+	Prop_OverrideContainer_Uint64					= 5152,
 
 	// Properties that are unique to drivers
 	Prop_UserConfigPath_String					= 6000,
@@ -693,17 +703,19 @@ enum EVREventType
 
 	VREvent_InputFocusCaptured			= 400, // data is process DEPRECATED
 	VREvent_InputFocusReleased			= 401, // data is process DEPRECATED
-	VREvent_SceneFocusLost				= 402, // data is process
-	VREvent_SceneFocusGained			= 403, // data is process
+	// VREvent_SceneFocusLost			= 402, // data is process
+	// VREvent_SceneFocusGained			= 403, // data is process
 	VREvent_SceneApplicationChanged		= 404, // data is process - The App actually drawing the scene changed (usually to or from the compositor)
 	VREvent_SceneFocusChanged			= 405, // data is process - New app got access to draw the scene
 	VREvent_InputFocusChanged			= 406, // data is process
-	VREvent_SceneApplicationSecondaryRenderingStarted = 407, // data is process
+	// VREvent_SceneApplicationSecondaryRenderingStarted = 407,
 	VREvent_SceneApplicationUsingWrongGraphicsAdapter = 408, // data is process
 	VREvent_ActionBindingReloaded		 = 409, // data is process - The App that action binds reloaded for
 
 	VREvent_HideRenderModels			= 410, // Sent to the scene application to request hiding render models temporarily
 	VREvent_ShowRenderModels			= 411, // Sent to the scene application to request restoring render model visibility
+
+	VREvent_SceneApplicationStateChanged = 412, // No data; but query VRApplications()->GetSceneApplicationState();
 
 	VREvent_ConsoleOpened               = 420,
 	VREvent_ConsoleClosed               = 421,
@@ -749,7 +761,7 @@ enum EVREventType
 
 	VREvent_Quit							= 700, // data is process
 	VREvent_ProcessQuit						= 701, // data is process
-	VREvent_QuitAborted_UserPrompt			= 702, // data is process
+	//VREvent_QuitAborted_UserPrompt			= 702, // data is process
 	VREvent_QuitAcknowledged				= 703, // data is process
 	VREvent_DriverRequestedQuit				= 704, // The driver has requested that SteamVR shut down
 	VREvent_RestartRequested				= 705, // A driver or other component wants the user to restart SteamVR
@@ -798,17 +810,17 @@ enum EVREventType
 	VREvent_KeyboardCharInput				= 1201,
 	VREvent_KeyboardDone					= 1202, // Sent when DONE button clicked on keyboard
 
-	VREvent_ApplicationTransitionStarted		= 1300,
-	VREvent_ApplicationTransitionAborted		= 1301,
-	VREvent_ApplicationTransitionNewAppStarted	= 1302,
+	//VREvent_ApplicationTransitionStarted		= 1300,
+	//VREvent_ApplicationTransitionAborted		= 1301,
+	//VREvent_ApplicationTransitionNewAppStarted	= 1302,
 	VREvent_ApplicationListUpdated				= 1303,
 	VREvent_ApplicationMimeTypeLoad				= 1304,
-	VREvent_ApplicationTransitionNewAppLaunchComplete = 1305,
+	// VREvent_ApplicationTransitionNewAppLaunchComplete = 1305,
 	VREvent_ProcessConnected					= 1306,
 	VREvent_ProcessDisconnected					= 1307,
 
-	VREvent_Compositor_MirrorWindowShown		= 1400,
-	VREvent_Compositor_MirrorWindowHidden		= 1401,
+	//VREvent_Compositor_MirrorWindowShown		= 1400, // DEPRECATED
+	//VREvent_Compositor_MirrorWindowHidden		= 1401, // DEPRECATED
 	VREvent_Compositor_ChaperoneBoundsShown		= 1410,
 	VREvent_Compositor_ChaperoneBoundsHidden	= 1411,
 	VREvent_Compositor_DisplayDisconnected		= 1412,
@@ -817,6 +829,7 @@ enum EVREventType
 	VREvent_Compositor_ApplicationNotResponding	= 1415,
 	VREvent_Compositor_ApplicationResumed		= 1416,
 	VREvent_Compositor_OutOfVideoMemory			= 1417,
+	VREvent_Compositor_DisplayModeNotSupported	= 1418, // k_pch_SteamVR_PreferredRefreshRate
 
 	VREvent_TrackedCamera_StartVideoStream  = 1500,
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
@@ -847,6 +860,9 @@ enum EVREventType
 
 	VREvent_SystemReport_Started			= 1900, // user or system initiated generation of a system report. broadcast
 
+	VREvent_Monitor_ShowHeadsetView			= 2000, // data is process
+	VREvent_Monitor_HideHeadsetView			= 2001, // data is process
+
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start	= 10000,
 	VREvent_VendorSpecific_Reserved_End		= 19999,
@@ -865,6 +881,7 @@ enum EDeviceActivityLevel
 	k_EDeviceActivityLevel_UserInteraction = 1,				// Activity (movement or prox sensor) is happening now	
 	k_EDeviceActivityLevel_UserInteraction_Timeout = 2,		// No activity for the last 0.5 seconds
 	k_EDeviceActivityLevel_Standby = 3,						// Idle for at least 5 seconds (configurable in Settings -> Power Management)
+	k_EDeviceActivityLevel_Idle_Timeout = 4,
 };
 
 
@@ -1531,6 +1548,7 @@ enum EVRInitError
 	VRInitError_Init_AlreadyRunning					= 143,
 	VRInitError_Init_FailedForVrMonitor				= 144,
 	VRInitError_Init_PropertyManagerInitFailed		= 145,
+	VRInitError_Init_WebServerFailed				= 146,
 
 	VRInitError_Driver_Failed						= 200,
 	VRInitError_Driver_Unknown						= 201,
@@ -1546,6 +1564,7 @@ enum EVRInitError
 	VRInitError_Driver_HmdDriverIdOutOfBounds		= 211,
 	VRInitError_Driver_HmdDisplayMirrored			= 212,
 	VRInitError_Driver_HmdDisplayNotFoundLaptop		= 213,
+	// Never make error 259 because we return it from main and it would conflict with STILL_ACTIVE
 
 	VRInitError_IPC_ServerInitFailed				= 300,
 	VRInitError_IPC_ConnectFailed					= 301,
@@ -1646,6 +1665,7 @@ enum EVRInitError
 	VRInitError_Compositor_CreateLastFrameRenderTexture							= 484,
 	VRInitError_Compositor_CreateMirrorOverlay									= 485,
 	VRInitError_Compositor_FailedToCreateVirtualDisplayBackbuffer				= 486,
+	VRInitError_Compositor_DisplayModeNotSupported								= 487,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime		= 1000,
 	VRInitError_VendorSpecific_WindowsNotInDevMode					= 1001,
@@ -1747,7 +1767,7 @@ struct CameraVideoStreamFrameHeader_t
 
 	uint32_t nFrameSequence;
 
-	TrackedDevicePose_t standingTrackedDevicePose;
+	TrackedDevicePose_t trackedDevicePose;
 	
 	uint64_t ulFrameExposureTime;						// mid-point of the exposure of the image in host system ticks
 };
@@ -1963,6 +1983,7 @@ enum ECameraCompatibilityMode
 	CAMERA_COMPAT_MODE_ISO_40FPS,
 	CAMERA_COMPAT_MODE_ISO_35FPS,
 	CAMERA_COMPAT_MODE_ISO_30FPS,
+	CAMERA_COMPAT_MODE_ISO_15FPS,
 	MAX_CAMERA_COMPAT_MODES
 };
 
@@ -2020,7 +2041,7 @@ VR_CAMERA_DECL_ALIGN( 8 ) struct CameraVideoStreamFrame_t
 
 	double m_flSyncMarkerError;
 
-	TrackedDevicePose_t m_StandingTrackedDevicePose;	// Supplied by HMD layer when used as a tracked camera
+	TrackedDevicePose_t m_RawTrackedDevicePose;	// Raw-and-uncalibrated pose, supplied by HMD layer when used as a tracked camera
 
 	uint64_t m_pImageData;
 };
@@ -2176,19 +2197,25 @@ namespace vr
 	static const char * const k_pch_SteamVR_BackgroundDomeRadius_Float = "backgroundDomeRadius";
 	static const char * const k_pch_SteamVR_GridColor_String = "gridColor";
 	static const char * const k_pch_SteamVR_PlayAreaColor_String = "playAreaColor";
+	static const char * const k_pch_SteamVR_TrackingLossColor_String = "trackingLossColor";
 	static const char * const k_pch_SteamVR_ShowStage_Bool = "showStage";
 	static const char * const k_pch_SteamVR_ActivateMultipleDrivers_Bool = "activateMultipleDrivers";
 	static const char * const k_pch_SteamVR_UsingSpeakers_Bool = "usingSpeakers";
 	static const char * const k_pch_SteamVR_SpeakersForwardYawOffsetDegrees_Float = "speakersForwardYawOffsetDegrees";
 	static const char * const k_pch_SteamVR_BaseStationPowerManagement_Int32 = "basestationPowerManagement";
+	static const char * const k_pch_SteamVR_ShowBaseStationPowerManagementTip_Int32 = "ShowBaseStationPowerManagementTip";
 	static const char * const k_pch_SteamVR_NeverKillProcesses_Bool = "neverKillProcesses";
 	static const char * const k_pch_SteamVR_SupersampleScale_Float = "supersampleScale";
 	static const char * const k_pch_SteamVR_MaxRecommendedResolution_Int32 = "maxRecommendedResolution";
 	static const char * const k_pch_SteamVR_MotionSmoothing_Bool = "motionSmoothing";
 	static const char * const k_pch_SteamVR_MotionSmoothingOverride_Int32 = "motionSmoothingOverride";
+	static const char * const k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
-	static const char * const k_pch_SteamVR_ShowMirrorView_Bool = "showMirrorView";
+	static const char * const k_pch_SteamVR_ShowLegacyMirrorView_Bool = "showLegacyMirrorView";
+	static const char * const k_pch_SteamVR_MirrorViewVisibility_Bool = "showMirrorView";
+	static const char * const k_pch_SteamVR_MirrorViewDisplayMode_Int32 = "mirrorViewDisplayMode";
+	static const char * const k_pch_SteamVR_MirrorViewEye_Int32 = "mirrorViewEye";
 	static const char * const k_pch_SteamVR_MirrorViewGeometry_String = "mirrorViewGeometry";
 	static const char * const k_pch_SteamVR_MirrorViewGeometryMaximized_String = "mirrorViewGeometryMaximized";
 	static const char * const k_pch_SteamVR_StartMonitorFromAppLaunch = "startMonitorFromAppLaunch";
@@ -2217,6 +2244,9 @@ namespace vr
 	static const char * const k_pch_SteamVR_HmdDisplayColorGainR_Float = "hmdDisplayColorGainR";
 	static const char * const k_pch_SteamVR_HmdDisplayColorGainG_Float = "hmdDisplayColorGainG";
 	static const char * const k_pch_SteamVR_HmdDisplayColorGainB_Float = "hmdDisplayColorGainB";
+	static const char * const k_pch_SteamVR_CustomIconStyle_String = "customIconStyle";
+	static const char * const k_pch_SteamVR_CustomOffIconStyle_String = "customOffIconStyle";
+	static const char * const k_pch_SteamVR_CustomIconForceUpdate_String = "customIconForceUpdate";
 
 	//-----------------------------------------------------------------------------
 	// direct mode keys
@@ -2240,7 +2270,6 @@ namespace vr
 	static const char * const k_pch_Lighthouse_PowerManagedBaseStations2_String = "PowerManagedBaseStations2";
 	static const char * const k_pch_Lighthouse_InactivityTimeoutForBaseStations_Int32 = "InactivityTimeoutForBaseStations";
 	static const char * const k_pch_Lighthouse_EnableImuFallback_Bool = "enableImuFallback";
-	static const char * const k_pch_Lighthouse_NewPairing_Bool = "newPairing";
 
 	//-----------------------------------------------------------------------------
 	// null keys
@@ -2302,6 +2331,7 @@ namespace vr
 	static const char * const k_pch_CollisionBounds_ColorGammaG_Int32 = "CollisionBoundsColorGammaG";
 	static const char * const k_pch_CollisionBounds_ColorGammaB_Int32 = "CollisionBoundsColorGammaB";
 	static const char * const k_pch_CollisionBounds_ColorGammaA_Int32 = "CollisionBoundsColorGammaA";
+	static const char * const k_pch_CollisionBounds_EnableDriverImport = "enableDriverBoundsImport";
 
 	//-----------------------------------------------------------------------------
 	// camera keys
@@ -2320,11 +2350,19 @@ namespace vr
 	//-----------------------------------------------------------------------------
 	// audio keys
 	static const char * const k_pch_audio_Section = "audio";
-	static const char * const k_pch_audio_OnPlaybackDevice_String = "onPlaybackDevice";
-	static const char * const k_pch_audio_OnRecordDevice_String = "onRecordDevice";
-	static const char * const k_pch_audio_OnPlaybackMirrorDevice_String = "onPlaybackMirrorDevice";
-	static const char * const k_pch_audio_OffPlaybackDevice_String = "offPlaybackDevice";
-	static const char * const k_pch_audio_OffRecordDevice_String = "offRecordDevice";
+	static const char * const k_pch_audio_SetOsDefaultPlaybackDevice_Bool = "setOsDefaultPlaybackDevice";
+	static const char * const k_pch_audio_EnablePlaybackDeviceOverride_Bool = "enablePlaybackDeviceOverride";
+	static const char * const k_pch_audio_PlaybackDeviceOverride_String = "playbackDeviceOverride";
+	static const char * const k_pch_audio_PlaybackDeviceOverrideName_String = "playbackDeviceOverrideName";
+	static const char * const k_pch_audio_SetOsDefaultRecordingDevice_Bool = "setOsDefaultRecordingDevice";
+	static const char * const k_pch_audio_EnableRecordingDeviceOverride_Bool = "enableRecordingDeviceOverride";
+	static const char * const k_pch_audio_RecordingDeviceOverride_String = "recordingDeviceOverride";
+	static const char * const k_pch_audio_RecordingDeviceOverrideName_String = "recordingDeviceOverrideName";
+	static const char * const k_pch_audio_EnablePlaybackMirror_Bool = "enablePlaybackMirror";
+	static const char * const k_pch_audio_PlaybackMirrorDevice_String = "playbackMirrorDevice";
+	static const char * const k_pch_audio_PlaybackMirrorDeviceName_String = "playbackMirrorDeviceName";
+	static const char * const k_pch_audio_OldPlaybackMirrorDevice_String = "onPlaybackMirrorDevice";
+	static const char * const k_pch_audio_LastHmdPlaybackDeviceId_String = "lastHmdPlaybackDeviceId";
 	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
 
 	//-----------------------------------------------------------------------------
@@ -2342,10 +2380,8 @@ namespace vr
 	static const char * const k_pch_Dashboard_Section = "dashboard";
 	static const char * const k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 	static const char * const k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
-	static const char * const k_pch_Dashboard_UseWebDashboard = "useWebDashboard";
+	static const char * const k_pch_Dashboard_UseWebKeyboard = "useWebKeyboard";
 	static const char * const k_pch_Dashboard_UseWebSettings = "useWebSettings";
-	static const char * const k_pch_Dashboard_UseWebIPD = "useWebIPD";
-	static const char * const k_pch_Dashboard_UseWebPowerMenu = "useWebPowerMenu";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
@@ -2359,8 +2395,6 @@ namespace vr
 	//-----------------------------------------------------------------------------
 	// web interface keys
 	static const char* const k_pch_WebInterface_Section = "WebInterface";
-	static const char* const k_pch_WebInterface_WebEnable_Bool = "WebEnable";
-	static const char* const k_pch_WebInterface_WebPort_String = "WebPort";
 
 	//-----------------------------------------------------------------------------
 	// vrwebhelper keys
@@ -2798,6 +2832,11 @@ static const char *IVRCompositorPluginProvider_Version = "IVRCompositorPluginPro
 
 namespace vr
 {
+
+	/** This container is automatically created before a display redirect device is activated.
+	* Any properties in this container will be returned when that property is read from the HMD's
+	* property container. */
+	static const PropertyContainerHandle_t k_ulDisplayRedirectContainer = 0x600000003;
 
 	enum EPropertyWriteType
 	{
