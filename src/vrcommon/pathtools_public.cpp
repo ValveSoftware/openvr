@@ -819,7 +819,7 @@ std::string Path_FilePathToUrl( const std::string & sRelativePath, const std::st
 
 		size_t unBufferSize = sAbsolute.length() * 3;
 		char *pchBuffer = (char *)alloca( unBufferSize );
-		V_URLEncodeNoPlusForSpace( pchBuffer, (int)unBufferSize, sAbsolute.c_str(), (int)sAbsolute.length() );
+		V_URLEncodeFullPath( pchBuffer, (int)unBufferSize, sAbsolute.c_str(), (int)sAbsolute.length() );
 
 		return std::string( FILE_URL_PREFIX ) + pchBuffer;
 	}

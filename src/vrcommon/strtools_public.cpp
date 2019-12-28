@@ -4,7 +4,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
+#include <codecvt>
 #include <iostream>
+#include <functional>
+#include <locale>
+#include <codecvt>
 
 //-----------------------------------------------------------------------------
 // Purpose:
@@ -49,96 +53,36 @@ bool StringHasSuffixCaseSensitive( const std::string &sString, const std::string
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+
 std::string UTF16to8(const wchar_t * in)
 {
-	std::string out;
-	unsigned int codepoint = 0;
-	for ( ; in && *in != 0; ++in )
+	try
 	{
-		if (*in >= 0xd800 && *in <= 0xdbff)
-			codepoint = ((*in - 0xd800) << 10) + 0x10000;
-		else
-		{
-			if (*in >= 0xdc00 && *in <= 0xdfff)
-				codepoint |= *in - 0xdc00;
-			else
-				codepoint = *in;
+		typedef std::codecvt_utf8< wchar_t > convert_type;
+		std::wstring_convert< convert_type, wchar_t > converter;
 
-			if (codepoint <= 0x7f)
-				out.append(1, static_cast<char>(codepoint));
-			else if (codepoint <= 0x7ff)
-			{
-				out.append(1, static_cast<char>(0xc0 | ((codepoint >> 6) & 0x1f)));
-				out.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
-			}
-			else if (codepoint <= 0xffff)
-			{
-				out.append(1, static_cast<char>(0xe0 | ((codepoint >> 12) & 0x0f)));
-				out.append(1, static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
-				out.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
-			}
-			else
-			{
-				out.append(1, static_cast<char>(0xf0 | ((codepoint >> 18) & 0x07)));
-				out.append(1, static_cast<char>(0x80 | ((codepoint >> 12) & 0x3f)));
-				out.append(1, static_cast<char>(0x80 | ((codepoint >> 6) & 0x3f)));
-				out.append(1, static_cast<char>(0x80 | (codepoint & 0x3f)));
-			}
-			codepoint = 0;
-		}
+		return converter.to_bytes( in );
 	}
-	return out;
+	catch ( ... )
+	{
+		return std::string();
+	}
 }
+
 
 std::wstring UTF8to16(const char * in)
 {
-	std::wstring out;
-	unsigned int codepoint = 0;
-	int following = 0;
-	for ( ; in && *in != 0; ++in )
+	try
 	{
-		unsigned char ch = *in;
-		if (ch <= 0x7f)
-		{
-			codepoint = ch;
-			following = 0;
-		}
-		else if (ch <= 0xbf)
-		{
-			if (following > 0)
-			{
-				codepoint = (codepoint << 6) | (ch & 0x3f);
-				--following;
-			}
-		}
-		else if (ch <= 0xdf)
-		{
-			codepoint = ch & 0x1f;
-			following = 1;
-		}
-		else if (ch <= 0xef)
-		{
-			codepoint = ch & 0x0f;
-			following = 2;
-		}
-		else
-		{
-			codepoint = ch & 0x07;
-			following = 3;
-		}
-		if (following == 0)
-		{
-			if (codepoint > 0xffff)
-			{
-				out.append(1, static_cast<wchar_t>(0xd800 + (codepoint >> 10)));
-				out.append(1, static_cast<wchar_t>(0xdc00 + (codepoint & 0x03ff)));
-			}
-			else
-				out.append(1, static_cast<wchar_t>(codepoint));
-			codepoint = 0;
-		}
+		typedef std::codecvt_utf8< wchar_t > convert_type;
+		std::wstring_convert< convert_type, wchar_t > converter;
+
+		return converter.from_bytes( in );
 	}
-	return out;
+	catch ( ... )
+	{
+		return std::wstring();
+	}
 }
 
 
@@ -245,11 +189,30 @@ int iHexCharToInt( char cValue )
 	return -1;
 }
 
+
+//-----------------------------------------------------------------------------
+// Purpose: These define the set of characters to filter for components (which
+//			need all the escaping we can muster) vs. paths (which don't want
+//			/ and : escaped so we don't break less compliant URL handling code.
+//-----------------------------------------------------------------------------
+static bool CharNeedsEscape_Component( const char c )
+{
+	return (!(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9')
+		&& c != '-' && c != '_' && c != '.');
+}
+static bool CharNeedsEscape_FullPath( const char c )
+{
+	return (!(c >= 'a' && c <= 'z') && !(c >= 'A' && c <= 'Z') && !(c >= '0' && c <= '9')
+		&& c != '-' && c != '_' && c != '.' && c != '/' && c != ':' );
+}
+
+
 //-----------------------------------------------------------------------------
 // Purpose: Internal implementation of encode, works in the strict RFC manner, or
 //          with spaces turned to + like HTML form encoding.
 //-----------------------------------------------------------------------------
-void V_URLEncodeInternal( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen, bool bUsePlusForSpace )
+void V_URLEncodeInternal( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen, 
+	bool bUsePlusForSpace, std::function< bool(const char)> fnNeedsEscape )
 {
 	//AssertMsg( nDestLen > 3*nSourceLen, "Target buffer for V_URLEncode should be 3x source length, plus one for terminating null\n" );
 	
@@ -267,9 +230,7 @@ void V_URLEncodeInternal( char *pchDest, int nDestLen, const char *pchSource, in
 		// We allow only a-z, A-Z, 0-9, period, underscore, and hyphen to pass through unescaped.
 		// These are the characters allowed by both the original RFC 1738 and the latest RFC 3986.
 		// Current specs also allow '~', but that is forbidden under original RFC 1738.
-		if ( !( pchSource[i] >= 'a' && pchSource[i] <= 'z' ) && !( pchSource[i] >= 'A' && pchSource[i] <= 'Z' ) && !(pchSource[i] >= '0' && pchSource[i] <= '9' )
-			 && pchSource[i] != '-' && pchSource[i] != '_' && pchSource[i] != '.'	
-		)
+		if ( fnNeedsEscape( pchSource[i] ) )
 		{
 			if ( bUsePlusForSpace && pchSource[i] == ' ' )
 			{
@@ -397,15 +358,19 @@ size_t V_URLDecodeInternal( char *pchDecodeDest, int nDecodeDestLen, const char 
 //-----------------------------------------------------------------------------
 void V_URLEncode( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen )
 {
-	return V_URLEncodeInternal( pchDest, nDestLen, pchSource, nSourceLen, true );
+	return V_URLEncodeInternal( pchDest, nDestLen, pchSource, nSourceLen, true, CharNeedsEscape_Component );
 }
 
 
 void V_URLEncodeNoPlusForSpace( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen )
 {
-	return V_URLEncodeInternal( pchDest, nDestLen, pchSource, nSourceLen, false );
+	return V_URLEncodeInternal( pchDest, nDestLen, pchSource, nSourceLen, false, CharNeedsEscape_Component );
 }
 
+void V_URLEncodeFullPath( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen )
+{
+	return V_URLEncodeInternal( pchDest, nDestLen, pchSource, nSourceLen, false, CharNeedsEscape_FullPath );
+}
 
 //-----------------------------------------------------------------------------
 // Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
@@ -458,3 +423,62 @@ std::vector<std::string> TokenizeString( const std::string & sString, char cToke
 	return vecStrings;
 }
 
+//-----------------------------------------------------------------------------
+// Purpose: Repairs a should-be-UTF-8 string to a for-sure-is-UTF-8 string, plus return boolean if we subbed in '?' somewhere
+//-----------------------------------------------------------------------------
+bool RepairUTF8( const char *pbegin, const char *pend, std::string & sOutputUtf8 )
+{
+	typedef std::codecvt_utf8<char32_t> facet_type;
+	facet_type myfacet;
+
+	std::mbstate_t mystate = std::mbstate_t();
+
+	sOutputUtf8.clear();
+	sOutputUtf8.reserve( pend - pbegin );
+	bool bSqueakyClean = true;
+
+	const char *pmid = pbegin;
+
+	while ( pmid != pend )
+	{
+		char32_t out = 0xdeadbeef, *pout;
+		pbegin = pmid;
+		switch ( myfacet.in( mystate, pbegin, pend, pmid, &out, &out + 1, pout ) )
+		{
+		case facet_type::ok:
+			// could convert back, but no need
+			for ( const char *p = pbegin; p != pmid; ++p )
+			{
+				sOutputUtf8 += *p;
+			}
+			break;
+
+		case facet_type::noconv:
+			// unexpected! always converting type
+			bSqueakyClean = false;
+			break;
+
+		case facet_type::partial:
+			sOutputUtf8 += '?';
+			pmid++;  // partial consumes 0, so make progress
+			bSqueakyClean = false;
+			break;
+
+		case facet_type::error:
+			sOutputUtf8 += '?';
+			// error consumes some bytes
+			bSqueakyClean = false;
+			break;
+		}
+	}
+
+	return bSqueakyClean;
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: Repairs a should-be-UTF-8 string to a for-sure-is-UTF-8 string, plus return boolean if we subbed in '?' somewhere
+//-----------------------------------------------------------------------------
+bool RepairUTF8( const std::string & sInputUtf8, std::string & sOutputUtf8 )
+{
+	return RepairUTF8( sInputUtf8.data(), sInputUtf8.data() + sInputUtf8.size(), sOutputUtf8 );
+}

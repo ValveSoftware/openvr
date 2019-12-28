@@ -21,6 +21,10 @@ std::string UTF16to8(const wchar_t * in);
 std::wstring UTF8to16(const char * in);
 #define Utf16FromUtf8 UTF8to16
 
+/** Repairs a should-be-UTF-8 string to a for-sure-is-UTF-8 string, plus return boolean if we subbed in '?' somewhere */
+bool RepairUTF8( const char *begin, const char *end, std::string & sOutputUtf8 );
+bool RepairUTF8( const std::string & sInputUtf8, std::string & sOutputUtf8 );
+
 /** safely copy a string into a buffer */
 void strcpy_safe( char *pchBuffer, size_t unBufferSizeBytes, const char *pchSource );
 template< size_t bufferSize >
@@ -114,6 +118,10 @@ void V_URLEncode( char *pchDest, int nDestLen, const char *pchSource, int nSourc
 
 /** Same as V_URLEncode, but without plus for space. */
 void V_URLEncodeNoPlusForSpace( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen );
+
+/** Same as V_URLEncodeNoPlusForSpace, but without escaping / and : */
+void V_URLEncodeFullPath( char *pchDest, int nDestLen, const char *pchSource, int nSourceLen );
+
 
 //-----------------------------------------------------------------------------
 // Purpose: Decodes a string (or binary data) from URL encoding format, see rfc1738 section 2.2.  
