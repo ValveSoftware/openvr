@@ -37,8 +37,12 @@ namespace vr
 
 static void *g_pVRModule = NULL;
 static IVRClientCore *g_pHmdSystem = NULL;
-static std::recursive_mutex g_mutexSystem;
 
+static std::recursive_mutex& GetMutexSystem()
+{
+	static std::recursive_mutex mutexSystem;
+	return mutexSystem;
+}
 
 typedef void* (*VRClientCoreFactoryFn)(const char *pInterfaceName, int *pReturnCode);
 
@@ -55,7 +59,7 @@ void CleanupInternalInterfaces();
 
 uint32_t VR_InitInternal2( EVRInitError *peError, vr::EVRApplicationType eApplicationType, const char *pStartupInfo )
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	EVRInitError err = VR_LoadHmdSystemInternal();
 	if ( err == vr::VRInitError_None )
@@ -87,7 +91,7 @@ uint32_t VR_InitInternal( EVRInitError *peError, vr::EVRApplicationType eApplica
 
 void VR_ShutdownInternal()
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 	
 	if ( g_pHmdSystem )
 	{
@@ -172,7 +176,7 @@ EVRInitError VR_LoadHmdSystemInternal()
 
 void *VR_GetGenericInterface(const char *pchInterfaceVersion, EVRInitError *peError)
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	if (!g_pHmdSystem)
 	{
@@ -186,7 +190,7 @@ void *VR_GetGenericInterface(const char *pchInterfaceVersion, EVRInitError *peEr
 
 bool VR_IsInterfaceVersionValid(const char *pchInterfaceVersion)
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	if (!g_pHmdSystem)
 	{
@@ -198,7 +202,7 @@ bool VR_IsInterfaceVersionValid(const char *pchInterfaceVersion)
 
 bool VR_IsHmdPresent()
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	if( g_pHmdSystem )
 	{
@@ -225,7 +229,7 @@ bool VR_IsHmdPresent()
 /** Returns true if the OpenVR runtime is installed. */
 bool VR_IsRuntimeInstalled()
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	if( g_pHmdSystem )
 	{
@@ -319,7 +323,7 @@ bool VR_GetRuntimePath( char *pchPathBuffer, uint32_t unBufferSize, uint32_t *pu
 /** Returns the symbol version of an HMD error. */
 const char *VR_GetVRInitErrorAsSymbol( EVRInitError error )
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	if( g_pHmdSystem )
 		return g_pHmdSystem->GetIDForVRInitError( error );
@@ -331,7 +335,7 @@ const char *VR_GetVRInitErrorAsSymbol( EVRInitError error )
 /** Returns the english string version of an HMD error. */
 const char *VR_GetVRInitErrorAsEnglishDescription( EVRInitError error )
 {
-	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
+	std::lock_guard<std::recursive_mutex> lock( GetMutexSystem() );
 
 	if ( g_pHmdSystem )
 		return g_pHmdSystem->GetEnglishStringForHmdError( error );
