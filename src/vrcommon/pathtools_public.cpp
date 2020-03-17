@@ -361,8 +361,9 @@ std::string Path_Compact( const std::string & sRawPath, char slash )
 		std::string::size_type len = sPath.length();
 		if( sPath[ len-1 ] == '.'  && sPath[ len-2 ] == slash )
 		{
-		  // sPath.pop_back();
-		  sPath[len-1] = 0;  // for now, at least
+			sPath.pop_back();
+			//Not sure why the following line of code was used for a while.  It causes problems with strlen.
+			//sPath[len-1] = 0;  // for now, at least 
 		}
 	}
 

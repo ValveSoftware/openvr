@@ -15,11 +15,17 @@ bool StringHasSuffix( const std::string &sString, const std::string &sSuffix );
 bool StringHasSuffixCaseSensitive( const std::string &sString, const std::string &sSuffix );
 
 /** converts a UTF-16 string to a UTF-8 string */
-std::string UTF16to8(const wchar_t * in);
+std::string UTF16to8( const wchar_t * in );
+std::string UTF16to8( const std::wstring & in );
 
 /** converts a UTF-8 string to a UTF-16 string */
 std::wstring UTF8to16(const char * in);
+std::wstring UTF8to16( const std::string & in );
 #define Utf16FromUtf8 UTF8to16
+
+#if defined( _WIN32 )
+std::string DefaultACPtoUTF8( const char *pszStr );
+#endif
 
 /** Repairs a should-be-UTF-8 string to a for-sure-is-UTF-8 string, plus return boolean if we subbed in '?' somewhere */
 bool RepairUTF8( const char *begin, const char *end, std::string & sOutputUtf8 );

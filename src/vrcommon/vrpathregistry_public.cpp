@@ -212,19 +212,25 @@ bool CVRPathRegistry_Public::ToJsonString( std::string &sJsonString )
 // ---------------------------------------------------------------------------
 // Purpose: Loads the config file from its well known location
 // ---------------------------------------------------------------------------
-bool CVRPathRegistry_Public::BLoadFromFile()
+bool CVRPathRegistry_Public::BLoadFromFile( std::string *psLoadError )
 {
 	std::string sRegPath = GetVRPathRegistryFilename();
 	if( sRegPath.empty() )
 	{
-		VRLog( "Unable to determine VR Path Registry filename\n" );
+		if ( psLoadError )
+		{
+			*psLoadError = "Unable to determine VR Path Registry filename";
+		}
 		return false;
 	}
 
 	std::string sRegistryContents = Path_ReadTextFile( sRegPath );
 	if( sRegistryContents.empty() )
 	{
-		VRLog( "Unable to read VR Path Registry from %s\n", sRegPath.c_str() );
+		if ( psLoadError )
+		{
+			*psLoadError = "Unable to read VR Path Registry from " + sRegPath;
+		}
 		return false;
 	}
 
@@ -236,7 +242,10 @@ bool CVRPathRegistry_Public::BLoadFromFile()
 	try {
 		if ( !parseFromStream( builder, istream, &root, &sErrors ) )
 		{
-			VRLog( "Unable to parse %s: %s\n", sRegPath.c_str(), sErrors.c_str() );
+			if ( psLoadError )
+			{
+				*psLoadError = "Unable to parse " + sRegPath + ": " + sErrors;
+			}
 			return false;
 		}
 
@@ -250,7 +259,10 @@ bool CVRPathRegistry_Public::BLoadFromFile()
 	}
 	catch ( ... )
 	{
-		VRLog( "Unable to parse %s: %s\n", sRegPath.c_str(), "exception thrown in JSON library" );
+		if ( psLoadError )
+		{
+			*psLoadError = "Unable to parse " + sRegPath + ": exception thrown in JSON library";
+		}
 		return false;
 	}
 
@@ -263,9 +275,6 @@ bool CVRPathRegistry_Public::BLoadFromFile()
 // ---------------------------------------------------------------------------
 bool CVRPathRegistry_Public::BSaveToFile() const
 {
-#if defined( DASHBOARD_BUILD_MODE )
-	return false;
-#else
 	std::string sRegPath = GetVRPathRegistryFilename();
 	if( sRegPath.empty() )
 		return false;
@@ -298,7 +307,6 @@ bool CVRPathRegistry_Public::BSaveToFile() const
 	}
 
 	return true;
-#endif
 }
 
 
@@ -345,12 +353,15 @@ std::string CVRPathRegistry_Public::GetLogPath() const
 // ---------------------------------------------------------------------------
 bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *psConfigPath, std::string *psLogPath, const char *pchConfigPathOverride, const char *pchLogPathOverride, std::vector<std::string> *pvecExternalDrivers )
 {
+	std::string sLoadError;
 	CVRPathRegistry_Public pathReg;
-	bool bLoadedRegistry = pathReg.BLoadFromFile();
+	bool bLoadedRegistry = pathReg.BLoadFromFile( &sLoadError );
 	int nCountEnvironmentVariables = 0;
+	int nRequestedPaths = 0;
 
 	if( psRuntimePath )
 	{
+		nRequestedPaths++;
 		if ( GetEnvironmentVariable( k_pchRuntimeOverrideVar ).length() != 0 )
 		{
 			*psRuntimePath = GetEnvironmentVariable( k_pchRuntimeOverrideVar );
@@ -368,6 +379,7 @@ bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *
 
 	if( psConfigPath )
 	{
+		nRequestedPaths++;
 		if ( GetEnvironmentVariable( k_pchConfigOverrideVar ).length() != 0 )
 		{
 			*psConfigPath = GetEnvironmentVariable( k_pchConfigOverrideVar );
@@ -389,6 +401,7 @@ bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *
 
 	if( psLogPath )
 	{
+		nRequestedPaths++;
 		if ( GetEnvironmentVariable( k_pchLogOverrideVar ).length() != 0 )
 		{
 			*psLogPath = GetEnvironmentVariable( k_pchLogOverrideVar );
@@ -413,10 +426,14 @@ bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *
 		*pvecExternalDrivers = pathReg.m_vecExternalDrivers;
 	}
 
-	if ( nCountEnvironmentVariables == 3 )
+	if ( nCountEnvironmentVariables == nRequestedPaths )
 	{
 		// all three environment variables were set, so we don't need the physical file
 		return true;
+	}
+	else if( !bLoadedRegistry )
+	{
+		VRLog( "%s\n", sLoadError.c_str() );
 	}
 
 	return bLoadedRegistry;

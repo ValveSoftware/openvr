@@ -10,6 +10,10 @@
 #include <locale>
 #include <codecvt>
 
+#if defined( _WIN32 )
+#include <windows.h>
+#endif
+
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
@@ -53,15 +57,15 @@ bool StringHasSuffixCaseSensitive( const std::string &sString, const std::string
 //-----------------------------------------------------------------------------
 // Purpose:
 //-----------------------------------------------------------------------------
+typedef std::codecvt_utf8< wchar_t > convert_type;
 
 std::string UTF16to8(const wchar_t * in)
 {
+	static std::wstring_convert< convert_type, wchar_t > s_converter;  // construction of this can be expensive (or even serialized) depending on locale
+
 	try
 	{
-		typedef std::codecvt_utf8< wchar_t > convert_type;
-		std::wstring_convert< convert_type, wchar_t > converter;
-
-		return converter.to_bytes( in );
+		return s_converter.to_bytes( in );
 	}
 	catch ( ... )
 	{
@@ -69,15 +73,16 @@ std::string UTF16to8(const wchar_t * in)
 	}
 }
 
+std::string UTF16to8( const std::wstring & in ) { return UTF16to8( in.c_str() ); }
+
 
 std::wstring UTF8to16(const char * in)
 {
+	static std::wstring_convert< convert_type, wchar_t > s_converter;  // construction of this can be expensive (or even serialized) depending on locale
+
 	try
 	{
-		typedef std::codecvt_utf8< wchar_t > convert_type;
-		std::wstring_convert< convert_type, wchar_t > converter;
-
-		return converter.from_bytes( in );
+		return s_converter.from_bytes( in );
 	}
 	catch ( ... )
 	{
@@ -85,13 +90,36 @@ std::wstring UTF8to16(const char * in)
 	}
 }
 
+std::wstring UTF8to16( const std::string & in ) { return UTF8to16( in.c_str() ); }
 
+
+#if defined( _WIN32 )
+//-----------------------------------------------------------------------------
+// Purpose: Convert LPSTR in the default CodePage to UTF8
+//-----------------------------------------------------------------------------
+std::string DefaultACPtoUTF8( const char *pszStr )
+{
+	if ( GetACP() == CP_UTF8 )
+	{
+		return pszStr;
+	}
+	else
+	{
+		std::vector<wchar_t> vecBuf( strlen( pszStr ) + 1 ); // should be guaranteed to be enough
+		MultiByteToWideChar( CP_ACP, MB_PRECOMPOSED, pszStr, -1, vecBuf.data(), (int) vecBuf.size() );
+		return UTF16to8( vecBuf.data() );
+	}
+}
+#endif
+
+// --------------------------------------------------------------------
+// Purpose:
+// --------------------------------------------------------------------
 void strcpy_safe( char *pchBuffer, size_t unBufferSizeBytes, const char *pchSource )
 {
 	strncpy( pchBuffer, pchSource, unBufferSizeBytes - 1 );
 	pchBuffer[unBufferSizeBytes - 1] = '\0';
 }
-
 
 // --------------------------------------------------------------------
 // Purpose: converts a string to upper case
@@ -438,19 +466,17 @@ bool RepairUTF8( const char *pbegin, const char *pend, std::string & sOutputUtf8
 	bool bSqueakyClean = true;
 
 	const char *pmid = pbegin;
-
 	while ( pmid != pend )
 	{
+		bool bHasError = false;
+		bool bHasValidData = false;
+
 		char32_t out = 0xdeadbeef, *pout;
 		pbegin = pmid;
 		switch ( myfacet.in( mystate, pbegin, pend, pmid, &out, &out + 1, pout ) )
 		{
 		case facet_type::ok:
-			// could convert back, but no need
-			for ( const char *p = pbegin; p != pmid; ++p )
-			{
-				sOutputUtf8 += *p;
-			}
+			bHasValidData = true;
 			break;
 
 		case facet_type::noconv:
@@ -459,16 +485,40 @@ bool RepairUTF8( const char *pbegin, const char *pend, std::string & sOutputUtf8
 			break;
 
 		case facet_type::partial:
-			sOutputUtf8 += '?';
-			pmid++;  // partial consumes 0, so make progress
-			bSqueakyClean = false;
+			bHasError = pbegin == pmid;
+			if ( bHasError )
+			{
+				bSqueakyClean = false;
+			}
+			else
+			{
+				bHasValidData = true;
+			}
 			break;
 
 		case facet_type::error:
-			sOutputUtf8 += '?';
-			// error consumes some bytes
+			bHasError = true;
 			bSqueakyClean = false;
 			break;
+		}
+
+		if ( bHasValidData )
+		{
+			// could convert back, but no need
+			for ( const char *p = pbegin; p != pmid; ++p )
+			{
+				sOutputUtf8 += *p;
+			}
+		}
+
+		if ( bHasError )
+		{
+			sOutputUtf8 += '?';
+		}
+
+		if ( pmid == pbegin )
+		{
+			pmid++;
 		}
 	}
 

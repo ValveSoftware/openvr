@@ -281,7 +281,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateFallbackSyncTexture );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_ShareFallbackSyncTexture );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayIndexBuffer );
-		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayVertextBuffer );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayVertexBuffer );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateTextVertexBuffer );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateTextIndexBuffer );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateMirrorTextures );
@@ -289,6 +289,9 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateMirrorOverlay );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToCreateVirtualDisplayBackbuffer );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_DisplayModeNotSupported );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayInvalidCall );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayAlreadyInitialized );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToCreateMailbox );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);
