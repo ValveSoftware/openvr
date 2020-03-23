@@ -16,7 +16,7 @@ namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
 	static const uint32_t k_nSteamVRVersionMinor = 10;
-	static const uint32_t k_nSteamVRVersionBuild = 30;
+	static const uint32_t k_nSteamVRVersionBuild = 32;
 } // namespace vr
 
 // vrtypes.h
@@ -4162,6 +4162,15 @@ enum EVRRenderModelError
 	VRRenderModelError_InvalidTexture = 400,
 };
 
+enum EVRRenderModelTextureFormat
+{
+	VRRenderModelTextureFormat_RGBA8_SRGB = 0, // RGBA with 8 bits per channel per pixel. Data size is width * height * 4ub
+	VRRenderModelTextureFormat_BC2,
+	VRRenderModelTextureFormat_BC4,
+	VRRenderModelTextureFormat_BC7,
+	VRRenderModelTextureFormat_BC7_SRGB
+};
+
 /** A single vertex in a render model */
 struct RenderModel_Vertex_t
 {
@@ -4180,7 +4189,8 @@ struct RenderModel_Vertex_t
 struct RenderModel_TextureMap_t
 {
 	uint16_t unWidth, unHeight; // width and height of the texture map in pixels
-	const uint8_t *rubTextureMapData;	// Map texture data. All textures are RGBA with 8 bits per channel per pixel. Data size is width * height * 4ub
+	const uint8_t *rubTextureMapData;	// Map texture data.
+	EVRRenderModelTextureFormat format; // Refer to EVRRenderModelTextureFormat
 };
 #if defined(__linux__) || defined(__APPLE__) 
 #pragma pack( pop )

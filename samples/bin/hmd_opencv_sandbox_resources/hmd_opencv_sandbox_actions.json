@@ -1,0 +1,55 @@
+{
+      "default_bindings": [
+        {
+          "controller_type": "generic",
+          "binding_url": "hmd_opencv_sandbox_bindings_generic.json"
+        }
+      ], 
+  "actions": [
+    {
+      "name": "/actions/demo/in/HideCubes",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/demo/in/advance_demo",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/demo/in/triggerhaptic",
+      "type": "boolean"
+    },
+    {
+      "name": "/actions/demo/in/AnalogInput",
+      "type": "vector2"
+    },
+    {
+      "name": "/actions/demo/in/Hand_Right",
+      "type": "pose"
+    },
+    {
+      "name": "/actions/demo/in/Hand_Left",
+      "type": "pose"
+    },
+    {
+      "name": "/actions/demo/out/haptic_left",
+      "type": "vibration"
+    },
+    {
+      "name": "/actions/demo/out/haptic_right",
+      "type": "vibration"
+    }
+  ],
+    "localization" : [
+      {
+        "language_tag": "en_US",
+        "/actions/demo/in/HideCubes": "Hide Cubes",
+        "/actions/demo/in/advance_demo": "Advance Demo",
+        "/actions/demo/in/triggerhaptic": "Trigger Haptic Pulse",
+        "/actions/demo/in/AnalogInput": "Analog Input",
+        "/actions/demo/in/Hand_Right": "Right Hand Pose",
+        "/actions/demo/in/Hand_Left": "Left Hand Pose",
+        "/actions/demo/out/haptic_left": "Left Haptic Feedback",
+        "/actions/demo/out/haptic_right": "Right Haptic Feedback"
+      }
+    ]
+}

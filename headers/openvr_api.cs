@@ -5168,6 +5168,14 @@ public enum EVRRenderModelError
 	NotEnoughTexCoords = 308,
 	InvalidTexture = 400,
 }
+public enum EVRRenderModelTextureFormat
+{
+	RGBA8_SRGB = 0,
+	BC2 = 1,
+	BC4 = 2,
+	BC7 = 3,
+	BC7_SRGB = 4,
+}
 public enum EVRNotificationType
 {
 	Transient = 0,
@@ -5947,6 +5955,7 @@ public enum EVRDebugError
 	public ushort unWidth;
 	public ushort unHeight;
 	public IntPtr rubTextureMapData; // const uint8_t *
+	public EVRRenderModelTextureFormat format;
 }
 // This structure is for backwards binary compatibility on Linux and OSX only
 [StructLayout(LayoutKind.Sequential, Pack = 4)] public struct RenderModel_TextureMap_t_Packed
@@ -5954,17 +5963,20 @@ public enum EVRDebugError
 	public ushort unWidth;
 	public ushort unHeight;
 	public IntPtr rubTextureMapData; // const uint8_t *
+	public EVRRenderModelTextureFormat format;
 	public RenderModel_TextureMap_t_Packed(RenderModel_TextureMap_t unpacked)
 	{
 		this.unWidth = unpacked.unWidth;
 		this.unHeight = unpacked.unHeight;
 		this.rubTextureMapData = unpacked.rubTextureMapData;
+		this.format = unpacked.format;
 	}
 	public void Unpack(ref RenderModel_TextureMap_t unpacked)
 	{
 		unpacked.unWidth = this.unWidth;
 		unpacked.unHeight = this.unHeight;
 		unpacked.rubTextureMapData = this.rubTextureMapData;
+		unpacked.format = this.format;
 	}
 }
 [StructLayout(LayoutKind.Sequential)] public struct RenderModel_t

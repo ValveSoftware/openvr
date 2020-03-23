@@ -1108,6 +1108,13 @@
 	,{"name": "VRRenderModelError_NotEnoughTexCoords","value": "308"}
 	,{"name": "VRRenderModelError_InvalidTexture","value": "400"}
 ]}
+,	{"enumname": "vr::EVRRenderModelTextureFormat","values": [ 
+	{"name": "VRRenderModelTextureFormat_RGBA8_SRGB","value": "0"}
+	,{"name": "VRRenderModelTextureFormat_BC2","value": "1"}
+	,{"name": "VRRenderModelTextureFormat_BC4","value": "2"}
+	,{"name": "VRRenderModelTextureFormat_BC7","value": "3"}
+	,{"name": "VRRenderModelTextureFormat_BC7_SRGB","value": "4"}
+]}
 ,	{"enumname": "vr::EVRNotificationType","values": [ 
 	{"name": "EVRNotificationType_Transient","value": "0"}
 	,{"name": "EVRNotificationType_Persistent","value": "1"}
@@ -2117,7 +2124,8 @@
 ,{"struct": "vr::RenderModel_TextureMap_t","fields": [
 { "fieldname": "unWidth", "fieldtype": "uint16_t"},
 { "fieldname": "unHeight", "fieldtype": "uint16_t"},
-{ "fieldname": "rubTextureMapData", "fieldtype": "const uint8_t *"}]}
+{ "fieldname": "rubTextureMapData", "fieldtype": "const uint8_t *"},
+{ "fieldname": "format", "fieldtype": "enum vr::EVRRenderModelTextureFormat"}]}
 ,{"struct": "vr::RenderModel_t","fields": [
 { "fieldname": "rVertexData", "fieldtype": "const struct vr::RenderModel_Vertex_t *"},
 { "fieldname": "unVertexCount", "fieldtype": "uint32_t"},

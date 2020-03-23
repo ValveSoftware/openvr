@@ -1540,6 +1540,15 @@ typedef enum EVRRenderModelError
 	EVRRenderModelError_VRRenderModelError_InvalidTexture = 400,
 } EVRRenderModelError;
 
+typedef enum EVRRenderModelTextureFormat
+{
+	EVRRenderModelTextureFormat_VRRenderModelTextureFormat_RGBA8_SRGB = 0,
+	EVRRenderModelTextureFormat_VRRenderModelTextureFormat_BC2 = 1,
+	EVRRenderModelTextureFormat_VRRenderModelTextureFormat_BC4 = 2,
+	EVRRenderModelTextureFormat_VRRenderModelTextureFormat_BC7 = 3,
+	EVRRenderModelTextureFormat_VRRenderModelTextureFormat_BC7_SRGB = 4,
+} EVRRenderModelTextureFormat;
+
 typedef enum EVRNotificationType
 {
 	EVRNotificationType_Transient = 0,
@@ -2233,6 +2242,7 @@ typedef struct RenderModel_TextureMap_t
 	uint16_t unWidth;
 	uint16_t unHeight;
 	uint8_t * rubTextureMapData; // const uint8_t *
+	enum EVRRenderModelTextureFormat format;
 } RenderModel_TextureMap_t;
 
 #if defined(__linux__) || defined(__APPLE__)
