@@ -7,6 +7,8 @@
 #include "strtools_public.h"
 #include "dirtools_public.h"
 
+#include <sstream>
+
 #if defined( WIN32 )
 #include <windows.h>
 #include <shlobj.h>
