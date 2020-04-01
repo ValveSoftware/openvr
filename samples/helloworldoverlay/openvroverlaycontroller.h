@@ -67,7 +67,6 @@ private:
 private:
 	vr::HmdError m_eCompositorError;
 	vr::HmdError m_eOverlayError;
-	vr::Compositor_OverlaySettings m_overlaySettings;
 	vr::VROverlayHandle_t m_ulOverlayHandle;
     vr::VROverlayHandle_t m_ulOverlayThumbnailHandle;
 
