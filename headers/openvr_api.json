@@ -390,7 +390,6 @@
 	,{"name": "VREvent_DashboardDeactivated","value": "503"}
 	,{"name": "VREvent_DashboardRequested","value": "505"}
 	,{"name": "VREvent_ResetDashboard","value": "506"}
-	,{"name": "VREvent_RenderToast","value": "507"}
 	,{"name": "VREvent_ImageLoaded","value": "508"}
 	,{"name": "VREvent_ShowKeyboard","value": "509"}
 	,{"name": "VREvent_HideKeyboard","value": "510"}
@@ -449,6 +448,8 @@
 	,{"name": "VREvent_LastKnownSectionSettingChanged","value": "867"}
 	,{"name": "VREvent_DismissedWarningsSectionSettingChanged","value": "868"}
 	,{"name": "VREvent_GpuSpeedSectionSettingChanged","value": "869"}
+	,{"name": "VREvent_WindowsMRSectionSettingChanged","value": "870"}
+	,{"name": "VREvent_OtherSectionSettingChanged","value": "871"}
 	,{"name": "VREvent_StatusUpdate","value": "900"}
 	,{"name": "VREvent_WebInterface_InstallDriverCompleted","value": "950"}
 	,{"name": "VREvent_MCImageUpdated","value": "1000"}
@@ -1540,6 +1541,8 @@
 ,{
 	"constname": "k_pch_Null_DisplayFrequency_Float","consttype": "const char *const", "constval": "displayFrequency"}
 ,{
+	"constname": "k_pch_WindowsMR_Section","consttype": "const char *const", "constval": "driver_holographic"}
+,{
 	"constname": "k_pch_UserInterface_Section","consttype": "const char *const", "constval": "userinterface"}
 ,{
 	"constname": "k_pch_UserInterface_StatusAlwaysOnTop_Bool","consttype": "const char *const", "constval": "StatusAlwaysOnTop"}
@@ -1595,6 +1598,8 @@
 	"constname": "k_pch_CollisionBounds_PlaySpaceOn_Bool","consttype": "const char *const", "constval": "CollisionBoundsPlaySpaceOn"}
 ,{
 	"constname": "k_pch_CollisionBounds_FadeDistance_Float","consttype": "const char *const", "constval": "CollisionBoundsFadeDistance"}
+,{
+	"constname": "k_pch_CollisionBounds_WallHeight_Float","consttype": "const char *const", "constval": "CollisionBoundsWallHeight"}
 ,{
 	"constname": "k_pch_CollisionBounds_ColorGammaR_Int32","consttype": "const char *const", "constval": "CollisionBoundsColorGammaR"}
 ,{
@@ -1654,6 +1659,10 @@
 ,{
 	"constname": "k_pch_audio_OldPlaybackMirrorDevice_String","consttype": "const char *const", "constval": "onPlaybackMirrorDevice"}
 ,{
+	"constname": "k_pch_audio_ActiveMirrorDevice_String","consttype": "const char *const", "constval": "activePlaybackMirrorDevice"}
+,{
+	"constname": "k_pch_audio_EnablePlaybackMirrorIndependentVolume_Bool","consttype": "const char *const", "constval": "enablePlaybackMirrorIndependentVolume"}
+,{
 	"constname": "k_pch_audio_LastHmdPlaybackDeviceId_String","consttype": "const char *const", "constval": "lastHmdPlaybackDeviceId"}
 ,{
 	"constname": "k_pch_audio_VIVEHDMIGain","consttype": "const char *const", "constval": "viveHDMIGain"}
@@ -1677,8 +1686,6 @@
 	"constname": "k_pch_Dashboard_EnableDashboard_Bool","consttype": "const char *const", "constval": "enableDashboard"}
 ,{
 	"constname": "k_pch_Dashboard_ArcadeMode_Bool","consttype": "const char *const", "constval": "arcadeMode"}
-,{
-	"constname": "k_pch_Dashboard_UseWebSettings","consttype": "const char *const", "constval": "useWebSettings"}
 ,{
 	"constname": "k_pch_Dashboard_Position","consttype": "const char *const", "constval": "position"}
 ,{

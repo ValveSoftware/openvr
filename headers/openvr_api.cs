@@ -4403,7 +4403,6 @@ public enum EVREventType
 	VREvent_DashboardDeactivated = 503,
 	VREvent_DashboardRequested = 505,
 	VREvent_ResetDashboard = 506,
-	VREvent_RenderToast = 507,
 	VREvent_ImageLoaded = 508,
 	VREvent_ShowKeyboard = 509,
 	VREvent_HideKeyboard = 510,
@@ -4462,6 +4461,8 @@ public enum EVREventType
 	VREvent_LastKnownSectionSettingChanged = 867,
 	VREvent_DismissedWarningsSectionSettingChanged = 868,
 	VREvent_GpuSpeedSectionSettingChanged = 869,
+	VREvent_WindowsMRSectionSettingChanged = 870,
+	VREvent_OtherSectionSettingChanged = 871,
 	VREvent_StatusUpdate = 900,
 	VREvent_WebInterface_InstallDriverCompleted = 950,
 	VREvent_MCImageUpdated = 1000,
@@ -7084,6 +7085,7 @@ public class OpenVR
 	public const string k_pch_Null_RenderHeight_Int32 = "renderHeight";
 	public const string k_pch_Null_SecondsFromVsyncToPhotons_Float = "secondsFromVsyncToPhotons";
 	public const string k_pch_Null_DisplayFrequency_Float = "displayFrequency";
+	public const string k_pch_WindowsMR_Section = "driver_holographic";
 	public const string k_pch_UserInterface_Section = "userinterface";
 	public const string k_pch_UserInterface_StatusAlwaysOnTop_Bool = "StatusAlwaysOnTop";
 	public const string k_pch_UserInterface_MinimizeToTray_Bool = "MinimizeToTray";
@@ -7112,6 +7114,7 @@ public class OpenVR
 	public const string k_pch_CollisionBounds_CenterMarkerOn_Bool = "CollisionBoundsCenterMarkerOn";
 	public const string k_pch_CollisionBounds_PlaySpaceOn_Bool = "CollisionBoundsPlaySpaceOn";
 	public const string k_pch_CollisionBounds_FadeDistance_Float = "CollisionBoundsFadeDistance";
+	public const string k_pch_CollisionBounds_WallHeight_Float = "CollisionBoundsWallHeight";
 	public const string k_pch_CollisionBounds_ColorGammaR_Int32 = "CollisionBoundsColorGammaR";
 	public const string k_pch_CollisionBounds_ColorGammaG_Int32 = "CollisionBoundsColorGammaG";
 	public const string k_pch_CollisionBounds_ColorGammaB_Int32 = "CollisionBoundsColorGammaB";
@@ -7141,6 +7144,8 @@ public class OpenVR
 	public const string k_pch_audio_PlaybackMirrorDevice_String = "playbackMirrorDevice";
 	public const string k_pch_audio_PlaybackMirrorDeviceName_String = "playbackMirrorDeviceName";
 	public const string k_pch_audio_OldPlaybackMirrorDevice_String = "onPlaybackMirrorDevice";
+	public const string k_pch_audio_ActiveMirrorDevice_String = "activePlaybackMirrorDevice";
+	public const string k_pch_audio_EnablePlaybackMirrorIndependentVolume_Bool = "enablePlaybackMirrorIndependentVolume";
 	public const string k_pch_audio_LastHmdPlaybackDeviceId_String = "lastHmdPlaybackDeviceId";
 	public const string k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
 	public const string k_pch_Power_Section = "power";
@@ -7153,7 +7158,6 @@ public class OpenVR
 	public const string k_pch_Dashboard_Section = "dashboard";
 	public const string k_pch_Dashboard_EnableDashboard_Bool = "enableDashboard";
 	public const string k_pch_Dashboard_ArcadeMode_Bool = "arcadeMode";
-	public const string k_pch_Dashboard_UseWebSettings = "useWebSettings";
 	public const string k_pch_Dashboard_Position = "position";
 	public const string k_pch_Dashboard_DesktopScale = "desktopScale";
 	public const string k_pch_Dashboard_DashboardScale = "dashboardScale";
