@@ -1,0 +1,13 @@
+syntax = "proto3";
+
+package com.limelight.protobuf ;
+
+message PositionInfo {
+    float posX = 1;
+    float posY = 2;
+    float posZ = 3;
+    float rotX = 4;
+    float rotY = 5;
+    float rotZ = 6;
+    float rotW = 7;
+}
