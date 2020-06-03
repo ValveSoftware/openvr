@@ -2,6 +2,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include <stdint.h>
 
 /** Returns the path (including filename) to the current executable */
@@ -93,6 +94,7 @@ bool Path_MakeWritable( const std::string &strFilename );
 /** Path operations to read or write text/binary files */
 unsigned char * Path_ReadBinaryFile( const std::string &strFilename, int *pSize );
 uint32_t  Path_ReadBinaryFile( const std::string &strFilename, unsigned char *pBuffer, uint32_t unSize );
+std::vector<uint8_t> Path_ReadBinaryFile( const std::string & strFilename );
 bool Path_WriteBinaryFile( const std::string &strFilename, unsigned char *pData, unsigned nSize );
 std::string Path_ReadTextFile( const std::string &strFilename );
 bool Path_WriteStringToTextFile( const std::string &strFilename, const char *pchData );

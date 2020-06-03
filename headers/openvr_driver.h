@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 11;
-	static const uint32_t k_nSteamVRVersionBuild = 11;
+	static const uint32_t k_nSteamVRVersionMinor = 12;
+	static const uint32_t k_nSteamVRVersionBuild = 5;
 } // namespace vr
 
 // vrtypes.h
@@ -634,6 +634,9 @@ enum EVRSubmitFlags
 	// Set to indicate a discontinuity between this and the last frame.
 	// This will prevent motion smoothing from attempting to extrapolate using the pair.
 	Submit_FrameDiscontinuty = 0x20,
+
+	// Set to indicate that pTexture->handle is a contains VRVulkanTextureArrayData_t
+	Submit_VulkanTextureWithArrayData = 0x40,
 };
 
 /** Data required for passing Vulkan textures to IVRCompositor::Submit.
@@ -648,6 +651,15 @@ struct VRVulkanTextureData_t
 	VkQueue_T *m_pQueue;
 	uint32_t m_nQueueFamilyIndex;
 	uint32_t m_nWidth, m_nHeight, m_nFormat, m_nSampleCount;
+};
+
+/** Data required for passing Vulkan texture arrays to IVRCompositor::Submit.
+* Be sure to call OpenVR_Shutdown before destroying these resources. 
+* Please see https://github.com/ValveSoftware/openvr/wiki/Vulkan for Vulkan-specific documentation */
+struct VRVulkanTextureArrayData_t : public VRVulkanTextureData_t
+{
+	uint32_t m_unArrayIndex;
+	uint32_t m_unArraySize;
 };
 
 /** Data required for passing D3D12 textures to IVRCompositor::Submit.
@@ -2282,6 +2294,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_CustomIconForceUpdate_String = "customIconForceUpdate";
 	static const char * const k_pch_SteamVR_AllowGlobalActionSetPriority = "globalActionSetPriority";
 	static const char * const k_pch_SteamVR_OverlayRenderQuality = "overlayRenderQuality_2";
+	static const char * const k_pch_SteamVR_BlockOculusSDKOnOpenVRLaunchOption_Bool = "blockOculusSDKOnOpenVRLaunchOption";
+	static const char * const k_pch_SteamVR_BlockOculusSDKOnAllLaunches_Bool = "blockOculusSDKOnAllLaunches";
 
 	//-----------------------------------------------------------------------------
 	// direct mode keys
@@ -2460,6 +2474,7 @@ namespace vr
 	static const char* const k_pch_App_BindingPreviousURLSuffix_String = "PreviousURL";
 	static const char* const k_pch_App_NeedToUpdateAutosaveSuffix_Bool = "NeedToUpdateAutosave";
 	static const char* const k_pch_App_DominantHand_Int32 = "DominantHand";
+	static const char* const k_pch_App_BlockOculusSDK_Bool = "blockOculusSDK";
 
 	//-----------------------------------------------------------------------------
 	// configuration for trackers

@@ -39,6 +39,7 @@
 ,{"typedef": "vr::VRFirmwareError","type": "enum vr::EVRFirmwareError"}
 ,{"typedef": "vr::VRCompositorError","type": "enum vr::EVRCompositorError"}
 ,{"typedef": "vr::VRScreenshotsError","type": "enum vr::EVRScreenshotError"}
+,{"typedef": "vr::PathHandle_t","type": "uint64_t"}
 ],
 "enums":[
 	{"enumname": "vr::EVREye","values": [ 
@@ -327,6 +328,7 @@
 	,{"name": "Submit_TextureWithPose","value": "8"}
 	,{"name": "Submit_TextureWithDepth","value": "16"}
 	,{"name": "Submit_FrameDiscontinuty","value": "32"}
+	,{"name": "Submit_VulkanTextureWithArrayData","value": "64"}
 ]}
 ,	{"enumname": "vr::EVRState","values": [ 
 	{"name": "VRState_Undefined","value": "-1"}
@@ -1201,6 +1203,29 @@
 	{"name": "VRDebugError_Success","value": "0"}
 	,{"name": "VRDebugError_BadParameter","value": "1"}
 ]}
+,	{"enumname": "vr::EPropertyWriteType","values": [ 
+	{"name": "PropertyWrite_Set","value": "0"}
+	,{"name": "PropertyWrite_Erase","value": "1"}
+	,{"name": "PropertyWrite_SetError","value": "2"}
+]}
+,	{"enumname": "vr::EBlockQueueError","values": [ 
+	{"name": "BlockQueueError_None","value": "0"}
+	,{"name": "BlockQueueError_QueueAlreadyExists","value": "1"}
+	,{"name": "BlockQueueError_QueueNotFound","value": "2"}
+	,{"name": "BlockQueueError_BlockNotAvailable","value": "3"}
+	,{"name": "BlockQueueError_InvalidHandle","value": "4"}
+	,{"name": "BlockQueueError_InvalidParam","value": "5"}
+	,{"name": "BlockQueueError_ParamMismatch","value": "6"}
+	,{"name": "BlockQueueError_InternalError","value": "7"}
+	,{"name": "BlockQueueError_AlreadyInitialized","value": "8"}
+	,{"name": "BlockQueueError_OperationIsServerOnly","value": "9"}
+	,{"name": "BlockQueueError_TooManyConnections","value": "10"}
+]}
+,	{"enumname": "vr::EBlockQueueReadType","values": [ 
+	{"name": "BlockQueueRead_Latest","value": "0"}
+	,{"name": "BlockQueueRead_New","value": "1"}
+	,{"name": "BlockQueueRead_Next","value": "2"}
+]}
 ],
 "consts":[{
 	"constname": "k_nDriverNone","consttype": "const uint32_t", "constval": "4294967295"}
@@ -1485,6 +1510,10 @@
 ,{
 	"constname": "k_pch_SteamVR_OverlayRenderQuality","consttype": "const char *const", "constval": "overlayRenderQuality_2"}
 ,{
+	"constname": "k_pch_SteamVR_BlockOculusSDKOnOpenVRLaunchOption_Bool","consttype": "const char *const", "constval": "blockOculusSDKOnOpenVRLaunchOption"}
+,{
+	"constname": "k_pch_SteamVR_BlockOculusSDKOnAllLaunches_Bool","consttype": "const char *const", "constval": "blockOculusSDKOnAllLaunches"}
+,{
 	"constname": "k_pch_DirectMode_Section","consttype": "const char *const", "constval": "direct_mode"}
 ,{
 	"constname": "k_pch_DirectMode_Enable_Bool","consttype": "const char *const", "constval": "enable"}
@@ -1725,6 +1754,8 @@
 ,{
 	"constname": "k_pch_App_DominantHand_Int32","consttype": "const char *const", "constval": "DominantHand"}
 ,{
+	"constname": "k_pch_App_BlockOculusSDK_Bool","consttype": "const char *const", "constval": "blockOculusSDK"}
+,{
 	"constname": "k_pch_Trackers_Section","consttype": "const char *const", "constval": "trackers"}
 ,{
 	"constname": "k_pch_DesktopUI_Section","consttype": "const char *const", "constval": "DesktopUI"}
@@ -1778,6 +1809,90 @@
 	"constname": "IVRSpatialAnchors_Version","consttype": "const char *const", "constval": "IVRSpatialAnchors_001"}
 ,{
 	"constname": "IVRDebug_Version","consttype": "const char *const", "constval": "IVRDebug_001"}
+,{
+	"constname": "k_ulDisplayRedirectContainer","consttype": "const PropertyContainerHandle_t", "constval": "25769803779"}
+,{
+	"constname": "IVRProperties_Version","consttype": "const char *const", "constval": "IVRProperties_001"}
+,{
+	"constname": "k_pchPathUserHandRight","consttype": "const char *", "constval": "/user/hand/right"}
+,{
+	"constname": "k_pchPathUserHandLeft","consttype": "const char *", "constval": "/user/hand/left"}
+,{
+	"constname": "k_pchPathUserHandPrimary","consttype": "const char *", "constval": "/user/hand/primary"}
+,{
+	"constname": "k_pchPathUserHandSecondary","consttype": "const char *", "constval": "/user/hand/secondary"}
+,{
+	"constname": "k_pchPathUserHead","consttype": "const char *", "constval": "/user/head"}
+,{
+	"constname": "k_pchPathUserGamepad","consttype": "const char *", "constval": "/user/gamepad"}
+,{
+	"constname": "k_pchPathUserTreadmill","consttype": "const char *", "constval": "/user/treadmill"}
+,{
+	"constname": "k_pchPathUserStylus","consttype": "const char *", "constval": "/user/stylus"}
+,{
+	"constname": "k_pchPathDevices","consttype": "const char *", "constval": "/devices"}
+,{
+	"constname": "k_pchPathDevicePath","consttype": "const char *", "constval": "/device_path"}
+,{
+	"constname": "k_pchPathBestAliasPath","consttype": "const char *", "constval": "/best_alias_path"}
+,{
+	"constname": "k_pchPathBoundTrackerAliasPath","consttype": "const char *", "constval": "/bound_tracker_path"}
+,{
+	"constname": "k_pchPathBoundTrackerRole","consttype": "const char *", "constval": "/bound_tracker_role"}
+,{
+	"constname": "k_pchPathPoseRaw","consttype": "const char *", "constval": "/pose/raw"}
+,{
+	"constname": "k_pchPathPoseTip","consttype": "const char *", "constval": "/pose/tip"}
+,{
+	"constname": "k_pchPathSystemButtonClick","consttype": "const char *", "constval": "/input/system/click"}
+,{
+	"constname": "k_pchPathProximity","consttype": "const char *", "constval": "/proximity"}
+,{
+	"constname": "k_pchPathControllerTypePrefix","consttype": "const char *", "constval": "/controller_type/"}
+,{
+	"constname": "k_pchPathInputProfileSuffix","consttype": "const char *", "constval": "/input_profile"}
+,{
+	"constname": "k_pchPathBindingNameSuffix","consttype": "const char *", "constval": "/binding_name"}
+,{
+	"constname": "k_pchPathBindingUrlSuffix","consttype": "const char *", "constval": "/binding_url"}
+,{
+	"constname": "k_pchPathBindingErrorSuffix","consttype": "const char *", "constval": "/binding_error"}
+,{
+	"constname": "k_pchPathActiveActionSets","consttype": "const char *", "constval": "/active_action_sets"}
+,{
+	"constname": "k_pchPathComponentUpdates","consttype": "const char *", "constval": "/total_component_updates"}
+,{
+	"constname": "k_pchPathUserFootLeft","consttype": "const char *", "constval": "/user/foot/left"}
+,{
+	"constname": "k_pchPathUserFootRight","consttype": "const char *", "constval": "/user/foot/right"}
+,{
+	"constname": "k_pchPathUserShoulderLeft","consttype": "const char *", "constval": "/user/shoulder/left"}
+,{
+	"constname": "k_pchPathUserShoulderRight","consttype": "const char *", "constval": "/user/shoulder/right"}
+,{
+	"constname": "k_pchPathUserElbowLeft","consttype": "const char *", "constval": "/user/elbow/left"}
+,{
+	"constname": "k_pchPathUserElbowRight","consttype": "const char *", "constval": "/user/elbow/right"}
+,{
+	"constname": "k_pchPathUserKneeLeft","consttype": "const char *", "constval": "/user/knee/left"}
+,{
+	"constname": "k_pchPathUserKneeRight","consttype": "const char *", "constval": "/user/knee/right"}
+,{
+	"constname": "k_pchPathUserWaist","consttype": "const char *", "constval": "/user/waist"}
+,{
+	"constname": "k_pchPathUserChest","consttype": "const char *", "constval": "/user/chest"}
+,{
+	"constname": "k_pchPathUserCamera","consttype": "const char *", "constval": "/user/camera"}
+,{
+	"constname": "k_pchPathUserKeyboard","consttype": "const char *", "constval": "/user/keyboard"}
+,{
+	"constname": "k_pchPathClientAppKey","consttype": "const char *", "constval": "/client_info/app_key"}
+,{
+	"constname": "k_ulInvalidPathHandle","consttype": "const PathHandle_t", "constval": "0"}
+,{
+	"constname": "IVRPaths_Version","consttype": "const char *const", "constval": "IVRPaths_001"}
+,{
+	"constname": "IVRBlockQueue_Version","consttype": "const char *", "constval": "IVRBlockQueue_004"}
 ],
 "structs":[{"struct": "vr::HmdMatrix34_t","fields": [
 { "fieldname": "m", "fieldtype": "float [3][4]"}]}
@@ -1854,6 +1969,9 @@
 { "fieldname": "m_nHeight", "fieldtype": "uint32_t"},
 { "fieldname": "m_nFormat", "fieldtype": "uint32_t"},
 { "fieldname": "m_nSampleCount", "fieldtype": "uint32_t"}]}
+,{"struct": "vr::VRVulkanTextureArrayData_t","fields": [
+{ "fieldname": "m_unArrayIndex", "fieldtype": "uint32_t"},
+{ "fieldname": "m_unArraySize", "fieldtype": "uint32_t"}]}
 ,{"struct": "vr::D3D12TextureData_t","fields": [
 { "fieldname": "m_pResource", "fieldtype": "struct ID3D12Resource *"},
 { "fieldname": "m_pCommandQueue", "fieldtype": "struct ID3D12CommandQueue *"},
@@ -2213,6 +2331,40 @@
 { "fieldname": "m_pVRSpatialAnchors", "fieldtype": "class vr::IVRSpatialAnchors *"},
 { "fieldname": "m_pVRDebug", "fieldtype": "class vr::IVRDebug *"},
 { "fieldname": "m_pVRNotifications", "fieldtype": "class vr::IVRNotifications *"}]}
+,{"struct": "vr::PropertyWrite_t","fields": [
+{ "fieldname": "prop", "fieldtype": "enum vr::ETrackedDeviceProperty"},
+{ "fieldname": "writeType", "fieldtype": "enum vr::EPropertyWriteType"},
+{ "fieldname": "eSetError", "fieldtype": "enum vr::ETrackedPropertyError"},
+{ "fieldname": "pvBuffer", "fieldtype": "void *"},
+{ "fieldname": "unBufferSize", "fieldtype": "uint32_t"},
+{ "fieldname": "unTag", "fieldtype": "PropertyTypeTag_t"},
+{ "fieldname": "eError", "fieldtype": "enum vr::ETrackedPropertyError"}]}
+,{"struct": "vr::PropertyRead_t","fields": [
+{ "fieldname": "prop", "fieldtype": "enum vr::ETrackedDeviceProperty"},
+{ "fieldname": "pvBuffer", "fieldtype": "void *"},
+{ "fieldname": "unBufferSize", "fieldtype": "uint32_t"},
+{ "fieldname": "unTag", "fieldtype": "PropertyTypeTag_t"},
+{ "fieldname": "unRequiredBufferSize", "fieldtype": "uint32_t"},
+{ "fieldname": "eError", "fieldtype": "enum vr::ETrackedPropertyError"}]}
+,{"struct": "vr::CVRPropertyHelpers","fields": [
+{ "fieldname": "m_pProperties", "fieldtype": "class vr::IVRProperties *"}]}
+,{"struct": "vr::PathWrite_t","fields": [
+{ "fieldname": "ulPath", "fieldtype": "PathHandle_t"},
+{ "fieldname": "writeType", "fieldtype": "enum vr::EPropertyWriteType"},
+{ "fieldname": "eSetError", "fieldtype": "enum vr::ETrackedPropertyError"},
+{ "fieldname": "pvBuffer", "fieldtype": "void *"},
+{ "fieldname": "unBufferSize", "fieldtype": "uint32_t"},
+{ "fieldname": "unTag", "fieldtype": "PropertyTypeTag_t"},
+{ "fieldname": "eError", "fieldtype": "enum vr::ETrackedPropertyError"},
+{ "fieldname": "pszPath", "fieldtype": "const char *"}]}
+,{"struct": "vr::PathRead_t","fields": [
+{ "fieldname": "ulPath", "fieldtype": "PathHandle_t"},
+{ "fieldname": "pvBuffer", "fieldtype": "void *"},
+{ "fieldname": "unBufferSize", "fieldtype": "uint32_t"},
+{ "fieldname": "unTag", "fieldtype": "PropertyTypeTag_t"},
+{ "fieldname": "unRequiredBufferSize", "fieldtype": "uint32_t"},
+{ "fieldname": "eError", "fieldtype": "enum vr::ETrackedPropertyError"},
+{ "fieldname": "pszPath", "fieldtype": "const char *"}]}
 ],
 "methods":[{
 	"classname": "vr::IVRSystem",
@@ -5370,6 +5522,171 @@
 {	"paramname": "pchRequest" ,"paramtype": "const char *"},
 {	"paramname": "pchResponseBuffer" ,"out_string": " " ,"paramtype": "char *"},
 {	"paramname": "unResponseBufferSize" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRProperties",
+	"methodname": "ReadPropertyBatch",
+	"returntype": "vr::ETrackedPropertyError",
+	"params": [ 
+{	"paramname": "ulContainerHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pBatch" ,"paramtype": "struct vr::PropertyRead_t *"},
+{	"paramname": "unBatchEntryCount" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRProperties",
+	"methodname": "WritePropertyBatch",
+	"returntype": "vr::ETrackedPropertyError",
+	"params": [ 
+{	"paramname": "ulContainerHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pBatch" ,"paramtype": "struct vr::PropertyWrite_t *"},
+{	"paramname": "unBatchEntryCount" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRProperties",
+	"methodname": "GetPropErrorNameFromEnum",
+	"returntype": "const char *",
+	"params": [ 
+{	"paramname": "error" ,"paramtype": "vr::ETrackedPropertyError"}
+	 ]
+}
+,{
+	"classname": "vr::IVRProperties",
+	"methodname": "TrackedDeviceToPropertyContainer",
+	"returntype": "PropertyContainerHandle_t",
+	"params": [ 
+{	"paramname": "nDevice" ,"paramtype": "vr::TrackedDeviceIndex_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRPaths",
+	"methodname": "ReadPathBatch",
+	"returntype": "vr::ETrackedPropertyError",
+	"params": [ 
+{	"paramname": "ulRootHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pBatch" ,"paramtype": "struct vr::PathRead_t *"},
+{	"paramname": "unBatchEntryCount" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRPaths",
+	"methodname": "WritePathBatch",
+	"returntype": "vr::ETrackedPropertyError",
+	"params": [ 
+{	"paramname": "ulRootHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pBatch" ,"paramtype": "struct vr::PathWrite_t *"},
+{	"paramname": "unBatchEntryCount" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRPaths",
+	"methodname": "StringToHandle",
+	"returntype": "vr::ETrackedPropertyError",
+	"params": [ 
+{	"paramname": "pHandle" ,"paramtype": "vr::PathHandle_t *"},
+{	"paramname": "pchPath" ,"paramtype": "const char *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRPaths",
+	"methodname": "HandleToString",
+	"returntype": "vr::ETrackedPropertyError",
+	"params": [ 
+{	"paramname": "pHandle" ,"paramtype": "vr::PathHandle_t"},
+{	"paramname": "pchBuffer" ,"paramtype": "char *"},
+{	"paramname": "unBufferSize" ,"paramtype": "uint32_t"},
+{	"paramname": "punBufferSizeUsed" ,"paramtype": "uint32_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "Create",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "pulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t *"},
+{	"paramname": "pchPath" ,"paramtype": "const char *"},
+{	"paramname": "unBlockDataSize" ,"paramtype": "uint32_t"},
+{	"paramname": "unBlockHeaderSize" ,"paramtype": "uint32_t"},
+{	"paramname": "unBlockCount" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "Connect",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "pulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t *"},
+{	"paramname": "pchPath" ,"paramtype": "const char *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "Destroy",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "AcquireWriteOnlyBlock",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pulBlockHandle" ,"paramtype": "vr::PropertyContainerHandle_t *"},
+{	"paramname": "ppvBuffer" ,"paramtype": "void **"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "ReleaseWriteOnlyBlock",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "ulBlockHandle" ,"paramtype": "vr::PropertyContainerHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "WaitAndAcquireReadOnlyBlock",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pulBlockHandle" ,"paramtype": "vr::PropertyContainerHandle_t *"},
+{	"paramname": "ppvBuffer" ,"paramtype": "const void **"},
+{	"paramname": "eReadType" ,"paramtype": "vr::EBlockQueueReadType"},
+{	"paramname": "unTimeoutMs" ,"paramtype": "uint32_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "AcquireReadOnlyBlock",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pulBlockHandle" ,"paramtype": "vr::PropertyContainerHandle_t *"},
+{	"paramname": "ppvBuffer" ,"paramtype": "const void **"},
+{	"paramname": "eReadType" ,"paramtype": "vr::EBlockQueueReadType"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "ReleaseReadOnlyBlock",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "ulBlockHandle" ,"paramtype": "vr::PropertyContainerHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRBlockQueue",
+	"methodname": "QueueHasReader",
+	"returntype": "vr::EBlockQueueError",
+	"params": [ 
+{	"paramname": "ulQueueHandle" ,"paramtype": "vr::PropertyContainerHandle_t"},
+{	"paramname": "pbHasReaders" ,"paramtype": "bool *"}
 	 ]
 }
 ]
