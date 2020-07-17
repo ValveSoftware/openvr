@@ -448,6 +448,12 @@ std::vector<std::string> TokenizeString( const std::string & sString, char cToke
 	{
 		vecStrings.push_back( s );
 	}
+
+	if ( !sString.empty() && sString.back() == cToken )
+	{
+		vecStrings.push_back( "" );
+	}
+
 	return vecStrings;
 }
 

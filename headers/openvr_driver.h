@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 12;
-	static const uint32_t k_nSteamVRVersionBuild = 5;
+	static const uint32_t k_nSteamVRVersionMinor = 13;
+	static const uint32_t k_nSteamVRVersionBuild = 10;
 } // namespace vr
 
 // vrtypes.h
@@ -441,7 +441,7 @@ enum ETrackedDeviceProperty
 	Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
 	Prop_HmdColumnCorrectionSettingPrefix_String = 2077,
 	Prop_CameraSupportsCompatibilityModes_Bool	= 2078,
-
+	Prop_SupportsRoomViewDepthProjection_Bool	= 2079,
 	Prop_DisplayAvailableFrameRates_Float_Array = 2080, // populated by compositor from actual EDID list when available from GPU driver
 	Prop_DisplaySupportsMultipleFramerates_Bool = 2081, // if this is true but Prop_DisplayAvailableFrameRates_Float_Array is empty, explain to user
 	Prop_DisplayColorMultLeft_Vector3			= 2082,
@@ -805,6 +805,7 @@ enum EVREventType
 	VREvent_ChaperoneFlushCache				= 805, // Sent when the process needs to reload any cached data it retrieved from VRChaperone()
 	VREvent_ChaperoneRoomSetupStarting	    = 806, // Triggered by CVRChaperoneClient::RoomSetupStarting
 	VREvent_ChaperoneRoomSetupFinished	    = 807, // Triggered by CVRChaperoneClient::CommitWorkingCopy
+	VREvent_StandingZeroPoseReset			= 808,
 
 	VREvent_AudioSettingsHaveChanged		= 820,
 
@@ -1460,6 +1461,7 @@ enum EVRApplicationType
 	VRApplication_SteamWatchdog = 6,// Reserved for Steam
 	VRApplication_Bootstrapper = 7, // reserved for vrstartup
 	VRApplication_WebHelper = 8,	// reserved for vrwebhelper
+	VRApplication_OpenXR = 9,		// reserved for openxr
 
 	VRApplication_Max
 };
@@ -2041,14 +2043,14 @@ enum ECameraCompatibilityMode
 	MAX_CAMERA_COMPAT_MODES
 };
 
-enum ETrackedCameraRoomViewMode
+enum ECameraRoomViewStyle
 {
-	TRACKED_CAMERA_ROOMVIEW_MODE_DEFAULT = 0,
-	TRACKED_CAMERA_ROOMVIEW_MODE_EDGE_A = 1,
-	TRACKED_CAMERA_ROOMVIEW_MODE_EDGE_B = 2,
-	TRACKED_CAMERA_ROOMVIEW_MODE_VIDEO_TRANSLUSCENT = 3,
-	TRACKED_CAMERA_ROOMVIEW_MODE_VIDEO_OPAQUE = 4,
-	TRACKED_CAMERA_ROOMVIEW_MODE_COUNT = 5,
+	CAMERA_ROOMVIEW_STYLE_DEFAULT = 0,
+	CAMERA_ROOMVIEW_STYLE_EDGE_A = 1,
+	CAMERA_ROOMVIEW_STYLE_EDGE_B = 2,
+	CAMERA_ROOMVIEW_STYLE_VIDEO_TRANSLUSCENT = 3,
+	CAMERA_ROOMVIEW_STYLE_VIDEO_OPAQUE = 4,
+	CAMERA_ROOMVIEW_STYLE_COUNT = 5,
 };
 
 #ifdef _MSC_VER
@@ -2391,15 +2393,15 @@ namespace vr
 	// camera keys
 	static const char * const k_pch_Camera_Section = "camera";
 	static const char * const k_pch_Camera_EnableCamera_Bool = "enableCamera";
-	static const char * const k_pch_Camera_EnableCameraInDashboard_Bool = "enableCameraInDashboard";
+	static const char * const k_pch_Camera_ShowOnController_Bool = "showOnController";
 	static const char * const k_pch_Camera_EnableCameraForCollisionBounds_Bool = "enableCameraForCollisionBounds";
-	static const char * const k_pch_Camera_EnableCameraForRoomView_Bool = "enableCameraForRoomView";
+	static const char * const k_pch_Camera_RoomView_Int32 = "roomView";
 	static const char * const k_pch_Camera_BoundsColorGammaR_Int32 = "cameraBoundsColorGammaR";
 	static const char * const k_pch_Camera_BoundsColorGammaG_Int32 = "cameraBoundsColorGammaG";
 	static const char * const k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
 	static const char * const k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 	static const char * const k_pch_Camera_BoundsStrength_Int32 = "cameraBoundsStrength";
-	static const char * const k_pch_Camera_RoomViewMode_Int32 = "cameraRoomViewMode";
+	static const char * const k_pch_Camera_RoomViewStyle_Int32 = "roomViewStyle";
 
 	//-----------------------------------------------------------------------------
 	// audio keys

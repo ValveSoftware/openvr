@@ -106,14 +106,14 @@ static const unsigned long k_unControllerStateAxisCount = 5;
 static const unsigned long long k_ulOverlayHandleInvalid = 0;
 static const unsigned long k_unMaxDistortionFunctionParameters = 8;
 static const unsigned long k_unScreenshotHandleInvalid = 0;
-static const char * IVRSystem_Version = "IVRSystem_021";
+static const char * IVRSystem_Version = "IVRSystem_022";
 static const char * IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
 static const char * IVRTrackedCamera_Version = "IVRTrackedCamera_006";
 static const unsigned long k_unMaxApplicationKeyLength = 128;
 static const char * k_pch_MimeType_HomeApp = "vr/home";
 static const char * k_pch_MimeType_GameTheater = "vr/game_theater";
 static const char * IVRApplications_Version = "IVRApplications_007";
-static const char * IVRChaperone_Version = "IVRChaperone_003";
+static const char * IVRChaperone_Version = "IVRChaperone_004";
 static const char * IVRChaperoneSetup_Version = "IVRChaperoneSetup_006";
 static const char * IVRCompositor_Version = "IVRCompositor_026";
 static const unsigned long k_unVROverlayMaxKeyLength = 128;
@@ -272,15 +272,15 @@ static const char * k_pch_CollisionBounds_ColorGammaA_Int32 = "CollisionBoundsCo
 static const char * k_pch_CollisionBounds_EnableDriverImport = "enableDriverBoundsImport";
 static const char * k_pch_Camera_Section = "camera";
 static const char * k_pch_Camera_EnableCamera_Bool = "enableCamera";
-static const char * k_pch_Camera_EnableCameraInDashboard_Bool = "enableCameraInDashboard";
+static const char * k_pch_Camera_ShowOnController_Bool = "showOnController";
 static const char * k_pch_Camera_EnableCameraForCollisionBounds_Bool = "enableCameraForCollisionBounds";
-static const char * k_pch_Camera_EnableCameraForRoomView_Bool = "enableCameraForRoomView";
+static const char * k_pch_Camera_RoomView_Int32 = "roomView";
 static const char * k_pch_Camera_BoundsColorGammaR_Int32 = "cameraBoundsColorGammaR";
 static const char * k_pch_Camera_BoundsColorGammaG_Int32 = "cameraBoundsColorGammaG";
 static const char * k_pch_Camera_BoundsColorGammaB_Int32 = "cameraBoundsColorGammaB";
 static const char * k_pch_Camera_BoundsColorGammaA_Int32 = "cameraBoundsColorGammaA";
 static const char * k_pch_Camera_BoundsStrength_Int32 = "cameraBoundsStrength";
-static const char * k_pch_Camera_RoomViewMode_Int32 = "cameraRoomViewMode";
+static const char * k_pch_Camera_RoomViewStyle_Int32 = "roomViewStyle";
 static const char * k_pch_audio_Section = "audio";
 static const char * k_pch_audio_SetOsDefaultPlaybackDevice_Bool = "setOsDefaultPlaybackDevice";
 static const char * k_pch_audio_EnablePlaybackDeviceOverride_Bool = "enablePlaybackDeviceOverride";
@@ -603,6 +603,7 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_DriverProvidedChaperoneVisibility_Bool = 2076,
 	ETrackedDeviceProperty_Prop_HmdColumnCorrectionSettingPrefix_String = 2077,
 	ETrackedDeviceProperty_Prop_CameraSupportsCompatibilityModes_Bool = 2078,
+	ETrackedDeviceProperty_Prop_SupportsRoomViewDepthProjection_Bool = 2079,
 	ETrackedDeviceProperty_Prop_DisplayAvailableFrameRates_Float_Array = 2080,
 	ETrackedDeviceProperty_Prop_DisplaySupportsMultipleFramerates_Bool = 2081,
 	ETrackedDeviceProperty_Prop_DisplayColorMultLeft_Vector3 = 2082,
@@ -814,6 +815,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_ChaperoneFlushCache = 805,
 	EVREventType_VREvent_ChaperoneRoomSetupStarting = 806,
 	EVREventType_VREvent_ChaperoneRoomSetupFinished = 807,
+	EVREventType_VREvent_StandingZeroPoseReset = 808,
 	EVREventType_VREvent_AudioSettingsHaveChanged = 820,
 	EVREventType_VREvent_BackgroundSettingHasChanged = 850,
 	EVREventType_VREvent_CameraSettingsHaveChanged = 851,
@@ -1075,7 +1077,8 @@ typedef enum EVRApplicationType
 	EVRApplicationType_VRApplication_SteamWatchdog = 6,
 	EVRApplicationType_VRApplication_Bootstrapper = 7,
 	EVRApplicationType_VRApplication_WebHelper = 8,
-	EVRApplicationType_VRApplication_Max = 9,
+	EVRApplicationType_VRApplication_OpenXR = 9,
+	EVRApplicationType_VRApplication_Max = 10,
 } EVRApplicationType;
 
 typedef enum EVRFirmwareError
@@ -1895,6 +1898,9 @@ typedef struct VRTextureBounds_t
 
 typedef struct VRTextureWithPose_t
 {
+	void * handle; // void *
+	enum ETextureType eType;
+	enum EColorSpace eColorSpace;
 	struct HmdMatrix34_t mDeviceToAbsoluteTracking;
 } VRTextureWithPose_t;
 
@@ -1907,11 +1913,18 @@ typedef struct VRTextureDepthInfo_t
 
 typedef struct VRTextureWithDepth_t
 {
+	void * handle; // void *
+	enum ETextureType eType;
+	enum EColorSpace eColorSpace;
 	struct VRTextureDepthInfo_t depth;
 } VRTextureWithDepth_t;
 
 typedef struct VRTextureWithPoseAndDepth_t
 {
+	void * handle; // void *
+	enum ETextureType eType;
+	enum EColorSpace eColorSpace;
+	struct HmdMatrix34_t mDeviceToAbsoluteTracking;
 	struct VRTextureDepthInfo_t depth;
 } VRTextureWithPoseAndDepth_t;
 
@@ -2592,7 +2605,6 @@ struct VR_IVRSystem_FnTable
 	bool (OPENVR_FNTABLE_CALLTYPE *IsDisplayOnDesktop)();
 	bool (OPENVR_FNTABLE_CALLTYPE *SetDisplayVisibility)(bool bIsVisibleOnDesktop);
 	void (OPENVR_FNTABLE_CALLTYPE *GetDeviceToAbsoluteTrackingPose)(ETrackingUniverseOrigin eOrigin, float fPredictedSecondsToPhotonsFromNow, struct TrackedDevicePose_t * pTrackedDevicePoseArray, uint32_t unTrackedDevicePoseArrayCount);
-	void (OPENVR_FNTABLE_CALLTYPE *ResetSeatedZeroPose)();
 	struct HmdMatrix34_t (OPENVR_FNTABLE_CALLTYPE *GetSeatedZeroPoseToStandingAbsoluteTrackingPose)();
 	struct HmdMatrix34_t (OPENVR_FNTABLE_CALLTYPE *GetRawZeroPoseToStandingAbsoluteTrackingPose)();
 	uint32_t (OPENVR_FNTABLE_CALLTYPE *GetSortedTrackedDeviceIndicesOfClass)(ETrackedDeviceClass eTrackedDeviceClass, TrackedDeviceIndex_t * punTrackedDeviceIndexArray, uint32_t unTrackedDeviceIndexArrayCount, TrackedDeviceIndex_t unRelativeToTrackedDeviceIndex);
@@ -2698,6 +2710,7 @@ struct VR_IVRChaperone_FnTable
 	void (OPENVR_FNTABLE_CALLTYPE *GetBoundsColor)(struct HmdColor_t * pOutputColorArray, int nNumOutputColors, float flCollisionBoundsFadeDistance, struct HmdColor_t * pOutputCameraColor);
 	bool (OPENVR_FNTABLE_CALLTYPE *AreBoundsVisible)();
 	void (OPENVR_FNTABLE_CALLTYPE *ForceBoundsVisible)(bool bForce);
+	void (OPENVR_FNTABLE_CALLTYPE *ResetZeroPose)(ETrackingUniverseOrigin eTrackingUniverseOrigin);
 };
 
 struct VR_IVRChaperoneSetup_FnTable

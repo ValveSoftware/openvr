@@ -228,6 +228,7 @@
 	,{"name": "Prop_DriverProvidedChaperoneVisibility_Bool","value": "2076"}
 	,{"name": "Prop_HmdColumnCorrectionSettingPrefix_String","value": "2077"}
 	,{"name": "Prop_CameraSupportsCompatibilityModes_Bool","value": "2078"}
+	,{"name": "Prop_SupportsRoomViewDepthProjection_Bool","value": "2079"}
 	,{"name": "Prop_DisplayAvailableFrameRates_Float_Array","value": "2080"}
 	,{"name": "Prop_DisplaySupportsMultipleFramerates_Bool","value": "2081"}
 	,{"name": "Prop_DisplayColorMultLeft_Vector3","value": "2082"}
@@ -429,6 +430,7 @@
 	,{"name": "VREvent_ChaperoneFlushCache","value": "805"}
 	,{"name": "VREvent_ChaperoneRoomSetupStarting","value": "806"}
 	,{"name": "VREvent_ChaperoneRoomSetupFinished","value": "807"}
+	,{"name": "VREvent_StandingZeroPoseReset","value": "808"}
 	,{"name": "VREvent_AudioSettingsHaveChanged","value": "820"}
 	,{"name": "VREvent_BackgroundSettingHasChanged","value": "850"}
 	,{"name": "VREvent_CameraSettingsHaveChanged","value": "851"}
@@ -662,7 +664,8 @@
 	,{"name": "VRApplication_SteamWatchdog","value": "6"}
 	,{"name": "VRApplication_Bootstrapper","value": "7"}
 	,{"name": "VRApplication_WebHelper","value": "8"}
-	,{"name": "VRApplication_Max","value": "9"}
+	,{"name": "VRApplication_OpenXR","value": "9"}
+	,{"name": "VRApplication_Max","value": "10"}
 ]}
 ,	{"enumname": "vr::EVRFirmwareError","values": [ 
 	{"name": "VRFirmwareError_None","value": "0"}
@@ -1312,7 +1315,7 @@
 ,{
 	"constname": "k_unScreenshotHandleInvalid","consttype": "const uint32_t", "constval": "0"}
 ,{
-	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_021"}
+	"constname": "IVRSystem_Version","consttype": "const char *const", "constval": "IVRSystem_022"}
 ,{
 	"constname": "IVRExtendedDisplay_Version","consttype": "const char *const", "constval": "IVRExtendedDisplay_001"}
 ,{
@@ -1326,7 +1329,7 @@
 ,{
 	"constname": "IVRApplications_Version","consttype": "const char *const", "constval": "IVRApplications_007"}
 ,{
-	"constname": "IVRChaperone_Version","consttype": "const char *const", "constval": "IVRChaperone_003"}
+	"constname": "IVRChaperone_Version","consttype": "const char *const", "constval": "IVRChaperone_004"}
 ,{
 	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_006"}
 ,{
@@ -1644,11 +1647,11 @@
 ,{
 	"constname": "k_pch_Camera_EnableCamera_Bool","consttype": "const char *const", "constval": "enableCamera"}
 ,{
-	"constname": "k_pch_Camera_EnableCameraInDashboard_Bool","consttype": "const char *const", "constval": "enableCameraInDashboard"}
+	"constname": "k_pch_Camera_ShowOnController_Bool","consttype": "const char *const", "constval": "showOnController"}
 ,{
 	"constname": "k_pch_Camera_EnableCameraForCollisionBounds_Bool","consttype": "const char *const", "constval": "enableCameraForCollisionBounds"}
 ,{
-	"constname": "k_pch_Camera_EnableCameraForRoomView_Bool","consttype": "const char *const", "constval": "enableCameraForRoomView"}
+	"constname": "k_pch_Camera_RoomView_Int32","consttype": "const char *const", "constval": "roomView"}
 ,{
 	"constname": "k_pch_Camera_BoundsColorGammaR_Int32","consttype": "const char *const", "constval": "cameraBoundsColorGammaR"}
 ,{
@@ -1660,7 +1663,7 @@
 ,{
 	"constname": "k_pch_Camera_BoundsStrength_Int32","consttype": "const char *const", "constval": "cameraBoundsStrength"}
 ,{
-	"constname": "k_pch_Camera_RoomViewMode_Int32","consttype": "const char *const", "constval": "cameraRoomViewMode"}
+	"constname": "k_pch_Camera_RoomViewStyle_Int32","consttype": "const char *const", "constval": "roomViewStyle"}
 ,{
 	"constname": "k_pch_audio_Section","consttype": "const char *const", "constval": "audio"}
 ,{
@@ -2474,11 +2477,6 @@
 }
 ,{
 	"classname": "vr::IVRSystem",
-	"methodname": "ResetSeatedZeroPose",
-	"returntype": "void"
-}
-,{
-	"classname": "vr::IVRSystem",
 	"methodname": "GetSeatedZeroPoseToStandingAbsoluteTrackingPose",
 	"returntype": "struct vr::HmdMatrix34_t"
 }
@@ -3257,6 +3255,14 @@
 	"returntype": "void",
 	"params": [ 
 {	"paramname": "bForce" ,"paramtype": "bool"}
+	 ]
+}
+,{
+	"classname": "vr::IVRChaperone",
+	"methodname": "ResetZeroPose",
+	"returntype": "void",
+	"params": [ 
+{	"paramname": "eTrackingUniverseOrigin" ,"paramtype": "vr::ETrackingUniverseOrigin"}
 	 ]
 }
 ,{
