@@ -4719,6 +4719,7 @@ public enum ETrackedDeviceProperty
 	Prop_Audio_DefaultPlaybackDeviceId_String = 2300,
 	Prop_Audio_DefaultRecordingDeviceId_String = 2301,
 	Prop_Audio_DefaultPlaybackDeviceVolume_Float = 2302,
+	Prop_Audio_SupportsDualSpeakerAndJackOutput_Bool = 2303,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -4885,6 +4886,8 @@ public enum EVREventType
 	VREvent_RoomViewHidden = 527,
 	VREvent_ShowUI = 528,
 	VREvent_ShowDevTools = 529,
+	VREvent_DesktopViewUpdating = 530,
+	VREvent_DesktopViewReady = 531,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -7699,6 +7702,7 @@ public class OpenVR
 	public const string k_pch_audio_EnablePlaybackMirrorIndependentVolume_Bool = "enablePlaybackMirrorIndependentVolume";
 	public const string k_pch_audio_LastHmdPlaybackDeviceId_String = "lastHmdPlaybackDeviceId";
 	public const string k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
+	public const string k_pch_audio_DualSpeakerAndJackOutput_Bool = "dualSpeakerAndJackOutput";
 	public const string k_pch_Power_Section = "power";
 	public const string k_pch_Power_PowerOffOnExit_Bool = "powerOffOnExit";
 	public const string k_pch_Power_TurnOffScreensTimeout_Float = "turnOffScreensTimeout";
@@ -7773,6 +7777,7 @@ public class OpenVR
 	public const string k_pchPathBoundTrackerRole = "/bound_tracker_role";
 	public const string k_pchPathPoseRaw = "/pose/raw";
 	public const string k_pchPathPoseTip = "/pose/tip";
+	public const string k_pchPathPoseGrip = "/pose/grip";
 	public const string k_pchPathSystemButtonClick = "/input/system/click";
 	public const string k_pchPathProximity = "/proximity";
 	public const string k_pchPathControllerTypePrefix = "/controller_type/";

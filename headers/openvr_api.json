@@ -252,6 +252,7 @@
 	,{"name": "Prop_Audio_DefaultPlaybackDeviceId_String","value": "2300"}
 	,{"name": "Prop_Audio_DefaultRecordingDeviceId_String","value": "2301"}
 	,{"name": "Prop_Audio_DefaultPlaybackDeviceVolume_Float","value": "2302"}
+	,{"name": "Prop_Audio_SupportsDualSpeakerAndJackOutput_Bool","value": "2303"}
 	,{"name": "Prop_AttachedDeviceId_String","value": "3000"}
 	,{"name": "Prop_SupportedButtons_Uint64","value": "3001"}
 	,{"name": "Prop_Axis0Type_Int32","value": "3002"}
@@ -413,6 +414,8 @@
 	,{"name": "VREvent_RoomViewHidden","value": "527"}
 	,{"name": "VREvent_ShowUI","value": "528"}
 	,{"name": "VREvent_ShowDevTools","value": "529"}
+	,{"name": "VREvent_DesktopViewUpdating","value": "530"}
+	,{"name": "VREvent_DesktopViewReady","value": "531"}
 	,{"name": "VREvent_Notification_Shown","value": "600"}
 	,{"name": "VREvent_Notification_Hidden","value": "601"}
 	,{"name": "VREvent_Notification_BeginInteraction","value": "602"}
@@ -1699,6 +1702,8 @@
 ,{
 	"constname": "k_pch_audio_VIVEHDMIGain","consttype": "const char *const", "constval": "viveHDMIGain"}
 ,{
+	"constname": "k_pch_audio_DualSpeakerAndJackOutput_Bool","consttype": "const char *const", "constval": "dualSpeakerAndJackOutput"}
+,{
 	"constname": "k_pch_Power_Section","consttype": "const char *const", "constval": "power"}
 ,{
 	"constname": "k_pch_Power_PowerOffOnExit_Bool","consttype": "const char *const", "constval": "powerOffOnExit"}
@@ -1846,6 +1851,8 @@
 	"constname": "k_pchPathPoseRaw","consttype": "const char *", "constval": "/pose/raw"}
 ,{
 	"constname": "k_pchPathPoseTip","consttype": "const char *", "constval": "/pose/tip"}
+,{
+	"constname": "k_pchPathPoseGrip","consttype": "const char *", "constval": "/pose/grip"}
 ,{
 	"constname": "k_pchPathSystemButtonClick","consttype": "const char *", "constval": "/input/system/click"}
 ,{

@@ -15,8 +15,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 13;
-	static const uint32_t k_nSteamVRVersionBuild = 10;
+	static const uint32_t k_nSteamVRVersionMinor = 14;
+	static const uint32_t k_nSteamVRVersionBuild = 15;
 } // namespace vr
 
 // vrtypes.h
@@ -469,7 +469,8 @@ enum ETrackedDeviceProperty
 
 	Prop_Audio_DefaultPlaybackDeviceId_String		= 2300,
 	Prop_Audio_DefaultRecordingDeviceId_String		= 2301,
-	Prop_Audio_DefaultPlaybackDeviceVolume_Float	= 2302,
+	Prop_Audio_DefaultPlaybackDeviceVolume_Float = 2302,
+	Prop_Audio_SupportsDualSpeakerAndJackOutput_Bool = 2303,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -784,6 +785,8 @@ enum EVREventType
 	VREvent_RoomViewHidden					= 527, // Sent by compositor whenever room-view is disabled
 	VREvent_ShowUI							= 528, // data is showUi
 	VREvent_ShowDevTools					= 529, // data is showDevTools
+	VREvent_DesktopViewUpdating				= 530,
+	VREvent_DesktopViewReady				= 531,
 
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
@@ -2829,6 +2832,7 @@ namespace vr
 	static const char * const k_pch_audio_EnablePlaybackMirrorIndependentVolume_Bool = "enablePlaybackMirrorIndependentVolume";
 	static const char * const k_pch_audio_LastHmdPlaybackDeviceId_String = "lastHmdPlaybackDeviceId";
 	static const char * const k_pch_audio_VIVEHDMIGain = "viveHDMIGain";
+	static const char * const k_pch_audio_DualSpeakerAndJackOutput_Bool = "dualSpeakerAndJackOutput";
 
 	//-----------------------------------------------------------------------------
 	// power management keys

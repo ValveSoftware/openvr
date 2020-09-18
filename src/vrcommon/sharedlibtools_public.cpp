@@ -10,13 +10,33 @@
 #include <dlfcn.h>
 #endif
 
-SharedLibHandle SharedLib_Load( const char *pchPath )
+
+SharedLibHandle SharedLib_Load( const char *pchPath, uint32_t *pErrorCode )
 {
+	SharedLibHandle pHandle = nullptr;
 #if defined( _WIN32)
-	return (SharedLibHandle)LoadLibraryEx( pchPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH );
+	pHandle = ( SharedLibHandle )LoadLibraryEx( pchPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH );
 #elif defined(POSIX)
-	return (SharedLibHandle)dlopen(pchPath, RTLD_LOCAL|RTLD_NOW);
+	pHandle = (SharedLibHandle) dlopen(pchPath, RTLD_LOCAL|RTLD_NOW);
 #endif
+
+	if ( pErrorCode )
+	{
+		if ( pHandle == nullptr )
+		{
+#if defined( _WIN32)
+			*pErrorCode = ( uint32_t ) GetLastError();
+#elif defined(POSIX)
+			*pErrorCode = 1;
+#endif
+		}
+		else
+		{
+			*pErrorCode = 0;
+		}
+	}
+
+	return pHandle;
 }
 
 void *SharedLib_GetFunction( SharedLibHandle lib, const char *pchFunctionName)
