@@ -4,6 +4,8 @@ project(openvr_api)
 set( LIBNAME "openvr_api" )
 set(OPENVR_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../headers)
 
+include(GNUInstallDirs)
+
 # Set some properies for specific files.
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
@@ -101,7 +103,7 @@ endif()
 target_link_libraries(${LIBNAME} ${EXTRA_LIBS} ${CMAKE_DL_LIBS})
 target_include_directories(${LIBNAME} PUBLIC ${OPENVR_HEADER_DIR})
 
-install(TARGETS ${LIBNAME} DESTINATION lib)
+install(TARGETS ${LIBNAME} DESTINATION ${CMAKE_INSTALL_LIBDIR})
 install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/openvr)
 
 # Generate a .pc file for linux environments
