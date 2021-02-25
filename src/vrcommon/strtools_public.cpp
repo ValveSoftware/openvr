@@ -1,5 +1,5 @@
 //========= Copyright Valve Corporation ============//
-#include "strtools_public.h"
+#include <vrcore/strtools_public.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,9 +9,28 @@
 #include <functional>
 #include <locale>
 #include <codecvt>
+#include <vrcore/assert.h>
 
 #if defined( _WIN32 )
 #include <windows.h>
+#endif
+
+#if defined( OSX ) || defined( LINUX )
+//-----------------------------------------------------------------------------
+// Purpose:  stricmp -> strcasecmp bridge
+//-----------------------------------------------------------------------------
+int stricmp( const char *pStr1, const char *pStr2 )
+{
+	return strcasecmp( pStr1, pStr2 );
+}
+
+//-----------------------------------------------------------------------------
+// Purpose: strincmp -> strncasecmp bridge
+//-----------------------------------------------------------------------------
+int strnicmp( const char *pStr1, const char *pStr2, size_t unBufferLen )
+{
+	return strncasecmp( pStr1, pStr2, unBufferLen );
+}
 #endif
 
 //-----------------------------------------------------------------------------
@@ -91,6 +110,53 @@ std::wstring UTF8to16(const char * in)
 }
 
 std::wstring UTF8to16( const std::string & in ) { return UTF8to16( in.c_str() ); }
+
+//-----------------------------------------------------------------------------
+// Purpose: Format string to std::string converter
+//-----------------------------------------------------------------------------
+std::string Format( const char *pchFormat, ... )
+{
+	static constexpr size_t k_ulMaxStackString = 4096;
+
+	va_list args;
+	char pchBuffer[k_ulMaxStackString];
+
+	va_start( args, pchFormat );
+	int unSize = vsnprintf( pchBuffer, sizeof( pchBuffer ), pchFormat, args );
+	va_end( args );
+
+	// Something went fairly wrong
+	if ( unSize < 0 )
+	{
+		AssertMsg( false, "Format string parse failure" );
+		return "";
+	}
+
+	// Processing on the stack worked, success
+	if ( unSize < k_ulMaxStackString )
+	{
+		return pchBuffer;
+	}
+
+	// If processing on the stack failed, fallback to a dynamic allocation
+	std::vector< char > vecChar{};
+	vecChar.resize( unSize + 1 );
+
+	va_start( args, pchFormat );
+	unSize = vsnprintf( vecChar.data(), vecChar.size(), pchFormat, args );
+	va_end( args );
+
+	// Double check, just in case
+	if ( unSize < 0 )
+	{
+		AssertMsg( false, "Format string parse failure" );
+		return "";
+	}
+
+	return vecChar.data();
+}
+
+
 
 
 #if defined( _WIN32 )

@@ -9,11 +9,18 @@ static const char *k_pchRuntimeOverrideVar = "VR_OVERRIDE";
 static const char *k_pchConfigOverrideVar = "VR_CONFIG_PATH";
 static const char *k_pchLogOverrideVar = "VR_LOG_PATH";
 
+static const uint32_t k_unSteamVRAppId = 250820;
+static const uint32_t k_unSteamVRMainAppId = 330050;
+
+
 class CVRPathRegistry_Public
 {
 public:
 	static std::string GetVRPathRegistryFilename();
 	static std::string GetOpenVRConfigPath();
+	static uint32_t GetSteamAppId();
+	static bool IsSteamVRMain();
+	static uint32_t InitSteamAppId();
 
 public:
 	CVRPathRegistry_Public();

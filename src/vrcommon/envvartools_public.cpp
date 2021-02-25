@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation ============//
-#include "envvartools_public.h"
-#include "strtools_public.h"
+#include <vrcore/envvartools_public.h>
+#include <vrcore/strtools_public.h>
 #include <stdlib.h>
 #include <string>
 #include <cctype>

@@ -39,6 +39,9 @@ void strcpy_safe( char (& buffer) [ bufferSize ], const char *pchSource )
 	strcpy_safe( buffer, bufferSize, pchSource );
 }
 
+/** Turns printf-style format args into a std::string */
+std::string Format( const char *pchFormat, ... );
+
 
 /** converts a string to upper case */
 std::string StringToUpper( const std::string & sString );
@@ -48,12 +51,11 @@ std::string StringToLower( const std::string & sString );
 
 // we stricmp (from WIN) but it isn't POSIX - OSX/LINUX have strcasecmp so just inline bridge to it
 #if defined( OSX ) || defined( LINUX )
-#include <strings.h>
-inline int stricmp(const char *pStr1, const char *pStr2) { return strcasecmp(pStr1,pStr2); }
+int stricmp(const char *pStr1, const char *pStr2);
 #ifndef _stricmp
 #define _stricmp stricmp
 #endif
-inline int strnicmp( const char *pStr1, const char *pStr2, size_t unBufferLen ) { return strncasecmp( pStr1,pStr2, unBufferLen ); }
+int strnicmp( const char *pStr1, const char *pStr2, size_t unBufferLen );
 #ifndef _strnicmp
 #define _strnicmp strnicmp
 #endif

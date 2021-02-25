@@ -2,12 +2,12 @@
 #define VR_API_EXPORT 1
 #include "openvr.h"
 #include "ivrclientcore.h"
-#include "pathtools_public.h"
-#include "sharedlibtools_public.h"
-#include "envvartools_public.h"
+#include <vrcore/pathtools_public.h>
+#include <vrcore/sharedlibtools_public.h>
+#include <vrcore/envvartools_public.h>
 #include "hmderrors_public.h"
-#include "strtools_public.h"
-#include "vrpathregistry_public.h"
+#include <vrcore/strtools_public.h>
+#include <vrcore/vrpathregistry_public.h>
 #include <mutex>
 
 using vr::EVRInitError;
@@ -88,21 +88,22 @@ uint32_t VR_InitInternal( EVRInitError *peError, vr::EVRApplicationType eApplica
 void VR_ShutdownInternal()
 {
 	std::lock_guard<std::recursive_mutex> lock( g_mutexSystem );
-	
+
+#if !defined( VR_API_PUBLIC )
+	CleanupInternalInterfaces();
+#endif
+
 	if ( g_pHmdSystem )
 	{
 		g_pHmdSystem->Cleanup();
 		g_pHmdSystem = NULL;
 	}
+
 	if ( g_pVRModule )
 	{
 		SharedLib_Unload( g_pVRModule );
 		g_pVRModule = NULL;
 	}
-
-#if !defined( VR_API_PUBLIC )
-	CleanupInternalInterfaces();
-#endif
 
 	++g_nVRToken;
 }

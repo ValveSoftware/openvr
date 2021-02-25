@@ -1,7 +1,7 @@
 //========= Copyright Valve Corporation ============//
-#include "dirtools_public.h"
-#include "strtools_public.h"
-#include "pathtools_public.h"
+#include <vrcore/dirtools_public.h>
+#include <vrcore/strtools_public.h>
+#include <vrcore/pathtools_public.h>
 
 #include <errno.h>
 #include <string.h>

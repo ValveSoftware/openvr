@@ -112,6 +112,8 @@ std::string GetUserDocumentsPath();
 /** deletes / unlinks a single file */
 bool Path_UnlinkFile( const std::string &strFilename );
 
+std::string Path_SanitizeFilename( const std::string& sFilename );
+
 #ifndef MAX_UNICODE_PATH
 	#define MAX_UNICODE_PATH 32767
 #endif

@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation ============//
-#include "strtools_public.h"
-#include "pathtools_public.h"
+#include <vrcore/strtools_public.h>
+#include <vrcore/pathtools_public.h>
 
 #if defined( _WIN32)
 #include <windows.h>
@@ -931,4 +931,58 @@ bool Path_UnlinkFile( const std::string &strFilename )
 #else
 	return ( 0 == unlink( strFilename.c_str() ) );
 #endif
+}
+
+
+// -----------------------------------------------------------------------------------------------------
+// Limits the set of characters that are allowed in filenames
+// -----------------------------------------------------------------------------------------------------
+std::string Path_SanitizeFilename( const std::string& sFilename )
+{
+	std::string sFixed = sFilename;
+	std::string::iterator iLastDot = sFixed.end();
+	for ( std::string::iterator i = sFixed.begin(); i != sFixed.end(); i++ )
+	{
+		if ( *i == '.' )
+		{
+			iLastDot = i;
+		}
+
+		// path-related characters are forbidden (except the last period)
+		switch ( *i )
+		{
+			case '\0':
+			case '.':
+			case '\\':
+			case '/':
+			case ':':
+			case '|':
+			case '?':
+			case '>':
+			case '<':
+			case '&':
+			case '%':
+			case '@':
+			case '$':
+			case '*':
+			case '\"':
+				*i = '_';
+				break;
+
+			default:
+				if ( *i < 32 )
+				{
+					*i = '_';
+				}
+				break;
+		}
+	}
+
+	if ( iLastDot != sFixed.end() && iLastDot != sFixed.begin() 
+		&& iLastDot+1 != sFixed.end() )
+	{
+		*iLastDot = '.';
+	}
+
+	return sFixed;
 }

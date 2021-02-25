@@ -173,7 +173,16 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_FailedForVrMonitor);
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PropertyManagerInitFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_WebServerFailed );
-		
+		RETURN_ENUM_AS_STRING( VRInitError_Init_IllegalTypeTransition );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_MismatchedRuntimes );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_InvalidProcessId );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRServiceStartupFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismNeedsNewDrivers );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismStartupTimedOut );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_CouldNotStartPrism );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_CreateDriverDirectDeviceFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismExitedUnexpectedly );
+
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Unknown );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdUnknown);
@@ -292,6 +301,9 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayInvalidCall );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateOverlayAlreadyInitialized );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToCreateMailbox );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_WindowInterfaceIsNull );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_SystemLayerCreateInstance );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_SystemLayerCreateSession );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);
