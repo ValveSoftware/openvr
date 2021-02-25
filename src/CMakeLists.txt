@@ -18,7 +18,7 @@ if(APPLE)
 elseif(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_definitions( -DWIN64 )
-    set( LIBNAME "openvr_api64" )
+    # set( LIBNAME "openvr_api64" )
   endif()
 endif()
 
@@ -99,10 +99,45 @@ if(USE_CUSTOM_LIBCXX)
 endif()
 
 target_link_libraries(${LIBNAME} ${EXTRA_LIBS} ${CMAKE_DL_LIBS})
-target_include_directories(${LIBNAME} PUBLIC ${OPENVR_HEADER_DIR})
-
-install(TARGETS ${LIBNAME} DESTINATION lib)
+target_include_directories(${LIBNAME} 
+	PUBLIC 
+		$<BUILD_INTERFACE:${OPENVR_HEADER_DIR}>
+		$<INSTALL_INTERFACE:include>)
 install(FILES ${PUBLIC_HEADER_FILES} DESTINATION include/openvr)
+
+##### Installation targets #####
+install(TARGETS ${LIBNAME} EXPORT OpenVRTargets
+  LIBRARY DESTINATION lib
+  ARCHIVE DESTINATION lib
+  RUNTIME DESTINATION bin)
+
+##### Export files #####
+if (WIN32)
+  set(PKG_PREFIX "cmake")
+else ()
+  set(PKG_PREFIX "lib/cmake/OpenVR")
+endif ()
+
+include(CMakePackageConfigHelpers)
+write_basic_package_version_file("${CMAKE_BINARY_DIR}/OpenVRConfigVersion.cmake"
+  VERSION ${OPENVR_VERSION}
+  COMPATIBILITY AnyNewerVersion
+)
+
+install(EXPORT OpenVRTargets
+  FILE OpenVRTargets.cmake
+  NAMESPACE OpenVR::
+  DESTINATION ${PKG_PREFIX}
+)
+
+install(
+  FILES
+    ${CMAKE_CURRENT_SOURCE_DIR}/OpenVRConfig.cmake
+    ${CMAKE_BINARY_DIR}/OpenVRConfigVersion.cmake
+  DESTINATION ${PKG_PREFIX}
+  COMPONENT Devel
+)
+
 
 # Generate a .pc file for linux environments
 if(PLATFORM_NAME MATCHES "linux")
