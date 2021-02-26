@@ -9,9 +9,11 @@
 //            | 2 5 8 |    |  2  6 10 14 |
 //                         |  3  7 11 15 |
 //
+// Dependencies: Vector2, Vector3, Vector3
+//
 //  AUTHOR: Song Ho Ahn (song.ahn@gmail.com)
 // CREATED: 2005-06-24
-// UPDATED: 2014-09-21
+// UPDATED: 2017-06-27
 //
 // Copyright (C) 2005 Song Ho Ahn
 ///////////////////////////////////////////////////////////////////////////////
@@ -20,7 +22,8 @@
 #include <algorithm>
 #include "Matrices.h"
 
-const float DEG2RAD = 3.141593f / 180;
+const float DEG2RAD = 3.141593f / 180.0f;
+const float RAD2DEG = 180.0f / 3.141593f;
 const float EPSILON = 0.00001f;
 
 
@@ -39,7 +42,7 @@ Matrix2& Matrix2::transpose()
 ///////////////////////////////////////////////////////////////////////////////
 // return the determinant of 2x2 matrix
 ///////////////////////////////////////////////////////////////////////////////
-float Matrix2::getDeterminant()
+float Matrix2::getDeterminant() const
 {
     return m[0] * m[3] - m[1] * m[2];
 }
@@ -71,6 +74,25 @@ Matrix2& Matrix2::invert()
 
 
 ///////////////////////////////////////////////////////////////////////////////
+// retrieve rotation angle in degree from rotation matrix, R
+// R = | c -s |
+//     | s  c |
+// angle = atan(s / c)
+///////////////////////////////////////////////////////////////////////////////
+float Matrix2::getAngle() const
+{
+    // angle between -pi ~ +pi (-180 ~ +180)
+    return RAD2DEG * atan2f(m[1], m[0]);
+}
+
+//=============================================================================
+
+
+
+
+
+
+///////////////////////////////////////////////////////////////////////////////
 // transpose 3x3 matrix
 ///////////////////////////////////////////////////////////////////////////////
 Matrix3& Matrix3::transpose()
@@ -87,7 +109,7 @@ Matrix3& Matrix3::transpose()
 ///////////////////////////////////////////////////////////////////////////////
 // return determinant of 3x3 matrix
 ///////////////////////////////////////////////////////////////////////////////
-float Matrix3::getDeterminant()
+float Matrix3::getDeterminant() const
 {
     return m[0] * (m[4] * m[8] - m[5] * m[7]) -
            m[1] * (m[3] * m[8] - m[5] * m[6]) +
@@ -98,7 +120,11 @@ float Matrix3::getDeterminant()
 
 ///////////////////////////////////////////////////////////////////////////////
 // inverse 3x3 matrix
-// If cannot find inverse, set identity matrix
+// If cannot find inverse (det=0), set identity matrix
+// M^-1 = adj(M) / det(M)
+//        | m4m8-m5m7  m5m6-m3m8  m3m7-m4m6 |
+//      = | m7m2-m8m1  m0m8-m2m6  m6m1-m7m0 | / det(M)
+//        | m1m5-m2m4  m2m3-m0m5  m0m4-m1m3 |
 ///////////////////////////////////////////////////////////////////////////////
 Matrix3& Matrix3::invert()
 {
@@ -106,13 +132,13 @@ Matrix3& Matrix3::invert()
     float tmp[9];
 
     tmp[0] = m[4] * m[8] - m[5] * m[7];
-    tmp[1] = m[2] * m[7] - m[1] * m[8];
+    tmp[1] = m[7] * m[2] - m[8] * m[1];
     tmp[2] = m[1] * m[5] - m[2] * m[4];
     tmp[3] = m[5] * m[6] - m[3] * m[8];
     tmp[4] = m[0] * m[8] - m[2] * m[6];
     tmp[5] = m[2] * m[3] - m[0] * m[5];
     tmp[6] = m[3] * m[7] - m[4] * m[6];
-    tmp[7] = m[1] * m[6] - m[0] * m[7];
+    tmp[7] = m[6] * m[1] - m[7] * m[0];
     tmp[8] = m[0] * m[4] - m[1] * m[3];
 
     // check determinant if it is 0
@@ -136,6 +162,57 @@ Matrix3& Matrix3::invert()
 
     return *this;
 }
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// retrieve angles in degree from rotation matrix, M = Rx*Ry*Rz
+// Rx: rotation about X-axis, pitch
+// Ry: rotation about Y-axis, yaw(heading)
+// Rz: rotation about Z-axis, roll
+//    Rx           Ry          Rz
+// |1  0   0| | Cy  0 Sy| |Cz -Sz 0|   | CyCz        -CySz         Sy  |
+// |0 Cx -Sx|*|  0  1  0|*|Sz  Cz 0| = | SxSyCz+CxSz -SxSySz+CxCz -SxCy|
+// |0 Sx  Cx| |-Sy  0 Cy| | 0   0 1|   |-CxSyCz+SxSz  CxSySz+SxCz  CxCy|
+//
+// Pitch: atan(-m[7] / m[8]) = atan(SxCy/CxCy)
+// Yaw  : asin(m[6]) = asin(Sy)
+// Roll : atan(-m[3] / m[0]) = atan(SzCy/CzCy)
+///////////////////////////////////////////////////////////////////////////////
+Vector3 Matrix3::getAngle() const
+{
+    float pitch, yaw, roll;         // 3 angles
+
+    // find yaw (around y-axis) first
+    // NOTE: asin() returns -90~+90, so correct the angle range -180~+180
+    // using z value of forward vector
+    yaw = RAD2DEG * asinf(m[6]);
+    if(m[8] < 0)
+    {
+        if(yaw >= 0) yaw = 180.0f - yaw;
+        else         yaw =-180.0f - yaw;
+    }
+
+    // find roll (around z-axis) and pitch (around x-axis)
+    // if forward vector is (1,0,0) or (-1,0,0), then m[0]=m[4]=m[9]=m[10]=0
+    if(m[0] > -EPSILON && m[0] < EPSILON)
+    {
+        roll  = 0;  //@@ assume roll=0
+        pitch = RAD2DEG * atan2f(m[1], m[4]);
+    }
+    else
+    {
+        roll = RAD2DEG * atan2f(-m[3], m[0]);
+        pitch = RAD2DEG * atan2f(-m[7], m[8]);
+    }
+
+    return Vector3(pitch, yaw, roll);
+}
+
+//=============================================================================
+
+
+
 
 
 
@@ -408,7 +485,7 @@ Matrix4& Matrix4::invertGeneral()
 ///////////////////////////////////////////////////////////////////////////////
 // return determinant of 4x4 matrix
 ///////////////////////////////////////////////////////////////////////////////
-float Matrix4::getDeterminant()
+float Matrix4::getDeterminant() const
 {
     return m[0] * getCofactor(m[5],m[6],m[7], m[9],m[10],m[11], m[13],m[14],m[15]) -
            m[1] * getCofactor(m[4],m[6],m[7], m[8],m[10],m[11], m[12],m[14],m[15]) +
@@ -425,7 +502,7 @@ float Matrix4::getDeterminant()
 ///////////////////////////////////////////////////////////////////////////////
 float Matrix4::getCofactor(float m0, float m1, float m2,
                            float m3, float m4, float m5,
-                           float m6, float m7, float m8)
+                           float m6, float m7, float m8) const
 {
     return m0 * (m4 * m8 - m5 * m7) -
            m1 * (m3 * m8 - m5 * m6) +
@@ -578,4 +655,164 @@ Matrix4& Matrix4::rotateZ(float angle)
     m[13]= m12* s + m13* c;
 
     return *this;
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// rotate matrix to face along the target direction
+// NOTE: This function will clear the previous rotation and scale info and
+// rebuild the matrix with the target vector. But it will keep the previous
+// translation values.
+// NOTE: It is for rotating object to look at the target, NOT for camera
+///////////////////////////////////////////////////////////////////////////////
+Matrix4& Matrix4::lookAt(const Vector3& target)
+{
+    // compute forward vector and normalize
+    Vector3 position = Vector3(m[12], m[13], m[14]);
+    Vector3 forward = target - position;
+    forward.normalize();
+    Vector3 up;             // up vector of object
+    Vector3 left;           // left vector of object
+
+    // compute temporal up vector
+    // if forward vector is near Y-axis, use up vector (0,0,-1) or (0,0,1)
+    if(fabs(forward.x) < EPSILON && fabs(forward.z) < EPSILON)
+    {
+        // forward vector is pointing +Y axis
+        if(forward.y > 0)
+            up.set(0, 0, -1);
+        // forward vector is pointing -Y axis
+        else
+            up.set(0, 0, 1);
+    }
+    else
+    {
+        // assume up vector is +Y axis
+        up.set(0, 1, 0);
+    }
+
+    // compute left vector
+    left = up.cross(forward);
+    left.normalize();
+
+    // re-compute up vector
+    up = forward.cross(left);
+    //up.normalize();
+
+    // NOTE: overwrite rotation and scale info of the current matrix
+    this->setColumn(0, left);
+    this->setColumn(1, up);
+    this->setColumn(2, forward);
+
+    return *this;
+}
+
+Matrix4& Matrix4::lookAt(const Vector3& target, const Vector3& upVec)
+{
+    // compute forward vector and normalize
+    Vector3 position = Vector3(m[12], m[13], m[14]);
+    Vector3 forward = target - position;
+    forward.normalize();
+
+    // compute left vector
+    Vector3 left = upVec.cross(forward);
+    left.normalize();
+
+    // compute orthonormal up vector
+    Vector3 up = forward.cross(left);
+    up.normalize();
+
+    // NOTE: overwrite rotation and scale info of the current matrix
+    this->setColumn(0, left);
+    this->setColumn(1, up);
+    this->setColumn(2, forward);
+
+    return *this;
+}
+
+Matrix4& Matrix4::lookAt(float tx, float ty, float tz)
+{
+    return lookAt(Vector3(tx, ty, tz));
+}
+
+Matrix4& Matrix4::lookAt(float tx, float ty, float tz, float ux, float uy, float uz)
+{
+    return lookAt(Vector3(tx, ty, tz), Vector3(ux, uy, uz));
+}
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// return 3x3 matrix containing rotation only
+///////////////////////////////////////////////////////////////////////////////
+Matrix3 Matrix4::getRotationMatrix() const
+{
+    Matrix3 mat(m[0], m[1], m[2],
+                m[4], m[5], m[6],
+                m[8], m[9], m[10]);
+    return mat;
+}
+
+
+
+/*@@
+///////////////////////////////////////////////////////////////////////////////
+// skew with a given angle on the axis
+///////////////////////////////////////////////////////////////////////////////
+Matrix4& Matrix4::skew(float angle, const Vector3& axis)
+{
+    float t = tanf(angle * DEG2RAD);    // tangent
+    m[0] += m[1] * t;
+    m[4] += m[5] * t;
+    m[8] += m[9] * t;
+    m[12]+= m[13]* t;
+    return *this;
+}
+*/
+
+
+
+///////////////////////////////////////////////////////////////////////////////
+// retrieve angles in degree from rotation matrix, M = Rx*Ry*Rz
+// Rx: rotation about X-axis, pitch
+// Ry: rotation about Y-axis, yaw(heading)
+// Rz: rotation about Z-axis, roll
+//    Rx           Ry          Rz
+// |1  0   0| | Cy  0 Sy| |Cz -Sz 0|   | CyCz        -CySz         Sy  |
+// |0 Cx -Sx|*|  0  1  0|*|Sz  Cz 0| = | SxSyCz+CxSz -SxSySz+CxCz -SxCy|
+// |0 Sx  Cx| |-Sy  0 Cy| | 0   0 1|   |-CxSyCz+SxSz  CxSySz+SxCz  CxCy|
+//
+// Pitch: atan(-m[9] / m[10]) = atan(SxCy/CxCy)
+// Yaw  : asin(m[8]) = asin(Sy)
+// Roll : atan(-m[4] / m[0]) = atan(SzCy/CzCy)
+///////////////////////////////////////////////////////////////////////////////
+Vector3 Matrix4::getAngle() const
+{
+    float pitch, yaw, roll;         // 3 angles
+
+    // find yaw (around y-axis) first
+    // NOTE: asin() returns -90~+90, so correct the angle range -180~+180
+    // using z value of forward vector
+    yaw = RAD2DEG * asinf(m[8]);
+    if(m[10] < 0)
+    {
+        if(yaw >= 0) yaw = 180.0f - yaw;
+        else         yaw =-180.0f - yaw;
+    }
+
+    // find roll (around z-axis) and pitch (around x-axis)
+    // if forward vector is (1,0,0) or (-1,0,0), then m[0]=m[4]=m[9]=m[10]=0
+    if(m[0] > -EPSILON && m[0] < EPSILON)
+    {
+        roll  = 0;  //@@ assume roll=0
+        pitch = RAD2DEG * atan2f(m[1], m[5]);
+    }
+    else
+    {
+        roll = RAD2DEG * atan2f(-m[4], m[0]);
+        pitch = RAD2DEG * atan2f(-m[9], m[10]);
+    }
+
+    return Vector3(pitch, yaw, roll);
 }
