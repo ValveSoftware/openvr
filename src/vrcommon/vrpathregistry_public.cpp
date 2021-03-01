@@ -7,6 +7,8 @@
 #include <vrcore/strtools_public.h>
 #include <vrcore/dirtools_public.h>
 
+#include <sstream>
+
 #if defined( WIN32 )
 #include <windows.h>
 #include <shlobj.h>
