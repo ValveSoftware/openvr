@@ -1,6 +1,7 @@
 //========= Copyright Valve Corporation ============//
 #include <vrcore/strtools_public.h>
 #include <string.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <sstream>
