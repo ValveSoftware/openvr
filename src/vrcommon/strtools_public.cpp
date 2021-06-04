@@ -1,5 +1,5 @@
 //========= Copyright Valve Corporation ============//
-#include <vrcore/strtools_public.h>
+#include <vrcommon/strtools_public.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 #include <functional>
 #include <locale>
 #include <codecvt>
-#include <vrcore/assert.h>
+//#include <assert.h>
 
 #if defined( _WIN32 )
 #include <windows.h>
@@ -111,6 +111,7 @@ std::wstring UTF8to16(const char * in)
 
 std::wstring UTF8to16( const std::string & in ) { return UTF8to16( in.c_str() ); }
 
+#if defined( _WIN32 )
 //-----------------------------------------------------------------------------
 // Purpose: Format string to std::string converter
 //-----------------------------------------------------------------------------
@@ -128,7 +129,7 @@ std::string Format( const char *pchFormat, ... )
 	// Something went fairly wrong
 	if ( unSize < 0 )
 	{
-		AssertMsg( false, "Format string parse failure" );
+		//AssertMsg( false, "Format string parse failure" );
 		return "";
 	}
 
@@ -149,13 +150,13 @@ std::string Format( const char *pchFormat, ... )
 	// Double check, just in case
 	if ( unSize < 0 )
 	{
-		AssertMsg( false, "Format string parse failure" );
+		//AssertMsg( false, "Format string parse failure" );
 		return "";
 	}
 
 	return vecChar.data();
 }
-
+#endif
 
 
 
