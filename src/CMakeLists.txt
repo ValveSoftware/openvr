@@ -10,22 +10,21 @@ if(APPLE)
   if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
     set_source_files_properties(vrcommon/pathtools_public.cpp vrcommon/vrpathregistry_public.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
   endif()
-  if(BUILD_SHARED OR BUILD_FRAMEWORK)
+  if(OPENVR_BUILD_SHARED OR OPENVR_BUILD_FRAMEWORK)
     find_library(FOUNDATION_FRAMEWORK Foundation)
     mark_as_advanced(FOUNDATION_FRAMEWORK)
     set(EXTRA_LIBS ${EXTRA_LIBS} ${FOUNDATION_FRAMEWORK})
-  endif(BUILD_SHARED OR BUILD_FRAMEWORK)
+  endif(OPENVR_BUILD_SHARED OR OPENVR_BUILD_FRAMEWORK)
 elseif(WIN32)
   if(CMAKE_SIZEOF_VOID_P EQUAL 8)
     add_definitions( -DWIN64 )
-    set( LIBNAME "openvr_api64" )
   endif()
 endif()
 
 # Add include folders.
 include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../headers ${CMAKE_CURRENT_SOURCE_DIR}/vrcommon)
 
-if(USE_CUSTOM_LIBCXX)
+if(OPENVR_USE_CUSTOM_LIBCXX)
 	link_directories(
 		${LIBCXX_LIB_DIR}
 	)
@@ -66,9 +65,9 @@ source_group("VRCommon" FILES
 )
 
 # Build the library.
-if(BUILD_SHARED)
+if(OPENVR_BUILD_SHARED)
 	add_library(${LIBNAME} SHARED ${SOURCE_FILES})
-elseif(BUILD_FRAMEWORK)
+elseif(OPENVR_BUILD_FRAMEWORK)
 	set( LIBNAME "OpenVR" )
 	add_library( ${LIBNAME} 
             SHARED ${SOURCE_FILES}
@@ -94,7 +93,7 @@ else()
 	add_library(${LIBNAME} STATIC ${SOURCE_FILES})
 endif()
 
-if(USE_CUSTOM_LIBCXX)
+if(OPENVR_USE_CUSTOM_LIBCXX)
 	set(EXTRA_LIBS ${EXTRA_LIBS} c++ c++abi)
 endif()
 
