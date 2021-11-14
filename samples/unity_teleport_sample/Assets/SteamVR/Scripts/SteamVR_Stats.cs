@@ -46,7 +46,7 @@ public class SteamVR_Stats : MonoBehaviour
 				if (compositor != null)
 				{
 					var timing = new Compositor_FrameTiming();
-					timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Compositor_FrameTiming));
+					timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Compositor_FrameTiming>();
 					compositor.GetFrameTiming(ref timing, 0);
 
 					var update = timing.m_flSystemTimeInSeconds;
