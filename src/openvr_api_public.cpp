@@ -2,12 +2,12 @@
 #define VR_API_EXPORT 1
 #include "openvr.h"
 #include "ivrclientcore.h"
-#include <vrcore/pathtools_public.h>
-#include <vrcore/sharedlibtools_public.h>
-#include <vrcore/envvartools_public.h>
+#include <vrcommon/pathtools_public.h>
+#include <vrcommon/sharedlibtools_public.h>
+#include <vrcommon/envvartools_public.h>
 #include "hmderrors_public.h"
-#include <vrcore/strtools_public.h>
-#include <vrcore/vrpathregistry_public.h>
+#include <vrcommon/strtools_public.h>
+#include <vrcommon/vrpathregistry_public.h>
 #include <mutex>
 
 using vr::EVRInitError;

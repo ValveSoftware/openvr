@@ -1,6 +1,6 @@
 //========= Copyright Valve Corporation ============//
-#include <vrcore/strtools_public.h>
-#include <vrcore/pathtools_public.h>
+#include <vrcommon/strtools_public.h>
+#include <vrcommon/pathtools_public.h>
 
 #if defined( _WIN32)
 #include <windows.h>
