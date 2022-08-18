@@ -69,7 +69,7 @@ typedef uint64_t PathHandle_t;
 
 
 
-data = api_shared.loadfile('_dynamic_openvr_api.json', 'vr')
+data = api_shared.loadfile('../headers/openvr_api.json', 'vr')
 converttype = api_shared.converttype
 striparraysuffix = api_shared.striparraysuffix
 structlist = api_shared.structlist

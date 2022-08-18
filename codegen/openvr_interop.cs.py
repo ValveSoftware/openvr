@@ -24,7 +24,7 @@ namespace Valve.VR
 
 
 
-data = api_shared.loadfile('_dynamic_openvr_api.json', 'vr')
+data = api_shared.loadfile('../headers/openvr_api.json', 'vr')
 converttype = api_shared.converttype
 structlist = api_shared.structlist
 typedeflist = api_shared.typedeflist

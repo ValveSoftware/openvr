@@ -42,18 +42,8 @@ print ("""//======= Copyright (c) Valve Corporation, All rights reserved. ======
 #include <stdlib.h>
 #include <assert.h>
 
-#include "openvr.h"
-#include "ivrsystem.h"
-#include "ivrchaperone.h"
-#include "ivrchaperonesetup.h"
-#include "ivrcompositor.h"
-#include "ivroverlay.h"
-#include "ivrrendermodels.h"
-#include "ivrnotifications.h"
-#include "ivrblockqueue.h"
-
-#include "../vrclient/interface_adapters_client.h"
-#include "_dynamic_openvr_api_flat.h"
+#include "../headers/openvr.h"
+#include "openvr_capi.h"
 
 class FnTableRegistration
 {
@@ -77,7 +67,7 @@ private:
 
 import json
 import sys
-with open('_dynamic_openvr_api.json') as data_file:
+with open('../headers/openvr_api.json') as data_file:
 	data = json.load(data_file)
 
 import api_shared
