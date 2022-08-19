@@ -1,5 +1,5 @@
 //========= Copyright Valve Corporation ============//
-#include <vrcore/strtools_public.h>
+#include <vrcommon/strtools_public.h>
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -9,7 +9,7 @@
 #include <functional>
 #include <locale>
 #include <codecvt>
-#include <vrcore/assert.h>
+// #include <vrcommon/assert.h>
 
 #if defined( _WIN32 )
 #include <windows.h>
@@ -128,7 +128,8 @@ std::string Format( const char *pchFormat, ... )
 	// Something went fairly wrong
 	if ( unSize < 0 )
 	{
-		AssertMsg( false, "Format string parse failure" );
+		// AssertMsg( false, "Format string parse failure" );
+		std::cerr << "Format string parse failure" << std::endl;
 		return "";
 	}
 
@@ -149,7 +150,8 @@ std::string Format( const char *pchFormat, ... )
 	// Double check, just in case
 	if ( unSize < 0 )
 	{
-		AssertMsg( false, "Format string parse failure" );
+		// AssertMsg( false, "Format string parse failure" );
+		std::cerr << "Format string parse failure" << std::endl;
 		return "";
 	}
 
