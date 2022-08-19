@@ -1,4 +1,5 @@
-{"typedefs":[{"typedef": "vr::SpatialAnchorHandle_t","type": "uint32_t"}
+{"typedefs":[{"typedef": "vr::PropertyTypeTag_t","type": "uint32_t"}
+,{"typedef": "vr::SpatialAnchorHandle_t","type": "uint32_t"}
 ,{"typedef": "vr::glSharedTextureHandle_t","type": "void *"}
 ,{"typedef": "vr::glInt_t","type": "int32_t"}
 ,{"typedef": "vr::glUInt_t","type": "uint32_t"}
@@ -152,6 +153,8 @@
 	,{"name": "Prop_ManufacturerSerialNumber_String","value": "1049"}
 	,{"name": "Prop_ComputedSerialNumber_String","value": "1050"}
 	,{"name": "Prop_EstimatedDeviceFirstUseTime_Int32","value": "1051"}
+	,{"name": "Prop_DevicePowerUsage_Float","value": "1052"}
+	,{"name": "Prop_IgnoreMotionForStandby_Bool","value": "1053"}
 	,{"name": "Prop_ReportsTimeSinceVSync_Bool","value": "2000"}
 	,{"name": "Prop_SecondsFromVsyncToPhotons_Float","value": "2001"}
 	,{"name": "Prop_DisplayFrequency_Float","value": "2002"}
@@ -240,10 +243,14 @@
 	,{"name": "Prop_CameraExposureTime_Float","value": "2088"}
 	,{"name": "Prop_CameraGlobalGain_Float","value": "2089"}
 	,{"name": "Prop_DashboardScale_Float","value": "2091"}
+	,{"name": "Prop_PeerButtonInfo_String","value": "2092"}
 	,{"name": "Prop_IpdUIRangeMinMeters_Float","value": "2100"}
 	,{"name": "Prop_IpdUIRangeMaxMeters_Float","value": "2101"}
 	,{"name": "Prop_Hmd_SupportsHDCP14LegacyCompat_Bool","value": "2102"}
 	,{"name": "Prop_Hmd_SupportsMicMonitoring_Bool","value": "2103"}
+	,{"name": "Prop_Hmd_SupportsDisplayPortTrainingMode_Bool","value": "2104"}
+	,{"name": "Prop_SupportsRoomViewDirect_Bool","value": "2105"}
+	,{"name": "Prop_SupportsAppThrottling_Bool","value": "2106"}
 	,{"name": "Prop_DriverRequestedMuraCorrectionMode_Int32","value": "2200"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerLeft_Int32","value": "2201"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerRight_Int32","value": "2202"}
@@ -337,6 +344,7 @@
 	,{"name": "Submit_VulkanTextureWithArrayData","value": "64"}
 	,{"name": "Submit_GlArrayTexture","value": "128"}
 	,{"name": "Submit_Reserved2","value": "32768"}
+	,{"name": "Submit_Reserved3","value": "65536"}
 ]}
 ,	{"enumname": "vr::EVRState","values": [ 
 	{"name": "VRState_Undefined","value": "-1"}
@@ -422,6 +430,9 @@
 	,{"name": "VREvent_ShowDevTools","value": "529"}
 	,{"name": "VREvent_DesktopViewUpdating","value": "530"}
 	,{"name": "VREvent_DesktopViewReady","value": "531"}
+	,{"name": "VREvent_StartDashboard","value": "532"}
+	,{"name": "VREvent_ElevatePrism","value": "533"}
+	,{"name": "VREvent_OverlayClosed","value": "534"}
 	,{"name": "VREvent_Notification_Shown","value": "600"}
 	,{"name": "VREvent_Notification_Hidden","value": "601"}
 	,{"name": "VREvent_Notification_BeginInteraction","value": "602"}
@@ -431,6 +442,7 @@
 	,{"name": "VREvent_QuitAcknowledged","value": "703"}
 	,{"name": "VREvent_DriverRequestedQuit","value": "704"}
 	,{"name": "VREvent_RestartRequested","value": "705"}
+	,{"name": "VREvent_InvalidateSwapTextureSets","value": "706"}
 	,{"name": "VREvent_ChaperoneDataHasChanged","value": "800"}
 	,{"name": "VREvent_ChaperoneUniverseHasChanged","value": "801"}
 	,{"name": "VREvent_ChaperoneTempDataHasChanged","value": "802"}
@@ -485,6 +497,7 @@
 	,{"name": "VREvent_Compositor_OutOfVideoMemory","value": "1417"}
 	,{"name": "VREvent_Compositor_DisplayModeNotSupported","value": "1418"}
 	,{"name": "VREvent_Compositor_StageOverrideReady","value": "1419"}
+	,{"name": "VREvent_Compositor_RequestDisconnectReconnect","value": "1420"}
 	,{"name": "VREvent_TrackedCamera_StartVideoStream","value": "1500"}
 	,{"name": "VREvent_TrackedCamera_StopVideoStream","value": "1501"}
 	,{"name": "VREvent_TrackedCamera_PauseVideoStream","value": "1502"}
@@ -662,6 +675,7 @@
 	,{"name": "VROverlayError_TextureAlreadyLocked","value": "31"}
 	,{"name": "VROverlayError_TextureLockCapacityReached","value": "32"}
 	,{"name": "VROverlayError_TextureNotLocked","value": "33"}
+	,{"name": "VROverlayError_TimedOut","value": "34"}
 ]}
 ,	{"enumname": "vr::EVRApplicationType","values": [ 
 	{"name": "VRApplication_Other","value": "0"}
@@ -677,7 +691,8 @@
 	,{"name": "VRApplication_OpenXRScene","value": "10"}
 	,{"name": "VRApplication_OpenXROverlay","value": "11"}
 	,{"name": "VRApplication_Prism","value": "12"}
-	,{"name": "VRApplication_Max","value": "13"}
+	,{"name": "VRApplication_RoomView","value": "13"}
+	,{"name": "VRApplication_Max","value": "14"}
 ]}
 ,	{"enumname": "vr::EVRFirmwareError","values": [ 
 	{"name": "VRFirmwareError_None","value": "0"}
@@ -759,8 +774,20 @@
 	,{"name": "VRInitError_Init_PrismNeedsNewDrivers","value": "151"}
 	,{"name": "VRInitError_Init_PrismStartupTimedOut","value": "152"}
 	,{"name": "VRInitError_Init_CouldNotStartPrism","value": "153"}
-	,{"name": "VRInitError_Init_CreateDriverDirectDeviceFailed","value": "154"}
-	,{"name": "VRInitError_Init_PrismExitedUnexpectedly","value": "155"}
+	,{"name": "VRInitError_Init_PrismClientInitFailed","value": "154"}
+	,{"name": "VRInitError_Init_PrismClientStartFailed","value": "155"}
+	,{"name": "VRInitError_Init_PrismExitedUnexpectedly","value": "156"}
+	,{"name": "VRInitError_Init_BadLuid","value": "157"}
+	,{"name": "VRInitError_Init_NoServerForAppContainer","value": "158"}
+	,{"name": "VRInitError_Init_DuplicateBootstrapper","value": "159"}
+	,{"name": "VRInitError_Init_VRDashboardServicePending","value": "160"}
+	,{"name": "VRInitError_Init_VRDashboardServiceTimeout","value": "161"}
+	,{"name": "VRInitError_Init_VRDashboardServiceStopped","value": "162"}
+	,{"name": "VRInitError_Init_VRDashboardAlreadyStarted","value": "163"}
+	,{"name": "VRInitError_Init_VRDashboardCopyFailed","value": "164"}
+	,{"name": "VRInitError_Init_VRDashboardTokenFailure","value": "165"}
+	,{"name": "VRInitError_Init_VRDashboardEnvironmentFailure","value": "166"}
+	,{"name": "VRInitError_Init_VRDashboardPathFailure","value": "167"}
 	,{"name": "VRInitError_Driver_Failed","value": "200"}
 	,{"name": "VRInitError_Driver_Unknown","value": "201"}
 	,{"name": "VRInitError_Driver_HmdUnknown","value": "202"}
@@ -774,6 +801,8 @@
 	,{"name": "VRInitError_Driver_HmdDriverIdOutOfBounds","value": "211"}
 	,{"name": "VRInitError_Driver_HmdDisplayMirrored","value": "212"}
 	,{"name": "VRInitError_Driver_HmdDisplayNotFoundLaptop","value": "213"}
+	,{"name": "VRInitError_Driver_PeerDriverNotInstalled","value": "214"}
+	,{"name": "VRInitError_Driver_WirelessHmdNotConnected","value": "215"}
 	,{"name": "VRInitError_IPC_ServerInitFailed","value": "300"}
 	,{"name": "VRInitError_IPC_ConnectFailed","value": "301"}
 	,{"name": "VRInitError_IPC_SharedStateInitFailed","value": "302"}
@@ -879,8 +908,11 @@
 	,{"name": "VRInitError_Compositor_WindowInterfaceIsNull","value": "491"}
 	,{"name": "VRInitError_Compositor_SystemLayerCreateInstance","value": "492"}
 	,{"name": "VRInitError_Compositor_SystemLayerCreateSession","value": "493"}
+	,{"name": "VRInitError_Compositor_CreateInverseDistortUVs","value": "494"}
+	,{"name": "VRInitError_Compositor_CreateBackbufferDepth","value": "495"}
 	,{"name": "VRInitError_VendorSpecific_UnableToConnectToOculusRuntime","value": "1000"}
 	,{"name": "VRInitError_VendorSpecific_WindowsNotInDevMode","value": "1001"}
+	,{"name": "VRInitError_VendorSpecific_OculusLinkNotEnabled","value": "1002"}
 	,{"name": "VRInitError_VendorSpecific_HmdFound_CantOpenDevice","value": "1101"}
 	,{"name": "VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart","value": "1102"}
 	,{"name": "VRInitError_VendorSpecific_HmdFound_NoStoredConfig","value": "1103"}
@@ -895,6 +927,7 @@
 	,{"name": "VRInitError_VendorSpecific_HmdFound_UserDataError","value": "1112"}
 	,{"name": "VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck","value": "1113"}
 	,{"name": "VRInitError_VendorSpecific_OculusRuntimeBadInstall","value": "1114"}
+	,{"name": "VRInitError_VendorSpecific_HmdFound_UnexpectedConfiguration_1","value": "1115"}
 	,{"name": "VRInitError_Steam_SteamInstallationNotFound","value": "2000"}
 	,{"name": "VRInitError_LastError","value": "2001"}
 ]}
@@ -1088,6 +1121,7 @@
 	,{"name": "VROverlayFlags_HideLaserIntersection","value": "524288"}
 	,{"name": "VROverlayFlags_WantsModalBehavior","value": "1048576"}
 	,{"name": "VROverlayFlags_IsPremultiplied","value": "2097152"}
+	,{"name": "VROverlayFlags_IgnoreTextureAlpha","value": "4194304"}
 ]}
 ,	{"enumname": "vr::VRMessageOverlayResponse","values": [ 
 	{"name": "VRMessageOverlayResponse_ButtonPress_0","value": "0"}
@@ -1146,6 +1180,7 @@
 	,{"name": "VRRenderModelTextureFormat_BC4","value": "2"}
 	,{"name": "VRRenderModelTextureFormat_BC7","value": "3"}
 	,{"name": "VRRenderModelTextureFormat_BC7_SRGB","value": "4"}
+	,{"name": "VRRenderModelTextureFormat_RGBA16_FLOAT","value": "5"}
 ]}
 ,	{"enumname": "vr::EVRNotificationType","values": [ 
 	{"name": "EVRNotificationType_Transient","value": "0"}
@@ -1254,6 +1289,9 @@
 	{"name": "BlockQueueRead_Latest","value": "0"}
 	,{"name": "BlockQueueRead_New","value": "1"}
 	,{"name": "BlockQueueRead_Next","value": "2"}
+]}
+,	{"enumname": "vr::EBlockQueueCreationFlag","values": [ 
+	{"name": "BlockQueueFlag_OwnerIsReader","value": "1"}
 ]}
 ],
 "consts":[{
@@ -1369,7 +1407,7 @@
 ,{
 	"constname": "k_unMaxOverlayIntersectionMaskPrimitivesCount","consttype": "const uint32_t", "constval": "32"}
 ,{
-	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_025"}
+	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_026"}
 ,{
 	"constname": "IVROverlayView_Version","consttype": "const char *const", "constval": "IVROverlayView_003"}
 ,{
@@ -1465,6 +1503,10 @@
 ,{
 	"constname": "k_pch_SteamVR_AdditionalFramesToPredict_Int32","consttype": "const char *const", "constval": "additionalFramesToPredict"}
 ,{
+	"constname": "k_pch_SteamVR_WorldScale_Float","consttype": "const char *const", "constval": "worldScale"}
+,{
+	"constname": "k_pch_SteamVR_FovScale_Int32","consttype": "const char *const", "constval": "fovScale"}
+,{
 	"constname": "k_pch_SteamVR_DisableAsyncReprojection_Bool","consttype": "const char *const", "constval": "disableAsync"}
 ,{
 	"constname": "k_pch_SteamVR_ForceFadeOnBadTracking_Bool","consttype": "const char *const", "constval": "forceFadeOnBadTracking"}
@@ -1550,6 +1592,8 @@
 	"constname": "k_pch_SteamVR_BlockOculusSDKOnAllLaunches_Bool","consttype": "const char *const", "constval": "blockOculusSDKOnAllLaunches"}
 ,{
 	"constname": "k_pch_SteamVR_HDCPLegacyCompatibility_Bool","consttype": "const char *const", "constval": "hdcp14legacyCompatibility"}
+,{
+	"constname": "k_pch_SteamVR_DisplayPortTrainingMode_Int","consttype": "const char *const", "constval": "displayPortTrainingMode"}
 ,{
 	"constname": "k_pch_SteamVR_UsePrism_Bool","consttype": "const char *const", "constval": "usePrism"}
 ,{
@@ -1767,6 +1811,8 @@
 ,{
 	"constname": "k_pch_Dashboard_UseStandaloneSystemLayer","consttype": "const char *const", "constval": "standaloneSystemLayer"}
 ,{
+	"constname": "k_pch_Dashboard_StickyDashboard","consttype": "const char *const", "constval": "stickyDashboard"}
+,{
 	"constname": "k_pch_modelskin_Section","consttype": "const char *const", "constval": "modelskins"}
 ,{
 	"constname": "k_pch_Driver_Enable_Bool","consttype": "const char *const", "constval": "enable"}
@@ -1939,7 +1985,7 @@
 ,{
 	"constname": "IVRPaths_Version","consttype": "const char *const", "constval": "IVRPaths_001"}
 ,{
-	"constname": "IVRBlockQueue_Version","consttype": "const char *", "constval": "IVRBlockQueue_004"}
+	"constname": "IVRBlockQueue_Version","consttype": "const char *", "constval": "IVRBlockQueue_005"}
 ],
 "structs":[{"struct": "vr::HmdMatrix34_t","fields": [
 { "fieldname": "m", "fieldtype": "float [3][4]"}]}
@@ -2303,7 +2349,8 @@
 { "fieldname": "unWidth", "fieldtype": "uint16_t"},
 { "fieldname": "unHeight", "fieldtype": "uint16_t"},
 { "fieldname": "rubTextureMapData", "fieldtype": "const uint8_t *"},
-{ "fieldname": "format", "fieldtype": "enum vr::EVRRenderModelTextureFormat"}]}
+{ "fieldname": "format", "fieldtype": "enum vr::EVRRenderModelTextureFormat"},
+{ "fieldname": "unMipLevels", "fieldtype": "uint16_t"}]}
 ,{"struct": "vr::RenderModel_t","fields": [
 { "fieldname": "rVertexData", "fieldtype": "const struct vr::RenderModel_Vertex_t *"},
 { "fieldname": "unVertexCount", "fieldtype": "uint32_t"},
@@ -4081,6 +4128,24 @@
 }
 ,{
 	"classname": "vr::IVROverlay",
+	"methodname": "SetOverlayPreCurvePitch",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "fRadians" ,"paramtype": "float"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "GetOverlayPreCurvePitch",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pfRadians" ,"paramtype": "float *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
 	"methodname": "SetOverlayTextureColorSpace",
 	"returntype": "vr::EVROverlayError",
 	"params": [ 
@@ -4268,6 +4333,14 @@
 {	"paramname": "eTrackingOrigin" ,"paramtype": "vr::ETrackingUniverseOrigin"},
 {	"paramname": "coordinatesInOverlay" ,"paramtype": "struct vr::HmdVector2_t"},
 {	"paramname": "pmatTransform" ,"paramtype": "struct vr::HmdMatrix34_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "WaitFrameSync",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "nTimeoutMs" ,"paramtype": "uint32_t"}
 	 ]
 }
 ,{
@@ -5677,7 +5750,8 @@
 {	"paramname": "pchPath" ,"paramtype": "const char *"},
 {	"paramname": "unBlockDataSize" ,"paramtype": "uint32_t"},
 {	"paramname": "unBlockHeaderSize" ,"paramtype": "uint32_t"},
-{	"paramname": "unBlockCount" ,"paramtype": "uint32_t"}
+{	"paramname": "unBlockCount" ,"paramtype": "uint32_t"},
+{	"paramname": "unFlags" ,"paramtype": "uint32_t"}
 	 ]
 }
 ,{

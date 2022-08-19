@@ -16,8 +16,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 16;
-	static const uint32_t k_nSteamVRVersionBuild = 8;
+	static const uint32_t k_nSteamVRVersionMinor = 23;
+	static const uint32_t k_nSteamVRVersionBuild = 7;
 } // namespace vr
 
 // public_vrtypes.h
@@ -28,6 +28,8 @@ namespace vr
 namespace vr
 {
 #pragma pack( push, 8 )
+
+typedef uint32_t PropertyTypeTag_t;
 
 // right-handed system
 // +y is up
@@ -387,6 +389,8 @@ enum ETrackedDeviceProperty
 	Prop_ManufacturerSerialNumber_String		= 1049,
 	Prop_ComputedSerialNumber_String			= 1050,
 	Prop_EstimatedDeviceFirstUseTime_Int32		= 1051,
+	Prop_DevicePowerUsage_Float					= 1052,
+	Prop_IgnoreMotionForStandby_Bool			= 1053,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -479,10 +483,15 @@ enum ETrackedDeviceProperty
     Prop_CameraGlobalGain_Float                 = 2089,
 	// Prop_DashboardLayoutPathName_String 		= 2090, // DELETED
 	Prop_DashboardScale_Float 					= 2091,
+	Prop_PeerButtonInfo_String					= 2092,
+
 	Prop_IpdUIRangeMinMeters_Float 				= 2100,
 	Prop_IpdUIRangeMaxMeters_Float 				= 2101,
 	Prop_Hmd_SupportsHDCP14LegacyCompat_Bool	= 2102,
 	Prop_Hmd_SupportsMicMonitoring_Bool 		= 2103,
+	Prop_Hmd_SupportsDisplayPortTrainingMode_Bool	= 2104,
+	Prop_SupportsRoomViewDirect_Bool 			= 2105,
+	Prop_SupportsAppThrottling_Bool				= 2106,
 
 	// Driver requested mura correction properties
 	Prop_DriverRequestedMuraCorrectionMode_Int32		= 2200,
@@ -671,8 +680,8 @@ enum EVRSubmitFlags
 	Submit_GlArrayTexture = 0x80,
 
 	// Do not use
-	Submit_Reserved2 = 0x8000,
-
+	Submit_Reserved2 = 0x08000,
+	Submit_Reserved3 = 0x10000,
 
 };
 
@@ -824,6 +833,11 @@ enum EVREventType
 	VREvent_DesktopViewUpdating				= 530,
 	VREvent_DesktopViewReady				= 531,
 
+	VREvent_StartDashboard					= 532,
+	VREvent_ElevatePrism					= 533,
+
+	VREvent_OverlayClosed					= 534,
+
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
 	VREvent_Notification_BeginInteraction	= 602,
@@ -835,6 +849,7 @@ enum EVREventType
 	VREvent_QuitAcknowledged				= 703, // data is process
 	VREvent_DriverRequestedQuit				= 704, // The driver has requested that SteamVR shut down
 	VREvent_RestartRequested				= 705, // A driver or other component wants the user to restart SteamVR
+	VREvent_InvalidateSwapTextureSets		= 706,
 
 	VREvent_ChaperoneDataHasChanged			= 800, // this will never happen with the new chaperone system
 	VREvent_ChaperoneUniverseHasChanged		= 801,
@@ -905,6 +920,7 @@ enum EVREventType
 	VREvent_Compositor_OutOfVideoMemory			= 1417,
 	VREvent_Compositor_DisplayModeNotSupported	= 1418, // k_pch_SteamVR_PreferredRefreshRate
 	VREvent_Compositor_StageOverrideReady		= 1419,
+	VREvent_Compositor_RequestDisconnectReconnect = 1420,
 
 	VREvent_TrackedCamera_StartVideoStream  = 1500,
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
@@ -1484,6 +1500,7 @@ enum EVROverlayError
 	VROverlayError_TextureAlreadyLocked		= 31,
 	VROverlayError_TextureLockCapacityReached = 32,
 	VROverlayError_TextureNotLocked			= 33,
+	VROverlayError_TimedOut                 = 34,
 };
 
 /** enum values to pass in to VR_Init to identify whether the application will
@@ -1505,6 +1522,7 @@ enum EVRApplicationType
 	VRApplication_OpenXRScene = 10,	  // reserved for openxr (started session)
 	VRApplication_OpenXROverlay = 11, // reserved for openxr (started overlay session)
 	VRApplication_Prism = 12,		// reserved for the vrprismhost process
+	VRApplication_RoomView = 13,	// reserved for the RoomView process
 
 	VRApplication_Max
 };
@@ -1517,6 +1535,15 @@ inline bool IsOpenXRAppType( EVRApplicationType eType )
 	return eType == VRApplication_OpenXRInstance
 		|| eType == VRApplication_OpenXRScene
 		|| eType == VRApplication_OpenXROverlay;
+}
+
+
+/** returns true if the specified application type submits eye buffers */
+inline bool BAppTypeSubmitsEyeBuffers( EVRApplicationType eType )
+{
+	return eType == VRApplication_Scene
+		|| eType == VRApplication_OpenXRScene
+		|| eType == VRApplication_RoomView;
 }
 
 
@@ -1641,8 +1668,20 @@ enum EVRInitError
 	VRInitError_Init_PrismNeedsNewDrivers			= 151,
 	VRInitError_Init_PrismStartupTimedOut			= 152,
 	VRInitError_Init_CouldNotStartPrism				= 153,
-	VRInitError_Init_CreateDriverDirectDeviceFailed = 154,
-	VRInitError_Init_PrismExitedUnexpectedly		= 155,
+	VRInitError_Init_PrismClientInitFailed			= 154,
+	VRInitError_Init_PrismClientStartFailed			= 155,
+	VRInitError_Init_PrismExitedUnexpectedly		= 156,
+	VRInitError_Init_BadLuid						= 157,
+	VRInitError_Init_NoServerForAppContainer		= 158,
+	VRInitError_Init_DuplicateBootstrapper			= 159,
+	VRInitError_Init_VRDashboardServicePending		= 160,
+	VRInitError_Init_VRDashboardServiceTimeout		= 161,
+	VRInitError_Init_VRDashboardServiceStopped		= 162,
+	VRInitError_Init_VRDashboardAlreadyStarted		= 163,
+	VRInitError_Init_VRDashboardCopyFailed			= 164,
+	VRInitError_Init_VRDashboardTokenFailure		= 165,
+	VRInitError_Init_VRDashboardEnvironmentFailure	= 166,
+	VRInitError_Init_VRDashboardPathFailure			= 167,
 
 	VRInitError_Driver_Failed						= 200,
 	VRInitError_Driver_Unknown						= 201,
@@ -1658,6 +1697,9 @@ enum EVRInitError
 	VRInitError_Driver_HmdDriverIdOutOfBounds		= 211,
 	VRInitError_Driver_HmdDisplayMirrored			= 212,
 	VRInitError_Driver_HmdDisplayNotFoundLaptop		= 213,
+	VRInitError_Driver_PeerDriverNotInstalled		= 214,
+	VRInitError_Driver_WirelessHmdNotConnected		= 215,
+
 	// Never make error 259 because we return it from main and it would conflict with STILL_ACTIVE
 
 	VRInitError_IPC_ServerInitFailed				= 300,
@@ -1766,9 +1808,12 @@ enum EVRInitError
 	VRInitError_Compositor_WindowInterfaceIsNull								= 491,
 	VRInitError_Compositor_SystemLayerCreateInstance							= 492,
 	VRInitError_Compositor_SystemLayerCreateSession								= 493,
+	VRInitError_Compositor_CreateInverseDistortUVs								= 494,
+	VRInitError_Compositor_CreateBackbufferDepth								= 495,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime		= 1000,
 	VRInitError_VendorSpecific_WindowsNotInDevMode					= 1001,
+	VRInitError_VendorSpecific_OculusLinkNotEnabled					= 1002,
 
 	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 				= 1101,
 	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart	= 1102,
@@ -1784,6 +1829,7 @@ enum EVRInitError
 	VRInitError_VendorSpecific_HmdFound_UserDataError				= 1112,
 	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck		= 1113,
 	VRInitError_VendorSpecific_OculusRuntimeBadInstall				= 1114,
+	VRInitError_VendorSpecific_HmdFound_UnexpectedConfiguration_1	= 1115,
 
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
 
@@ -2727,6 +2773,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_MotionSmoothingOverride_Int32 = "motionSmoothingOverride";
 	static const char * const k_pch_SteamVR_FramesToThrottle_Int32 = "framesToThrottle";
 	static const char * const k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
+	static const char * const k_pch_SteamVR_WorldScale_Float = "worldScale";
+	static const char * const k_pch_SteamVR_FovScale_Int32 = "fovScale";
 	static const char * const k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
@@ -2770,6 +2818,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_BlockOculusSDKOnOpenVRLaunchOption_Bool = "blockOculusSDKOnOpenVRLaunchOption";
 	static const char * const k_pch_SteamVR_BlockOculusSDKOnAllLaunches_Bool = "blockOculusSDKOnAllLaunches";
 	static const char * const k_pch_SteamVR_HDCPLegacyCompatibility_Bool = "hdcp14legacyCompatibility";
+	static const char * const k_pch_SteamVR_DisplayPortTrainingMode_Int = "displayPortTrainingMode";
 	static const char * const k_pch_SteamVR_UsePrism_Bool = "usePrism";
 
 	//-----------------------------------------------------------------------------
@@ -2917,6 +2966,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_DesktopScale = "desktopScale";
 	static const char * const k_pch_Dashboard_DashboardScale = "dashboardScale";
 	static const char * const k_pch_Dashboard_UseStandaloneSystemLayer = "standaloneSystemLayer";
+	static const char * const k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
@@ -3635,8 +3685,7 @@ typedef uint32_t VRNotificationId;
 
 #pragma pack( pop )
 
-/** Allows notification sources to interact with the VR system
-	This current interface is not yet implemented. Do not use yet. */
+/** Allows notification sources to interact with the VR system. */
 class IVRNotifications
 {
 public:
@@ -3753,6 +3802,9 @@ namespace vr
 
 		// If this is set, alpha composition assumes the texture is pre-multiplied
 		VROverlayFlags_IsPremultiplied = 1 << 21,
+
+		// If this is set, the alpha values of the overlay texture will be ignored
+		VROverlayFlags_IgnoreTextureAlpha = 1 << 22,
 	};
 
 	enum VRMessageOverlayResponse
@@ -3948,6 +4000,12 @@ namespace vr
 		/** Returns the curvature of the overlay as a percentage from (0..1] where 1 is a fully closed cylinder. */
 		virtual EVROverlayError GetOverlayCurvature( VROverlayHandle_t ulOverlayHandle, float *pfCurvature ) = 0;
 
+		/** Sets the pitch angle (in radians) of the overlay before curvature is applied -- to form a fan or disk. */
+		virtual EVROverlayError SetOverlayPreCurvePitch( VROverlayHandle_t ulOverlayHandle, float fRadians ) = 0;
+
+		/** Returns the overlay's set pre-curve pitch angle (in radians). */
+		virtual EVROverlayError GetOverlayPreCurvePitch( VROverlayHandle_t ulOverlayHandle, float *pfRadians ) = 0;
+
 		/** Sets the colorspace the overlay texture's data is in.  Defaults to 'auto'.
 		* If the texture needs to be resolved, you should call SetOverlayTexture with the appropriate colorspace instead. */
 		virtual EVROverlayError SetOverlayTextureColorSpace( VROverlayHandle_t ulOverlayHandle, EColorSpace eTextureColorSpace ) = 0;
@@ -4012,6 +4070,11 @@ namespace vr
 
 		/** Get the transform in 3d space associated with a specific 2d point in the overlay's coordinate space (where 0,0 is the lower left). -Z points out of the overlay */
 		virtual EVROverlayError GetTransformForOverlayCoordinates( VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, HmdVector2_t coordinatesInOverlay, HmdMatrix34_t *pmatTransform ) = 0;
+
+		/** This function will block until the top of each frame, and can therefore be used to synchronize with the runtime's update rate.
+		* Note: In non-async mode, some signals may be dropped due to scene app performance, so passing a timeout of 1000/refresh rate
+		* may be useful depending on the overlay app's desired behavior. */
+		virtual EVROverlayError WaitFrameSync( uint32_t nTimeoutMs ) = 0;
 
 		// ---------------------------------------------
 		// Overlay input methods
@@ -4165,7 +4228,7 @@ namespace vr
 		virtual void CloseMessageOverlay() = 0;
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_025";
+	static const char * const IVROverlay_Version = "IVROverlay_026";
 
 } // namespace vr
 
@@ -4285,7 +4348,8 @@ enum EVRRenderModelTextureFormat
 	VRRenderModelTextureFormat_BC2,
 	VRRenderModelTextureFormat_BC4,
 	VRRenderModelTextureFormat_BC7,
-	VRRenderModelTextureFormat_BC7_SRGB
+	VRRenderModelTextureFormat_BC7_SRGB,
+	VRRenderModelTextureFormat_RGBA16_FLOAT,
 };
 
 /** A single vertex in a render model */
@@ -4308,6 +4372,7 @@ struct RenderModel_TextureMap_t
 	uint16_t unWidth, unHeight; // width and height of the texture map in pixels
 	const uint8_t *rubTextureMapData;	// Map texture data.
 	EVRRenderModelTextureFormat format; // Refer to EVRRenderModelTextureFormat
+	uint16_t unMipLevels;
 };
 #if defined(__linux__) || defined(__APPLE__)
 #pragma pack( pop )

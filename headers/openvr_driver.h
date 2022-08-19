@@ -16,8 +16,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 1;
-	static const uint32_t k_nSteamVRVersionMinor = 16;
-	static const uint32_t k_nSteamVRVersionBuild = 8;
+	static const uint32_t k_nSteamVRVersionMinor = 23;
+	static const uint32_t k_nSteamVRVersionBuild = 7;
 } // namespace vr
 
 // public_vrtypes.h
@@ -28,6 +28,8 @@ namespace vr
 namespace vr
 {
 #pragma pack( push, 8 )
+
+typedef uint32_t PropertyTypeTag_t;
 
 // right-handed system
 // +y is up
@@ -387,6 +389,8 @@ enum ETrackedDeviceProperty
 	Prop_ManufacturerSerialNumber_String		= 1049,
 	Prop_ComputedSerialNumber_String			= 1050,
 	Prop_EstimatedDeviceFirstUseTime_Int32		= 1051,
+	Prop_DevicePowerUsage_Float					= 1052,
+	Prop_IgnoreMotionForStandby_Bool			= 1053,
 
 	// Properties that are unique to TrackedDeviceClass_HMD
 	Prop_ReportsTimeSinceVSync_Bool				= 2000,
@@ -479,10 +483,15 @@ enum ETrackedDeviceProperty
     Prop_CameraGlobalGain_Float                 = 2089,
 	// Prop_DashboardLayoutPathName_String 		= 2090, // DELETED
 	Prop_DashboardScale_Float 					= 2091,
+	Prop_PeerButtonInfo_String					= 2092,
+
 	Prop_IpdUIRangeMinMeters_Float 				= 2100,
 	Prop_IpdUIRangeMaxMeters_Float 				= 2101,
 	Prop_Hmd_SupportsHDCP14LegacyCompat_Bool	= 2102,
 	Prop_Hmd_SupportsMicMonitoring_Bool 		= 2103,
+	Prop_Hmd_SupportsDisplayPortTrainingMode_Bool	= 2104,
+	Prop_SupportsRoomViewDirect_Bool 			= 2105,
+	Prop_SupportsAppThrottling_Bool				= 2106,
 
 	// Driver requested mura correction properties
 	Prop_DriverRequestedMuraCorrectionMode_Int32		= 2200,
@@ -671,8 +680,8 @@ enum EVRSubmitFlags
 	Submit_GlArrayTexture = 0x80,
 
 	// Do not use
-	Submit_Reserved2 = 0x8000,
-
+	Submit_Reserved2 = 0x08000,
+	Submit_Reserved3 = 0x10000,
 
 };
 
@@ -824,6 +833,11 @@ enum EVREventType
 	VREvent_DesktopViewUpdating				= 530,
 	VREvent_DesktopViewReady				= 531,
 
+	VREvent_StartDashboard					= 532,
+	VREvent_ElevatePrism					= 533,
+
+	VREvent_OverlayClosed					= 534,
+
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
 	VREvent_Notification_BeginInteraction	= 602,
@@ -835,6 +849,7 @@ enum EVREventType
 	VREvent_QuitAcknowledged				= 703, // data is process
 	VREvent_DriverRequestedQuit				= 704, // The driver has requested that SteamVR shut down
 	VREvent_RestartRequested				= 705, // A driver or other component wants the user to restart SteamVR
+	VREvent_InvalidateSwapTextureSets		= 706,
 
 	VREvent_ChaperoneDataHasChanged			= 800, // this will never happen with the new chaperone system
 	VREvent_ChaperoneUniverseHasChanged		= 801,
@@ -905,6 +920,7 @@ enum EVREventType
 	VREvent_Compositor_OutOfVideoMemory			= 1417,
 	VREvent_Compositor_DisplayModeNotSupported	= 1418, // k_pch_SteamVR_PreferredRefreshRate
 	VREvent_Compositor_StageOverrideReady		= 1419,
+	VREvent_Compositor_RequestDisconnectReconnect = 1420,
 
 	VREvent_TrackedCamera_StartVideoStream  = 1500,
 	VREvent_TrackedCamera_StopVideoStream   = 1501,
@@ -1484,6 +1500,7 @@ enum EVROverlayError
 	VROverlayError_TextureAlreadyLocked		= 31,
 	VROverlayError_TextureLockCapacityReached = 32,
 	VROverlayError_TextureNotLocked			= 33,
+	VROverlayError_TimedOut                 = 34,
 };
 
 /** enum values to pass in to VR_Init to identify whether the application will
@@ -1505,6 +1522,7 @@ enum EVRApplicationType
 	VRApplication_OpenXRScene = 10,	  // reserved for openxr (started session)
 	VRApplication_OpenXROverlay = 11, // reserved for openxr (started overlay session)
 	VRApplication_Prism = 12,		// reserved for the vrprismhost process
+	VRApplication_RoomView = 13,	// reserved for the RoomView process
 
 	VRApplication_Max
 };
@@ -1517,6 +1535,15 @@ inline bool IsOpenXRAppType( EVRApplicationType eType )
 	return eType == VRApplication_OpenXRInstance
 		|| eType == VRApplication_OpenXRScene
 		|| eType == VRApplication_OpenXROverlay;
+}
+
+
+/** returns true if the specified application type submits eye buffers */
+inline bool BAppTypeSubmitsEyeBuffers( EVRApplicationType eType )
+{
+	return eType == VRApplication_Scene
+		|| eType == VRApplication_OpenXRScene
+		|| eType == VRApplication_RoomView;
 }
 
 
@@ -1641,8 +1668,20 @@ enum EVRInitError
 	VRInitError_Init_PrismNeedsNewDrivers			= 151,
 	VRInitError_Init_PrismStartupTimedOut			= 152,
 	VRInitError_Init_CouldNotStartPrism				= 153,
-	VRInitError_Init_CreateDriverDirectDeviceFailed = 154,
-	VRInitError_Init_PrismExitedUnexpectedly		= 155,
+	VRInitError_Init_PrismClientInitFailed			= 154,
+	VRInitError_Init_PrismClientStartFailed			= 155,
+	VRInitError_Init_PrismExitedUnexpectedly		= 156,
+	VRInitError_Init_BadLuid						= 157,
+	VRInitError_Init_NoServerForAppContainer		= 158,
+	VRInitError_Init_DuplicateBootstrapper			= 159,
+	VRInitError_Init_VRDashboardServicePending		= 160,
+	VRInitError_Init_VRDashboardServiceTimeout		= 161,
+	VRInitError_Init_VRDashboardServiceStopped		= 162,
+	VRInitError_Init_VRDashboardAlreadyStarted		= 163,
+	VRInitError_Init_VRDashboardCopyFailed			= 164,
+	VRInitError_Init_VRDashboardTokenFailure		= 165,
+	VRInitError_Init_VRDashboardEnvironmentFailure	= 166,
+	VRInitError_Init_VRDashboardPathFailure			= 167,
 
 	VRInitError_Driver_Failed						= 200,
 	VRInitError_Driver_Unknown						= 201,
@@ -1658,6 +1697,9 @@ enum EVRInitError
 	VRInitError_Driver_HmdDriverIdOutOfBounds		= 211,
 	VRInitError_Driver_HmdDisplayMirrored			= 212,
 	VRInitError_Driver_HmdDisplayNotFoundLaptop		= 213,
+	VRInitError_Driver_PeerDriverNotInstalled		= 214,
+	VRInitError_Driver_WirelessHmdNotConnected		= 215,
+
 	// Never make error 259 because we return it from main and it would conflict with STILL_ACTIVE
 
 	VRInitError_IPC_ServerInitFailed				= 300,
@@ -1766,9 +1808,12 @@ enum EVRInitError
 	VRInitError_Compositor_WindowInterfaceIsNull								= 491,
 	VRInitError_Compositor_SystemLayerCreateInstance							= 492,
 	VRInitError_Compositor_SystemLayerCreateSession								= 493,
+	VRInitError_Compositor_CreateInverseDistortUVs								= 494,
+	VRInitError_Compositor_CreateBackbufferDepth								= 495,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime		= 1000,
 	VRInitError_VendorSpecific_WindowsNotInDevMode					= 1001,
+	VRInitError_VendorSpecific_OculusLinkNotEnabled					= 1002,
 
 	VRInitError_VendorSpecific_HmdFound_CantOpenDevice 				= 1101,
 	VRInitError_VendorSpecific_HmdFound_UnableToRequestConfigStart	= 1102,
@@ -1784,6 +1829,7 @@ enum EVRInitError
 	VRInitError_VendorSpecific_HmdFound_UserDataError				= 1112,
 	VRInitError_VendorSpecific_HmdFound_ConfigFailedSanityCheck		= 1113,
 	VRInitError_VendorSpecific_OculusRuntimeBadInstall				= 1114,
+	VRInitError_VendorSpecific_HmdFound_UnexpectedConfiguration_1	= 1115,
 
 	VRInitError_Steam_SteamInstallationNotFound = 2000,
 
@@ -2078,6 +2124,7 @@ enum ECameraVideoStreamFormat
 	CVS_FORMAT_YUYV16 = 5,		// 16 bits per pixel
 	CVS_FORMAT_BAYER16BG = 6,   // 16 bits per pixel, 10-bit BG-format Bayer, see https://docs.opencv.org/3.1.0/de/d25/imgproc_color_conversions.html
 	CVS_FORMAT_MJPEG = 7,       // variable-sized MJPEG Open DML format, see https://www.loc.gov/preservation/digital/formats/fdd/fdd000063.shtml
+	CVS_FORMAT_RGBX32 = 8,      // Full-sized pixels, 4BPP, LSB = RED
 	CVS_MAX_FORMATS
 };
 
@@ -2318,6 +2365,8 @@ namespace vr
 	static const char * const k_pch_SteamVR_MotionSmoothingOverride_Int32 = "motionSmoothingOverride";
 	static const char * const k_pch_SteamVR_FramesToThrottle_Int32 = "framesToThrottle";
 	static const char * const k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
+	static const char * const k_pch_SteamVR_WorldScale_Float = "worldScale";
+	static const char * const k_pch_SteamVR_FovScale_Int32 = "fovScale";
 	static const char * const k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
@@ -2361,6 +2410,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_BlockOculusSDKOnOpenVRLaunchOption_Bool = "blockOculusSDKOnOpenVRLaunchOption";
 	static const char * const k_pch_SteamVR_BlockOculusSDKOnAllLaunches_Bool = "blockOculusSDKOnAllLaunches";
 	static const char * const k_pch_SteamVR_HDCPLegacyCompatibility_Bool = "hdcp14legacyCompatibility";
+	static const char * const k_pch_SteamVR_DisplayPortTrainingMode_Int = "displayPortTrainingMode";
 	static const char * const k_pch_SteamVR_UsePrism_Bool = "usePrism";
 
 	//-----------------------------------------------------------------------------
@@ -2508,6 +2558,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_DesktopScale = "desktopScale";
 	static const char * const k_pch_Dashboard_DashboardScale = "dashboardScale";
 	static const char * const k_pch_Dashboard_UseStandaloneSystemLayer = "standaloneSystemLayer";
+	static const char * const k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 
 	//-----------------------------------------------------------------------------
 	// model skin keys
@@ -2815,14 +2866,20 @@ namespace vr
 		/** Submits queued layers for display. */
 		virtual void Present( vr::SharedTextureHandle_t syncTexture ) {}
 
-		/** Called after Present to allow driver to take more time until vsync after they've successfully acquired the sync texture in Present.*/
-		virtual void PostPresent() {}
+		/** Called after Present to allow driver to take more time until vsync after they've successfully acquired the sync texture in Present.
+		* Set Prop_SupportsAppThrottling_Bool to enable throttling / prediction UI in per-app video settings. */
+		struct Throttling_t
+		{
+			uint32_t nFramesToThrottle;
+			uint32_t nAdditionalFramesToPredict;
+		};
+		virtual void PostPresent( const Throttling_t *pThrottling ) {}
 
 		/** Called to get additional frame timing stats from driver.  Check m_nSize for versioning (new members will be added to end only). */
 		virtual void GetFrameTiming( DriverDirectMode_FrameTiming *pFrameTiming ) {}
 	};
 
-	static const char *IVRDriverDirectModeComponent_Version = "IVRDriverDirectModeComponent_007";
+	static const char *IVRDriverDirectModeComponent_Version = "IVRDriverDirectModeComponent_008";
 
 }
 
