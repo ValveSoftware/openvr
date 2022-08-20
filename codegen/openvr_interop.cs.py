@@ -43,7 +43,7 @@ api_shared.outputclasses('vr', data)
 print("}\n\n");
 
 # Output the OpenVRInterop class 
-print('public class OpenVRInterop\n{')
+print('public partial class OpenVRInterop\n{')
 print('[DllImportAttribute("openvr_api", EntryPoint = "VR_InitInternal", CallingConvention = CallingConvention.Cdecl)]')
 print('internal static extern uint InitInternal(ref EVRInitError peError, EVRApplicationType eApplicationType);')
 print('[DllImportAttribute("openvr_api", EntryPoint = "VR_InitInternal2", CallingConvention = CallingConvention.Cdecl)]')
@@ -71,7 +71,7 @@ print("}\n\n");
 api_shared.outputenums('vr', data)
 
 print("""
-	[StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
+	[StructLayout(LayoutKind.Explicit)] public partial struct VREvent_Data_t
 	{
 		[FieldOffset(0)] public VREvent_Reserved_t reserved;
 		[FieldOffset(0)] public VREvent_Controller_t controller;
@@ -106,7 +106,7 @@ print("""
 	""")
 
 print("""
-	[StructLayout(LayoutKind.Explicit)] public struct VROverlayIntersectionMaskPrimitive_Data_t
+	[StructLayout(LayoutKind.Explicit)] public partial struct VROverlayIntersectionMaskPrimitive_Data_t
 	{
 		[FieldOffset(0)] public IntersectionMaskRectangle_t m_Rectangle;
 		[FieldOffset(0)] public IntersectionMaskCircle_t m_Circle;
@@ -117,7 +117,7 @@ api_shared.outputstructs('vr', data)
 
 
 # Output the OpenVR class
-print('\npublic class OpenVR\n{')
+print('\npublic partial class OpenVR\n{')
 print("""
 	public static uint InitInternal(ref EVRInitError peError, EVRApplicationType eApplicationType)
 	{
@@ -233,7 +233,7 @@ print("""
 
 	const string FnTable_Prefix = "FnTable:";
 
-	class COpenVRContext
+	partial class COpenVRContext
 	{
 		public COpenVRContext() { Clear(); }
 

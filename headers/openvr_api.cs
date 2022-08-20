@@ -18,7 +18,7 @@ namespace Valve.VR
 {
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRSystem
+public partial struct IVRSystem
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate void _GetRecommendedRenderTargetSize(ref uint pnWidth, ref uint pnHeight);
@@ -253,7 +253,7 @@ public struct IVRSystem
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRExtendedDisplay
+public partial struct IVRExtendedDisplay
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate void _GetWindowBounds(ref int pnX, ref int pnY, ref uint pnWidth, ref uint pnHeight);
@@ -273,7 +273,7 @@ public struct IVRExtendedDisplay
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRTrackedCamera
+public partial struct IVRTrackedCamera
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate IntPtr _GetCameraErrorNameFromEnum(EVRTrackedCameraError eCameraError);
@@ -348,7 +348,7 @@ public struct IVRTrackedCamera
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRApplications
+public partial struct IVRApplications
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRApplicationError _AddApplicationManifest(IntPtr pchApplicationManifestFullPath, bool bTemporary);
@@ -503,7 +503,7 @@ public struct IVRApplications
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRChaperone
+public partial struct IVRChaperone
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate ChaperoneCalibrationState _GetCalibrationState();
@@ -553,7 +553,7 @@ public struct IVRChaperone
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRChaperoneSetup
+public partial struct IVRChaperoneSetup
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate bool _CommitWorkingCopy(EChaperoneConfigFile configFile);
@@ -658,7 +658,7 @@ public struct IVRChaperoneSetup
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRCompositor
+public partial struct IVRCompositor
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate void _SetTrackingSpace(ETrackingUniverseOrigin eOrigin);
@@ -918,7 +918,7 @@ public struct IVRCompositor
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVROverlay
+public partial struct IVROverlay
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVROverlayError _FindOverlay(IntPtr pchOverlayKey, ref ulong pOverlayHandle);
@@ -1333,7 +1333,7 @@ public struct IVROverlay
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVROverlayView
+public partial struct IVROverlayView
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVROverlayError _AcquireOverlayView(ulong ulOverlayHandle, ref VRNativeDevice_t pNativeDevice, ref VROverlayView_t pOverlayView, uint unOverlayViewSize);
@@ -1358,7 +1358,7 @@ public struct IVROverlayView
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRHeadsetView
+public partial struct IVRHeadsetView
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate void _SetHeadsetViewSize(uint nWidth, uint nHeight);
@@ -1408,7 +1408,7 @@ public struct IVRHeadsetView
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRRenderModels
+public partial struct IVRRenderModels
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRRenderModelError _LoadRenderModel_Async(IntPtr pchRenderModelName, ref IntPtr ppRenderModel);
@@ -1508,7 +1508,7 @@ public struct IVRRenderModels
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRNotifications
+public partial struct IVRNotifications
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRNotificationError _CreateNotification(ulong ulOverlayHandle, ulong ulUserValue, EVRNotificationType type, IntPtr pchText, EVRNotificationStyle style, ref NotificationBitmap_t pImage, ref uint pNotificationId);
@@ -1523,7 +1523,7 @@ public struct IVRNotifications
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRSettings
+public partial struct IVRSettings
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate IntPtr _GetSettingsErrorNameFromEnum(EVRSettingsError eError);
@@ -1583,7 +1583,7 @@ public struct IVRSettings
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRScreenshots
+public partial struct IVRScreenshots
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRScreenshotError _RequestScreenshot(ref uint pOutScreenshotHandle, EVRScreenshotType type, IntPtr pchPreviewFilename, IntPtr pchVRFilename);
@@ -1623,7 +1623,7 @@ public struct IVRScreenshots
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRResources
+public partial struct IVRResources
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate uint _LoadSharedResource(IntPtr pchResourceName, string pchBuffer, uint unBufferLen);
@@ -1638,7 +1638,7 @@ public struct IVRResources
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRDriverManager
+public partial struct IVRDriverManager
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate uint _GetDriverCount();
@@ -1663,7 +1663,7 @@ public struct IVRDriverManager
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRInput
+public partial struct IVRInput
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRInputError _SetActionManifestPath(IntPtr pchActionManifestPath);
@@ -1828,7 +1828,7 @@ public struct IVRInput
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRIOBuffer
+public partial struct IVRIOBuffer
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EIOBufferError _Open(IntPtr pchPath, EIOBufferMode mode, uint unElementSize, uint unElements, ref ulong pulBuffer);
@@ -1863,7 +1863,7 @@ public struct IVRIOBuffer
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRSpatialAnchors
+public partial struct IVRSpatialAnchors
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRSpatialAnchorError _CreateSpatialAnchorFromDescriptor(IntPtr pchDescriptor, ref uint pHandleOut);
@@ -1888,7 +1888,7 @@ public struct IVRSpatialAnchors
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRDebug
+public partial struct IVRDebug
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVRDebugError _EmitVrProfilerEvent(IntPtr pchMessage);
@@ -1913,7 +1913,7 @@ public struct IVRDebug
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRProperties
+public partial struct IVRProperties
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate ETrackedPropertyError _ReadPropertyBatch(ulong ulContainerHandle, ref PropertyRead_t pBatch, uint unBatchEntryCount);
@@ -1938,7 +1938,7 @@ public struct IVRProperties
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRPaths
+public partial struct IVRPaths
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate ETrackedPropertyError _ReadPathBatch(ulong ulRootHandle, ref PathRead_t pBatch, uint unBatchEntryCount);
@@ -1963,7 +1963,7 @@ public struct IVRPaths
 }
 
 [StructLayout(LayoutKind.Sequential)]
-public struct IVRBlockQueue
+public partial struct IVRBlockQueue
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EBlockQueueError _Create(ref ulong pulQueueHandle, IntPtr pchPath, uint unBlockDataSize, uint unBlockHeaderSize, uint unBlockCount, uint unFlags);
@@ -2013,7 +2013,7 @@ public struct IVRBlockQueue
 }
 
 
-public class Utils
+public partial class Utils
 {
 	public static IntPtr ToUtf8(string managedString)
 	{
@@ -2033,7 +2033,7 @@ public class Utils
 	private static byte[] buffer = new byte[1024];
 }
 
-public class CVRSystem
+public partial class CVRSystem
 {
 	IVRSystem FnTable;
 	internal CVRSystem(IntPtr pInterface)
@@ -2194,7 +2194,7 @@ public class CVRSystem
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate bool _PollNextEventPacked(ref VREvent_t_Packed pEvent,uint uncbVREvent);
 	[StructLayout(LayoutKind.Explicit)]
-	struct PollNextEventUnion
+	partial struct PollNextEventUnion
 	{
 		[FieldOffset(0)]
 		public IVRSystem._PollNextEvent pPollNextEvent;
@@ -2240,7 +2240,7 @@ public class CVRSystem
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate bool _GetControllerStatePacked(uint unControllerDeviceIndex,ref VRControllerState_t_Packed pControllerState,uint unControllerStateSize);
 	[StructLayout(LayoutKind.Explicit)]
-	struct GetControllerStateUnion
+	partial struct GetControllerStateUnion
 	{
 		[FieldOffset(0)]
 		public IVRSystem._GetControllerState pGetControllerState;
@@ -2271,7 +2271,7 @@ public class CVRSystem
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate bool _GetControllerStateWithPosePacked(ETrackingUniverseOrigin eOrigin,uint unControllerDeviceIndex,ref VRControllerState_t_Packed pControllerState,uint unControllerStateSize,ref TrackedDevicePose_t pTrackedDevicePose);
 	[StructLayout(LayoutKind.Explicit)]
-	struct GetControllerStateWithPoseUnion
+	partial struct GetControllerStateWithPoseUnion
 	{
 		[FieldOffset(0)]
 		public IVRSystem._GetControllerStateWithPose pGetControllerStateWithPose;
@@ -2353,7 +2353,7 @@ public class CVRSystem
 }
 
 
-public class CVRExtendedDisplay
+public partial class CVRExtendedDisplay
 {
 	IVRExtendedDisplay FnTable;
 	internal CVRExtendedDisplay(IntPtr pInterface)
@@ -2385,7 +2385,7 @@ public class CVRExtendedDisplay
 }
 
 
-public class CVRTrackedCamera
+public partial class CVRTrackedCamera
 {
 	IVRTrackedCamera FnTable;
 	internal CVRTrackedCamera(IntPtr pInterface)
@@ -2472,7 +2472,7 @@ public class CVRTrackedCamera
 }
 
 
-public class CVRApplications
+public partial class CVRApplications
 {
 	IVRApplications FnTable;
 	internal CVRApplications(IntPtr pInterface)
@@ -2684,7 +2684,7 @@ public class CVRApplications
 }
 
 
-public class CVRChaperone
+public partial class CVRChaperone
 {
 	IVRChaperone FnTable;
 	internal CVRChaperone(IntPtr pInterface)
@@ -2736,7 +2736,7 @@ public class CVRChaperone
 }
 
 
-public class CVRChaperoneSetup
+public partial class CVRChaperoneSetup
 {
 	IVRChaperoneSetup FnTable;
 	internal CVRChaperoneSetup(IntPtr pInterface)
@@ -2847,7 +2847,7 @@ public class CVRChaperoneSetup
 }
 
 
-public class CVRCompositor
+public partial class CVRCompositor
 {
 	IVRCompositor FnTable;
 	internal CVRCompositor(IntPtr pInterface)
@@ -3096,7 +3096,7 @@ public class CVRCompositor
 }
 
 
-public class CVROverlay
+public partial class CVROverlay
 {
 	IVROverlay FnTable;
 	internal CVROverlay(IntPtr pInterface)
@@ -3376,7 +3376,7 @@ public class CVROverlay
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate bool _PollNextOverlayEventPacked(ulong ulOverlayHandle,ref VREvent_t_Packed pEvent,uint uncbVREvent);
 	[StructLayout(LayoutKind.Explicit)]
-	struct PollNextOverlayEventUnion
+	partial struct PollNextOverlayEventUnion
 	{
 		[FieldOffset(0)]
 		public IVROverlay._PollNextOverlayEvent pPollNextOverlayEvent;
@@ -3601,7 +3601,7 @@ public class CVROverlay
 }
 
 
-public class CVROverlayView
+public partial class CVROverlayView
 {
 	IVROverlayView FnTable;
 	internal CVROverlayView(IntPtr pInterface)
@@ -3630,7 +3630,7 @@ public class CVROverlayView
 }
 
 
-public class CVRHeadsetView
+public partial class CVRHeadsetView
 {
 	IVRHeadsetView FnTable;
 	internal CVRHeadsetView(IntPtr pInterface)
@@ -3683,7 +3683,7 @@ public class CVRHeadsetView
 }
 
 
-public class CVRRenderModels
+public partial class CVRRenderModels
 {
 	IVRRenderModels FnTable;
 	internal CVRRenderModels(IntPtr pInterface)
@@ -3780,7 +3780,7 @@ public class CVRRenderModels
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate bool _GetComponentStatePacked(IntPtr pchRenderModelName,IntPtr pchComponentName,ref VRControllerState_t_Packed pControllerState,ref RenderModel_ControllerMode_State_t pState,ref RenderModel_ComponentState_t pComponentState);
 	[StructLayout(LayoutKind.Explicit)]
-	struct GetComponentStateUnion
+	partial struct GetComponentStateUnion
 	{
 		[FieldOffset(0)]
 		public IVRRenderModels._GetComponentState pGetComponentState;
@@ -3841,7 +3841,7 @@ public class CVRRenderModels
 }
 
 
-public class CVRNotifications
+public partial class CVRNotifications
 {
 	IVRNotifications FnTable;
 	internal CVRNotifications(IntPtr pInterface)
@@ -3864,7 +3864,7 @@ public class CVRNotifications
 }
 
 
-public class CVRSettings
+public partial class CVRSettings
 {
 	IVRSettings FnTable;
 	internal CVRSettings(IntPtr pInterface)
@@ -3962,7 +3962,7 @@ public class CVRSettings
 }
 
 
-public class CVRScreenshots
+public partial class CVRScreenshots
 {
 	IVRScreenshots FnTable;
 	internal CVRScreenshots(IntPtr pInterface)
@@ -4021,7 +4021,7 @@ public class CVRScreenshots
 }
 
 
-public class CVRResources
+public partial class CVRResources
 {
 	IVRResources FnTable;
 	internal CVRResources(IntPtr pInterface)
@@ -4047,7 +4047,7 @@ public class CVRResources
 }
 
 
-public class CVRDriverManager
+public partial class CVRDriverManager
 {
 	IVRDriverManager FnTable;
 	internal CVRDriverManager(IntPtr pInterface)
@@ -4079,7 +4079,7 @@ public class CVRDriverManager
 }
 
 
-public class CVRInput
+public partial class CVRInput
 {
 	IVRInput FnTable;
 	internal CVRInput(IntPtr pInterface)
@@ -4269,7 +4269,7 @@ public class CVRInput
 }
 
 
-public class CVRIOBuffer
+public partial class CVRIOBuffer
 {
 	IVRIOBuffer FnTable;
 	internal CVRIOBuffer(IntPtr pInterface)
@@ -4313,7 +4313,7 @@ public class CVRIOBuffer
 }
 
 
-public class CVRSpatialAnchors
+public partial class CVRSpatialAnchors
 {
 	IVRSpatialAnchors FnTable;
 	internal CVRSpatialAnchors(IntPtr pInterface)
@@ -4348,7 +4348,7 @@ public class CVRSpatialAnchors
 }
 
 
-public class CVRDebug
+public partial class CVRDebug
 {
 	IVRDebug FnTable;
 	internal CVRDebug(IntPtr pInterface)
@@ -4385,7 +4385,7 @@ public class CVRDebug
 }
 
 
-public class CVRProperties
+public partial class CVRProperties
 {
 	IVRProperties FnTable;
 	internal CVRProperties(IntPtr pInterface)
@@ -4415,7 +4415,7 @@ public class CVRProperties
 }
 
 
-public class CVRPaths
+public partial class CVRPaths
 {
 	IVRPaths FnTable;
 	internal CVRPaths(IntPtr pInterface)
@@ -4449,7 +4449,7 @@ public class CVRPaths
 }
 
 
-public class CVRBlockQueue
+public partial class CVRBlockQueue
 {
 	IVRBlockQueue FnTable;
 	internal CVRBlockQueue(IntPtr pInterface)
@@ -4514,7 +4514,7 @@ public class CVRBlockQueue
 }
 
 
-public class OpenVRInterop
+public partial class OpenVRInterop
 {
 	[DllImportAttribute("openvr_api", EntryPoint = "VR_InitInternal", CallingConvention = CallingConvention.Cdecl)]
 	internal static extern uint InitInternal(ref EVRInitError peError, EVRApplicationType eApplicationType);
@@ -5872,7 +5872,7 @@ public enum EBlockQueueCreationFlag
 	BlockQueueFlag_OwnerIsReader = 1,
 }
 
-[StructLayout(LayoutKind.Explicit)] public struct VREvent_Data_t
+[StructLayout(LayoutKind.Explicit)] public partial struct VREvent_Data_t
 {
 	[FieldOffset(0)] public VREvent_Reserved_t reserved;
 	[FieldOffset(0)] public VREvent_Controller_t controller;
@@ -5906,13 +5906,13 @@ public enum EBlockQueueCreationFlag
 }
 
 
-[StructLayout(LayoutKind.Explicit)] public struct VROverlayIntersectionMaskPrimitive_Data_t
+[StructLayout(LayoutKind.Explicit)] public partial struct VROverlayIntersectionMaskPrimitive_Data_t
 {
 	[FieldOffset(0)] public IntersectionMaskRectangle_t m_Rectangle;
 	[FieldOffset(0)] public IntersectionMaskCircle_t m_Circle;
 }
 
-[StructLayout(LayoutKind.Sequential)] public struct HmdMatrix34_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdMatrix34_t
 {
 	public float m0; //float[3][4]
 	public float m1;
@@ -5963,7 +5963,7 @@ public enum EBlockQueueCreationFlag
 	}
 #endif
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdMatrix33_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdMatrix33_t
 {
 	public float m0; //float[3][3]
 	public float m1;
@@ -5975,7 +5975,7 @@ public enum EBlockQueueCreationFlag
 	public float m7;
 	public float m8;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdMatrix44_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdMatrix44_t
 {
 	public float m0; //float[4][4]
 	public float m1;
@@ -5994,69 +5994,69 @@ public enum EBlockQueueCreationFlag
 	public float m14;
 	public float m15;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdVector3_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdVector3_t
 {
 	public float v0; //float[3]
 	public float v1;
 	public float v2;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdVector4_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdVector4_t
 {
 	public float v0; //float[4]
 	public float v1;
 	public float v2;
 	public float v3;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdVector3d_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdVector3d_t
 {
 	public double v0; //double[3]
 	public double v1;
 	public double v2;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdVector2_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdVector2_t
 {
 	public float v0; //float[2]
 	public float v1;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdQuaternion_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdQuaternion_t
 {
 	public double w;
 	public double x;
 	public double y;
 	public double z;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdQuaternionf_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdQuaternionf_t
 {
 	public float w;
 	public float x;
 	public float y;
 	public float z;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdColor_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdColor_t
 {
 	public float r;
 	public float g;
 	public float b;
 	public float a;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdQuad_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdQuad_t
 {
 	public HmdVector3_t vCorners0; //HmdVector3_t[4]
 	public HmdVector3_t vCorners1;
 	public HmdVector3_t vCorners2;
 	public HmdVector3_t vCorners3;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HmdRect2_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HmdRect2_t
 {
 	public HmdVector2_t vTopLeft;
 	public HmdVector2_t vBottomRight;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRBoneTransform_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRBoneTransform_t
 {
 	public HmdVector4_t position;
 	public HmdQuaternionf_t orientation;
 }
-[StructLayout(LayoutKind.Sequential)] public struct DistortionCoordinates_t
+[StructLayout(LayoutKind.Sequential)] public partial struct DistortionCoordinates_t
 {
 	public float rfRed0; //float[2]
 	public float rfRed1;
@@ -6065,13 +6065,13 @@ public enum EBlockQueueCreationFlag
 	public float rfBlue0; //float[2]
 	public float rfBlue1;
 }
-[StructLayout(LayoutKind.Sequential)] public struct Texture_t
+[StructLayout(LayoutKind.Sequential)] public partial struct Texture_t
 {
 	public IntPtr handle; // void *
 	public ETextureType eType;
 	public EColorSpace eColorSpace;
 }
-[StructLayout(LayoutKind.Sequential)] public struct TrackedDevicePose_t
+[StructLayout(LayoutKind.Sequential)] public partial struct TrackedDevicePose_t
 {
 	public HmdMatrix34_t mDeviceToAbsoluteTracking;
 	public HmdVector3_t vVelocity;
@@ -6082,34 +6082,34 @@ public enum EBlockQueueCreationFlag
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bDeviceIsConnected;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRTextureBounds_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRTextureBounds_t
 {
 	public float uMin;
 	public float vMin;
 	public float uMax;
 	public float vMax;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRTextureWithPose_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRTextureWithPose_t
 {
 	public IntPtr handle; // void *
 	public ETextureType eType;
 	public EColorSpace eColorSpace;
 	public HmdMatrix34_t mDeviceToAbsoluteTracking;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRTextureDepthInfo_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRTextureDepthInfo_t
 {
 	public IntPtr handle; // void *
 	public HmdMatrix44_t mProjection;
 	public HmdVector2_t vRange;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRTextureWithDepth_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRTextureWithDepth_t
 {
 	public IntPtr handle; // void *
 	public ETextureType eType;
 	public EColorSpace eColorSpace;
 	public VRTextureDepthInfo_t depth;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRTextureWithPoseAndDepth_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRTextureWithPoseAndDepth_t
 {
 	public IntPtr handle; // void *
 	public ETextureType eType;
@@ -6117,7 +6117,7 @@ public enum EBlockQueueCreationFlag
 	public HmdMatrix34_t mDeviceToAbsoluteTracking;
 	public VRTextureDepthInfo_t depth;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRVulkanTextureData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRVulkanTextureData_t
 {
 	public ulong m_nImage;
 	public IntPtr m_pDevice; // struct VkDevice_T *
@@ -6130,35 +6130,35 @@ public enum EBlockQueueCreationFlag
 	public uint m_nFormat;
 	public uint m_nSampleCount;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRVulkanTextureArrayData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRVulkanTextureArrayData_t
 {
 	public uint m_unArrayIndex;
 	public uint m_unArraySize;
 }
-[StructLayout(LayoutKind.Sequential)] public struct D3D12TextureData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct D3D12TextureData_t
 {
 	public IntPtr m_pResource; // struct ID3D12Resource *
 	public IntPtr m_pCommandQueue; // struct ID3D12CommandQueue *
 	public uint m_nNodeMask;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Controller_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Controller_t
 {
 	public uint button;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Mouse_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Mouse_t
 {
 	public float x;
 	public float y;
 	public uint button;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Scroll_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Scroll_t
 {
 	public float xdelta;
 	public float ydelta;
 	public uint unused;
 	public float viewportscale;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_TouchPadMove_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_TouchPadMove_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bFingerDown;
@@ -6168,12 +6168,12 @@ public enum EBlockQueueCreationFlag
 	public float fValueXRaw;
 	public float fValueYRaw;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Notification_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Notification_t
 {
 	public ulong ulUserValue;
 	public uint notificationId;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Process_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Process_t
 {
 	public uint pid;
 	public uint oldPid;
@@ -6182,17 +6182,17 @@ public enum EBlockQueueCreationFlag
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bConnectionLost;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Overlay_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Overlay_t
 {
 	public ulong overlayHandle;
 	public ulong devicePath;
 	public ulong memoryBlockId;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Status_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Status_t
 {
 	public uint statusState;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Keyboard_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Keyboard_t
 {
 	public byte cNewInput0,cNewInput1,cNewInput2,cNewInput3,cNewInput4,cNewInput5,cNewInput6,cNewInput7;
 	public string cNewInput
@@ -6213,16 +6213,16 @@ public enum EBlockQueueCreationFlag
 	}
 	public ulong uUserValue;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Ipd_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Ipd_t
 {
 	public float ipdMeters;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Chaperone_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Chaperone_t
 {
 	public ulong m_nPreviousUniverse;
 	public ulong m_nCurrentUniverse;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Reserved_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Reserved_t
 {
 	public ulong reserved0;
 	public ulong reserved1;
@@ -6231,44 +6231,44 @@ public enum EBlockQueueCreationFlag
 	public ulong reserved4;
 	public ulong reserved5;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_PerformanceTest_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_PerformanceTest_t
 {
 	public uint m_nFidelityLevel;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_SeatedZeroPoseReset_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_SeatedZeroPoseReset_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bResetBySystemMenu;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Screenshot_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Screenshot_t
 {
 	public uint handle;
 	public uint type;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_ScreenshotProgress_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_ScreenshotProgress_t
 {
 	public float progress;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_ApplicationLaunch_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_ApplicationLaunch_t
 {
 	public uint pid;
 	public uint unArgsHandle;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_EditingCameraSurface_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_EditingCameraSurface_t
 {
 	public ulong overlayHandle;
 	public uint nVisualMode;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_MessageOverlay_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_MessageOverlay_t
 {
 	public uint unVRMessageOverlayResponse;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_Property_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_Property_t
 {
 	public ulong container;
 	public ETrackedDeviceProperty prop;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_HapticVibration_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_HapticVibration_t
 {
 	public ulong containerHandle;
 	public ulong componentHandle;
@@ -6276,29 +6276,29 @@ public enum EBlockQueueCreationFlag
 	public float fFrequency;
 	public float fAmplitude;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_WebConsole_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_WebConsole_t
 {
 	public ulong webConsoleHandle;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_InputBindingLoad_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_InputBindingLoad_t
 {
 	public ulong ulAppContainer;
 	public ulong pathMessage;
 	public ulong pathUrl;
 	public ulong pathControllerType;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_InputActionManifestLoad_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_InputActionManifestLoad_t
 {
 	public ulong pathAppKey;
 	public ulong pathMessage;
 	public ulong pathMessageParam;
 	public ulong pathManifestPath;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_SpatialAnchor_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_SpatialAnchor_t
 {
 	public uint unHandle;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_ProgressUpdate_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_ProgressUpdate_t
 {
 	public ulong ulApplicationPropertyContainer;
 	public ulong pathDevice;
@@ -6307,19 +6307,19 @@ public enum EBlockQueueCreationFlag
 	public ulong pathIcon;
 	public float fProgress;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_ShowUI_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_ShowUI_t
 {
 	public EShowUIType eType;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_ShowDevTools_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_ShowDevTools_t
 {
 	public int nBrowserIdentifier;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_HDCPError_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_HDCPError_t
 {
 	public EHDCPError eCode;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VREvent_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VREvent_t
 {
 	public uint eventType;
 	public uint trackedDeviceIndex;
@@ -6327,7 +6327,7 @@ public enum EBlockQueueCreationFlag
 	public VREvent_Data_t data;
 }
 // This structure is for backwards binary compatibility on Linux and OSX only
-[StructLayout(LayoutKind.Sequential, Pack = 4)] public struct VREvent_t_Packed
+[StructLayout(LayoutKind.Sequential, Pack = 4)] public partial struct VREvent_t_Packed
 {
 	public uint eventType;
 	public uint trackedDeviceIndex;
@@ -6348,23 +6348,23 @@ public enum EBlockQueueCreationFlag
 		unpacked.data = this.data;
 	}
 }
-[StructLayout(LayoutKind.Sequential)] public struct RenderModel_ComponentState_t
+[StructLayout(LayoutKind.Sequential)] public partial struct RenderModel_ComponentState_t
 {
 	public HmdMatrix34_t mTrackingToComponentRenderModel;
 	public HmdMatrix34_t mTrackingToComponentLocal;
 	public uint uProperties;
 }
-[StructLayout(LayoutKind.Sequential)] public struct HiddenAreaMesh_t
+[StructLayout(LayoutKind.Sequential)] public partial struct HiddenAreaMesh_t
 {
 	public IntPtr pVertexData; // const struct vr::HmdVector2_t *
 	public uint unTriangleCount;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRControllerAxis_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRControllerAxis_t
 {
 	public float x;
 	public float y;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRControllerState_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRControllerState_t
 {
 	public uint unPacketNum;
 	public ulong ulButtonPressed;
@@ -6376,7 +6376,7 @@ public enum EBlockQueueCreationFlag
 	public VRControllerAxis_t rAxis4;
 }
 // This structure is for backwards binary compatibility on Linux and OSX only
-[StructLayout(LayoutKind.Sequential, Pack = 4)] public struct VRControllerState_t_Packed
+[StructLayout(LayoutKind.Sequential, Pack = 4)] public partial struct VRControllerState_t_Packed
 {
 	public uint unPacketNum;
 	public ulong ulButtonPressed;
@@ -6409,7 +6409,7 @@ public enum EBlockQueueCreationFlag
 		unpacked.rAxis4 = this.rAxis4;
 	}
 }
-[StructLayout(LayoutKind.Sequential)] public struct CameraVideoStreamFrameHeader_t
+[StructLayout(LayoutKind.Sequential)] public partial struct CameraVideoStreamFrameHeader_t
 {
 	public EVRTrackedCameraFrameType eFrameType;
 	public uint nWidth;
@@ -6419,7 +6419,7 @@ public enum EBlockQueueCreationFlag
 	public TrackedDevicePose_t trackedDevicePose;
 	public ulong ulFrameExposureTime;
 }
-[StructLayout(LayoutKind.Sequential)] public struct Compositor_FrameTiming
+[StructLayout(LayoutKind.Sequential)] public partial struct Compositor_FrameTiming
 {
 	public uint m_nSize;
 	public uint m_nFrameIndex;
@@ -6448,12 +6448,12 @@ public enum EBlockQueueCreationFlag
 	public uint m_nNumVSyncsReadyForUse;
 	public uint m_nNumVSyncsToFirstView;
 }
-[StructLayout(LayoutKind.Sequential)] public struct Compositor_BenchmarkResults
+[StructLayout(LayoutKind.Sequential)] public partial struct Compositor_BenchmarkResults
 {
 	public float m_flMegaPixelsPerSecond;
 	public float m_flHmdRecommendedMegaPixelsPerSecond;
 }
-[StructLayout(LayoutKind.Sequential)] public struct DriverDirectMode_FrameTiming
+[StructLayout(LayoutKind.Sequential)] public partial struct DriverDirectMode_FrameTiming
 {
 	public uint m_nSize;
 	public uint m_nNumFramePresents;
@@ -6461,19 +6461,19 @@ public enum EBlockQueueCreationFlag
 	public uint m_nNumDroppedFrames;
 	public uint m_nReprojectionFlags;
 }
-[StructLayout(LayoutKind.Sequential)] public struct ImuSample_t
+[StructLayout(LayoutKind.Sequential)] public partial struct ImuSample_t
 {
 	public double fSampleTime;
 	public HmdVector3d_t vAccel;
 	public HmdVector3d_t vGyro;
 	public uint unOffScaleFlags;
 }
-[StructLayout(LayoutKind.Sequential)] public struct AppOverrideKeys_t
+[StructLayout(LayoutKind.Sequential)] public partial struct AppOverrideKeys_t
 {
 	public IntPtr pchKey; // const char *
 	public IntPtr pchValue; // const char *
 }
-[StructLayout(LayoutKind.Sequential)] public struct Compositor_CumulativeStats
+[StructLayout(LayoutKind.Sequential)] public partial struct Compositor_CumulativeStats
 {
 	public uint m_nPid;
 	public uint m_nNumFramePresents;
@@ -6491,7 +6491,7 @@ public enum EBlockQueueCreationFlag
 	public uint m_nNumDroppedFramesTimedOut;
 	public uint m_nNumReprojectedFramesTimedOut;
 }
-[StructLayout(LayoutKind.Sequential)] public struct Compositor_StageRenderSettings
+[StructLayout(LayoutKind.Sequential)] public partial struct Compositor_StageRenderSettings
 {
 	public HmdColor_t m_PrimaryColor;
 	public HmdColor_t m_SecondaryColor;
@@ -6505,51 +6505,51 @@ public enum EBlockQueueCreationFlag
 	[MarshalAs(UnmanagedType.I1)]
 	public bool m_bWireframe;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionParams_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VROverlayIntersectionParams_t
 {
 	public HmdVector3_t vSource;
 	public HmdVector3_t vDirection;
 	public ETrackingUniverseOrigin eOrigin;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionResults_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VROverlayIntersectionResults_t
 {
 	public HmdVector3_t vPoint;
 	public HmdVector3_t vNormal;
 	public HmdVector2_t vUVs;
 	public float fDistance;
 }
-[StructLayout(LayoutKind.Sequential)] public struct IntersectionMaskRectangle_t
+[StructLayout(LayoutKind.Sequential)] public partial struct IntersectionMaskRectangle_t
 {
 	public float m_flTopLeftX;
 	public float m_flTopLeftY;
 	public float m_flWidth;
 	public float m_flHeight;
 }
-[StructLayout(LayoutKind.Sequential)] public struct IntersectionMaskCircle_t
+[StructLayout(LayoutKind.Sequential)] public partial struct IntersectionMaskCircle_t
 {
 	public float m_flCenterX;
 	public float m_flCenterY;
 	public float m_flRadius;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VROverlayIntersectionMaskPrimitive_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VROverlayIntersectionMaskPrimitive_t
 {
 	public EVROverlayIntersectionMaskPrimitiveType m_nPrimitiveType;
 	public VROverlayIntersectionMaskPrimitive_Data_t m_Primitive;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VROverlayProjection_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VROverlayProjection_t
 {
 	public float fLeft;
 	public float fRight;
 	public float fTop;
 	public float fBottom;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VROverlayView_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VROverlayView_t
 {
 	public ulong overlayHandle;
 	public Texture_t texture;
 	public VRTextureBounds_t textureBounds;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRVulkanDevice_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRVulkanDevice_t
 {
 	public IntPtr m_pInstance; // struct VkInstance_T *
 	public IntPtr m_pDevice; // struct VkDevice_T *
@@ -6557,19 +6557,19 @@ public enum EBlockQueueCreationFlag
 	public IntPtr m_pQueue; // struct VkQueue_T *
 	public uint m_uQueueFamilyIndex;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRNativeDevice_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRNativeDevice_t
 {
 	public IntPtr handle; // void *
 	public EDeviceType eType;
 }
-[StructLayout(LayoutKind.Sequential)] public struct RenderModel_Vertex_t
+[StructLayout(LayoutKind.Sequential)] public partial struct RenderModel_Vertex_t
 {
 	public HmdVector3_t vPosition;
 	public HmdVector3_t vNormal;
 	public float rfTextureCoord0; //float[2]
 	public float rfTextureCoord1;
 }
-[StructLayout(LayoutKind.Sequential)] public struct RenderModel_TextureMap_t
+[StructLayout(LayoutKind.Sequential)] public partial struct RenderModel_TextureMap_t
 {
 	public ushort unWidth;
 	public ushort unHeight;
@@ -6578,7 +6578,7 @@ public enum EBlockQueueCreationFlag
 	public ushort unMipLevels;
 }
 // This structure is for backwards binary compatibility on Linux and OSX only
-[StructLayout(LayoutKind.Sequential, Pack = 4)] public struct RenderModel_TextureMap_t_Packed
+[StructLayout(LayoutKind.Sequential, Pack = 4)] public partial struct RenderModel_TextureMap_t_Packed
 {
 	public ushort unWidth;
 	public ushort unHeight;
@@ -6602,7 +6602,7 @@ public enum EBlockQueueCreationFlag
 		unpacked.unMipLevels = this.unMipLevels;
 	}
 }
-[StructLayout(LayoutKind.Sequential)] public struct RenderModel_t
+[StructLayout(LayoutKind.Sequential)] public partial struct RenderModel_t
 {
 	public IntPtr rVertexData; // const struct vr::RenderModel_Vertex_t *
 	public uint unVertexCount;
@@ -6611,7 +6611,7 @@ public enum EBlockQueueCreationFlag
 	public int diffuseTextureId;
 }
 // This structure is for backwards binary compatibility on Linux and OSX only
-[StructLayout(LayoutKind.Sequential, Pack = 4)] public struct RenderModel_t_Packed
+[StructLayout(LayoutKind.Sequential, Pack = 4)] public partial struct RenderModel_t_Packed
 {
 	public IntPtr rVertexData; // const struct vr::RenderModel_Vertex_t *
 	public uint unVertexCount;
@@ -6635,23 +6635,23 @@ public enum EBlockQueueCreationFlag
 		unpacked.diffuseTextureId = this.diffuseTextureId;
 	}
 }
-[StructLayout(LayoutKind.Sequential)] public struct RenderModel_ControllerMode_State_t
+[StructLayout(LayoutKind.Sequential)] public partial struct RenderModel_ControllerMode_State_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bScrollWheelVisible;
 }
-[StructLayout(LayoutKind.Sequential)] public struct NotificationBitmap_t
+[StructLayout(LayoutKind.Sequential)] public partial struct NotificationBitmap_t
 {
 	public IntPtr m_pImageData; // void *
 	public int m_nWidth;
 	public int m_nHeight;
 	public int m_nBytesPerPixel;
 }
-[StructLayout(LayoutKind.Sequential)] public struct CVRSettingHelper
+[StructLayout(LayoutKind.Sequential)] public partial struct CVRSettingHelper
 {
 	public IntPtr m_pSettings; // class vr::IVRSettings *
 }
-[StructLayout(LayoutKind.Sequential)] public struct InputAnalogActionData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct InputAnalogActionData_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bActive;
@@ -6664,7 +6664,7 @@ public enum EBlockQueueCreationFlag
 	public float deltaZ;
 	public float fUpdateTime;
 }
-[StructLayout(LayoutKind.Sequential)] public struct InputDigitalActionData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct InputDigitalActionData_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bActive;
@@ -6675,20 +6675,20 @@ public enum EBlockQueueCreationFlag
 	public bool bChanged;
 	public float fUpdateTime;
 }
-[StructLayout(LayoutKind.Sequential)] public struct InputPoseActionData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct InputPoseActionData_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bActive;
 	public ulong activeOrigin;
 	public TrackedDevicePose_t pose;
 }
-[StructLayout(LayoutKind.Sequential)] public struct InputSkeletalActionData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct InputSkeletalActionData_t
 {
 	[MarshalAs(UnmanagedType.I1)]
 	public bool bActive;
 	public ulong activeOrigin;
 }
-[StructLayout(LayoutKind.Sequential)] public struct InputOriginInfo_t
+[StructLayout(LayoutKind.Sequential)] public partial struct InputOriginInfo_t
 {
 	public ulong devicePath;
 	public uint trackedDeviceIndex;
@@ -6830,7 +6830,7 @@ public enum EBlockQueueCreationFlag
 		}
 	}
 }
-[StructLayout(LayoutKind.Sequential)] public struct InputBindingInfo_t
+[StructLayout(LayoutKind.Sequential)] public partial struct InputBindingInfo_t
 {
 	public byte rchDevicePathName0,rchDevicePathName1,rchDevicePathName2,rchDevicePathName3,rchDevicePathName4,rchDevicePathName5,rchDevicePathName6,rchDevicePathName7,rchDevicePathName8,rchDevicePathName9,rchDevicePathName10,rchDevicePathName11,rchDevicePathName12,rchDevicePathName13,rchDevicePathName14,rchDevicePathName15,rchDevicePathName16,rchDevicePathName17,rchDevicePathName18,rchDevicePathName19,rchDevicePathName20,rchDevicePathName21,rchDevicePathName22,rchDevicePathName23,rchDevicePathName24,rchDevicePathName25,rchDevicePathName26,rchDevicePathName27,rchDevicePathName28,rchDevicePathName29,rchDevicePathName30,rchDevicePathName31,rchDevicePathName32,rchDevicePathName33,rchDevicePathName34,rchDevicePathName35,rchDevicePathName36,rchDevicePathName37,rchDevicePathName38,rchDevicePathName39,rchDevicePathName40,rchDevicePathName41,rchDevicePathName42,rchDevicePathName43,rchDevicePathName44,rchDevicePathName45,rchDevicePathName46,rchDevicePathName47,rchDevicePathName48,rchDevicePathName49,rchDevicePathName50,rchDevicePathName51,rchDevicePathName52,rchDevicePathName53,rchDevicePathName54,rchDevicePathName55,rchDevicePathName56,rchDevicePathName57,rchDevicePathName58,rchDevicePathName59,rchDevicePathName60,rchDevicePathName61,rchDevicePathName62,rchDevicePathName63,rchDevicePathName64,rchDevicePathName65,rchDevicePathName66,rchDevicePathName67,rchDevicePathName68,rchDevicePathName69,rchDevicePathName70,rchDevicePathName71,rchDevicePathName72,rchDevicePathName73,rchDevicePathName74,rchDevicePathName75,rchDevicePathName76,rchDevicePathName77,rchDevicePathName78,rchDevicePathName79,rchDevicePathName80,rchDevicePathName81,rchDevicePathName82,rchDevicePathName83,rchDevicePathName84,rchDevicePathName85,rchDevicePathName86,rchDevicePathName87,rchDevicePathName88,rchDevicePathName89,rchDevicePathName90,rchDevicePathName91,rchDevicePathName92,rchDevicePathName93,rchDevicePathName94,rchDevicePathName95,rchDevicePathName96,rchDevicePathName97,rchDevicePathName98,rchDevicePathName99,rchDevicePathName100,rchDevicePathName101,rchDevicePathName102,rchDevicePathName103,rchDevicePathName104,rchDevicePathName105,rchDevicePathName106,rchDevicePathName107,rchDevicePathName108,rchDevicePathName109,rchDevicePathName110,rchDevicePathName111,rchDevicePathName112,rchDevicePathName113,rchDevicePathName114,rchDevicePathName115,rchDevicePathName116,rchDevicePathName117,rchDevicePathName118,rchDevicePathName119,rchDevicePathName120,rchDevicePathName121,rchDevicePathName122,rchDevicePathName123,rchDevicePathName124,rchDevicePathName125,rchDevicePathName126,rchDevicePathName127;
 	public string rchDevicePathName
@@ -7422,7 +7422,7 @@ public enum EBlockQueueCreationFlag
 		}
 	}
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRActiveActionSet_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRActiveActionSet_t
 {
 	public ulong ulActionSet;
 	public ulong ulRestrictedToDevice;
@@ -7430,7 +7430,7 @@ public enum EBlockQueueCreationFlag
 	public uint unPadding;
 	public int nPriority;
 }
-[StructLayout(LayoutKind.Sequential)] public struct VRSkeletalSummaryData_t
+[StructLayout(LayoutKind.Sequential)] public partial struct VRSkeletalSummaryData_t
 {
 	public float flFingerCurl0; //float[5]
 	public float flFingerCurl1;
@@ -7442,11 +7442,11 @@ public enum EBlockQueueCreationFlag
 	public float flFingerSplay2;
 	public float flFingerSplay3;
 }
-[StructLayout(LayoutKind.Sequential)] public struct SpatialAnchorPose_t
+[StructLayout(LayoutKind.Sequential)] public partial struct SpatialAnchorPose_t
 {
 	public HmdMatrix34_t mAnchorToAbsoluteTracking;
 }
-[StructLayout(LayoutKind.Sequential)] public struct COpenVRContext
+[StructLayout(LayoutKind.Sequential)] public partial struct COpenVRContext
 {
 	public IntPtr m_pVRSystem; // class vr::IVRSystem *
 	public IntPtr m_pVRChaperone; // class vr::IVRChaperone *
@@ -7469,7 +7469,7 @@ public enum EBlockQueueCreationFlag
 	public IntPtr m_pVRDebug; // class vr::IVRDebug *
 	public IntPtr m_pVRNotifications; // class vr::IVRNotifications *
 }
-[StructLayout(LayoutKind.Sequential)] public struct PropertyWrite_t
+[StructLayout(LayoutKind.Sequential)] public partial struct PropertyWrite_t
 {
 	public ETrackedDeviceProperty prop;
 	public EPropertyWriteType writeType;
@@ -7479,7 +7479,7 @@ public enum EBlockQueueCreationFlag
 	public uint unTag;
 	public ETrackedPropertyError eError;
 }
-[StructLayout(LayoutKind.Sequential)] public struct PropertyRead_t
+[StructLayout(LayoutKind.Sequential)] public partial struct PropertyRead_t
 {
 	public ETrackedDeviceProperty prop;
 	public IntPtr pvBuffer; // void *
@@ -7488,11 +7488,11 @@ public enum EBlockQueueCreationFlag
 	public uint unRequiredBufferSize;
 	public ETrackedPropertyError eError;
 }
-[StructLayout(LayoutKind.Sequential)] public struct CVRPropertyHelpers
+[StructLayout(LayoutKind.Sequential)] public partial struct CVRPropertyHelpers
 {
 	public IntPtr m_pProperties; // class vr::IVRProperties *
 }
-[StructLayout(LayoutKind.Sequential)] public struct PathWrite_t
+[StructLayout(LayoutKind.Sequential)] public partial struct PathWrite_t
 {
 	public ulong ulPath;
 	public EPropertyWriteType writeType;
@@ -7503,7 +7503,7 @@ public enum EBlockQueueCreationFlag
 	public ETrackedPropertyError eError;
 	public IntPtr pszPath; // const char *
 }
-[StructLayout(LayoutKind.Sequential)] public struct PathRead_t
+[StructLayout(LayoutKind.Sequential)] public partial struct PathRead_t
 {
 	public ulong ulPath;
 	public IntPtr pvBuffer; // void *
@@ -7514,7 +7514,7 @@ public enum EBlockQueueCreationFlag
 	public IntPtr pszPath; // const char *
 }
 
-public class OpenVR
+public partial class OpenVR
 {
 
 	public static uint InitInternal(ref EVRInitError peError, EVRApplicationType eApplicationType)
@@ -7933,7 +7933,7 @@ public class OpenVR
 
 	const string FnTable_Prefix = "FnTable:";
 
-	class COpenVRContext
+	partial class COpenVRContext
 	{
 		public COpenVRContext() { Clear(); }
 

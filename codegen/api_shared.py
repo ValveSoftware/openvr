@@ -337,7 +337,8 @@ def outputstructfields(struct, data):
 				print('return new string(new char[] {')
 				for i in range(0, size-1):
 					print('(char)' + enumvalue['fieldname'] + str(i) + ',')
-				print('(char)' + enumvalue['fieldname'] + str(size-1) + '}).TrimEnd(\'\\0\');')
+				print('(char)' + enumvalue['fieldname'] + str(size-1))
+				print('}).TrimEnd(\'\\0\');')
 				print('}')
 				print('}')
 			else:
@@ -364,7 +365,7 @@ def outputstructs(namespace, data):
 						basename = getclasswithoutnamespace(key)
 						break
 						
-				print('[StructLayout(LayoutKind.Sequential)] public struct '+basename+'\n{')
+				print('[StructLayout(LayoutKind.Sequential)] public partial struct '+basename+'\n{')
 				outputstructfields(struct, data)
 
 				if (basename == 'HmdMatrix34_t'):
@@ -416,7 +417,7 @@ def outputstructs(namespace, data):
 						(basename == 'RenderModel_TextureMap_t') or
 						(basename == 'VREvent_t')):
 						print('// This structure is for backwards binary compatibility on Linux and OSX only')
-						print('[StructLayout(LayoutKind.Sequential, Pack = 4)] public struct '+basename+'_Packed\n{')
+						print('[StructLayout(LayoutKind.Sequential, Pack = 4)] public partial struct '+basename+'_Packed\n{')
 						outputstructfields(struct, data)
 						print('\tpublic '+basename+'_Packed('+basename+' unpacked)');
 						print('\t{')
@@ -481,7 +482,7 @@ def outputinterfaces(namespace, data):
 					print("\t}\n");
 
 				print("\t[StructLayout(LayoutKind.Sequential)]")
-				print("\tpublic struct " + classname + "\n\t{")
+				print("\tpublic partial struct " + classname + "\n\t{")
 				lastclass = classname
 
 
@@ -727,7 +728,7 @@ def isparamptr(paramname, paramlist):
 
 def outputclasses(namespace, data):
 
-	print("""public class Utils
+	print("""public partial class Utils
 	{
 		public static IntPtr ToUtf8(string managedString)
 		{
@@ -783,7 +784,7 @@ def outputclasses(namespace, data):
 					print("}\n\n");
 				classname = 'C' + interfacename[1:]
 				classshort = interfacename[1:]
-				print("public class " + classname+"\n{")
+				print("public partial class " + classname+"\n{")
 				print(interfacename+" FnTable;")
 				print("internal " + classname + "(IntPtr pInterface)")
 				print("{")
@@ -915,7 +916,7 @@ def outputclasses(namespace, data):
 				print('[UnmanagedFunctionPointer(CallingConvention.StdCall)]')				
 				print('internal delegate '+returntype+' _'+methodname+'Packed('+','.join(packedlist)+');')
 				print('[StructLayout(LayoutKind.Explicit)]')
-				print('struct '+methodname+'Union\n{')
+				print('partial struct '+methodname+'Union\n{')
 				print('\t[FieldOffset(0)]\n\tpublic '+interfacename+'._'+methodname+' p'+methodname+';')
 				print('\t[FieldOffset(0)]\n\tpublic _'+methodname+'Packed p'+methodname+'Packed;\n}')
 
