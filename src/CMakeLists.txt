@@ -34,8 +34,14 @@ endif()
 # Set the source group and files.
 set(CORE_FILES
 	openvr_api_public.cpp
-	jsoncpp.cpp
 )
+
+if(NOT USE_SYSTEM_JSONCPP)
+	set(JSON_CPP_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../thirdparty/jsoncpp)
+	include_directories(${JSON_CPP_DIR})
+	list(APPEND CORE_FILES ${JSON_CPP_DIR}/jsoncpp.cpp)
+endif()
+
 set(VRCOMMON_FILES
 	vrcommon/dirtools_public.cpp
 	vrcommon/envvartools_public.cpp
@@ -96,6 +102,10 @@ endif()
 
 if(USE_CUSTOM_LIBCXX)
 	set(EXTRA_LIBS ${EXTRA_LIBS} c++ c++abi)
+endif()
+
+if(USE_SYSTEM_JSONCPP)
+	list(APPEND EXTRA_LIBS jsoncpp)
 endif()
 
 target_link_libraries(${LIBNAME} ${EXTRA_LIBS} ${CMAKE_DL_LIBS})
