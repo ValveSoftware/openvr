@@ -180,7 +180,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismNeedsNewDrivers );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismStartupTimedOut );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_CouldNotStartPrism );
-		RETURN_ENUM_AS_STRING( VRInitError_Init_CreateDriverDirectDeviceFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismClientInitFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismExitedUnexpectedly );
 
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
