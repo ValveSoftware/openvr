@@ -8,7 +8,7 @@ set(OPENVR_HEADER_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../headers)
 if(APPLE)
   set(CMAKE_MACOSX_RPATH 1)
   if(CMAKE_SYSTEM_NAME MATCHES "Darwin")
-    set_source_files_properties(vrcommon/pathtools_public.cpp vrcommon/vrpathregistry_public.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
+    set_source_files_properties(vrcore/pathtools_public.cpp vrcore/vrpathregistry_public.cpp PROPERTIES COMPILE_FLAGS "-x objective-c++")
   endif()
   if(BUILD_SHARED OR BUILD_FRAMEWORK)
     find_library(FOUNDATION_FRAMEWORK Foundation)
@@ -23,7 +23,7 @@ elseif(WIN32)
 endif()
 
 # Add include folders.
-include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../headers ${CMAKE_CURRENT_SOURCE_DIR}/vrcommon)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR} ${CMAKE_CURRENT_SOURCE_DIR}/../headers ${CMAKE_CURRENT_SOURCE_DIR}/vrcore)
 
 if(USE_CUSTOM_LIBCXX)
 	link_directories(
@@ -36,19 +36,21 @@ set(CORE_FILES
 	openvr_api_public.cpp
 	jsoncpp.cpp
 )
-set(VRCOMMON_FILES
-	vrcommon/dirtools_public.cpp
-	vrcommon/envvartools_public.cpp
-	vrcommon/pathtools_public.cpp
-	vrcommon/sharedlibtools_public.cpp
-	vrcommon/hmderrors_public.cpp
-	vrcommon/vrpathregistry_public.cpp
-	vrcommon/strtools_public.cpp
+set(VRCORE_FILES
+	vrcore/dirtools_public.cpp
+	vrcore/envvartools_public.cpp
+	vrcore/pathtools_public.cpp
+	vrcore/sharedlibtools_public.cpp
+	vrcore/hmderrors_public.cpp
+	vrcore/vrpathregistry_public.cpp
+	vrcore/strtools_public.cpp
 )
+
+add_compile_definitions(VRCORE_NO_PLATFORM)
 
 set(SOURCE_FILES
 	${CORE_FILES}
-	${VRCOMMON_FILES}
+	${VRCORE_FILES}
 )
 
 set(PUBLIC_HEADER_FILES
@@ -61,8 +63,8 @@ source_group("Src" FILES
 	${CORE_FILES}
 )
 
-source_group("VRCommon" FILES
-	${VRCOMMON_FILES}
+source_group("VRCore" FILES
+	${VRCORE_FILES}
 )
 
 # Build the library.

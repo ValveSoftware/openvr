@@ -111,7 +111,7 @@ std::string Path_GetTemporaryDirectory()
 	const char *pchTmpDir = getenv( "TMPDIR" );
 	if ( pchTmpDir == NULL )
 	{
-		return "";
+		return "/tmp";
 	}
 	return pchTmpDir;
 #endif
@@ -608,15 +608,18 @@ std::vector<uint8_t> Path_ReadBinaryFile( const std::string & strFilename )
 	{
 		fseek( f, 0, SEEK_END );
 		int size = ftell( f );
-		fseek( f, 0, SEEK_SET );
+		if ( size > 0 )
+		{
+			fseek( f, 0, SEEK_SET );
 
-		vecFileContents.resize( size );
-		if ( fread( &vecFileContents[ 0 ], size, 1, f ) == 1 )
-		{
-		}
-		else
-		{
-			vecFileContents.clear();
+			vecFileContents.resize( size );
+			if ( fread( &vecFileContents[ 0 ], size, 1, f ) == 1 )
+			{
+			}
+			else
+			{
+				vecFileContents.clear();
+			}
 		}
 
 		fclose( f );
@@ -643,18 +646,21 @@ unsigned char * Path_ReadBinaryFile( const std::string &strFilename, int *pSize 
 	{
 		fseek(f, 0, SEEK_END);
 		int size = ftell(f);
-		fseek(f, 0, SEEK_SET);
-
-		buf = new unsigned char[size];
-		if (buf && fread(buf, size, 1, f) == 1)
+		if ( size > 0 )
 		{
-			if (pSize)
-				*pSize = size;
-		}
-		else
-		{
-			delete[] buf;
-			buf = 0;
+			fseek(f, 0, SEEK_SET);
+			
+			buf = new unsigned char[size];
+			if (buf && fread(buf, size, 1, f) == 1)
+			{
+				if (pSize)
+					*pSize = size;
+			}
+			else
+			{
+				delete[] buf;
+				buf = 0;
+			}
 		}
 
 		fclose(f);
@@ -682,18 +688,22 @@ uint32_t  Path_ReadBinaryFile( const std::string &strFilename, unsigned char *pB
 	if ( f != NULL )
 	{
 		fseek( f, 0, SEEK_END );
-		uint32_t size = (uint32_t)ftell( f );
-		fseek( f, 0, SEEK_SET );
+		int nSize = ftell( f );
+		if ( nSize > 0 )
+		{
+			uint32_t size = (uint32_t) nSize;
+			fseek( f, 0, SEEK_SET );
 
-		if ( size > unSize || !pBuffer )
-		{
-			unSizeToReturn = (uint32_t)size;
-		}
-		else
-		{
-			if ( fread( pBuffer, size, 1, f ) == 1 )
+			if ( size > unSize || !pBuffer )
 			{
-				unSizeToReturn = (uint32_t)size;
+				unSizeToReturn = size;
+			}
+			else
+			{
+				if ( fread( pBuffer, size, 1, f ) == 1 )
+				{
+					unSizeToReturn = size;
+				}
 			}
 		}
 
@@ -986,3 +996,67 @@ std::string Path_SanitizeFilename( const std::string& sFilename )
 
 	return sFixed;
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: deletes a directory and any contents, including subdirectories.
+//-----------------------------------------------------------------------------
+bool Path_DeleteDirectory( const std::string &sDirectoryPath, bool bDeleteSubdirectories )
+{
+#if defined( _WIN32 )
+	std::wstring wsDirectoryPath = UTF8to16( sDirectoryPath.c_str() );
+	std::wstring wsDirectoryPattern = wsDirectoryPath + L"\\*.*";
+	WIN32_FIND_DATAW findData;
+	HANDLE hFindFile = FindFirstFileW( wsDirectoryPattern.c_str(), &findData );
+	if ( hFindFile == INVALID_HANDLE_VALUE )
+		return false;
+
+	do
+	{
+		if ( findData.cFileName[ 0 ] == '.' )
+			continue;
+
+		std::wstring wsFilePath = wsDirectoryPath + L"\\" + findData.cFileName;
+
+		if ( findData.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY )
+		{
+			if ( !bDeleteSubdirectories )
+			{
+				FindClose( hFindFile );
+				return false;
+			}
+			else if ( !Path_DeleteDirectory( UTF16to8( wsFilePath ), bDeleteSubdirectories ) )
+			{
+				FindClose( hFindFile );
+				return false;
+			}
+		}
+
+		if ( !SetFileAttributesW( wsFilePath.c_str(), FILE_ATTRIBUTE_NORMAL ) )
+		{
+			FindClose( hFindFile );
+			return false;
+		}
+
+		if ( !DeleteFileW( wsFilePath.c_str() ) )
+		{
+			FindClose( hFindFile );
+			return false;
+		}
+	} while ( FindNextFileW( hFindFile, &findData ) );
+
+	if ( !FindClose( hFindFile ) )
+		return false;
+
+	if ( !SetFileAttributesW( wsDirectoryPath.c_str(), FILE_ATTRIBUTE_NORMAL ) )
+		return false;
+
+	if ( !RemoveDirectoryW( wsDirectoryPath.c_str() ) )
+		return false;
+
+	return true;
+#else
+	return false;
+#endif
+}
+

@@ -21,7 +21,7 @@ public:
 	static uint32_t GetSteamAppId();
 	static bool IsSteamVRMain();
 	static uint32_t InitSteamAppId();
-
+	static bool IsChildOfVRServer();
 public:
 	CVRPathRegistry_Public();
 

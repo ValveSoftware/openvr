@@ -114,6 +114,8 @@ bool Path_UnlinkFile( const std::string &strFilename );
 
 std::string Path_SanitizeFilename( const std::string& sFilename );
 
+bool Path_DeleteDirectory( const std::string& sDirectoryPath, bool bDeleteSubdirectories = false );
+
 #ifndef MAX_UNICODE_PATH
 	#define MAX_UNICODE_PATH 32767
 #endif
@@ -140,6 +142,8 @@ std::string Path_SanitizeFilename( const std::string& sFilename );
 #define PROGRAM_EXT ""
 #if defined( LINUX32 )
 #define PLATSUBDIR	"linux32"
+#elif defined( ANDROIDARM32 )
+#define PLATSUBDIR	"androidarm32" 
 #elif defined( ANDROIDARM64 )
 #define PLATSUBDIR	"androidarm64" 
 #elif defined( LINUXARM64 )

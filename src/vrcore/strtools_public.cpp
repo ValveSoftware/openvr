@@ -9,7 +9,13 @@
 #include <functional>
 #include <locale>
 #include <codecvt>
+#include <cstdarg>
+
+#if !defined( VRCORE_NO_PLATFORM )
 #include <vrcore/assert.h>
+#else
+#define AssertMsg( cond, ... )
+#endif
 
 #if defined( _WIN32 )
 #include <windows.h>
@@ -604,3 +610,37 @@ bool RepairUTF8( const std::string & sInputUtf8, std::string & sOutputUtf8 )
 {
 	return RepairUTF8( sInputUtf8.data(), sInputUtf8.data() + sInputUtf8.size(), sOutputUtf8 );
 }
+
+
+//-----------------------------------------------------------------------------
+// Purpose: Trims trailing CR, LF, Tab, and Space characters
+//-----------------------------------------------------------------------------
+std::string TrimTrailingWhitespace( const std::string& in )
+{
+	// trim string at the point where a non-whitespace character occurs -- often at the end of the string
+	size_t endpos = in.find_last_not_of( " \t\n\r" );
+	if ( std::string::npos != endpos )
+	{
+		return in.substr( 0, endpos + 1 );
+	}
+	else
+	{
+		return in;
+	}
+}
+
+/** Returns an IP address as a string */
+std::string IpToString( uint32_t unIpH )
+{
+	uint8_t *ip = ( uint8_t * )&unIpH;
+	return Format( "%d.%d.%d.%d", ip[ 3 ], ip[ 2 ], ip[ 1 ], ip[ 0 ] );
+}
+
+/** Returns an IP address and port as a string */
+std::string IpAndPortToString( uint32_t unIpH, uint16_t usPortH )
+{
+	uint8_t *ip = ( uint8_t * )&unIpH;
+	return Format( "%d.%d.%d.%d:%u", ip[ 3 ], ip[ 2 ], ip[ 1 ], ip[ 0 ], usPortH );
+}
+
+

@@ -56,6 +56,14 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	case VRInitError_Init_FirmwareUpdateBusy:			return "Firmware Update In Progress (138)";
 	case VRInitError_Init_FirmwareRecoveryBusy:			return "Firmware Recovery In Progress (139)";
 	case VRInitError_Init_USBServiceBusy:				return "USB Service Busy (140)";
+	case VRInitError_Init_VRDashboardServicePending:	return "VR Dashboard startup failed, vrservice was pending for too long (160)";
+	case VRInitError_Init_VRDashboardServiceTimeout:	return "VR Dashboard startup failed, attempt to communicate with vrservice timed out (161)";
+	case VRInitError_Init_VRDashboardServiceStopped:	return "VR Dashboard startup failed, vrservice was stopped (162)";
+	case VRInitError_Init_VRDashboardAlreadyStarted:	return "VR Dashboard startup failed, vrdashboard was already running (163)";
+	case VRInitError_Init_VRDashboardCopyFailed:		return "VR Dashboard startup failed, required files did not copy correctly (164)";
+	case VRInitError_Init_VRDashboardTokenFailure:		return "VR Dashboard startup failed, unable to create appropriate token (165)";
+	case VRInitError_Init_VRDashboardEnvironmentFailure:	return "VR Dashboard startup failed, unable to create appropriate environment (166)";
+	case VRInitError_Init_VRDashboardPathFailure:		return "VR Dashboard startup failed, path error (167)";
 
 	case VRInitError_Driver_Failed:							return "Driver Failed (200)";
 	case VRInitError_Driver_Unknown:						return "Driver Not Known (201)";
@@ -109,6 +117,7 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	case VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext:		return "HMD found, but problems with the data (1110)";
 	case VRInitError_VendorSpecific_HmdFound_UserDataAddressRange:			return "HMD found, but problems with the data (1111)";
 	case VRInitError_VendorSpecific_HmdFound_UserDataError:					return "HMD found, but problems with the data (1112)";
+	case VRInitError_VendorSpecific_HmdFound_UnexpectedConfiguration_1:		return "HMD found, but problems with the data (1115)";
 
 	case VRInitError_Steam_SteamInstallationNotFound: return "Unable to find Steam installation (2000)";
 
@@ -180,8 +189,20 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismNeedsNewDrivers );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismStartupTimedOut );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_CouldNotStartPrism );
-		RETURN_ENUM_AS_STRING( VRInitError_Init_CreateDriverDirectDeviceFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismClientInitFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismClientStartFailed );
 		RETURN_ENUM_AS_STRING( VRInitError_Init_PrismExitedUnexpectedly );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_BadLuid );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_NoServerForAppContainer );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_DuplicateBootstrapper );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardServicePending );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardServiceTimeout );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardServiceStopped );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardAlreadyStarted );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardCopyFailed );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardTokenFailure );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardEnvironmentFailure );
+		RETURN_ENUM_AS_STRING( VRInitError_Init_VRDashboardPathFailure );
 
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Failed );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_Unknown );
@@ -197,6 +218,8 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDriverIdOutOfBounds );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDisplayMirrored );
 		RETURN_ENUM_AS_STRING( VRInitError_Driver_HmdDisplayNotFoundLaptop );
+		RETURN_ENUM_AS_STRING( VRInitError_Driver_PeerDriverNotInstalled );
+		RETURN_ENUM_AS_STRING( VRInitError_Driver_WirelessHmdNotConnected );
 
 		RETURN_ENUM_AS_STRING( VRInitError_IPC_ServerInitFailed);
 		RETURN_ENUM_AS_STRING( VRInitError_IPC_ConnectFailed);
@@ -304,10 +327,13 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_WindowInterfaceIsNull );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_SystemLayerCreateInstance );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_SystemLayerCreateSession );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateInverseDistortUVs );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateBackbufferDepth );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_WindowsNotInDevMode );
+		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_OculusLinkNotEnabled );
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_OculusRuntimeBadInstall );
 
 		// Lighthouse
@@ -324,6 +350,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_HmdFound_UnableToGetUserDataNext );
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_HmdFound_UserDataAddressRange );
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_HmdFound_UserDataError );
+		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_HmdFound_UnexpectedConfiguration_1 );
 
 		RETURN_ENUM_AS_STRING( VRInitError_Steam_SteamInstallationNotFound );
 

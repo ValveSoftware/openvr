@@ -31,6 +31,9 @@ std::string DefaultACPtoUTF8( const char *pszStr );
 bool RepairUTF8( const char *begin, const char *end, std::string & sOutputUtf8 );
 bool RepairUTF8( const std::string & sInputUtf8, std::string & sOutputUtf8 );
 
+/** Trims trailing CR, LF, Tab, and Space characters */
+std::string TrimTrailingWhitespace( const std::string& in );
+
 /** safely copy a string into a buffer */
 void strcpy_safe( char *pchBuffer, size_t unBufferSizeBytes, const char *pchSource );
 template< size_t bufferSize >
@@ -148,6 +151,12 @@ size_t V_URLDecodeNoPlusForSpace( char *pchDecodeDest, int nDecodeDestLen, const
 // Purpose: strip extension from a path
 //-----------------------------------------------------------------------------
 void V_StripExtension( std::string &in );
+
+/** Returns an IP address as a string */
+std::string IpToString( uint32_t unIpH );
+
+/** Returns an IP address and port as a string */
+std::string IpAndPortToString( uint32_t unIpH, uint16_t usPortH );
 
 
 /** Tokenizes a string into a vector of strings */

@@ -481,3 +481,10 @@ uint32_t CVRPathRegistry_Public::InitSteamAppId()
 	return nSteamAppId;
 }
 
+//-----------------------------------------------------------------------------
+//-----------------------------------------------------------------------------
+bool CVRPathRegistry_Public::IsChildOfVRServer()
+{
+	std::string app_key = GetEnvironmentVariable( "STEAMVR_APPKEY" );
+	return app_key == "openvr.component.vrserver";
+}
