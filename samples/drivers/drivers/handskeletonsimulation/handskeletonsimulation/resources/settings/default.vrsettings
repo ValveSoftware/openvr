@@ -1,0 +1,12 @@
+{
+   "driver_handskeletonsimulation" : {
+      "enable": true,
+      "model_number": "MyControllerModelNumber 1"
+   },
+   "driver_handskeletonsimulation_left_controller": {
+      "serial_number": "MyLeftControllerABC123"
+   },
+   "driver_handskeletonsimulation_right_controller": {
+      "serial_number": "MyRightControllerXYZ789"
+   }
+}

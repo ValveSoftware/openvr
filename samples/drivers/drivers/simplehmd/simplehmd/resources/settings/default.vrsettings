@@ -1,0 +1,17 @@
+{
+	"driver_simplehmd": {
+		"enable": true,
+		"serial_number": "MyDummyHMDSerial-ABC123",
+		"model_number": "MyDummyHMDModel-1"
+	},
+	"simplehmd_display": {
+	    "window_x": 0,
+	    "window_y": 0,
+	    "window_width": 2160,
+	    "window_height": 1200,
+	    "render_width": 1512,
+	    "render_height": 1680,
+	    "vsync_to_photons": 0.011,
+	    "display_frequency": 0
+	}
+}

@@ -1,0 +1,8 @@
+[
+  {
+    "language_tag": "en_US",
+    "simplehmd": "My Simple HMD Driver",
+
+    "/input/system": "System Button"
+  }
+]

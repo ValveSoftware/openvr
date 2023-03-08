@@ -1,0 +1,10 @@
+{
+	"alwaysActivate": true,
+	"name" : "simplehmd",
+	"directory" : "",
+	"resourceOnly" : false,
+	"hmd_presence" :
+	[
+		"*.*"
+	]
+}

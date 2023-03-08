@@ -1,0 +1,30 @@
+{
+	"jsonid": "input_profile",
+	"controller_type": "mycontroller",
+	"input_bindingui_mode": "controller_handed",
+	"input_bindingui_left": {
+		"image": "{simplecontroller}/icons/sample_controller.svg"
+	},
+	"input_bindingui_right": {
+		"image": "{simplecontroller}/icons/sample_controller.svg"
+	},
+	"input_source": {
+		"/input/a": {
+			"binding_image_point": [ 80, 60 ],
+			"type": "button",
+			"touch": true,
+			"order": 1
+		},
+		"/input/trigger": {
+			"binding_image_point": [ 250, 60 ],
+			"type": "trigger",
+			"order": 2
+		},
+		"/output/haptic": {
+			"binding_image_point": [ 300, 150 ],
+			"type": "vibration",
+			"order": 4
+		}
+	},
+	"default_bindings": []
+}

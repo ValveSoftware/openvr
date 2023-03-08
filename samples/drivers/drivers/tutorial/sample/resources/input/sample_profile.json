@@ -1,0 +1,41 @@
+{
+  "jsonid": "input_profile",
+  "controller_type": "<my_device_name>",
+  "input_bindingui_mode": "controller_handed",
+  "input_source": {
+    "/input/a": {
+      "type": "button",
+      "touch": true,
+      "binding_image_point": [
+        80,
+        60
+      ],
+      "order": 1
+    },
+    "/input/trigger": {
+      "type": "trigger",
+      "binding_image_point": [
+        250,
+        60
+      ],
+      "order": 2
+    },
+    "/input/joystick": {
+      "type": "joystick",
+      "click": true,
+      "binding_image_point": [
+        60,
+        60
+      ],
+      "order": 3
+    },
+    "/output/haptic": {
+      "type": "vibration",
+      "binding_image_point": [
+        300,
+        150
+      ],
+      "order": 4
+    }
+  }
+}

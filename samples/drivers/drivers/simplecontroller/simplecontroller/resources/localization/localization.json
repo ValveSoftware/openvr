@@ -1,0 +1,9 @@
+[
+  {
+    "language_tag": "en_US",
+    "mycontroller" : "My Sample Driver Controller",
+
+    "/input/a" : "A button",
+    "/input/trigger": "Trigger"
+  }
+]

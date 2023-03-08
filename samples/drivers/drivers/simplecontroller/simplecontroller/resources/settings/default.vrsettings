@@ -1,0 +1,12 @@
+{
+   "driver_simplecontroller" : {
+      "enable" : true,
+      "mycontroller_model_number" : "MyControllerModelNumber 1"
+   },
+   "driver_simplecontroller_left_controller": {
+      "mycontroller_serial_number": "MyLeftControllerABC123"
+   },
+   "driver_simplecontroller_right_controller": {
+      "mycontroller_serial_number": "MyRightControllerXYZ789"
+   }
+}

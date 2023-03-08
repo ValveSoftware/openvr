@@ -5,8 +5,6 @@ VisualStudioVersion = 14.0.25420.1
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hellovr_opengl", "hellovr_opengl\hellovr_opengl.vcxproj", "{FF19F6AE-67E0-4585-9D4A-038CB6E8DD09}"
 EndProject
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "driver_sample", "driver_sample\driver_sample.vcxproj", "{A47C788B-1BDA-4057-87A9-FC35ED711B44}"
-EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "hellovr_dx12", "hellovr_dx12\hellovr_dx12.vcxproj", "{407B75DC-C7A4-444B-B628-63BCAB83C981}"
 EndProject
 Global

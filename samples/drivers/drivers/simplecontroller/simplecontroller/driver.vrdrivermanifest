@@ -1,0 +1,8 @@
+{
+	"alwaysActivate": true,
+	"name" : "simplecontroller",
+	"directory" : "",
+	"resourceOnly" : false,
+
+	"hmd_presence" : []
+}

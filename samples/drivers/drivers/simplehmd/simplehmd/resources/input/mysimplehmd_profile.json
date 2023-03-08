@@ -1,0 +1,16 @@
+{
+  "jsonid": "input_profile",
+  "controller_type": "simplehmd",
+  "input_bindingui_mode": "hmd",
+  "input_source": {
+    "/input/system": {
+      "binding_image_point": [
+        250,
+        60
+      ],
+      "type": "button",
+      "order": 2
+    }
+  },
+  "default_bindings": []
+}
