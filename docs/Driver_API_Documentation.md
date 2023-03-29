@@ -1796,11 +1796,12 @@ The list of keys that can be specified in the JSON file are:
 * `jsonid` - Required. This **must** be set to `input_profile`.
 * `controller_type` - Required if `Prop_ControllerType_String` has not been specified by the device. This is the
   controller type that this profile is for. This is used to match the profile to the device.
-* `compatibility_mode_controller_type` - Optional. Specifies that the device should emulate the specified device type.
-  Within the binding profile, this enabled compatibility mode and this sets:
+* `compatibility_mode_controller_type` - **(deprecated in v1.26)** Specifies that the device should emulate the specified device type when a binding is unavailable.
+  Within a binding it will set the following values:
     * `simulated_controller_type` to the specified controller type.
     * `simulate_rendermodel` to `true`.
     * `simulate_hmd` to `true`.
+* `remapping` - **(v1.26+)** Optional. A json file that details how to convert bindings from one controller type to another. Used when an application doesn't specify a binding for this device type. See: [Automatic Rebinding](#automatic-rebinding).
 * `device_class` - Optional. Inferred from the device's `Prop_DeviceClass_Int32` property.
 * `hand_priority` - Optional. If `Prop_ControllerHandSelectionPriority_Int32` has not been previously set,
   the value specified here **will** be used for that property, otherwise ignored if the property has already been set.
@@ -1941,7 +1942,8 @@ order, binding profiles will be chosen:
 3. A binding set on the partner.steamworks site.
 4. A default binding set by the driver.
 5. A binding from the targeted compatibility mode device (if compatibility mode enabled).
-   See [Device Emulation](device-emulation).
+   See [Device Emulation](#device-emulation).
+6. A binding that has been converted using a remapping layout (if [Automatic Rebinding](#automatic-rebinding) is enabled.)
 
 Binding profiles can be generated using the SteamVR Bindings web interface.
 Enabling `Enable Debugging Options in the input bindings user interface` in SteamVR developer settings will allow you to
@@ -1966,7 +1968,8 @@ following order (where lower numbered items are selected first):
 3. A binding set on the partner.steamworks site.
 4. A default binding set by the driver writer. This is what is described in this article.
 5. A binding from the targeted compatibility mode device (if compatibility mode enabled).
-   See [Device Emulation](device-emulation).
+   See [Device Emulation](#device-emulation).
+6. A binding that has been converted using a remapping layout (if [Automatic Rebinding](#automatic-rebinding) is enabled.)
 
 Default bindings are set in the input profile, under the `default_bindings` key in the root object.
 
@@ -3123,37 +3126,171 @@ which can also be the grip pose) suffice for creating simple curl animations.
 A way to implement skeletal input, with joints positions and orientations calculated programmatically can be found
 in `samples/drivers/handskeletonsimulation`.
 
-## Device Emulation
 
-Some applications enable functionality depending on what controller is connected. Typically, this is most apparent with
-Skeletal Input, with some applications specifically targeting only Index Controllers.
+## Application Compatibility
 
-This can cause problems for new devices which may not be compatible with these applications, even though they implement
-the OpenVR APIs correctly.
+Some applications were built with a specific set of controllers in mind. They may enable or disable functionality depending on the type of controller or HMD that is in use, or just crash outright. We provide a host of effective solutions for maintaining the uniqueness of your controller while also gaining compatibility with SteamVR titles.
 
-These applications typically check `Prop_ControllerType_String` (specified by `controller_type` in the device's input
-profile) of a device, then enable certain features such as skeletal input (hand tracking) if they detect a specific
-controller (typically `knuckles`, for Index Controllers).
+To give an example: a SteamVR Input application may have an analog grip action and a digital grip action, only using the analog action for controllers it knows have an analog grip component. If the application was not programmed with your controller type in mind it may not check the action you've bound, or it may even crash entirely. This is also common with Skeletal Input, with some applications only checking skeletal data if it thinks an Index Controller is connected.
 
-Simply emulating - by setting your device's `Prop_ControllerType_String` to `knuckles` - _can_ work, but is **not
-recommended**.
+SteamVR supports three different types of input and there are around a dozen different properties that an application may check to determine the type of controller in use. Simply using a common controller's `controller_type` will not only break many applications, but it will cause various problems with SteamVR itself.
 
-Doing this means that you are restricted to only the inputs the index controller has, and you cannot have custom
-bindings for your device. This also means that in the SteamVR Input binding UI, your device will be shown, listed and
-configured as an Index Controller, and not as your device, and will show binding profiles only created for the index
-controller.
-
-There are also some applications that check rendermodels of the current device, meaning you would also lose any unique
-presence your device has in VR by emulating through specifying these properties.
-
-A non-exhaustive list of well-known applications that are not fully compliant with OpenVR and require emulation to take
-advantage of certain features are:
+An example of a few well-known applications that require emulation to take advantage of certain features are:
 
 * `VRChat` - requires `knuckles` controller type to enable skeletal input.
 * `Boneworks` - requires `knuckles` controller type to enable skeletal input.
+* `Bonelab` - requires `valve/index_controller` interaction profile to enable skeletal input.
 * `Skyrim VR` - checks for device rendermodels that it supports.
+* `Vacation Simulator` - checks the HMD model name.
+* `Google Earth VR` - checks for device model names it supports.
 
-See [Emulating Devices](#emulating-devices) for information on how to emulate devices.
+To ensure maximum compatibility with your controllers you **should** take three separate steps.
+* Setup an [Automatic Rebinding](#automatic-rebinding) file for SteamVR Input and OpenXR applications.
+* Create binding files for important titles (including emulation when necessary). [Default Bindings](#default-bindings)
+* _[Optionally]_ Set emulation options in your default legacy binding file. [Legacy Binding Simulation](#legacy-binding-simulation)
+ 
+ See [Emulating Devices in Bindings](#emulating-devices-in-bindings) for information on how to emulate devices.
+
+
+### Automatic Rebinding
+
+_**This feature only applies to SteamVR v1.26 and higher. In earlier versions the remappings file will be ignored.**_
+
+If an application does not provide a binding for your device SteamVR will try to use the remappings file to convert an existing binding to work with your device. This works for SteamVR Input and OpenXR applications.
+
+The remapping json has an array of `layouts` which then have an array of `remappings`. Remappings specify a path, but can also specify a mode, and a specific input. When converting a binding SteamVR will look for the highest priority layout that the application has a binding for. Then it copies that binding profile and loops through each binding. For each binding it will check if there is a matching `remapping` and apply the conversion. If there is not a remapping for that binding it will just copy it across verbatim. 
+
+Remappings come in three types: input, mode, and component. When remapping a binding SteamVR checks for the most specific remappings first - input remappings (ex: click). Then we search for mode remappings (ex: button). And finally component remappings (ex: /user/hand/left/trigger). We'll only use one remapping per binding unless it has the remapping_mode: 'multiple' listed. This lets us do simple things like remapping the a button to the x button. But also more complex things like the various modes/inputs of a trigger style grip to a force sensor style grip.
+
+#### File Structure
+* `to_controller_type` - Required. This **must** be set to the device's `controller_type`.
+* `layouts` - Required. This is an array of layout objects.
+    * `priority` - Required. If multiple layouts can be used, use the highest priority. 
+    * `from_controller_type` - Required. The controller type this layout will convert from. 
+    * `simulate_controller_type` (default: true) - Optional. If this layout should also add the controller simulation option to the binding. 
+    * `simulate_render_model` (default: true) - Optional. If this layout should also add the controller render model simulation option to the binding. 
+    * `simulate_HMD` (default: true) - Optional. If this layout should also add the HMD simulation option to the binding. 
+    * `remappings` - Optional. Array of remapping objects. If all of your components are the same you don't need this.
+        * `from` - Required. An object specifying the type(s) of binding(s) to recognize.
+            * `path` - Required. The full path of the component to remap bindings from.
+            * `mode` - Optional. The type of binding mode to remap bindings from.
+            * `input` - Optional. The specific input on the mode to remap bindings from.
+        * `to` - Optional. An object specifying the details for the resulting binding. 
+            * `path` - Required. The full path of the component to remap bindings to.
+            * `mode` - Optional. The type of binding mode to remap bindings to.
+            * `input` - Optional. The specific input on the mode to remap bindings to.
+            * `parameters` - Optional. Object listing parameters to use for the resulting mapping.
+            * `parameters_mode` (default: replace) - Optional. The way to use the parameters specified in the `to` section. Potential values:
+                * `replace` or empty - Will clear the parameters from the original binding and copy over the parameters in the `to` section (if they exist).
+                * `copy` - Will copy the parameters from the original binding to the new binding.
+                * `append` - Will copy the parameters from the original binding and add the parameters from the `to` section. If there are duplicates the `to` parameter's value will be used.
+            * `parameters_modification` - Optional. This will modify the click and touch threshold parameters. Resulting activation thresholds will be clamped between 0.02 and 0.99. Resulting deactivation thresholds will be clamped between 0.01 and 0.98. Potential values:
+                * `quarter_thresholds` - Multiplies threshold values by 0.25.
+                * `half_thresholds` - Multiplies threshold values by 0.5.
+                * `double_thresholds` - Multiplies threshold values by 2.0.
+        * `remapping_mode` (default: replace) - Optional. Sometimes you want to do other things with a binding besides just replace it with another. Potential values:
+            * `replace` or empty - Will delete the old binding and add the new one.
+            * `delete` - Deletes the old binding and does not create a substitute. 
+            * `multiple` - Specifies that there are multiple new bindings to be created from the binding this remapping applies to.
+        * `mirror` (default: true) - Optional. By default we duplicate and mirror component paths from left to right and right to left. In most cases this means you only have to write one set of remappings instead of manually writing a set for /user/hand/left and another set of remappings for /user/hand/right. (this works for feet and elbows too)
+
+#### One-to-Many Remappings
+You can make one component map to multiple components, or inputs, using "remapping_mode" : "multiple". This has to be added to each remapping object you want to be used. If you want to keep the original binding as well add a component mapping with the same from/to. For example the following set of remappings will copy all the joystick bindings and make new bindings for a component called thumbstick, another set for a component called trackpad, and then keep the original joystick bindings.
+
+```json
+        {
+          "from": {
+            "path" : "/user/hand/right/input/joystick"
+          },
+          "to": {
+            "path" : "/user/hand/right/input/thumbstick",
+            "parameters_mode": "copy"
+          },
+          "remapping_mode" : "multiple"
+        },
+        {
+          "from": {
+            "path" : "/user/hand/right/input/joystick"
+          },
+          "to": {
+            "path" : "/user/hand/right/input/trackpad",
+            "parameters_mode": "copy"
+          },
+          "remapping_mode" : "multiple"
+        },
+        {
+          "from": {
+            "path" : "/user/hand/right/input/joystick"
+          },
+          "to": {
+            "path" : "/user/hand/right/input/joystick",
+            "parameters_mode": "copy"
+          },
+          "remapping_mode" : "multiple"
+        },
+```
+
+#### Examples
+You can find many examples of rebinding files in the drivers for included controller types. For example, from your SteamVR folder SteamVR\drivers\indexcontroller\resources\input\index_controller_remapping.json
+
+
+### Emulating Devices in Bindings
+
+The Binding UI has settings in the Options menu in the upper right hand corner for setting up emulation. You can also do it manually in a bindings json. This looks different depending on the VR API the application is using.
+
+#### SteamVR Input and Legacy Input
+
+Setting `simulated_controller_type` in a binding will configure SteamVR to tell the application that your device has different properties than you configured in the driver. Specifically, the properties listed in [Emulateable Devices](#emulateable-devices). This will only be true for the application that this binding applies to. Your device will still appear normally in the dashboard and overlays.
+
+Emulation settings are stored in the root of the bindings profile json object, under the key `options`.
+
+```json
+{
+  "options": {
+    "simulated_controller_type": "knuckles",
+    "simulate_rendermodel": true
+  }
+}
+```
+
+* `simulated_controller_type` - The `Prop_ControllerType_String` of the controller you want to simulate. 
+* `simulate_rendermodel` (Default: false) - Whether to simulate the rendermodel. Some games look for the rendermodel, instead of the controller type.
+* `simulate_hmd` (Default: true) - Simulate an HMD type that corresponds to the simulated_controller_type. Some games check hmd to determine controller type.
+
+#### OpenXR
+
+Since OpenXR doesn't allow applications to get information about devices directly emulation is much more simple. In the root of the document `interaction_profile` **must** be specified with one of the interaction profiles the application accepts. The Binding UI will display the acceptable profiles from the application when it is running.
+
+### Legacy Binding Simulation
+
+Before OpenXR and SteamVR Input we used an input system we now refer to as Legacy Input. This system is still supported by SteamVR and many popular applications use it. However, it is a very generic system that doesn't allow an application to submit bindings on a per controller basis. This means that it is impossible to tell whether the application will support your device programmatically. 
+
+The simulation settings can make your device compatible with many legacy applications. But as it can be hard to know all the legacy applications that will need emulation we recommend setting emulation options on your default legacy binding file. That will emulate the controller you choose for _all_ legacy applications. Follow the [instructions here](#steamvr-input-and-legacy-input) to add these settings to your default legacy binding file.
+
+The downside of this approach is that all legacy input applications will show the render model (and controller instructions, if any) for the controller you choose to emulate. We believe the level of application compatibility gained by this approach is worth the cost.
+
+### Binding Duplication
+
+**_As of SteamVR v1.26 this approach is deprecated in favor of [Automatic Rebinding](#automatic-rebinding). If a rebinding file is specified `compatibility_mode_controller_type` will be ignored._**
+
+Within the device input profile, `compatibility_mode_controller_type` **can** be provided, which will only take effect when no binding profile exists for an application.
+
+When a binding profile isn't found, the binding profile from the emulated device **will** be used, along with setting
+the simulation properties.
+
+**Only** input components that are specified both in the device's input profile and the emulation device's profile will
+be successfully bound and active.
+
+```json
+{
+  "compatibility_mode_controller_type": "knuckles"
+}
+```
+
+In the root of `<device_name>_profile.json` input profile, a device can set `compatibility_mode_controller_type` to an
+emulate-able device listed in [Emulateable Devices](#Emulateable-Devices).
+
+Doing this is the equivalent of setting `simulated_controller_type` and `simulate_rendermodel` per application binding profile.
 
 ### Emulateable Devices
 
@@ -3185,9 +3322,8 @@ container:
   set to `TrackedControllerRole_RightHand`.
 * `tracking_system_name` - Simulates `Prop_TrackingSystemName_String` for a device.
 * `manufacturer_name` - Simulates `Prop_ManufacturerName_String` for a device.
-* `legacy_axis` - Simulates the `Prop_Axis0Type_Int32`, `Prop_Axis1Type_Int32`...`Prop_Axis4Type_Int32` properties in
-  ascending order in the array.
-* `legacy_buttons` - the button masks for the legacy input system in `Prop_SupportedButtons_Uint64`.
+* `legacy_axis` - Simulates the `Prop_Axis0Type_Int32`, `Prop_Axis1Type_Int32`...`Prop_Axis4Type_Int32` axis component types.
+* `legacy_buttons` - The button masks for the legacy input system in `Prop_SupportedButtons_Uint64`.
 
 The list below shows the device controller type that can be emulated, and the properties and values that SteamVR will
 set in the override property container when set. Depending on the `Prop_ControllerRoleHint_Int32`, where specified
@@ -3212,25 +3348,6 @@ will be set in the override property container.
     * `Prop_ManufacturerName_String` - `Valve`
     * `legacy_buttons` - [ 0, 1, 2, 7, 32, 33, 34 ]
     * `legacy_axis` - [ 2, 3, 3, 0, 0 ]
-
-* `vive_tracker`
-    * `hmd_profile` - `vive`
-    * `Prop_ModelNumber_String`
-        * Left Hand: `VIVE Tracker MV`
-        * Right Hand: `VIVE Tracker MV`
-    * `Prop_SerialNumber_String`
-        * Left Hand: `LHR-00000001`
-        * Right Hand: `LHR-00000002`
-    * `Prop_RenderModelName_String`
-        * Left Hand: `{htc}vr_tracker_vive_1_0`
-        * Right Hand: `{htc}vr_tracker_vive_1_0`
-    * `Prop_RegisteredDeviceType_String`
-        * Left Hand: `htc/vive_trackerLHR-00000001`
-        * Right Hand: `htc/vive_trackerLHR-00000002`
-    * `Prop_TrackingSystemName_String` - `lighthouse`
-    * `Prop_ManufacturerName_String` - `HTC`
-    * `legacy_buttons` - `[ 0, 1, 2, 32, 33 ]`
-    * `legacy_axis` - `[ 1, 3, 0, 0, 0 ]`
 
 * `indexhmd`
     * `Prop_ModelNumber_String` - `Index`
@@ -3267,58 +3384,51 @@ will be set in the override property container.
     * `Prop_TrackingSystemName_String` - `oculus`
     * `Prop_ManufacturerName_String` - `Oculus`
 
-### Emulating Devices
+* `vive_controller`
+    * `hmd_profile` - `vive`
+    * `Prop_ModelNumber_String`
+        * Left Hand: `VIVE Controller Pro MV`
+        * Right Hand: `VIVE Controller Pro MV`
+    * `Prop_SerialNumber_String`
+        * Left Hand: `LHR-00000001`
+        * Right Hand: `LHR-00000002`
+    * `Prop_RenderModelName_String`
+        * Left Hand: `vr_controller_vive_1_5`
+        * Right Hand: `vr_controller_vive_1_5`
+    * `Prop_RegisteredDeviceType_String`
+        * Left Hand: `htc/vive_controllerLHR-00000001`
+        * Right Hand: `htc/vive_controllerLHR-00000002`
+    * `Prop_TrackingSystemName_String` - `lighthouse`
+    * `Prop_ManufacturerName_String` - `HTC`
+    * `legacy_buttons` - `[ 0, 1, 2, 32, 33 ]`
+    * `legacy_axis` - `[ 1, 3, 0, 0, 0 ]`
 
-Driver developers have the option to either:
+* `vive`
+    * `Prop_ModelNumber_String` - `Vive`
+    * `Prop_SerialNumber_String` - `LHR-00000000`
+    * `Prop_RenderModelName_String` - `generic_hmd`
+    * `Prop_RegisteredDeviceType_String` - `htc/vive`
+    * `Prop_TrackingSystemName_String` - `lighthouse`
+    * `Prop_ManufacturerName_String` - `HTC`
 
-1. Create individual binding files for each application that requires emulation
-2. Add simulation options to their default legacy binding file. If a specific legacy binding file is not provided with
-   the application for the device, then the runtime **will** simulate the controller type specified in the default
-   legacy binding file.
-
-Generally, whilst not ideal, adding the simulation options to the legacy binding file is safer option.
-
-Emulation settings are stored in the root of the bindings profile json object, under the key `options`.
-
-```json
-{
-  "options": {
-    "simulated_controller_type": "knuckles",
-    "simulate_rendermodel": true
-  }
-}
-```
-
-* `simulated_controller_type` - The `Prop_ControllerType_String` to emulate. This is what the game sees, but SteamVR
-  itself will use the `Prop_ControllerType_String` you set for your device programmatically. This means that a device
-  will continue to have its device specific bindings.
-* `simulate_rendermodel` - Whether to simulate the rendermodel. Some games look for the rendermodel, instead of the
-  controller type, to enable device specific features.
-* `simulate_hmd` - Simulate the current HMD used.
-
-### Emulation in Input Profile
-
-This is the recommended approach.
-
-Within the device input profile, `compatibility_mode_controller_type` **can** be provided, which will only take effect
-when no binding profile exists for an application.
-
-When a binding profile isn't found, the binding profile from the emulated device **will** be used, along with setting
-the simulation properties.
-
-**Only** input components that are specified both in the device's input profile and the emulation device's profile will
-be successfully bound and active.
-
-```json
-{
-  "compatibility_mode_controller_type": "knuckles"
-}
-```
-
-In the root of `<device_name>_profile.json` input profile, a device can set `compatibility_mode_controller_type` to an
-emulate-able device listed in [Emulateable Devices](#Emulateable-Devices).
-
-Doing this is the equivalent of setting `simulated_controller_type` and `simulate_rendermodel` per binding profile.
+* `vive_tracker`
+    * `hmd_profile` - `vive`
+    * `Prop_ModelNumber_String`
+        * Left Hand: `VIVE Tracker MV`
+        * Right Hand: `VIVE Tracker MV`
+    * `Prop_SerialNumber_String`
+        * Left Hand: `LHR-00000001`
+        * Right Hand: `LHR-00000002`
+    * `Prop_RenderModelName_String`
+        * Left Hand: `{htc}vr_tracker_vive_1_0`
+        * Right Hand: `{htc}vr_tracker_vive_1_0`
+    * `Prop_RegisteredDeviceType_String`
+        * Left Hand: `htc/vive_trackerLHR-00000001`
+        * Right Hand: `htc/vive_trackerLHR-00000002`
+    * `Prop_TrackingSystemName_String` - `lighthouse`
+    * `Prop_ManufacturerName_String` - `HTC`
+    * `legacy_buttons` - `[ 0, 1, 2, 32, 33 ]`
+    * `legacy_axis` - `[ 1, 3, 0, 0, 0 ]`
 
 ## Render Models
 
