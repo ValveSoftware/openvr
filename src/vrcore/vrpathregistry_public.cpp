@@ -374,7 +374,7 @@ bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *
 		}
 		else
 		{
-			*psRuntimePath = "";
+			psRuntimePath->clear();
 		}
 	}
 
@@ -396,7 +396,7 @@ bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *
 		}
 		else
 		{
-			*psConfigPath = "";
+			psConfigPath->clear();
 		}
 	}
 
@@ -418,7 +418,7 @@ bool CVRPathRegistry_Public::GetPaths( std::string *psRuntimePath, std::string *
 		}
 		else
 		{
-			*psLogPath = "";
+			psLogPath->clear();
 		}
 	}
 
