@@ -3662,8 +3662,7 @@ Value::Members Value::getMemberNames() const {
   ObjectValues::const_iterator it = value_.map_->begin();
   ObjectValues::const_iterator itEnd = value_.map_->end();
   for (; it != itEnd; ++it) {
-    members.push_back(std::string((*it).first.data(),
-                                  (*it).first.length()));
+    members.emplace_back((*it).first.data(), (*it).first.length());
   }
   return members;
 }
@@ -3941,7 +3940,7 @@ void Path::makePath(const std::string& path, const InArgs& in) {
       const char* beginName = current;
       while (current != end && !strchr("[.", *current))
         ++current;
-      args_.push_back(std::string(beginName, current));
+      args_.emplace_back(std::string(beginName, current));
     }
   }
 }
