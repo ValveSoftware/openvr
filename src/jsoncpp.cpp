@@ -316,7 +316,7 @@ bool Reader::parse(const char* beginDoc,
   current_ = begin_;
   lastValueEnd_ = 0;
   lastValue_ = 0;
-  commentsBefore_ = "";
+  commentsBefore_.clear();
   errors_.clear();
   while (!nodes_.empty())
     nodes_.pop();
@@ -358,7 +358,7 @@ bool Reader::readValue() {
 
   if (collectComments_ && !commentsBefore_.empty()) {
     currentValue().setComment(commentsBefore_, commentBefore);
-    commentsBefore_ = "";
+    commentsBefore_.clear();
   }
 
   switch (token.type_) {
@@ -1257,7 +1257,7 @@ bool OurReader::parse(const char* beginDoc,
   current_ = begin_;
   lastValueEnd_ = 0;
   lastValue_ = 0;
-  commentsBefore_ = "";
+  commentsBefore_.clear();
   errors_.clear();
   while (!nodes_.empty())
     nodes_.pop();
@@ -1300,7 +1300,7 @@ bool OurReader::readValue() {
 
   if (collectComments_ && !commentsBefore_.empty()) {
     currentValue().setComment(commentsBefore_, commentBefore);
-    commentsBefore_ = "";
+    commentsBefore_.clear();
   }
 
   switch (token.type_) {
@@ -4365,7 +4365,7 @@ void FastWriter::dropNullPlaceholders() { dropNullPlaceholders_ = true; }
 void FastWriter::omitEndingLineFeed() { omitEndingLineFeed_ = true; }
 
 std::string FastWriter::write(const Value& root) {
-  document_ = "";
+  document_.clear();
   writeValue(root);
   if (!omitEndingLineFeed_)
     document_ += "\n";
@@ -4433,9 +4433,9 @@ StyledWriter::StyledWriter()
     : rightMargin_(74), indentSize_(3), addChildValues_() {}
 
 std::string StyledWriter::write(const Value& root) {
-  document_ = "";
+  document_.clear();
   addChildValues_ = false;
-  indentString_ = "";
+  indentString_.clear();
   writeCommentBeforeValue(root);
   writeValue(root);
   writeCommentAfterValueOnSameLine(root);
@@ -4649,7 +4649,7 @@ StyledStreamWriter::StyledStreamWriter(std::string indentation)
 void StyledStreamWriter::write(std::ostream& out, const Value& root) {
   document_ = &out;
   addChildValues_ = false;
-  indentString_ = "";
+  indentString_.clear();
   indented_ = true;
   writeCommentBeforeValue(root);
   if (!indented_) writeIndent();
@@ -4931,7 +4931,7 @@ int BuiltStyledStreamWriter::write(Value const& root, std::ostream* sout)
   sout_ = sout;
   addChildValues_ = false;
   indented_ = true;
-  indentString_ = "";
+  indentString_.clear();
   writeCommentBeforeValue(root);
   if (!indented_) writeIndent();
   indented_ = true;
@@ -5185,7 +5185,7 @@ StreamWriter* StreamWriterBuilder::newStreamWriter() const
   }
   std::string nullSymbol = "null";
   if (dnp) {
-    nullSymbol = "";
+    nullSymbol.clear();
   }
   if (pre > 17) pre = 17;
   std::string endingLineFeedSymbol = "";
