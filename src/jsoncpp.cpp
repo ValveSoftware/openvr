@@ -2625,8 +2625,7 @@ void throwLogicError(std::string const& msg)
 Value::CommentInfo::CommentInfo() : comment_(0) {}
 
 Value::CommentInfo::~CommentInfo() {
-  if (comment_)
-    releaseStringValue(comment_);
+  releaseStringValue(comment_);
 }
 
 void Value::CommentInfo::setComment(const char* text, size_t len) {
@@ -2902,11 +2901,9 @@ Value::~Value() {
     JSON_ASSERT_UNREACHABLE;
   }
 
-  if (comments_)
-    delete[] comments_;
+  delete[] comments_;
 
-  if ( default_value_)
-	  delete default_value_;
+  delete default_value_;
 }
 
 Value& Value::operator=(Value other) {
