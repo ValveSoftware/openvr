@@ -4647,7 +4647,7 @@ bool StyledWriter::hasCommentForValue(const Value& value) {
 
 StyledStreamWriter::StyledStreamWriter(std::string indentation)
     : document_(NULL), rightMargin_(74), indentation_(indentation),
-      addChildValues_() {}
+      addChildValues_(), indented_() {}
 
 void StyledStreamWriter::write(std::ostream& out, const Value& root) {
   document_ = &out;
