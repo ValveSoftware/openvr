@@ -2166,7 +2166,7 @@ bool CharReaderBuilder::validate(Json::Value* invalid) const
   }
   return 0u == inv.size();
 }
-Value& CharReaderBuilder::operator[](std::string key)
+Value& CharReaderBuilder::operator[](const std::string &key)
 {
   return settings_[key];
 }
@@ -5223,7 +5223,7 @@ bool StreamWriterBuilder::validate(Json::Value* invalid) const
   }
   return 0u == inv.size();
 }
-Value& StreamWriterBuilder::operator[](std::string key)
+Value& StreamWriterBuilder::operator[](const std::string &key)
 {
   return settings_[key];
 }
