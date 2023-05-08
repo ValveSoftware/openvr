@@ -4616,7 +4616,7 @@ void StyledWriter::writeCommentBeforeValue(const Value& root) {
   while (iter != comment.end()) {
     document_ += *iter;
     if (*iter == '\n' &&
-       (iter != comment.end() && *(iter + 1) == '/'))
+       (iter + 1 != comment.end() && *(iter + 1) == '/'))
       writeIndent();
     ++iter;
   }
@@ -4832,7 +4832,7 @@ void StyledStreamWriter::writeCommentBeforeValue(const Value& root) {
   while (iter != comment.end()) {
     *document_ << *iter;
     if (*iter == '\n' &&
-       (iter != comment.end() && *(iter + 1) == '/'))
+       (iter + 1 != comment.end() && *(iter + 1) == '/'))
       // writeIndent();  // would include newline
       *document_ << indentString_;
     ++iter;
@@ -5120,7 +5120,7 @@ void BuiltStyledStreamWriter::writeCommentBeforeValue(Value const& root) {
   while (iter != comment.end()) {
     *sout_ << *iter;
     if (*iter == '\n' &&
-       (iter != comment.end() && *(iter + 1) == '/'))
+       (iter + 1 != comment.end() && *(iter + 1) == '/'))
       // writeIndent();  // would write extra newline
       *sout_ << indentString_;
     ++iter;
