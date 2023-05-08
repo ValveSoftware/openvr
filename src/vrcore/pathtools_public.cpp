@@ -871,16 +871,32 @@ std::string Path_FilePathToUrl( const std::string & sRelativePath, const std::st
 	}
 }
 
+#if (__cplusplus < 201703L)
+
+template <typename T, std::size_t N>
+constexpr std::size_t size(const T (&array)[N]) noexcept
+{
+	return N;
+}
+
+#else
+
+using std::size;
+
+#endif
+
 // -----------------------------------------------------------------------------------------------------
 // Purpose: Strips off file:// off a URL and returns the path. For other kinds of URLs an empty string is returned
 // -----------------------------------------------------------------------------------------------------
 std::string Path_UrlToFilePath( const std::string & sFileUrl )
 {
-	if ( !strnicmp( sFileUrl.c_str(), FILE_URL_PREFIX, strlen( FILE_URL_PREFIX ) ) )
+	// -1 for '\0'.
+	constexpr size_t kFileUrlPrefixLength = size( FILE_URL_PREFIX ) - 1;
+	if ( !strnicmp( sFileUrl.c_str(), FILE_URL_PREFIX, kFileUrlPrefixLength ) )
 	{
 		char *pchBuffer = (char *)alloca( sFileUrl.length() );
 		V_URLDecodeNoPlusForSpace( pchBuffer, (int)sFileUrl.length(), 
-			sFileUrl.c_str() + strlen( FILE_URL_PREFIX ), (int)( sFileUrl.length() - strlen( FILE_URL_PREFIX ) ) );
+			sFileUrl.c_str() + kFileUrlPrefixLength, (int)( sFileUrl.length() - kFileUrlPrefixLength ) );
 
 		return Path_FixSlashes( pchBuffer );
 	}
