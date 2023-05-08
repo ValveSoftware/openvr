@@ -1130,7 +1130,7 @@ public:
   typedef const Value* pointer;
   typedef ValueConstIterator SelfType;
 
-  ValueConstIterator();
+  ValueConstIterator() = default;
   ValueConstIterator(ValueIterator const& other);
 
 private:
@@ -1180,7 +1180,7 @@ public:
   typedef Value* pointer;
   typedef ValueIterator SelfType;
 
-  ValueIterator();
+  ValueIterator() = default;
   explicit ValueIterator(const ValueConstIterator& other);
   ValueIterator(const ValueIterator& other);
 
@@ -1940,7 +1940,7 @@ private:
 class JSON_API StyledStreamWriter {
 public:
   StyledStreamWriter(std::string indentation = "\t");
-  ~StyledStreamWriter() {}
+  ~StyledStreamWriter() = default;
 
 public:
   /** \brief Serialize a Value in <a HREF="http://www.json.org">JSON</a> format.
