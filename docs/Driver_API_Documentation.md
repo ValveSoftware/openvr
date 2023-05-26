@@ -1,73 +1,85 @@
 # OpenVR Driver Documentation
 
 - [OpenVR Driver Documentation](#openvr-driver-documentation)
-    * [About](#about)
-    * [Overview & Important points](#overview---important-points)
-        + [Using interfaces implemented by the runtime](#using-interfaces-implemented-by-the-runtime)
-        + [Import interfaces and functions](#import-interfaces-and-functions)
-    * [Driver Folder Structure](#driver-folder-structure)
-    * [Driver files](#driver-files)
-        + [driver.vrdrivermanifest](#drivervrdrivermanifest)
-        + [resources/driver.vrresources](#resources-drivervrresources)
-        + [Icons](#icons)
-            - [Setting icons](#setting-icons)
-            - [Updating Icons](#updating-icons)
-        + [Device Class](#device-class)
-        + [Controller roles](#controller-roles)
-    * [localization/localization.json](#localization-localizationjson)
-        + [Defining localization in one file](#defining-localization-in-one-file)
-        + [Defining localization in multiple files](#defining-localization-in-multiple-files)
-    * [resources/settings/default.vrsettings](#resources-settings-defaultvrsettings)
+    - [About](#about)
+    - [Overview & Important points](#overview--important-points)
+        - [Using interfaces implemented by the runtime](#using-interfaces-implemented-by-the-runtime)
+        - [Import interfaces and functions](#import-interfaces-and-functions)
+    - [Driver Folder Structure](#driver-folder-structure)
+    - [Driver files](#driver-files)
+        - [driver.vrdrivermanifest](#drivervrdrivermanifest)
+        - [resources/driver.vrresources](#resourcesdrivervrresources)
+            - [Example](#example)
+        - [localization/localization.json](#localizationlocalizationjson)
+            - [Defining localization in one file](#defining-localization-in-one-file)
+            - [Defining localization in multiple files](#defining-localization-in-multiple-files)
+        - [resources/settings/default.vrsettings](#resourcessettingsdefaultvrsettings)
+            - [Example](#example)
+    - [Icons](#icons)
+        - [Setting icons](#setting-icons)
+        - [Updating Icons](#updating-icons)
+    - [Device Classes](#device-classes)
+        - [Controller roles](#controller-roles)
+        - [Trackers (Full body Tracking)](#trackers-full-body-tracking)
 - [Driver Structure](#driver-structure)
-    * [HmdDriverFactory](#hmddriverfactory)
-    * [IServerTrackedDeviceProvider](#iservertrackeddeviceprovider)
-    * [ITrackedDeviceServerDriver](#itrackeddeviceserverdriver)
-        + [Device Components](#device-components)
+    - [HmdDriverFactory](#hmddriverfactory)
+    - [IServerTrackedDeviceProvider](#iservertrackeddeviceprovider)
+        - [Example](#example)
+    - [ITrackedDeviceServerDriver](#itrackeddeviceserverdriver)
+        - [Device Components](#device-components)
             - [IVRDisplayComponent](#ivrdisplaycomponent)
             - [IVRDriverDirectModeComponent](#ivrdriverdirectmodecomponent)
             - [IVRVirtualDisplay](#ivrvirtualdisplay)
-    * [IVRServerDriverHost](#ivrserverdriverhost)
-    * [IVRDriverLog](#ivrdriverlog)
-    * [IVRWatchdogProvider](#ivrwatchdogprovider)
-        + [IVRWatchdogHost](#ivrwatchdoghost)
-    * [Device Inputs](#device-inputs)
-        + [Input Profiles](#input-profiles)
+    - [IVRServerDriverHost](#ivrserverdriverhost)
+    - [IVRDriverLog](#ivrdriverlog)
+    - [IVRWatchdogProvider](#ivrwatchdogprovider)
+        - [The watchdog interface is deprecated and should no longer be used for new projects.](#the-watchdog-interface-is-deprecated-and-should-no-longer-be-used-for-new-projects)
+        - [IVRWatchdogHost](#ivrwatchdoghost)
+    - [Device Inputs](#device-inputs)
+        - [Input Profiles](#input-profiles)
             - [Input sources](#input-sources)
-        + [Input Profile JSON](#input-profile-json)
+        - [Input Profile JSON](#input-profile-json)
             - [Reserved input sources](#reserved-input-sources)
-    * [Binding Profiles](#binding-profiles)
-        + [Default Bindings](#default-bindings)
-    * [Driver Input](#driver-input)
-        + [Creating Components](#creating-components)
-        + [Updating Components](#updating-components)
-    * [Events](#events)
-        + [Haptic Events](#haptic-events)
-    * [Device Properties](#device-properties)
-        + [Implementing Properties](#implementing-properties)
-        + [IVRProperties](#ivrproperties)
-        + [CVRPropertyHelpers](#cvrpropertyhelpers)
+    - [Binding Profiles](#binding-profiles)
+        - [Default Bindings](#default-bindings)
+    - [Driver Input](#driver-input)
+        - [Creating Components](#creating-components)
+        - [Updating Components](#updating-components)
+    - [Events](#events)
+        - [Haptic Events](#haptic-events)
+    - [Device Properties](#device-properties)
+        - [Implementing Properties](#implementing-properties)
+        - [IVRProperties](#ivrproperties)
+        - [CVRPropertyHelpers](#cvrpropertyhelpers)
             - [Getting properties](#getting-properties)
             - [Setting Properties](#setting-properties)
             - [Property Utilities](#property-utilities)
-    * [IVRSettings](#ivrsettings)
-    * [IVRResources](#ivrresources)
-    * [IVRDriverSpatialAnchors](#ivrdriverspatialanchors)
-    * [Poses](#poses)
-    * [Skeletal Input](#skeletal-input)
-        + [Notes on hand tracking compatibility](#notes-on-hand-tracking-compatibility)
-        + [The Skeleton](#the-skeleton)
-        + [Units and Coordinate System](#units-and-coordinate-system)
-        + [Bone Structure](#bone-structure)
+    - [IVRSettings](#ivrsettings)
+    - [IVRResources](#ivrresources)
+    - [IVRDriverSpatialAnchors](#ivrdriverspatialanchors)
+    - [Poses](#poses)
+    - [Skeletal Input](#skeletal-input)
+        - [Notes on hand tracking compatibility](#notes-on-hand-tracking-compatibility)
+        - [The Skeleton](#the-skeleton)
+        - [Units and Coordinate System](#units-and-coordinate-system)
+        - [Bone Structure](#bone-structure)
             - [Notes on the skeleton](#notes-on-the-skeleton)
-        + [Using Skeletal Input](#using-skeletal-input)
+        - [Using Skeletal Input](#using-skeletal-input)
             - [Creating Hand Animations](#creating-hand-animations)
-    * [Device Emulation](#device-emulation)
-        + [Emulateable Devices](#emulateable-devices)
-        + [Emulating Devices](#emulating-devices)
-        + [Emulation in Input Profile](#emulation-in-input-profile)
-    * [Render Models](#render-models)
-    * [Building & Development Environment](#building---development-environment)
-        + [Debugging SteamVR with Visual Studio](#debugging-steamvr-with-visual-studio)
+    - [Application Compatibility](#application-compatibility)
+        - [Automatic Rebinding](#automatic-rebinding)
+            - [File Structure](#file-structure)
+            - [One-to-Many Remappings](#one-to-many-remappings)
+            - [Examples](#examples)
+        - [Emulating Devices in Bindings](#emulating-devices-in-bindings)
+            - [SteamVR Input and Legacy Input](#steamvr-input-and-legacy-input)
+            - [OpenXR](#openxr)
+        - [Legacy Binding Simulation](#legacy-binding-simulation)
+        - [Binding Duplication](#binding-duplication)
+        - [Emulateable Devices](#emulateable-devices)
+    - [Render Models](#render-models)
+    - [Building & Development Environment](#building--development-environment)
+        - [Debugging SteamVR with Visual Studio](#debugging-steamvr-with-visual-studio)
 - [Further Examples](#further-examples)
 
 ## About
@@ -271,16 +283,17 @@ See [Icons](#icons) for how these icons should be formatted.
 
 If `Prop_ModelNumber_String` is not matched, a fallback considers the following child keys of `statusicons`:
 
-* `HMD` - Considered for driver devices of class `TrackedDeviceClass_HMD`. See [Device Class](#device-class) for more
+* `HMD` - Considered for driver devices of class `TrackedDeviceClass_HMD`. See [Device Classes](#device-classes) for
+  more
   information.
 * `<Left/Right>Controller` - Considered for driver devices of class `TrackedDeviceClass_Controller`.
-  See [Device Class](#device-class) for more information.
+  See [Device Classes](#device-classes) for more information.
     - If `<Left/Right>` is omitted, a fallback to `Controller` is considered. However, this means that the user won't be
       able to identify which icon represents the left/right hand.
 * `GenericTracker` - Considered for driver devices of class `TrackedDeviceClass_GenericTracker`.
-  See [Device Class](#device-class) for more information.
+  See [Device Classes](#device-classes) for more information.
 * `TrackingReference` - Considered for driver devices of class `TrackedDeviceClass_TrackingReference`.
-  See [Device Class](#device-class) for more information.
+  See [Device Classes](#device-classes) for more information.
 
 If these are not matched, the runtime **will** fallback to generic icons specified under these same keys
 in `system.vrresources`.
@@ -343,152 +356,7 @@ in `system.vrresources`.
 }
 ```
 
-### Icons
-
-If an icon is to be displayed in SteamVR, it **must** be one of the following sizes,
-depending on what type of device it is:
-
-* HMD: 50x32 or 100x64 (see below) png/gif
-* Other: 32x32 or 64x64 (see below) png/gif
-
-Append `@2x` to the end of the file name to have a 100x64 HMD icon or 64x64 device icon.
-Otherwise, a 50x32 or 32x32 icon size **will** be used.
-
-For example:
-
-* `my_hmd_icon.png` - 50x32 icon **must** be used.
-* `my_hmd_icon@2x.png` - 100x64 icon **must** be used.
-
-An icon which is not a supported size **will** be cropped from the top-left.
-
-An icon **can** choose to animate using a gif format. For example, it is typical for tracked controllers to have a
-breathing animation when they are on, but have not established tracking.
-
-Icons **must** be a colored green-blue gradient across the image. Icons **will** be formatted appropriately to include
-this gradient. These gradients are generated by the runtime, and are placed into the same folder
-the icon is in, with  `.b4bfb144` appended to the filename.
-
-#### Setting icons
-
-To set icons, they **must** be set as a property of the device. This can either be done in
-the `driver.vrdrivermanifest` file or through setting the properties programmatically.
-See [Device Properties](#device-properties).
-
-A list of icons that **can** be set are defined below:
-
-* `Prop_NamedIconPathDeviceOff_String` - The device is off.
-* `Prop_NamedIconPathDeviceSearching_String` - The device is on, but does not have tracking established.
-* `Prop_NamedIconPathDeviceSearchingAlert_String` - The device is on, does not have tracking established and has
-  received a warning.
-* `Prop_NamedIconPathDeviceReady_String` - The device is on, tracking and working nominally.
-* `Prop_NamedIconPathDeviceReadyAlert_String` - The device is on and ready to use, but needs to inform the user of
-  something (E.g. firmware update).
-* `Prop_NamedIconPathDeviceNotReady_String` - The device is on, but not ready to start up and establish tracking.
-* `Prop_NamedIconPathDeviceStandby_String` - The device has been put to sleep due to system inactivity.
-* `Prop_NamedIconPathDeviceStandbyAlert_String` - The device is in standby, but needs to inform the user of something (
-  E.g. firmware update).
-* `Prop_NamedIconPathDeviceAlertLow_String` - The device is working, but has a low battery. This is
-  when `Prop_DeviceBatteryPercentage_Float` is less than 15%. See [Device Properties](#device-properties).
-* `Prop_NamedIconPathTrackingReferenceDeviceOff_String` - The tracking reference device (i.e. basestation) is not yet
-  detected or has been switched off.
-* `Prop_NamedIconPathControllerLeftDeviceOff_String` - The left hand controller is off.
-* `Prop_NamedIconPathControllerRightDeviceOff_String` - The right hand controller is off.
-
-If a key is not matched, the `{system}/icons/invalid_status.png` icon **will** be used.
-
-#### Updating Icons
-
-The icon currently used to represent a device **can** be updated in two ways: by the runtime when
-a device ([submits a pose](#poses)) or the driver sending an event to update an icon.
-
-In a pose, a combination of setting these members:
-
-    ETrackingResult result
-    bool poseIsValid
-    bool deviceIsConnected
-
-Will update the icons to represent the current state of the device:
-
-* `Prop_NamedIconPathDeviceOff_String`
-    * `deviceIsConnected` is false.
-* `Prop_NamedIconPathDeviceSearching_String`
-    * `deviceIsConnected` is true.
-    * `result` is `TrackingResult_Uninitialized` or `TrackingResult_Calibrating_InProgress`.
-* `Prop_NamedIconPathDeviceReady_String`
-    * `deviceIsConnected` is true.
-    * `poseIsValid` is true.
-    * `result` is `TrackingResult_Running_OK`.
-* `Prop_NamedIconPathDeviceReadyAlert_String`
-    * Can only be set by the driver sending an event (see below).
-* `Prop_NamedIconPathDeviceNotReady_String`
-    * An HMD is not in the system
-    * vrserver or vrcompositor is not running
-* `Prop_NamedIconPathDeviceStandby_String`
-    * The position and orientation of the device's pose has been constant for a specific interval of time.
-* `Prop_NamedIconPathDeviceAlertLow_String`
-    * `deviceIsConnected` is true.
-    * `poseIsValid` is true.
-    * `result` is `TrackingResult_Running_OK`.
-    * `Prop_DeviceBatteryPercentage_Float` being less than 0.15.
-
-Icons **can** also be set programmatically, through the event system. Note that if a pose is then submitted after an
-event, the values in the pose **will** update the icons. Some icons cannot be set through the pose, typically when the
-device is in a state where it cannot submit poses, such as encountering an error.
-
-```c++
-VREvent_Status_t statusEvent;
-statusEvent.statusState = EVRState::VRState_Ready_Alert; // see above for possible states and descriptions
-
-vr::VRServerDriverHost()->VendorSpecificEvent(m_unObjectId, vr::VREvent_Status_t, (VREvent_Data_t&)statusEvent, 0);
-```
-
-### Device Class
-
-Devices in OpenVR **must** have a class associated with them. The class of the device defines what sort of device is
-being exposed to the runtime. The device classes available are defined in the `ETrackedDeviceClass` enum.
-
-* `TrackedDeviceClass_HMD` - Head-Mounted Displays. E.g. Index HMD.
-* `TrackedDeviceClass_Controller` - Tracked controllers. E.g. Index controllers.
-* `TrackedDeviceClass_GenericTracker` - Generic trackers, similar to controllers. E.g. Vive trackers. An
-  additional `manage trackers` interface in SteamVR **will** be shown for the user to configure where and how this
-  tracker is
-  used. Note: Tracker roles are not configurable by the driver.
-* `TrackedDeviceClass_TrackingReference` - Camera and base stations that serve as tracking reference points. E.g.
-  Basestation 2.0.
-* `TrackedDeviceClass_DisplayRedirect` - Accessories that aren't necessarily tracked themselves, but may redirect video
-  output from other tracked devices.
-
-### Controller roles
-
-Devices of `TrackedDeviceClass_Controller` **must** have a role associated with them. The _role_ identifies how the
-controller is used by the user and how the device will behave within the runtime. The roles are defined in
-the `ETrackedControllerRole` enum.
-
-* `TrackedControllerRole_LeftHand` - Tracked device associated with the left hand.
-* `TrackedControllerRole_RightHand` - Tracked device associated with the right hand.
-* `TrackedControllerRole_OptOut` - Tracked device is opting out of left/right hand selection.
-* `TrackedControllerRole_Treadmill` - Tracked device is a treadmill or other locomotion device that is to be used in
-  conjunction with the handed controllers.
-* `TrackedControllerRole_Stylus` - Tracked device is a stylus
-
-At any given time, there will be one and only one _active_ controller associated with
-a `TrackedControllerRole_LeftHand`, `TrackedControllerRole_RightHand` and `TrackedControllerRole_Treadmill` role.
-
-Applications **will not** receive input from multiple controllers assigned to the
-same `TrackedControllerRole_LeftHand`, `TrackedControllerRole_RightHand` and `TrackedControllerRole_Treadmill` roles at
-one time.
-
-The active device for each role is decided by the runtime, but can be influenced by the device
-through setting `Prop_ControllerHandSelectionPriority_Int32`.
-
-`TrackedControllerRole_Treadmill` **can** be used at the same time as `TrackedControllerRole_LeftHand`
-and `TrackedControllerRole_RightHand`. Additional UI is shown to the user for how to
-configure `TrackedControllerRole_Treadmill` bindings.
-
-If both an _input_ from `TrackedControllerRole_Treadmill` and an _input_ from a handed controller are assigned to the
-same _action_ in an application, SteamVR **will** use the input with the greatest absolute value.
-
-## localization/localization.json
+### localization/localization.json
 
 The localization JSON file specifies localization information for the device.
 
@@ -502,7 +370,7 @@ in English to `Index Controller`.
 The keys **can** define localized versions for whatever is exported from your driver through its visible properties (
 e.g. `Prop_RegisteredDeviceType_String`).
 
-### Defining localization in one file
+#### Defining localization in one file
 
 `localization/localization.json` **must** contain a JSON-formatted array, containing objects for each localized version.
 This object **must** contain:
@@ -529,7 +397,7 @@ And any strings the driver exports that the driver wishes to be localized.
 ]
 ```
 
-### Defining localization in multiple files
+#### Defining localization in multiple files
 
 `localization/localization.json` **must** contain a JSON-formatted object, containing language tag keys for each
 localized version.
@@ -563,11 +431,11 @@ This object **must** contain one key:
 }
 ```
 
-## resources/settings/default.vrsettings
+### resources/settings/default.vrsettings
 
-The `default.vrsettings` file provides default settings values for the keys it defines. You **should not** modify this
-file directly. Instead, see [IVRSettings](#ivrsettings) for the interface to modify settings. `IVRSettings` writes
-values to `steamvr.vrsettings`.
+The `default.vrsettings` file provides default settings values for the driver. The file **should not** be modified by
+users and should only provide default driver setting values which can then later be configured using the 
+[IVRSettings](#ivrsettings) interface. `IVRSettings` writes updated setting values to `steamvr.vrsettings`.
 
 Drivers **should** provide a `default.vrsettings` file to ship with the driver, which **must** be located
 in `<driver_name>/resources/settings/default.vrsettings`. This file provides a default set of settings which will be
@@ -598,7 +466,7 @@ While the driver can add any custom keys in this section, there are some keys th
       mode) for 3rd party drivers. Having this value set to `true` will mean if the driver is crashing on startup, the
       user will be unable to use SteamVR without uninstalling the driver.
 
-### Example
+#### Example
 
 ```json
 {
@@ -613,6 +481,172 @@ While the driver can add any custom keys in this section, there are some keys th
   }
 }
 ```
+
+## Icons
+
+If an icon is to be displayed in SteamVR, it **must** be one of the following sizes,
+depending on what type of device it is:
+
+* HMD: 50x32 or 100x64 (see below) png/gif
+* Other: 32x32 or 64x64 (see below) png/gif
+
+Append `@2x` to the end of the file name to have a 100x64 HMD icon or 64x64 device icon.
+Otherwise, a 50x32 or 32x32 icon size **will** be used.
+
+For example:
+
+* `my_hmd_icon.png` - 50x32 icon **must** be used.
+* `my_hmd_icon@2x.png` - 100x64 icon **must** be used.
+
+An icon which is not a supported size **will** be cropped from the top-left.
+
+An icon **can** choose to animate using a gif format. For example, it is typical for tracked controllers to have a
+breathing animation when they are on, but have not established tracking.
+
+Icons **must** be a colored green-blue gradient across the image. Icons **will** be formatted appropriately to include
+this gradient. These gradients are generated by the runtime, and are placed into the same folder
+the icon is in, with  `.b4bfb144` appended to the filename.
+
+### Setting icons
+
+To set icons, they **must** be set as a property of the device. This can either be done in
+the `driver.vrdrivermanifest` file or through setting the properties programmatically.
+See [Device Properties](#device-properties).
+
+A list of icons that **can** be set are defined below:
+
+* `Prop_NamedIconPathDeviceOff_String` - The device is off.
+* `Prop_NamedIconPathDeviceSearching_String` - The device is on, but does not have tracking established.
+* `Prop_NamedIconPathDeviceSearchingAlert_String` - The device is on, does not have tracking established and has
+  received a warning.
+* `Prop_NamedIconPathDeviceReady_String` - The device is on, tracking and working nominally.
+* `Prop_NamedIconPathDeviceReadyAlert_String` - The device is on and ready to use, but needs to inform the user of
+  something (E.g. firmware update).
+* `Prop_NamedIconPathDeviceNotReady_String` - The device is on, but not ready to start up and establish tracking.
+* `Prop_NamedIconPathDeviceStandby_String` - The device has been put to sleep due to system inactivity.
+* `Prop_NamedIconPathDeviceStandbyAlert_String` - The device is in standby, but needs to inform the user of something (
+  E.g. firmware update).
+* `Prop_NamedIconPathDeviceAlertLow_String` - The device is working, but has a low battery. This is
+  when `Prop_DeviceBatteryPercentage_Float` is less than 15%. See [Device Properties](#device-properties).
+* `Prop_NamedIconPathTrackingReferenceDeviceOff_String` - The tracking reference device (i.e. basestation) is not yet
+  detected or has been switched off.
+* `Prop_NamedIconPathControllerLeftDeviceOff_String` - The left hand controller is off.
+* `Prop_NamedIconPathControllerRightDeviceOff_String` - The right hand controller is off.
+
+If a key is not matched, the `{system}/icons/invalid_status.png` icon **will** be used.
+
+### Updating Icons
+
+The icon currently used to represent a device **can** be updated in two ways: by the runtime when
+a device ([submits a pose](#poses)) or the driver sending an event to update an icon.
+
+In a pose, a combination of setting these members:
+
+    ETrackingResult result
+    bool poseIsValid
+    bool deviceIsConnected
+
+Will update the icons to represent the current state of the device:
+
+* `Prop_NamedIconPathDeviceOff_String`
+    * `deviceIsConnected` is false.
+* `Prop_NamedIconPathDeviceSearching_String`
+    * `deviceIsConnected` is true.
+    * `poseIsValid` is false.
+    * The device previously connected, but then disconnected.
+* `Prop_NamedIconPathDeviceReady_String`
+    * `deviceIsConnected` is true.
+    * `poseIsValid` is true.
+* `Prop_NamedIconPathDeviceStandby_String`
+    * The orientation of the device's pose has remained close to constant.
+    * The `/proximity` boolean input path is `false`. For this to be used, `Prop_ContainsProximitySensor_Bool` **must** be set to true.
+* `Prop_NamedIconPathDeviceAlertLow_String`
+    * `deviceIsConnected` is true.
+    * `poseIsValid` is true.
+    * `result` is `TrackingResult_Running_OK`.
+    * `Prop_DeviceBatteryPercentage_Float` is less than 0.15.
+
+## Device Classes
+
+Devices in OpenVR **must** have a class associated with them. The class of the device defines what sort of device is
+being exposed to the runtime. The device classes available are defined in the `ETrackedDeviceClass` enum and the class
+of a device is provided to the runtime through `IVRServerDriverHost::TrackedDeviceAdded`.
+
+* `TrackedDeviceClass_HMD` - Head-Mounted Displays. E.g. Index HMD.
+* `TrackedDeviceClass_Controller` - Tracked controllers. E.g. Index controllers.
+* `TrackedDeviceClass_GenericTracker` - Generic trackers, similar to controllers. E.g. Vive trackers. An
+  additional `manage trackers` interface in SteamVR **will** be shown for the user to configure where and how this
+  tracker is
+  used. Note: Tracker roles are not configurable by the driver.
+* `TrackedDeviceClass_TrackingReference` - Camera and base stations that serve as tracking reference points. E.g.
+  Basestation 2.0.
+* `TrackedDeviceClass_DisplayRedirect` - Accessories that aren't necessarily tracked themselves, but may redirect video
+  output from other tracked devices.
+
+### Controller roles
+
+Devices of `TrackedDeviceClass_Controller` **must** have a role associated with them. The role identifies how the
+controller is used by the user and how the device will behave within the runtime. The roles are defined in
+the `ETrackedControllerRole` enum.
+
+* `TrackedControllerRole_LeftHand` - Tracked device associated with the left hand.
+* `TrackedControllerRole_RightHand` - Tracked device associated with the right hand.
+* `TrackedControllerRole_OptOut` - Tracked device is opting out of left/right hand selection.
+* `TrackedControllerRole_Treadmill` - Tracked device is a treadmill or other locomotion device that is to be used in
+  conjunction with the handed controllers.
+* `TrackedControllerRole_Stylus` - Tracked device is a stylus
+
+At any given time, there will be one and only one _active_ controller associated with
+a `TrackedControllerRole_LeftHand`, `TrackedControllerRole_RightHand` and `TrackedControllerRole_Treadmill` role.
+
+Applications **will not** receive input from multiple controllers assigned to the
+same `TrackedControllerRole_LeftHand`, `TrackedControllerRole_RightHand` and `TrackedControllerRole_Treadmill` roles at
+one time.
+
+The active device for each role is decided by the runtime, but can be influenced by the device
+through setting `Prop_ControllerHandSelectionPriority_Int32`.
+
+`TrackedControllerRole_Treadmill` **can** be used at the same time as `TrackedControllerRole_LeftHand`
+and `TrackedControllerRole_RightHand`. Additional UI is shown to the user for how to
+configure `TrackedControllerRole_Treadmill` bindings.
+
+If both an _input_ from `TrackedControllerRole_Treadmill` and an _input_ from a handed controller are assigned to the
+same _action_ in an application, SteamVR **will** use the input with the greatest absolute value.
+
+### Trackers (Full body Tracking)
+
+Drivers **can** expose device(s) of class `TrackedDeviceClass_GenericTracker` to expose trackers to SteamVR. These
+trackers can then be used by the user for features such as full-body tracking, object tracking and more.
+
+Tracker roles can be set by the user in the "Manage Trackers" section of SteamVR.
+
+Tracker roles are stored in `steamvr.vrsettings`, under the `vr::k_pch_Trackers_Section` ("trackers") section. Each key
+of the section has the formatting: `/devices/<driver_name>/<device_serial_number>`, with a string value of one of the
+tracker roles below.
+
+In most circumstances, SteamVR expects users to be the ones to assign roles to individual trackers, and so SteamVR
+provides the "Manage Trackers" UI in settings.
+However, a driver **can** write to the `trackers` section in the `steamvr.vrsettings` file using
+the [IVRSettings](#ivrsettings) interface as a way to modify each tracker's role.
+
+The list of available tracker roles that can be set by the user are:
+
+* `TrackerRole_Handed`
+* `TrackerRole_LeftFoot`
+* `TrackerRole_RightFoot`
+* `TrackerRole_LeftShoulder`
+* `TrackerRole_RightShoulder`
+* `TrackerRole_LeftElbow`
+* `TrackerRole_RightElbow`
+* `TrackerRole_LeftKnee`
+* `TrackerRole_RightKnee`
+* `TrackerRole_Waist`
+* `TrackerRole_Chest`
+* `TrackerRole_Camera`
+* `TrackerRole_Keyboard`
+
+Trackers **can** have input profiles, which are set depending on the current role of the tracker.
+See [Input Profiles](#input-profiles) for more information on the `tracker_types` section.
 
 # Driver Structure
 
@@ -660,7 +694,7 @@ and version of the interface implemented.
 implemented in the API version you are using. They **will** eventually match one of the `pInterfaceName` calls.
 
 Two common interfaces a driver **might** return pointers to are implementations
-of [IServerTrackedDeviceProvider](#IServerTrackedDeviceProvider) and [IVRWatchdogProvider](IVRWatchdogProvider).
+of [IServerTrackedDeviceProvider](#IServerTrackedDeviceProvider) and [IVRWatchdogProvider](#ivrwatchdogprovider).
 
 ```c++
 #include <openvr_driver.h>
@@ -772,11 +806,16 @@ This variable contains versions of the interfaces you are compiling your driver 
 <br/>
 
 ```c++
-virtual void MyRunFrame() = 0;
+virtual void RunFrame() = 0;
 ```
 
-`MyRunFrame` is called *directly* in the main loop of `vrserver.exe`. As a result, it **should not** perform calls that
+`RunFrame` is called *directly* in the main loop of `vrserver.exe`. As a result, it **should not** perform calls that
 might block. It is called on every frame.
+
+It is strongly recommended for a driver to use their own thread for performing work that might need to be done at a
+regular interval.
+
+A driver **should** (and perhaps only) poll for events using `RunFrame`. See [events](#events).
 
 <br/>
 
@@ -973,9 +1012,8 @@ The options are:
     * This takes advantage of "direct mode" (not to be confused with `IVRDriverDirectModeComponent`) which allows the
       runtime to skip the windowing system level and work directly on the display level.
 * `IVRDriverDirectModeComponent` - Only recommended if the driver is doing its own compositing, or if it is impossible
-  to
-  provide distortion data. Image texture handoff in driver direct mode happens before compositing and allows the driver
-  to own the display.
+  to provide distortion data. Image texture handoff in driver direct mode happens before compositing and allows the
+  driver to own the display.
 * `IVRVirtualDisplay` - Only recommended if you can provide your distortion data, but for some reason cannot provide the
   output, such as transmitting the frames wirelessly. Provides the driver with a final composited backbuffer intended
   for the headset's display.
@@ -1808,6 +1846,9 @@ The list of keys that can be specified in the JSON file are:
 * `legacy_binding` - Recommended. A fallback to `config/legacy_bindings_generic.json` will be set if this is not. The
   legacy bindings file is the same format as other input binding files, and can be built with the SteamVR binding UI and
   then exported.
+* `tracker_types` - Optional. If the input profile is intended to be used with a tracker, a path to another input
+  profile **can** be specified. Key is an enum of `ETrackerRole`, and the value is the path to the input profile for the
+  specified tracker role.
 * `input_bindingui_mode` - Recommended. How to render the device in the bindings UI. A fallback to `hmd` will be set if
   the device's class is `TrackedDeviceClass_HMD`, or set to `controller_handed` otherwise.
     * `controller_handed` - The device type is typically used as a pair, one in each hand. The device can optionally be
