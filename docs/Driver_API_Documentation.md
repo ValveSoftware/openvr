@@ -3199,9 +3199,15 @@ _**This feature only applies to SteamVR v1.26 and higher. In earlier versions th
 
 If an application does not provide a binding for your device SteamVR will try to use the remappings file to convert an existing binding to work with your device. This works for SteamVR Input and OpenXR applications.
 
-The remapping json has an array of `layouts` which then have an array of `remappings`. Remappings specify a path, but can also specify a mode, and a specific input. When converting a binding SteamVR will look for the highest priority layout that the application has a binding for. Then it copies that binding profile and loops through each binding. For each binding it will check if there is a matching `remapping` and apply the conversion. If there is not a remapping for that binding it will just copy it across verbatim. 
+When converting a binding, SteamVR will look for the highest priority `layout` that the application has a binding for. Then it reads the binding profile and assesses each binding. For each binding, it will check if there is a matching `autoremapping` or `remapping` and apply the conversion. If there is no match for that binding, it will just copy it across verbatim. 
 
-Remappings come in three types: input, mode, and component. When remapping a binding SteamVR checks for the most specific remappings first - input remappings (ex: click). Then we search for mode remappings (ex: button). And finally component remappings (ex: /user/hand/left/trigger). We'll only use one remapping per binding unless it has the remapping_mode: 'multiple' listed. This lets us do simple things like remapping the a button to the x button. But also more complex things like the various modes/inputs of a trigger style grip to a force sensor style grip.
+The remapping json has an array of `layouts` which then have an array of `autoremappings` and/or an array of `remappings`. These arrays list instructions for how to map from one binding to another. When the `autoremappings` and `remappings` are taken together, they must collectively specify all differences between two controllers. For example if you're remapping `from` a `knuckles` controller type, it has A/B buttons with touch sensors. If you're mapping to a controller that has those buttons but does not have touch sensors on them, then you'll need to provide either an `autoremapping`, or a set of `remappings` to convert the touch bindings to click bindings. You can do this explicitly with `remappings` but we recommend using `autoremappings` instead as SteamVR determines all of those binding scenarios for you. 
+
+The `autoremappings` objects simply specify a component to remap `from` and a component to remap `to`. SteamVR will determine all the binding scenarios needed to do that remapping. Internally SteamVR does this by looking up the components and their capabilities in their respective input profiles, then adding an array of `remapping` objects based on predefined templates. Because of this, autoremappings are only available to remap `from` the built-in controller types: `vive_controller`, `oculus_touch`, `knuckles` and `khr_simple_controller`. This method of remapping is the easiest to define and therefore least prone to errors since we draw from a predefined collection of binding types. If you have a relatively standard layout we recommend using `autoremappings` as much as possible instead of explicitly defining `remappings`.
+
+The `remappings` objects give you more explicit control over how to remap one component to another. If you need to do an uncommon remapping (like A/B to a touchpad) you can specify all the individual binding scenarios that would apply. You'll need to specify a `remapping` object to apply to every type of binding that can be made. `Remapping` objects come in three types: `input`, `mode`, and component. `Input` remappings cover a specific mode's input, `mode` remappings cover all inputs in a mode, component remappings cover all modes and inputs. 
+
+When remapping a binding, SteamVR checks for the most specific `remappings` first - `input` remappings (ex: click). Then `mode` remappings (ex: button). Finally, component remappings (ex: /user/hand/left/trigger). This lets us do simple things like remapping the A button to the X button. But also more complex things like the various modes/inputs of a trigger style grip to a force sensor style grip. We'll only use one remapping per binding unless it has the `remapping_mode` `multiple` listed (see [One-to-Many Remappings](#one-to-many-remappings)).
 
 #### File Structure
 * `to_controller_type` - Required. This **must** be set to the device's `controller_type`.
@@ -3211,7 +3217,12 @@ Remappings come in three types: input, mode, and component. When remapping a bin
     * `simulate_controller_type` (default: true) - Optional. If this layout should also add the controller simulation option to the binding. 
     * `simulate_render_model` (default: true) - Optional. If this layout should also add the controller render model simulation option to the binding. 
     * `simulate_HMD` (default: true) - Optional. If this layout should also add the HMD simulation option to the binding. 
-    * `remappings` - Optional. Array of remapping objects. If all of your components are the same you don't need this.
+    * `autoremappings` - Optional. Array of autoremapping objects. If all of your components are _exactly_ the same you don't need this.
+        * `from` - Required. A string component path. Ex: "/user/hand/right/input/trigger"
+        * `to` - Required. A string component path or a list of string component paths. Ex: "/user/hand/right/input/trigger" or: ["/user/hand/right/input/trigger", "/user/hand/right/input/grip"]
+        * `parameters` - Optional. Object listing parameters to use for the resulting mapping.
+        * `mirror` (default: true) - Optional. By default we duplicate and mirror component paths from left to right and right to left.
+    * `remappings` - Optional. Array of remapping objects. If all of your components are _exactly_ the same you don't need this.
         * `from` - Required. An object specifying the type(s) of binding(s) to recognize.
             * `path` - Required. The full path of the component to remap bindings from.
             * `mode` - Optional. The type of binding mode to remap bindings from.
@@ -3235,8 +3246,11 @@ Remappings come in three types: input, mode, and component. When remapping a bin
             * `multiple` - Specifies that there are multiple new bindings to be created from the binding this remapping applies to.
         * `mirror` (default: true) - Optional. By default we duplicate and mirror component paths from left to right and right to left. In most cases this means you only have to write one set of remappings instead of manually writing a set for /user/hand/left and another set of remappings for /user/hand/right. (this works for feet and elbows too)
 
+#### Autoremapping Parameters
+If your mapping is going from a digital input (button) to an analog input (trigger) you can optionally add click and touch thresholds to specify when those inputs should trigger. Specifically those parameters are: `click_activate_threshold`, `click_deactivate_threshold`, `touch_activate_threshold`, and `touch_deactivate_threshold`. Otherwise we'll use default values.
+
 #### One-to-Many Remappings
-You can make one component map to multiple components, or inputs, using "remapping_mode" : "multiple". This has to be added to each remapping object you want to be used. If you want to keep the original binding as well add a component mapping with the same from/to. For example the following set of remappings will copy all the joystick bindings and make new bindings for a component called thumbstick, another set for a component called trackpad, and then keep the original joystick bindings.
+You can make one component map to multiple components, or inputs, using "remapping_mode" : "multiple". This has to be added to each remapping object you want to be used. If you want to keep the original binding as well add a component mapping with the same from/to. You must also add a `multiple_group` member with an identifier that is unique to each group of remappings. For example the following set of remappings will copy all the joystick bindings and make new bindings for a component called thumbstick, another set for a component called trackpad, and then keep the original joystick bindings.
 
 ```json
         {
@@ -3247,7 +3261,8 @@ You can make one component map to multiple components, or inputs, using "remappi
             "path" : "/user/hand/right/input/thumbstick",
             "parameters_mode": "copy"
           },
-          "remapping_mode" : "multiple"
+          "remapping_mode" : "multiple",
+          "multiple_group" : "joystick_to_thumbstick"
         },
         {
           "from": {
@@ -3257,7 +3272,8 @@ You can make one component map to multiple components, or inputs, using "remappi
             "path" : "/user/hand/right/input/trackpad",
             "parameters_mode": "copy"
           },
-          "remapping_mode" : "multiple"
+          "remapping_mode" : "multiple",
+          "multiple_group" : "joystick_to_trackpad"
         },
         {
           "from": {
@@ -3267,12 +3283,13 @@ You can make one component map to multiple components, or inputs, using "remappi
             "path" : "/user/hand/right/input/joystick",
             "parameters_mode": "copy"
           },
-          "remapping_mode" : "multiple"
+          "remapping_mode" : "multiple",
+          "multiple_group" : "joystick_to_joystick"
         },
 ```
 
 #### Examples
-You can find many examples of rebinding files in the drivers for included controller types. For example, from your SteamVR folder SteamVR\drivers\indexcontroller\resources\input\index_controller_remapping.json
+You can find many examples of rebinding files in the drivers for included controller types. From your SteamVR folder `SteamVR\drivers\indexcontroller\resources\input\index_controller_remapping.json` or `SteamVR\resources\input\`.
 
 
 ### Emulating Devices in Bindings
