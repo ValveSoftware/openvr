@@ -33,6 +33,10 @@ bool BCreateDirectoryRecursive( const char *pchPath )
 	// copy the path into something we can munge
 	int len = (int)strlen( pchPath );
 	char *path = (char *)malloc( len + 1 );
+
+	if (path == nullptr)
+		return false;
+
 	strcpy( path, pchPath );
 
 	// Walk backwards to first non-existing dir that we find

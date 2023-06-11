@@ -454,9 +454,9 @@ public:
 };
 
 /// used internally
-void throwRuntimeError(std::string const& msg);
+[[noreturn]] void throwRuntimeError(std::string const& msg);
 /// used internally
-void throwLogicError(std::string const& msg);
+[[noreturn]] void throwLogicError(std::string const& msg);
 
 /** \brief Type of the value held by a Value object.
  */
