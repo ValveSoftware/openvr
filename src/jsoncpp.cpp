@@ -316,7 +316,7 @@ bool Reader::parse(const char* beginDoc,
   current_ = begin_;
   lastValueEnd_ = 0;
   lastValue_ = 0;
-  commentsBefore_ = "";
+  commentsBefore_.clear();
   errors_.clear();
   while (!nodes_.empty())
     nodes_.pop();
@@ -358,7 +358,7 @@ bool Reader::readValue() {
 
   if (collectComments_ && !commentsBefore_.empty()) {
     currentValue().setComment(commentsBefore_, commentBefore);
-    commentsBefore_ = "";
+    commentsBefore_.clear();
   }
 
   switch (token.type_) {
@@ -657,7 +657,7 @@ bool Reader::readObject(Token& tokenStart) {
       break;
     if (tokenName.type_ == tokenObjectEnd && name.empty()) // empty object
       return true;
-    name = "";
+    name.clear();
     if (tokenName.type_ == tokenString) {
       if (!decodeString(tokenName, name))
         return recoverFromError(tokenObjectEnd);
@@ -1257,7 +1257,7 @@ bool OurReader::parse(const char* beginDoc,
   current_ = begin_;
   lastValueEnd_ = 0;
   lastValue_ = 0;
-  commentsBefore_ = "";
+  commentsBefore_.clear();
   errors_.clear();
   while (!nodes_.empty())
     nodes_.pop();
@@ -1300,7 +1300,7 @@ bool OurReader::readValue() {
 
   if (collectComments_ && !commentsBefore_.empty()) {
     currentValue().setComment(commentsBefore_, commentBefore);
-    commentsBefore_ = "";
+    commentsBefore_.clear();
   }
 
   switch (token.type_) {
@@ -1650,7 +1650,7 @@ bool OurReader::readObject(Token& tokenStart) {
       break;
     if (tokenName.type_ == tokenObjectEnd && name.empty()) // empty object
       return true;
-    name = "";
+    name.clear();
     if (tokenName.type_ == tokenString) {
       if (!decodeString(tokenName, name))
         return recoverFromError(tokenObjectEnd);
@@ -2166,7 +2166,7 @@ bool CharReaderBuilder::validate(Json::Value* invalid) const
   }
   return 0u == inv.size();
 }
-Value& CharReaderBuilder::operator[](std::string key)
+Value& CharReaderBuilder::operator[](const std::string &key)
 {
   return settings_[key];
 }
@@ -2373,8 +2373,6 @@ char const* ValueIteratorBase::memberName(char const** end) const {
 // //////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////
 
-ValueConstIterator::ValueConstIterator() {}
-
 ValueConstIterator::ValueConstIterator(
     const Value::ObjectValues::iterator& current)
     : ValueIteratorBase(current) {}
@@ -2395,8 +2393,6 @@ operator=(const ValueIteratorBase& other) {
 // //////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////
 // //////////////////////////////////////////////////////////////////
-
-ValueIterator::ValueIterator() {}
 
 ValueIterator::ValueIterator(const Value::ObjectValues::iterator& current)
     : ValueIteratorBase(current) {}
@@ -2625,8 +2621,7 @@ void throwLogicError(std::string const& msg)
 Value::CommentInfo::CommentInfo() : comment_(0) {}
 
 Value::CommentInfo::~CommentInfo() {
-  if (comment_)
-    releaseStringValue(comment_);
+  releaseStringValue(comment_);
 }
 
 void Value::CommentInfo::setComment(const char* text, size_t len) {
@@ -2902,11 +2897,9 @@ Value::~Value() {
     JSON_ASSERT_UNREACHABLE;
   }
 
-  if (comments_)
-    delete[] comments_;
+  delete[] comments_;
 
-  if ( default_value_)
-	  delete default_value_;
+  delete default_value_;
 }
 
 Value& Value::operator=(Value other) {
@@ -3284,7 +3277,7 @@ bool Value::isConvertibleTo(ValueType other) const {
   case nullValue:
     return (isNumeric() && asDouble() == 0.0) ||
            (type_ == booleanValue && value_.bool_ == false) ||
-           (type_ == stringValue && asString() == "") ||
+           (type_ == stringValue && asString().empty()) ||
            (type_ == arrayValue && value_.map_->size() == 0) ||
            (type_ == objectValue && value_.map_->size() == 0) ||
            type_ == nullValue;
@@ -3662,8 +3655,7 @@ Value::Members Value::getMemberNames() const {
   ObjectValues::const_iterator it = value_.map_->begin();
   ObjectValues::const_iterator itEnd = value_.map_->end();
   for (; it != itEnd; ++it) {
-    members.push_back(std::string((*it).first.data(),
-                                  (*it).first.length()));
+    members.emplace_back((*it).first.data(), (*it).first.length());
   }
   return members;
 }
@@ -3907,6 +3899,7 @@ Path::Path(const std::string& path,
            const PathArgument& a4,
            const PathArgument& a5) {
   InArgs in;
+  in.reserve(5);
   in.push_back(&a1);
   in.push_back(&a2);
   in.push_back(&a3);
@@ -3941,7 +3934,7 @@ void Path::makePath(const std::string& path, const InArgs& in) {
       const char* beginName = current;
       while (current != end && !strchr("[.", *current))
         ++current;
-      args_.push_back(std::string(beginName, current));
+      args_.emplace_back(std::string(beginName, current));
     }
   }
 }
@@ -4368,7 +4361,7 @@ void FastWriter::dropNullPlaceholders() { dropNullPlaceholders_ = true; }
 void FastWriter::omitEndingLineFeed() { omitEndingLineFeed_ = true; }
 
 std::string FastWriter::write(const Value& root) {
-  document_ = "";
+  document_.clear();
   writeValue(root);
   if (!omitEndingLineFeed_)
     document_ += "\n";
@@ -4436,9 +4429,9 @@ StyledWriter::StyledWriter()
     : rightMargin_(74), indentSize_(3), addChildValues_() {}
 
 std::string StyledWriter::write(const Value& root) {
-  document_ = "";
+  document_.clear();
   addChildValues_ = false;
-  indentString_ = "";
+  indentString_.clear();
   writeCommentBeforeValue(root);
   writeValue(root);
   writeCommentAfterValueOnSameLine(root);
@@ -4652,7 +4645,7 @@ StyledStreamWriter::StyledStreamWriter(std::string indentation)
 void StyledStreamWriter::write(std::ostream& out, const Value& root) {
   document_ = &out;
   addChildValues_ = false;
-  indentString_ = "";
+  indentString_.clear();
   indented_ = true;
   writeCommentBeforeValue(root);
   if (!indented_) writeIndent();
@@ -4934,7 +4927,7 @@ int BuiltStyledStreamWriter::write(Value const& root, std::ostream* sout)
   sout_ = sout;
   addChildValues_ = false;
   indented_ = true;
-  indentString_ = "";
+  indentString_.clear();
   writeCommentBeforeValue(root);
   if (!indented_) writeIndent();
   indented_ = true;
@@ -5188,7 +5181,7 @@ StreamWriter* StreamWriterBuilder::newStreamWriter() const
   }
   std::string nullSymbol = "null";
   if (dnp) {
-    nullSymbol = "";
+    nullSymbol.clear();
   }
   if (pre > 17) pre = 17;
   std::string endingLineFeedSymbol = "";
@@ -5223,7 +5216,7 @@ bool StreamWriterBuilder::validate(Json::Value* invalid) const
   }
   return 0u == inv.size();
 }
-Value& StreamWriterBuilder::operator[](std::string key)
+Value& StreamWriterBuilder::operator[](const std::string &key)
 {
   return settings_[key];
 }

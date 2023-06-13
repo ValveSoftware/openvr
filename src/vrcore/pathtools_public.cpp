@@ -539,7 +539,6 @@ bool Path_Exists( const std::string & sPath )
 //-----------------------------------------------------------------------------
 std::string Path_FindParentDirectoryRecursively( const std::string &strStartDirectory, const std::string &strDirectoryName )
 {
-	std::string strFoundPath = "";
 	std::string strCurrentPath = Path_FixSlashes( strStartDirectory );
 	if ( strCurrentPath.length() == 0 )
 		return "";
