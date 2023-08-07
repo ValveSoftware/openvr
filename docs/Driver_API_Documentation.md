@@ -1730,8 +1730,6 @@ like a `printf` function.
 
 ## IVRWatchdogProvider
 
-### The watchdog interface is deprecated and should no longer be used for new projects.
-
 `IVRWatchdogProvider` provides an interface that is loaded into `steam.exe` to receive driver-defined events that should
 wake the runtime. For example, this could be turning on controllers, or putting the HMD on.
 
