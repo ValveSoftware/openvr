@@ -6480,11 +6480,11 @@ public enum EBlockQueueCreationFlag
 	public uint m_nNumDroppedFramesTimedOut;
 	public uint m_nNumReprojectedFramesTimedOut;
 	public uint m_nNumFrameSubmits;
-	public vrshared_double m_flSumCompositorCPUTimeMS;
-	public vrshared_double m_flSumCompositorGPUTimeMS;
-	public vrshared_double m_flSumTargetFrameTimes;
-	public vrshared_double m_flSumApplicationCPUTimeMS;
-	public vrshared_double m_flSumApplicationGPUTimeMS;
+	public double m_flSumCompositorCPUTimeMS;
+	public double m_flSumCompositorGPUTimeMS;
+	public double m_flSumTargetFrameTimes;
+	public double m_flSumApplicationCPUTimeMS;
+	public double m_flSumApplicationGPUTimeMS;
 	public uint m_nNumFramesWithDepth;
 }
 [StructLayout(LayoutKind.Sequential)] public struct Compositor_StageRenderSettings

@@ -247,6 +247,10 @@ def converttype(thetype):
 		thetype = 'int'
 	if(thetype == 'WebConsoleHandle_t'):
 		thetype = 'ulong'
+	if(thetype == 'vrshared_double'):
+		thetype = 'double'
+	if(thetype == 'vrshared_uint64_t'):
+		thetype = 'ulong'
 
 	if(thetype[0:7] == 'struct '):
 		thetype = thetype[7:]
