@@ -85,10 +85,10 @@ static vr::HmdQuaternion_t HmdQuaternion_Normalize( const vr::HmdQuaternion_t &q
 	vr::HmdQuaternion_t result{};
 	double n = sqrt( q.x * q.x + q.y * q.y + q.z * q.z + q.w * q.w );
 
-	result.w /= n;
-	result.x /= n;
-	result.y /= n;
-	result.z /= n;
+	result.w = q.w / n;
+	result.x = q.x / n;
+	result.y = q.y / n;
+	result.z = q.z / n;
 
 	return result;
 }

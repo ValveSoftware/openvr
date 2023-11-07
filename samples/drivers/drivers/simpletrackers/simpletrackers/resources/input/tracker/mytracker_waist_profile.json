@@ -1,0 +1,14 @@
+{
+  "jsonid": "input_profile",
+  "controller_type": "mytracker_waist",
+  "input_bindingui_mode": "single_device",
+  "input_source": {
+    "/pose/simplewaistpose": {
+      "type": "pose",
+      "binding_image_point": [
+        100,
+        90
+      ]
+    }
+  }
+}

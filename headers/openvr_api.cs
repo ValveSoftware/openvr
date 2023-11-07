@@ -4535,6 +4535,7 @@ public enum ETextureType
 	DirectX12 = 4,
 	DXGISharedHandle = 5,
 	Metal = 6,
+	Reserved = 7,
 }
 public enum EColorSpace
 {
@@ -4641,6 +4642,7 @@ public enum ETrackedDeviceProperty
 	Prop_EstimatedDeviceFirstUseTime_Int32 = 1051,
 	Prop_DevicePowerUsage_Float = 1052,
 	Prop_IgnoreMotionForStandby_Bool = 1053,
+	Prop_ActualTrackingSystemName_String = 1054,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -4741,6 +4743,8 @@ public enum ETrackedDeviceProperty
 	Prop_Hmd_SupportsRoomViewDirect_Bool = 2105,
 	Prop_Hmd_SupportsAppThrottling_Bool = 2106,
 	Prop_Hmd_SupportsGpuBusMonitoring_Bool = 2107,
+	Prop_DriverDisplaysIPDChanges_Bool = 2108,
+	Prop_Driver_Reserved_01 = 2109,
 	Prop_DSCVersion_Int32 = 2110,
 	Prop_DSCSliceCount_Int32 = 2111,
 	Prop_DSCBPPx16_Int32 = 2112,
@@ -4839,6 +4843,7 @@ public enum EVRSubmitFlags
 	Submit_FrameDiscontinuty = 32,
 	Submit_VulkanTextureWithArrayData = 64,
 	Submit_GlArrayTexture = 128,
+	Submit_IsEgl = 256,
 	Submit_Reserved2 = 32768,
 	Submit_Reserved3 = 65536,
 }
@@ -4871,6 +4876,8 @@ public enum EVREventType
 	VREvent_PropertyChanged = 111,
 	VREvent_WirelessDisconnect = 112,
 	VREvent_WirelessReconnect = 113,
+	VREvent_Reserved_01 = 114,
+	VREvent_Reserved_02 = 115,
 	VREvent_ButtonPress = 200,
 	VREvent_ButtonUnpress = 201,
 	VREvent_ButtonTouch = 202,
@@ -4931,6 +4938,7 @@ public enum EVREventType
 	VREvent_StartDashboard = 532,
 	VREvent_ElevatePrism = 533,
 	VREvent_OverlayClosed = 534,
+	VREvent_DashboardThumbChanged = 535,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -4973,6 +4981,7 @@ public enum EVREventType
 	VREvent_GpuSpeedSectionSettingChanged = 869,
 	VREvent_WindowsMRSectionSettingChanged = 870,
 	VREvent_OtherSectionSettingChanged = 871,
+	VREvent_AnyDriverSettingsChanged = 872,
 	VREvent_StatusUpdate = 900,
 	VREvent_WebInterface_InstallDriverCompleted = 950,
 	VREvent_MCImageUpdated = 1000,
@@ -4981,6 +4990,8 @@ public enum EVREventType
 	VREvent_KeyboardClosed = 1200,
 	VREvent_KeyboardCharInput = 1201,
 	VREvent_KeyboardDone = 1202,
+	VREvent_KeyboardOpened_Global = 1203,
+	VREvent_KeyboardClosed_Global = 1204,
 	VREvent_ApplicationListUpdated = 1303,
 	VREvent_ApplicationMimeTypeLoad = 1304,
 	VREvent_ProcessConnected = 1306,
@@ -5429,6 +5440,10 @@ public enum EVRInitError
 	Compositor_SystemLayerCreateSession = 493,
 	Compositor_CreateInverseDistortUVs = 494,
 	Compositor_CreateBackbufferDepth = 495,
+	Compositor_CannotDRMLeaseDisplay = 496,
+	Compositor_CannotConnectToDisplayServer = 497,
+	Compositor_GnomeNoDRMLeasing = 498,
+	Compositor_FailedToInitializeEncoder = 499,
 	VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	VendorSpecific_WindowsNotInDevMode = 1001,
 	VendorSpecific_OculusLinkNotEnabled = 1002,
@@ -5661,7 +5676,12 @@ public enum VROverlayFlags
 	WantsModalBehavior = 1048576,
 	IsPremultiplied = 2097152,
 	IgnoreTextureAlpha = 4194304,
+	EnableControlBar = 8388608,
+	EnableControlBarKeyboard = 16777216,
+	EnableControlBarClose = 33554432,
 	Reserved = 67108864,
+	EnableClickStabilization = 134217728,
+	MultiCursor = 268435456,
 }
 public enum VRMessageOverlayResponse
 {
@@ -5693,6 +5713,8 @@ public enum EKeyboardFlags
 {
 	KeyboardFlag_Minimal = 1,
 	KeyboardFlag_Modal = 2,
+	KeyboardFlag_ShowArrowKeys = 4,
+	KeyboardFlag_HideDoneKey = 8,
 }
 public enum EDeviceType
 {
@@ -6139,6 +6161,7 @@ public enum EBlockQueueCreationFlag
 	public float x;
 	public float y;
 	public uint button;
+	public uint cursorIndex;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Scroll_t
 {
@@ -6146,6 +6169,7 @@ public enum EBlockQueueCreationFlag
 	public float ydelta;
 	public uint unused;
 	public float viewportscale;
+	public uint cursorIndex;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_TouchPadMove_t
 {
@@ -6176,6 +6200,7 @@ public enum EBlockQueueCreationFlag
 	public ulong overlayHandle;
 	public ulong devicePath;
 	public ulong memoryBlockId;
+	public uint cursorIndex;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Status_t
 {
@@ -6201,6 +6226,7 @@ public enum EBlockQueueCreationFlag
 		}
 	}
 	public ulong uUserValue;
+	public ulong overlayHandle;
 }
 [StructLayout(LayoutKind.Sequential)] public struct VREvent_Ipd_t
 {
@@ -7643,7 +7669,10 @@ public class OpenVR
 	public const string k_pch_Controller_Component_GDC2015 = "gdc2015";
 	public const string k_pch_Controller_Component_Base = "base";
 	public const string k_pch_Controller_Component_Tip = "tip";
+	public const string k_pch_Controller_Component_OpenXR_Aim = "openxr_aim";
 	public const string k_pch_Controller_Component_HandGrip = "handgrip";
+	public const string k_pch_Controller_Component_OpenXR_Grip = "openxr_grip";
+	public const string k_pch_Controller_Component_OpenXR_HandModel = "openxr_handmodel";
 	public const string k_pch_Controller_Component_Status = "status";
 	public const string IVRRenderModels_Version = "IVRRenderModels_006";
 	public const uint k_unNotificationTextMaxSize = 256;
@@ -7728,6 +7757,7 @@ public class OpenVR
 	public const string k_pch_SteamVR_HDCPLegacyCompatibility_Bool = "hdcp14legacyCompatibility";
 	public const string k_pch_SteamVR_DisplayPortTrainingMode_Int = "displayPortTrainingMode";
 	public const string k_pch_SteamVR_UsePrism_Bool = "usePrism";
+	public const string k_pch_SteamVR_AllowFallbackMirrorWindowLinux_Bool = "allowFallbackMirrorWindowLinux";
 	public const string k_pch_DirectMode_Section = "direct_mode";
 	public const string k_pch_DirectMode_Enable_Bool = "enable";
 	public const string k_pch_DirectMode_Count_Int32 = "count";
@@ -7838,6 +7868,9 @@ public class OpenVR
 	public const string k_pch_Dashboard_UseStandaloneSystemLayer = "standaloneSystemLayer";
 	public const string k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 	public const string k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
+	public const string k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
+	public const string k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool = "allowDesktopBPMWithVRGamepadUI";
+	public const string k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";
 	public const string k_pch_Driver_BlockedBySafemode_Bool = "blocked_by_safe_mode";
@@ -7861,6 +7894,7 @@ public class OpenVR
 	public const string k_pch_LastKnown_Section = "LastKnown";
 	public const string k_pch_LastKnown_HMDManufacturer_String = "HMDManufacturer";
 	public const string k_pch_LastKnown_HMDModel_String = "HMDModel";
+	public const string k_pch_LastKnown_ActualHMDDriver_String = "ActualHMDDriver";
 	public const string k_pch_DismissedWarnings_Section = "DismissedWarnings";
 	public const string k_pch_Input_Section = "input";
 	public const string k_pch_Input_LeftThumbstickRotation_Float = "leftThumbstickRotation";

@@ -1,0 +1,8 @@
+{
+	"alwaysActivate": true,
+	"name" : "simpletrackers",
+	"directory" : "",
+	"resourceOnly" : false,
+
+	"hmd_presence" : []
+}

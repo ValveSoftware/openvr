@@ -1,0 +1,6 @@
+{
+   "driver_simpletrackers" : {
+      "enable" : true,
+      "mytracker_model_number" : "MyTrackerModelNumber 1"
+   }
+}

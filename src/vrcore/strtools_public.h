@@ -14,6 +14,9 @@ bool StringHasPrefixCaseSensitive( const std::string & sString, const std::strin
 bool StringHasSuffix( const std::string &sString, const std::string &sSuffix );
 bool StringHasSuffixCaseSensitive( const std::string &sString, const std::string &sSuffix );
 
+/** returns sModify with all instances of sFind replaced with sReplace */
+std::string StringReplace( const std::string &sModify, const std::string &sFind, const std::string &sReplace );
+
 /** converts a UTF-16 string to a UTF-8 string */
 std::string UTF16to8( const wchar_t * in );
 std::string UTF16to8( const std::wstring & in );

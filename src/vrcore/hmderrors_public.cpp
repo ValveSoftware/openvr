@@ -79,6 +79,8 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	case VRInitError_Driver_HmdDriverIdOutOfBounds:			return "Hmd DriverId is our of bounds (211)";
 	case VRInitError_Driver_HmdDisplayMirrored:				return "HMD detected over USB, but Monitor may be mirrored instead of extended (212)";
 	case VRInitError_Driver_HmdDisplayNotFoundLaptop:		return "On laptop, HMD detected over USB, but Monitor not found (213)";
+	case VRInitError_Driver_PeerDriverNotInstalled:			return "The current HMD requires an additional driver that is not installed (214)";
+	case VRInitError_Driver_WirelessHmdNotConnected:		return "A wireless HMD driver is present, but the wireless HMD has not connected yet (215)";
 
 	case VRInitError_IPC_ServerInitFailed:						return "VR Server Init Failed (300)";
 	case VRInitError_IPC_ConnectFailed:							return "Connect to VR Server Failed (301)";
@@ -98,6 +100,7 @@ const char *GetEnglishStringForHmdError( vr::EVRInitError eError )
 	case VRInitError_Compositor_OverlayInitFailed:		return "Compositor initialization succeeded, but overlay init failed (403)";
 	case VRInitError_Compositor_ScreenshotsInitFailed:	return "Compositor initialization succeeded, but screenshot init failed (404)";
 	case VRInitError_Compositor_UnableToCreateDevice:	return "Compositor unable to create graphics device (405)";
+	case VRInitError_Compositor_FailedToInitializeEncoder:	return "Driver unable to initialize video encoder (499)";
 
 	// Oculus
 	case VRInitError_VendorSpecific_UnableToConnectToOculusRuntime:	return "Unable to connect to Oculus Runtime (1000)";
@@ -329,6 +332,10 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_SystemLayerCreateSession );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateInverseDistortUVs );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateBackbufferDepth );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CannotDRMLeaseDisplay );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CannotConnectToDisplayServer );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_GnomeNoDRMLeasing );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToInitializeEncoder );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);

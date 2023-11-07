@@ -215,7 +215,7 @@ void MyControllerDeviceDriver::MyPoseUpdateThread()
 //-----------------------------------------------------------------------------
 void MyControllerDeviceDriver::EnterStandby()
 {
-	DriverLog( "%s hand has been put on standby", vr::TrackedControllerRole_LeftHand ? "Left" : "Right" );
+	DriverLog( "%s hand has been put on standby", my_controller_role_ == vr::TrackedControllerRole_LeftHand ? "Left" : "Right" );
 }
 
 //-----------------------------------------------------------------------------
@@ -244,7 +244,18 @@ void MyControllerDeviceDriver::Deactivate()
 //-----------------------------------------------------------------------------
 void MyControllerDeviceDriver::MyRunFrame()
 {
-	// update our inputs here
+	// Update our inputs here. For actual inputs coming from hardware, these will probably be read in a separate thread.
+	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_a_click ], false, 0 );
+	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_a_touch ], false, 0 );
+
+	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_trigger_click ], false, 0 );
+	vr::VRDriverInput()->UpdateScalarComponent( input_handles_[ MyComponent_trigger_value ], 0.f, 0 );
+
+	//if we wanted to set the trigger value to 1, we could do:
+	// vr::VRDriverInput()->UpdateScalarComponent( input_handles_[ MyComponent_trigger_value ], 1.f, 0 );
+
+	// or say that the A button has been clicked:
+	// vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_a_click ], true, 0 );
 }
 
 

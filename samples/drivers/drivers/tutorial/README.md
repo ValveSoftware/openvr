@@ -74,7 +74,7 @@ a good name! You'll be using it in a few places.
 
 #### driver.vrdrivermanifest
 
-Create a file called `driver.vrdrivermanfiest` within `<my_driver_name>`.
+Create a file called `driver.vrdrivermanifest` within `<my_driver_name>`.
 
 `driver.vrdrivermanifest` is a file that contains attributes about your driver. Fill it with the following contents:
 
@@ -576,7 +576,7 @@ Navigate to `bin\win64`
 
 Run `vrpathreg.exe adddriver "<path_to_project_dir>/build/<my_driver_name>"`
 
-If you go to `<AppData>/Local/openvr/paths.vrpath` you should see your driver listed under `external_drivers`.
+If you go to `<AppData>/Local/openvr/openvrpaths.vrpath` you should see your driver listed under `external_drivers`.
 
 Run SteamVR! There won't be anything displayed in the SteamVR Monitor, but you navigate to the SteamVR Web Console
 (`SteamVR Hamburger Menu > Developer Options > Web Console`) and you should see your driver's log of `Hello World`

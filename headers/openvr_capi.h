@@ -139,7 +139,10 @@ static const char * IVRHeadsetView_Version = "IVRHeadsetView_001";
 static const char * k_pch_Controller_Component_GDC2015 = "gdc2015";
 static const char * k_pch_Controller_Component_Base = "base";
 static const char * k_pch_Controller_Component_Tip = "tip";
+static const char * k_pch_Controller_Component_OpenXR_Aim = "openxr_aim";
 static const char * k_pch_Controller_Component_HandGrip = "handgrip";
+static const char * k_pch_Controller_Component_OpenXR_Grip = "openxr_grip";
+static const char * k_pch_Controller_Component_OpenXR_HandModel = "openxr_handmodel";
 static const char * k_pch_Controller_Component_Status = "status";
 static const char * IVRRenderModels_Version = "IVRRenderModels_006";
 static const unsigned long k_unNotificationTextMaxSize = 256;
@@ -224,6 +227,7 @@ static const char * k_pch_SteamVR_BlockOculusSDKOnAllLaunches_Bool = "blockOculu
 static const char * k_pch_SteamVR_HDCPLegacyCompatibility_Bool = "hdcp14legacyCompatibility";
 static const char * k_pch_SteamVR_DisplayPortTrainingMode_Int = "displayPortTrainingMode";
 static const char * k_pch_SteamVR_UsePrism_Bool = "usePrism";
+static const char * k_pch_SteamVR_AllowFallbackMirrorWindowLinux_Bool = "allowFallbackMirrorWindowLinux";
 static const char * k_pch_DirectMode_Section = "direct_mode";
 static const char * k_pch_DirectMode_Enable_Bool = "enable";
 static const char * k_pch_DirectMode_Count_Int32 = "count";
@@ -334,6 +338,9 @@ static const char * k_pch_Dashboard_DashboardScale = "dashboardScale";
 static const char * k_pch_Dashboard_UseStandaloneSystemLayer = "standaloneSystemLayer";
 static const char * k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 static const char * k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
+static const char * k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
+static const char * k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool = "allowDesktopBPMWithVRGamepadUI";
+static const char * k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
 static const char * k_pch_modelskin_Section = "modelskins";
 static const char * k_pch_Driver_Enable_Bool = "enable";
 static const char * k_pch_Driver_BlockedBySafemode_Bool = "blocked_by_safe_mode";
@@ -357,6 +364,7 @@ static const char * k_pch_DesktopUI_Section = "DesktopUI";
 static const char * k_pch_LastKnown_Section = "LastKnown";
 static const char * k_pch_LastKnown_HMDManufacturer_String = "HMDManufacturer";
 static const char * k_pch_LastKnown_HMDModel_String = "HMDModel";
+static const char * k_pch_LastKnown_ActualHMDDriver_String = "ActualHMDDriver";
 static const char * k_pch_DismissedWarnings_Section = "DismissedWarnings";
 static const char * k_pch_Input_Section = "input";
 static const char * k_pch_Input_LeftThumbstickRotation_Float = "leftThumbstickRotation";
@@ -445,6 +453,7 @@ typedef enum ETextureType
 	ETextureType_TextureType_DirectX12 = 4,
 	ETextureType_TextureType_DXGISharedHandle = 5,
 	ETextureType_TextureType_Metal = 6,
+	ETextureType_TextureType_Reserved = 7,
 } ETextureType;
 
 typedef enum EColorSpace
@@ -558,6 +567,7 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_EstimatedDeviceFirstUseTime_Int32 = 1051,
 	ETrackedDeviceProperty_Prop_DevicePowerUsage_Float = 1052,
 	ETrackedDeviceProperty_Prop_IgnoreMotionForStandby_Bool = 1053,
+	ETrackedDeviceProperty_Prop_ActualTrackingSystemName_String = 1054,
 	ETrackedDeviceProperty_Prop_ReportsTimeSinceVSync_Bool = 2000,
 	ETrackedDeviceProperty_Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	ETrackedDeviceProperty_Prop_DisplayFrequency_Float = 2002,
@@ -658,6 +668,8 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_Hmd_SupportsRoomViewDirect_Bool = 2105,
 	ETrackedDeviceProperty_Prop_Hmd_SupportsAppThrottling_Bool = 2106,
 	ETrackedDeviceProperty_Prop_Hmd_SupportsGpuBusMonitoring_Bool = 2107,
+	ETrackedDeviceProperty_Prop_DriverDisplaysIPDChanges_Bool = 2108,
+	ETrackedDeviceProperty_Prop_Driver_Reserved_01 = 2109,
 	ETrackedDeviceProperty_Prop_DSCVersion_Int32 = 2110,
 	ETrackedDeviceProperty_Prop_DSCSliceCount_Int32 = 2111,
 	ETrackedDeviceProperty_Prop_DSCBPPx16_Int32 = 2112,
@@ -759,6 +771,7 @@ typedef enum EVRSubmitFlags
 	EVRSubmitFlags_Submit_FrameDiscontinuty = 32,
 	EVRSubmitFlags_Submit_VulkanTextureWithArrayData = 64,
 	EVRSubmitFlags_Submit_GlArrayTexture = 128,
+	EVRSubmitFlags_Submit_IsEgl = 256,
 	EVRSubmitFlags_Submit_Reserved2 = 32768,
 	EVRSubmitFlags_Submit_Reserved3 = 65536,
 } EVRSubmitFlags;
@@ -793,6 +806,8 @@ typedef enum EVREventType
 	EVREventType_VREvent_PropertyChanged = 111,
 	EVREventType_VREvent_WirelessDisconnect = 112,
 	EVREventType_VREvent_WirelessReconnect = 113,
+	EVREventType_VREvent_Reserved_01 = 114,
+	EVREventType_VREvent_Reserved_02 = 115,
 	EVREventType_VREvent_ButtonPress = 200,
 	EVREventType_VREvent_ButtonUnpress = 201,
 	EVREventType_VREvent_ButtonTouch = 202,
@@ -853,6 +868,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_StartDashboard = 532,
 	EVREventType_VREvent_ElevatePrism = 533,
 	EVREventType_VREvent_OverlayClosed = 534,
+	EVREventType_VREvent_DashboardThumbChanged = 535,
 	EVREventType_VREvent_Notification_Shown = 600,
 	EVREventType_VREvent_Notification_Hidden = 601,
 	EVREventType_VREvent_Notification_BeginInteraction = 602,
@@ -895,6 +911,7 @@ typedef enum EVREventType
 	EVREventType_VREvent_GpuSpeedSectionSettingChanged = 869,
 	EVREventType_VREvent_WindowsMRSectionSettingChanged = 870,
 	EVREventType_VREvent_OtherSectionSettingChanged = 871,
+	EVREventType_VREvent_AnyDriverSettingsChanged = 872,
 	EVREventType_VREvent_StatusUpdate = 900,
 	EVREventType_VREvent_WebInterface_InstallDriverCompleted = 950,
 	EVREventType_VREvent_MCImageUpdated = 1000,
@@ -903,6 +920,8 @@ typedef enum EVREventType
 	EVREventType_VREvent_KeyboardClosed = 1200,
 	EVREventType_VREvent_KeyboardCharInput = 1201,
 	EVREventType_VREvent_KeyboardDone = 1202,
+	EVREventType_VREvent_KeyboardOpened_Global = 1203,
+	EVREventType_VREvent_KeyboardClosed_Global = 1204,
 	EVREventType_VREvent_ApplicationListUpdated = 1303,
 	EVREventType_VREvent_ApplicationMimeTypeLoad = 1304,
 	EVREventType_VREvent_ProcessConnected = 1306,
@@ -1370,6 +1389,10 @@ typedef enum EVRInitError
 	EVRInitError_VRInitError_Compositor_SystemLayerCreateSession = 493,
 	EVRInitError_VRInitError_Compositor_CreateInverseDistortUVs = 494,
 	EVRInitError_VRInitError_Compositor_CreateBackbufferDepth = 495,
+	EVRInitError_VRInitError_Compositor_CannotDRMLeaseDisplay = 496,
+	EVRInitError_VRInitError_Compositor_CannotConnectToDisplayServer = 497,
+	EVRInitError_VRInitError_Compositor_GnomeNoDRMLeasing = 498,
+	EVRInitError_VRInitError_Compositor_FailedToInitializeEncoder = 499,
 	EVRInitError_VRInitError_VendorSpecific_UnableToConnectToOculusRuntime = 1000,
 	EVRInitError_VRInitError_VendorSpecific_WindowsNotInDevMode = 1001,
 	EVRInitError_VRInitError_VendorSpecific_OculusLinkNotEnabled = 1002,
@@ -1622,7 +1645,12 @@ typedef enum VROverlayFlags
 	VROverlayFlags_WantsModalBehavior = 1048576,
 	VROverlayFlags_IsPremultiplied = 2097152,
 	VROverlayFlags_IgnoreTextureAlpha = 4194304,
+	VROverlayFlags_EnableControlBar = 8388608,
+	VROverlayFlags_EnableControlBarKeyboard = 16777216,
+	VROverlayFlags_EnableControlBarClose = 33554432,
 	VROverlayFlags_Reserved = 67108864,
+	VROverlayFlags_EnableClickStabilization = 134217728,
+	VROverlayFlags_MultiCursor = 268435456,
 } VROverlayFlags;
 
 typedef enum VRMessageOverlayResponse
@@ -1659,6 +1687,8 @@ typedef enum EKeyboardFlags
 {
 	EKeyboardFlags_KeyboardFlag_Minimal = 1,
 	EKeyboardFlags_KeyboardFlag_Modal = 2,
+	EKeyboardFlags_KeyboardFlag_ShowArrowKeys = 4,
+	EKeyboardFlags_KeyboardFlag_HideDoneKey = 8,
 } EKeyboardFlags;
 
 typedef enum EDeviceType
@@ -2076,6 +2106,7 @@ typedef struct VREvent_Mouse_t
 	float x;
 	float y;
 	uint32_t button;
+	uint32_t cursorIndex;
 } VREvent_Mouse_t;
 
 typedef struct VREvent_Scroll_t
@@ -2084,6 +2115,7 @@ typedef struct VREvent_Scroll_t
 	float ydelta;
 	uint32_t unused;
 	float viewportscale;
+	uint32_t cursorIndex;
 } VREvent_Scroll_t;
 
 typedef struct VREvent_TouchPadMove_t
@@ -2115,6 +2147,7 @@ typedef struct VREvent_Overlay_t
 	uint64_t overlayHandle;
 	uint64_t devicePath;
 	uint64_t memoryBlockId;
+	uint32_t cursorIndex;
 } VREvent_Overlay_t;
 
 typedef struct VREvent_Status_t
@@ -2126,6 +2159,7 @@ typedef struct VREvent_Keyboard_t
 {
 	char cNewInput[8]; //char[8]
 	uint64_t uUserValue;
+	uint64_t overlayHandle;
 } VREvent_Keyboard_t;
 
 typedef struct VREvent_Ipd_t
