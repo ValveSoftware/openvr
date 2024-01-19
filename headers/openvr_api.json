@@ -251,6 +251,7 @@
 	,{"name": "Prop_Hmd_SupportsHDR10_Bool","value": "2093"}
 	,{"name": "Prop_Hmd_EnableParallelRenderCameras_Bool","value": "2094"}
 	,{"name": "Prop_DriverProvidedChaperoneJson_String","value": "2095"}
+	,{"name": "Prop_ForceSystemLayerUseAppPoses_Bool","value": "2096"}
 	,{"name": "Prop_IpdUIRangeMinMeters_Float","value": "2100"}
 	,{"name": "Prop_IpdUIRangeMaxMeters_Float","value": "2101"}
 	,{"name": "Prop_Hmd_SupportsHDCP14LegacyCompat_Bool","value": "2102"}
@@ -264,6 +265,9 @@
 	,{"name": "Prop_DSCVersion_Int32","value": "2110"}
 	,{"name": "Prop_DSCSliceCount_Int32","value": "2111"}
 	,{"name": "Prop_DSCBPPx16_Int32","value": "2112"}
+	,{"name": "Prop_Hmd_MaxDistortedTextureWidth_Int32","value": "2113"}
+	,{"name": "Prop_Hmd_MaxDistortedTextureHeight_Int32","value": "2114"}
+	,{"name": "Prop_Hmd_AllowSupersampleFiltering_Bool","value": "2115"}
 	,{"name": "Prop_DriverRequestedMuraCorrectionMode_Int32","value": "2200"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerLeft_Int32","value": "2201"}
 	,{"name": "Prop_DriverRequestedMuraFeather_InnerRight_Int32","value": "2202"}
@@ -277,6 +281,12 @@
 	,{"name": "Prop_Audio_DefaultRecordingDeviceId_String","value": "2301"}
 	,{"name": "Prop_Audio_DefaultPlaybackDeviceVolume_Float","value": "2302"}
 	,{"name": "Prop_Audio_SupportsDualSpeakerAndJackOutput_Bool","value": "2303"}
+	,{"name": "Prop_Audio_DriverManagesPlaybackVolumeControl_Bool","value": "2304"}
+	,{"name": "Prop_Audio_DriverPlaybackVolume_Float","value": "2305"}
+	,{"name": "Prop_Audio_DriverPlaybackMute_Bool","value": "2306"}
+	,{"name": "Prop_Audio_DriverManagesRecordingVolumeControl_Bool","value": "2307"}
+	,{"name": "Prop_Audio_DriverRecordingVolume_Float","value": "2308"}
+	,{"name": "Prop_Audio_DriverRecordingMute_Bool","value": "2309"}
 	,{"name": "Prop_AttachedDeviceId_String","value": "3000"}
 	,{"name": "Prop_SupportedButtons_Uint64","value": "3001"}
 	,{"name": "Prop_Axis0Type_Int32","value": "3002"}
@@ -316,6 +326,7 @@
 	,{"name": "Prop_HasDriverDirectModeComponent_Bool","value": "6005"}
 	,{"name": "Prop_HasVirtualDisplayComponent_Bool","value": "6006"}
 	,{"name": "Prop_HasSpatialAnchorsSupport_Bool","value": "6007"}
+	,{"name": "Prop_SupportsXrTextureSets_Bool","value": "6008"}
 	,{"name": "Prop_ControllerType_String","value": "7000"}
 	,{"name": "Prop_ControllerHandSelectionPriority_Int32","value": "7002"}
 	,{"name": "Prop_VendorSpecific_Reserved_Start","value": "10000"}
@@ -450,6 +461,8 @@
 	,{"name": "VREvent_ElevatePrism","value": "533"}
 	,{"name": "VREvent_OverlayClosed","value": "534"}
 	,{"name": "VREvent_DashboardThumbChanged","value": "535"}
+	,{"name": "VREvent_DesktopMightBeVisible","value": "536"}
+	,{"name": "VREvent_DesktopMightBeHidden","value": "537"}
 	,{"name": "VREvent_Notification_Shown","value": "600"}
 	,{"name": "VREvent_Notification_Hidden","value": "601"}
 	,{"name": "VREvent_Notification_BeginInteraction","value": "602"}
@@ -544,6 +557,10 @@
 	,{"name": "VREvent_SystemReport_Started","value": "1900"}
 	,{"name": "VREvent_Monitor_ShowHeadsetView","value": "2000"}
 	,{"name": "VREvent_Monitor_HideHeadsetView","value": "2001"}
+	,{"name": "VREvent_Audio_SetSpeakersVolume","value": "2100"}
+	,{"name": "VREvent_Audio_SetSpeakersMute","value": "2101"}
+	,{"name": "VREvent_Audio_SetMicrophoneVolume","value": "2102"}
+	,{"name": "VREvent_Audio_SetMicrophoneMute","value": "2103"}
 	,{"name": "VREvent_VendorSpecific_Reserved_Start","value": "10000"}
 	,{"name": "VREvent_VendorSpecific_Reserved_End","value": "19999"}
 ]}
@@ -936,6 +953,7 @@
 	,{"name": "VRInitError_Compositor_CannotConnectToDisplayServer","value": "497"}
 	,{"name": "VRInitError_Compositor_GnomeNoDRMLeasing","value": "498"}
 	,{"name": "VRInitError_Compositor_FailedToInitializeEncoder","value": "499"}
+	,{"name": "VRInitError_Compositor_CreateBlurTexture","value": "500"}
 	,{"name": "VRInitError_VendorSpecific_UnableToConnectToOculusRuntime","value": "1000"}
 	,{"name": "VRInitError_VendorSpecific_WindowsNotInDevMode","value": "1001"}
 	,{"name": "VRInitError_VendorSpecific_OculusLinkNotEnabled","value": "1002"}
@@ -1431,7 +1449,7 @@
 ,{
 	"constname": "IVRChaperoneSetup_Version","consttype": "const char *const", "constval": "IVRChaperoneSetup_006"}
 ,{
-	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_027"}
+	"constname": "IVRCompositor_Version","consttype": "const char *const", "constval": "IVRCompositor_028"}
 ,{
 	"constname": "k_unVROverlayMaxKeyLength","consttype": "const uint32_t", "constval": "128"}
 ,{
@@ -1636,6 +1654,10 @@
 	"constname": "k_pch_SteamVR_UsePrism_Bool","consttype": "const char *const", "constval": "usePrism"}
 ,{
 	"constname": "k_pch_SteamVR_AllowFallbackMirrorWindowLinux_Bool","consttype": "const char *const", "constval": "allowFallbackMirrorWindowLinux"}
+,{
+	"constname": "k_pch_OpenXR_Section","consttype": "const char *const", "constval": "openxr"}
+,{
+	"constname": "k_pch_OpenXR_MetaUnityPluginCompatibility_Int32","consttype": "const char *const", "constval": "metaUnityPluginCompatibility"}
 ,{
 	"constname": "k_pch_DirectMode_Section","consttype": "const char *const", "constval": "direct_mode"}
 ,{
@@ -2238,6 +2260,10 @@
 { "fieldname": "nBrowserIdentifier", "fieldtype": "int32_t"}]}
 ,{"struct": "vr::VREvent_HDCPError_t","fields": [
 { "fieldname": "eCode", "fieldtype": "enum vr::EHDCPError"}]}
+,{"struct": "vr::VREvent_AudioVolumeControl_t","fields": [
+{ "fieldname": "fVolumeLevel", "fieldtype": "float"}]}
+,{"struct": "vr::VREvent_AudioMuteControl_t","fields": [
+{ "fieldname": "bMute", "fieldtype": "_Bool"}]}
 ,{"struct": "vr::(anonymous)","fields": [
 { "fieldname": "reserved", "fieldtype": "struct vr::VREvent_Reserved_t"},
 { "fieldname": "controller", "fieldtype": "struct vr::VREvent_Controller_t"},
@@ -2267,7 +2293,9 @@
 { "fieldname": "progressUpdate", "fieldtype": "struct vr::VREvent_ProgressUpdate_t"},
 { "fieldname": "showUi", "fieldtype": "struct vr::VREvent_ShowUI_t"},
 { "fieldname": "showDevTools", "fieldtype": "struct vr::VREvent_ShowDevTools_t"},
-{ "fieldname": "hdcpError", "fieldtype": "struct vr::VREvent_HDCPError_t"}]}
+{ "fieldname": "hdcpError", "fieldtype": "struct vr::VREvent_HDCPError_t"},
+{ "fieldname": "audioVolumeControl", "fieldtype": "struct vr::VREvent_AudioVolumeControl_t"},
+{ "fieldname": "audioMuteControl", "fieldtype": "struct vr::VREvent_AudioMuteControl_t"}]}
 ,{"struct": "vr::VREvent_t","fields": [
 { "fieldname": "eventType", "fieldtype": "uint32_t"},
 { "fieldname": "trackedDeviceIndex", "fieldtype": "TrackedDeviceIndex_t"},
@@ -3643,6 +3671,18 @@
 	"params": [ 
 {	"paramname": "eEye" ,"paramtype": "vr::EVREye"},
 {	"paramname": "pTexture" ,"paramtype": "const struct vr::Texture_t *"},
+{	"paramname": "pBounds" ,"paramtype": "const struct vr::VRTextureBounds_t *"},
+{	"paramname": "nSubmitFlags" ,"paramtype": "vr::EVRSubmitFlags"}
+	 ]
+}
+,{
+	"classname": "vr::IVRCompositor",
+	"methodname": "SubmitWithArrayIndex",
+	"returntype": "vr::EVRCompositorError",
+	"params": [ 
+{	"paramname": "eEye" ,"paramtype": "vr::EVREye"},
+{	"paramname": "pTexture" ,"paramtype": "const struct vr::Texture_t *"},
+{	"paramname": "unTextureArrayIndex" ,"paramtype": "uint32_t"},
 {	"paramname": "pBounds" ,"paramtype": "const struct vr::VRTextureBounds_t *"},
 {	"paramname": "nSubmitFlags" ,"paramtype": "vr::EVRSubmitFlags"}
 	 ]

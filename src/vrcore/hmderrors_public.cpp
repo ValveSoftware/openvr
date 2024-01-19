@@ -336,6 +336,7 @@ const char *GetIDForVRInitError( vr::EVRInitError eError )
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CannotConnectToDisplayServer );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_GnomeNoDRMLeasing );
 		RETURN_ENUM_AS_STRING( VRInitError_Compositor_FailedToInitializeEncoder );
+		RETURN_ENUM_AS_STRING( VRInitError_Compositor_CreateBlurTexture );
 
 		// Vendor-specific errors
 		RETURN_ENUM_AS_STRING( VRInitError_VendorSpecific_UnableToConnectToOculusRuntime);

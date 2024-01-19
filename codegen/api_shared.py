@@ -522,8 +522,12 @@ def outputinterfaces(namespace, data):
 							paramlist.append('ref ' + paramtype + ' ' + param['paramname'])
 					else:
 						paramlist.append(paramtype + ' ' + param['paramname'])
+					if(paramtype == 'bool'):
+						paramlist[-1] = '[MarshalAs(UnmanagedType.I1)] ' + paramlist[-1];
 
 			print("\t\t[UnmanagedFunctionPointer(CallingConvention.StdCall)]")
+			if(returntype == 'bool'):
+				print("\t\t[return: MarshalAs(UnmanagedType.I1)]")
 			print("\t\tinternal delegate "+returntype+" _"+methodname+"("+", ".join(paramlist)+");")
 			print("\t\t[MarshalAs(UnmanagedType.FunctionPtr)]")
 			print("\t\tinternal _"+methodname+" "+methodname+";\n")

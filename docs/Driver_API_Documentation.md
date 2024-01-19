@@ -78,6 +78,7 @@
         - [Binding Duplication](#binding-duplication)
         - [Emulateable Devices](#emulateable-devices)
     - [Render Models](#render-models)
+    - [Chaperone](#chaperone)
     - [Building & Development Environment](#building--development-environment)
         - [Debugging SteamVR with Visual Studio](#debugging-steamvr-with-visual-studio)
 - [Further Examples](#further-examples)
@@ -1168,6 +1169,26 @@ right and covers a single eye.
 * `EVREye eEye` - The eye to get the distortion for. The possible options are:
     * `Eye_Left` - The left eye.
     * `Eye_Right` - The right eye.
+* `float fU` - The current U coordinate.
+* `float fV` - The current V coordinate.
+
+```c++
+virtual bool ComputeInverseDistortion( HmdVector2_t *pResult, EVREye eEye, uint32_t unChannel, float fU, float fV ) = 0;
+```
+`ComputeInverseDistortion` is called by the runtime to get the result of the inverse distortion function for the specified eye,
+channel and uv.
+
+Drivers **may** return false from this method to indicate that the runtime should infer an estimate from
+the result returned by `IVRDisplayComponent::ComputeDistortion`.
+
+Returning true from method indicates to the runtime that it should not try to estimate the inverse, and instead use the
+values provided by the driver.
+
+* `HmdVector2_t *pResult` - Driver should write into this with the result for the specified UV.
+* `EVREye eEye` - The eye to get the distortion for. The possible options are:
+    * `Eye_Left` - The left eye.
+    * `Eye_Right` - The right eye.
+* `uint32_t unChannel` - Which channel is requested. 0 for red, 1 for blue, 2 for green.
 * `float fU` - The current U coordinate.
 * `float fV` - The current V coordinate.
 
@@ -3485,6 +3506,82 @@ will be set in the override property container.
     * `Prop_ManufacturerName_String` - `HTC`
     * `legacy_buttons` - `[ 0, 1, 2, 32, 33 ]`
     * `legacy_axis` - `[ 1, 3, 0, 0, 0 ]`
+
+## Chaperone
+
+The SteamVR Chaperone system provides visible boundaries for users when inside VR, which should be
+shown at the edges of the play space to avoid collisions with other objects.  
+
+The chaperone system is also responsible for keeping track of the relation between the driver's raw
+tracking space (the tracking space in which the driver provides poses to the runtime through 
+`IVRServerDriverHost::TrackedDevicePoseUpdate`) and the seated and standing universe origins that applications
+query poses relative to.
+
+A description of each of the universes is below, along with their corresponding json property:
+
+    * `TrackingUniverseSeated (seated)` - Useful for applications that need to render content relative to the user's resting head position, such as presenting a cockpit view in simulators.
+    * `TrackingUniverseStanding (standing)` - This is some point on the floor of the tracking space, where y = 0 **must** always be the floor in this tracking space. Useful for applications that want to render content that should scale to the user's real world setup, such as placing the floor at the same location.
+    * "Setup standing (setup_standing2)" - An origin from the raw tracking space. This is some point on the floor which is the center of the play space. The universe is not visible to applications, but the driver **may** choose to use it to break the dependency between where the standing origin should be, and where SteamVR should place the collision bounds relative to. It is optional for the driver to provide this, and if ommitted, it will default to being the same as the standing universe.
+
+Any driver that provides its own tracking solution **should** provide its own chaperone setup.
+
+A driver provides its chaperone setup as a json file. A driver **may** either provide an absolute path
+to the chaperone json file it wishes to present to SteamVR, or provide a json string by setting
+the `Prop_DriverProvidedChaperoneJson_String` property of the HMD container.
+
+A driver **may** provide multiple "universes", where (in this context), a universe represents a different
+location in the real world that requires a separate chaperone setup, such as switching to a different room.
+
+SteamVR only allows one chaperone universe to be active at a time. A driver **must** specify the 
+universe that it wishes to use by setting the `Prop_CurrentUniverseId_Uint64` property to the universe id
+it wises to use (more details below).
+
+The provided json **must** be valid, with no trailing commas, but **may** contain comments prefixed by `//`.
+
+    * `json_id` - **required**. Set to `chaperone_info`.
+    * `version` - **required**. Current chaperone json version is `5`.
+    * `time` - **required**. The ISO timestamp when the chaperone file was last modified.   
+    * `universes` - A json array containing json objects that contain:
+        * `collision_bounds` - An array that contains sets of polygons (An array that **should** 
+            contain arrays that contains arrays of 4 elements (the polygons),
+            where each element is an array that contains the x,y,z positions of each vertex).
+            Collision bounds are relative to the **setup standing** play space.
+            Drivers **should** provide 4 vertices per face they are drawing. Drivers **should**
+            provide vertices that are all on the same vertical plane as eachother.
+        * `play_area` - An array that contains two values: `[width, height]` of the play space.
+            The width and height are driver-defined, but **should** represent largest rectangle that 
+            can represent the playable area.
+        * `<seated/standing/setup_standing2>` - A json object that represents the relation between the driver's raw
+            tracking space and the specified universe origin. Drivers **must** provide seated and standing relations,
+            but **may** omit the setup standing universe. In this case, the setup standing universe will be
+            set to what was set for the standing property (see next paragraph). Each **must** contain the following properties:
+            * `translation` - The position offset between the raw origin and the universe's origin
+            * `yaw` - The rotation on the x,z plane between the raw space and universe's space
+        * `universeID` - The id of the universe. This **must** be a uint32 number and **must** be 
+            unique for each different universe.
+
+The driver **must** either:
+1. Set both the setup standing and standing origins.
+    * In this case, the setup standing origin is treated as the center of the play area. The standing origin is free to be placed elsewhere
+2. Set only the standing origin.
+    * In this case, the standing origin is treated as the center of the play area.
+
+### Recentering
+
+The recentering feature in SteamVR allows the user to update the standing and seated universe positions
+while inside SteamVR. This can be useful to reposition your height in a cockpit, or to reposition
+room-scale content relative to a different real-world position.
+
+Initially, the transforms for the standing and seated universes are set by the driver provided chaperone file.
+When a user requests a recenter, SteamVR updates the standing and seated transforms it holds in memory,
+and will attempt to update the seated universe (and only seated universe) in the chaperone file if
+the driver provided one, and that file is writeable. SteamVR **will not** attempt to modify the standing transform.
+
+If a driver wants to configure the way recentering is handled,
+it **may** configure the `Prop_Driver_RecenterSupport_Int32` property with one of the following values:
+* `k_EVRDriverRecenterSupport_SteamVRHandlesRecenter` - Default. SteamVR shows a recenter but and will do the above when a user requests a recenter.
+* `k_EVRDriverRecenterSupport_NoRecenter` - Recentering is not supported and no recenter button will be shown in the UI.
+* `k_EVRDriverRecenterSupport_DriverHandlesRecenter` - A recenter button is shown and an event **will** be triggered for the driver to handle the recenter, but SteamVR will do no additional processing.
 
 ## Render Models
 

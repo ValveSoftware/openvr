@@ -746,9 +746,18 @@ std::string Path_ReadTextFile( const std::string &strFilename )
 	if (!buf)
 		return "";
 
-	// convert CRLF -> LF
+	int i = 1; /* start working at byte 1 (in-place) */
 	size_t outsize = 1;
-	for (int i=1; i < size; i++)
+
+	// remove UTF8 BOM
+	if ( size >= 3 && buf[0] == 0xEF && buf[1] == 0xBB && buf[2] == 0xBF )
+	{
+		i = 3;
+		outsize = 0;
+	}
+
+	// convert CRLF -> LF
+	for ( ; i < size; i++ )
 	{
 		if (buf[i] == '\n' && buf[i-1] == '\r') // CRLF
 			buf[outsize-1] = '\n'; // ->LF

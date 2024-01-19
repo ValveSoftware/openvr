@@ -101,6 +101,8 @@ print("""
 		[FieldOffset(0)] public VREvent_ShowUI_t showUi;
 		[FieldOffset(0)] public VREvent_ShowDevTools_t showDevTools;
 		[FieldOffset(0)] public VREvent_HDCPError_t hdcpError;
+		[FieldOffset(0)] public VREvent_AudioVolumeControl_t audioVolumeControl;
+		[FieldOffset(0)] public VREvent_AudioMuteControl_t audioMuteControl;
 		[FieldOffset(0)] public VREvent_Keyboard_t keyboard; // This has to be at the end due to a mono bug
 	}
 	""")

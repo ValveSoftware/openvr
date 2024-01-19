@@ -16,8 +16,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 2;
-	static const uint32_t k_nSteamVRVersionMinor = 0;
-	static const uint32_t k_nSteamVRVersionBuild = 10;
+	static const uint32_t k_nSteamVRVersionMinor = 2;
+	static const uint32_t k_nSteamVRVersionBuild = 3;
 } // namespace vr
 
 // public_vrtypes.h
@@ -531,6 +531,7 @@ enum ETrackedDeviceProperty
 	Prop_Hmd_SupportsHDR10_Bool					= 2093,
 	Prop_Hmd_EnableParallelRenderCameras_Bool	= 2094,
 	Prop_DriverProvidedChaperoneJson_String		= 2095, // higher priority than Prop_DriverProvidedChaperonePath_String
+	Prop_ForceSystemLayerUseAppPoses_Bool		= 2096,
 
 	Prop_IpdUIRangeMinMeters_Float 				= 2100,
 	Prop_IpdUIRangeMaxMeters_Float 				= 2101,
@@ -547,6 +548,10 @@ enum ETrackedDeviceProperty
 	Prop_DSCSliceCount_Int32					= 2111,
 	Prop_DSCBPPx16_Int32						= 2112,
 
+	Prop_Hmd_MaxDistortedTextureWidth_Int32		= 2113,
+	Prop_Hmd_MaxDistortedTextureHeight_Int32	= 2114,
+	Prop_Hmd_AllowSupersampleFiltering_Bool		= 2115,
+
 	// Driver requested mura correction properties
 	Prop_DriverRequestedMuraCorrectionMode_Int32		= 2200,
 	Prop_DriverRequestedMuraFeather_InnerLeft_Int32		= 2201,
@@ -558,10 +563,16 @@ enum ETrackedDeviceProperty
 	Prop_DriverRequestedMuraFeather_OuterTop_Int32		= 2207,
 	Prop_DriverRequestedMuraFeather_OuterBottom_Int32	= 2208,
 
-	Prop_Audio_DefaultPlaybackDeviceId_String		= 2300,
-	Prop_Audio_DefaultRecordingDeviceId_String		= 2301,
-	Prop_Audio_DefaultPlaybackDeviceVolume_Float = 2302,
-	Prop_Audio_SupportsDualSpeakerAndJackOutput_Bool = 2303,
+	Prop_Audio_DefaultPlaybackDeviceId_String				= 2300,
+	Prop_Audio_DefaultRecordingDeviceId_String				= 2301,
+	Prop_Audio_DefaultPlaybackDeviceVolume_Float			= 2302,
+	Prop_Audio_SupportsDualSpeakerAndJackOutput_Bool		= 2303,
+	Prop_Audio_DriverManagesPlaybackVolumeControl_Bool		= 2304,
+	Prop_Audio_DriverPlaybackVolume_Float					= 2305,
+	Prop_Audio_DriverPlaybackMute_Bool						= 2306,
+	Prop_Audio_DriverManagesRecordingVolumeControl_Bool		= 2307,
+	Prop_Audio_DriverRecordingVolume_Float					= 2308,
+	Prop_Audio_DriverRecordingMute_Bool						= 2309,
 
 	// Properties that are unique to TrackedDeviceClass_Controller
 	Prop_AttachedDeviceId_String				= 3000,
@@ -610,7 +621,8 @@ enum ETrackedDeviceProperty
 	Prop_HasCameraComponent_Bool				= 6004,
 	Prop_HasDriverDirectModeComponent_Bool		= 6005,
 	Prop_HasVirtualDisplayComponent_Bool		= 6006,
-	Prop_HasSpatialAnchorsSupport_Bool		    = 6007,
+	Prop_HasSpatialAnchorsSupport_Bool			= 6007,
+	Prop_SupportsXrTextureSets_Bool				= 6008,
 
 	// Properties that are set internally based on other information provided by drivers
 	Prop_ControllerType_String					= 7000,
@@ -870,6 +882,9 @@ enum EVREventType
 
 	VREvent_DashboardThumbChanged			= 535, // Sent when a dashboard thumbnail image changes
 
+	VREvent_DesktopMightBeVisible			= 536, // Sent when any known desktop related overlay is visible
+	VREvent_DesktopMightBeHidden			= 537, // Sent when all known desktop related overlays are hidden
+
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
 	VREvent_Notification_BeginInteraction	= 602,
@@ -989,6 +1004,11 @@ enum EVREventType
 
 	VREvent_Monitor_ShowHeadsetView			= 2000, // data is process
 	VREvent_Monitor_HideHeadsetView			= 2001, // data is process
+
+	VREvent_Audio_SetSpeakersVolume			= 2100,
+	VREvent_Audio_SetSpeakersMute			= 2101,
+	VREvent_Audio_SetMicrophoneVolume		= 2102,
+	VREvent_Audio_SetMicrophoneMute			= 2103,
 
 	// Vendors are free to expose private events in this reserved region
 	VREvent_VendorSpecific_Reserved_Start	= 10000,
@@ -1302,6 +1322,16 @@ struct VREvent_HDCPError_t
 	EHDCPError eCode;
 };
 
+struct VREvent_AudioVolumeControl_t
+{
+	float fVolumeLevel;
+};
+
+struct VREvent_AudioMuteControl_t
+{
+	bool bMute;
+};
+
 typedef union
 {
 	VREvent_Reserved_t reserved;
@@ -1333,7 +1363,9 @@ typedef union
 	VREvent_ShowUI_t showUi;
 	VREvent_ShowDevTools_t showDevTools;
 	VREvent_HDCPError_t hdcpError;
-    /** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py */
+	VREvent_AudioVolumeControl_t audioVolumeControl;
+	VREvent_AudioMuteControl_t audioMuteControl;
+	/** NOTE!!! If you change this you MUST manually update openvr_interop.cs.py and openvr_api_flat.h.py */
 } VREvent_Data_t;
 
 
@@ -1865,6 +1897,7 @@ enum EVRInitError
 	VRInitError_Compositor_CannotConnectToDisplayServer							= 497,
 	VRInitError_Compositor_GnomeNoDRMLeasing									= 498,
 	VRInitError_Compositor_FailedToInitializeEncoder							= 499,
+	VRInitError_Compositor_CreateBlurTexture									= 500,
 
 	VRInitError_VendorSpecific_UnableToConnectToOculusRuntime		= 1000,
 	VRInitError_VendorSpecific_WindowsNotInDevMode					= 1001,
@@ -2883,6 +2916,11 @@ namespace vr
 	static const char * const k_pch_SteamVR_AllowFallbackMirrorWindowLinux_Bool = "allowFallbackMirrorWindowLinux";
 
 	//-----------------------------------------------------------------------------
+	// openxr keys
+	static const char * const k_pch_OpenXR_Section = "openxr";
+	static const char * const k_pch_OpenXR_MetaUnityPluginCompatibility_Int32 = "metaUnityPluginCompatibility";
+
+	//-----------------------------------------------------------------------------
 	// direct mode keys
 	static const char * const k_pch_DirectMode_Section = "direct_mode";
 	static const char * const k_pch_DirectMode_Enable_Bool = "enable";
@@ -3145,12 +3183,16 @@ public:
 	* Tracking space center (0,0,0) is the center of the Play Area. **/
 	virtual bool GetPlayAreaSize( float *pSizeX, float *pSizeZ ) = 0;
 
-	/** Returns the 4 corner positions of the Play Area (formerly named Soft Bounds).
-	* Corners are in counter-clockwise order.
-	* Standing center (0,0,0) is the center of the Play Area.
-	* It's a rectangle.
-	* 2 sides are parallel to the X axis and 2 sides are parallel to the Z axis.
-	* Height of every corner is 0Y (on the floor). **/
+	/** Returns a quad describing the Play Area (formerly named Soft Bounds).
+	 * The corners form a rectangle. 
+	 * Corners are in counter-clockwise order, starting at the front-right.
+	 * The positions are given relative to the standing origin.
+	 * The center of the rectangle is the center of the user's calibrated play space, not necessarily the standing
+	 * origin. 
+	 * The Play Area's forward direction goes from its center through the mid-point of a line drawn between the
+	 * first and second corner. 
+	 * The quad lies on the XZ plane (height = 0y), with 2 sides parallel to the X-axis and two sides parallel
+	 * to the Z-axis of the user's calibrated Play Area. **/
 	virtual bool GetPlayAreaRect( HmdQuad_t *rect ) = 0;
 
 	/** Reload Chaperone data from the .vrchap file on disk. */
@@ -3452,6 +3494,8 @@ public:
 	*	- AlreadySubmitted (app has submitted two left textures or two right textures in a single frame - i.e. before calling WaitGetPoses again)
 	*/
 	virtual EVRCompositorError Submit( EVREye eEye, const Texture_t *pTexture, const VRTextureBounds_t* pBounds = 0, EVRSubmitFlags nSubmitFlags = Submit_Default ) = 0;
+	virtual EVRCompositorError SubmitWithArrayIndex( EVREye eEye, const Texture_t *pTexture, uint32_t unTextureArrayIndex,
+		const VRTextureBounds_t *pBounds = 0, EVRSubmitFlags nSubmitFlags = Submit_Default ) = 0;
 
 	/** Clears the frame that was sent with the last call to Submit. This will cause the
 	* compositor to show the grid until Submit is called again. */
@@ -3631,7 +3675,7 @@ public:
 	virtual EVRCompositorError GetPosesForFrame( uint32_t unPosePredictionID, VR_ARRAY_COUNT( unPoseArrayCount ) TrackedDevicePose_t* pPoseArray, uint32_t unPoseArrayCount ) = 0;
 };
 
-static const char * const IVRCompositor_Version = "IVRCompositor_027";
+static const char * const IVRCompositor_Version = "IVRCompositor_028";
 
 } // namespace vr
 
