@@ -10,6 +10,7 @@
 
 #include <cstdbool>
 #include <unistd.h>
+#include <type_traits>
 
 #define sprintf_s   snprintf
 #define vsprintf_s  sprintf
@@ -22,6 +23,12 @@
 #define OutputDebugStringA(x) fprintf(stderr, "%s\n", x)
 
 typedef int errno_t;
+
+template < typename T, size_t N >
+size_t _countof( T ( & arr )[ N ] )
+{
+    return std::extent< T[ N ] >::value;
+}
 
 #endif  // _WIN32
 
