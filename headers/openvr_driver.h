@@ -16,8 +16,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 2;
-	static const uint32_t k_nSteamVRVersionMinor = 2;
-	static const uint32_t k_nSteamVRVersionBuild = 3;
+	static const uint32_t k_nSteamVRVersionMinor = 5;
+	static const uint32_t k_nSteamVRVersionBuild = 1;
 } // namespace vr
 
 // public_vrtypes.h
@@ -885,6 +885,11 @@ enum EVREventType
 	VREvent_DesktopMightBeVisible			= 536, // Sent when any known desktop related overlay is visible
 	VREvent_DesktopMightBeHidden			= 537, // Sent when all known desktop related overlays are hidden
 
+	VREvent_MutualSteamCapabilitiesChanged	= 538, // Sent when the set of capabilities common between both Steam and SteamVR have changed.
+
+	VREvent_OverlayCreated					= 539, // An OpenVR overlay of any sort was created. Data is overlay.
+	VREvent_OverlayDestroyed				= 540, // An OpenVR overlay of any sort was destroyed. Data is overlay.
+
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
 	VREvent_Notification_BeginInteraction	= 602,
@@ -1647,6 +1652,7 @@ enum EVRNotificationError
 	VRNotificationError_NotificationQueueFull = 101,
 	VRNotificationError_InvalidOverlayHandle = 102,
 	VRNotificationError_SystemWithUserValueAlreadyExists = 103,
+	VRNotificationError_ServiceUnavailable = 104,
 };
 
 
@@ -2014,22 +2020,22 @@ static const uint32_t k_unScreenshotHandleInvalid = 0;
 /** Compositor frame timing reprojection flags. */
 const uint32_t VRCompositor_ReprojectionReason_Cpu = 0x01;
 const uint32_t VRCompositor_ReprojectionReason_Gpu = 0x02;
-const uint32_t VRCompositor_ReprojectionAsync = 0x04;	// This flag indicates the async reprojection mode is active,
+const uint32_t VRCompositor_ReprojectionAsync = 0x04;		// This flag indicates the async reprojection mode is active,
 															// but does not indicate if reprojection actually happened or not.
 															// Use the ReprojectionReason flags above to check if reprojection
 															// was actually applied (i.e. scene texture was reused).
 															// NumFramePresents > 1 also indicates the scene texture was reused,
 															// and also the number of times that it was presented in total.
 
-const uint32_t VRCompositor_ReprojectionMotion = 0x08;	// This flag indicates whether or not motion smoothing was triggered for this frame
+const uint32_t VRCompositor_ReprojectionMotion = 0x08;		// This flag indicates whether or not motion smoothing was triggered for this frame
 
-const uint32_t VRCompositor_PredictionMask = 0xF0;	// The runtime may predict more than one frame (up to four) ahead if
-															// it detects the application is taking too long to render. These two
+const uint32_t VRCompositor_PredictionMask = 0xF0;			// The runtime may predict more than one frame ahead if
+															// it detects the application is taking too long to render. These
 															// bits will contain the count of additional frames (normally zero).
 															// Use the VR_COMPOSITOR_ADDITIONAL_PREDICTED_FRAMES macro to read from
 															// the latest frame timing entry.
 
-const uint32_t VRCompositor_ThrottleMask = 0xF00;	// Number of frames the compositor is throttling the application.
+const uint32_t VRCompositor_ThrottleMask = 0xF00;			// Number of frames the compositor is throttling the application.
 															// Use the VR_COMPOSITOR_NUMBER_OF_THROTTLED_FRAMES macro to read from
 															// the latest frame timing entry.
 
@@ -2081,6 +2087,8 @@ struct Compositor_FrameTiming
 
 	uint32_t m_nNumVSyncsReadyForUse;
 	uint32_t m_nNumVSyncsToFirstView;
+
+	float m_flTransferLatencyMs;
 };
 #if defined(__linux__) || defined(__APPLE__)
 #pragma pack( pop )
@@ -2320,6 +2328,7 @@ namespace vr
 		VRSettingsError_ReadFailed = 3,
 		VRSettingsError_JsonParseFailed = 4,
 		VRSettingsError_UnsetSettingHasNoDefault = 5, // This will be returned if the setting does not appear in the appropriate default file and has not been set
+		VRSettingsError_AccessDenied = 6,
 	};
 
 	// The maximum length of a settings key
@@ -2461,6 +2470,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
 	static const char * const k_pch_SteamVR_WorldScale_Float = "worldScale";
 	static const char * const k_pch_SteamVR_FovScale_Int32 = "fovScale";
+	static const char * const k_pch_SteamVR_FovScaleLetterboxed_Bool = "fovScaleLetterboxed";
 	static const char * const k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
@@ -2661,7 +2671,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 	static const char * const k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
 	static const char * const k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
-	static const char * const k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool = "allowDesktopBPMWithVRGamepadUI";
+	static const char * const k_pch_Dashboard_AllowVRGamepadUIViaGamescope_Bool = "allowVRGamepadUIViaGamescope";
 	static const char * const k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
 
 	//-----------------------------------------------------------------------------
@@ -2969,6 +2979,9 @@ namespace vr
 
 			// Hmd pose used to render this layer.
 			vr::HmdMatrix34_t mHmdPose;
+
+			// Time in seconds from now that mHmdPose was predicted to.
+			float flHmdPosePredictionTimeInSecondsFromNow;
 		};
 		virtual void SubmitLayer( const SubmitLayerPerEye_t( &perEye )[ 2 ] ) {}
 
@@ -2985,10 +2998,15 @@ namespace vr
 		virtual void PostPresent( const Throttling_t *pThrottling ) {}
 
 		/** Called to get additional frame timing stats from driver.  Check m_nSize for versioning (new members will be added to end only). */
-		virtual void GetFrameTiming( DriverDirectMode_FrameTiming *pFrameTiming ) {}
+		virtual void GetFrameTiming( DriverDirectMode_FrameTiming *pFrameTiming )
+		{
+			/** VRCompositor_ReprojectionMotion_XXX flags get passed in, and since these overlap with VRCompositor_ThrottleMask, they need
+			* to be cleared out if this function isn't implemented; otherwise, those settings will get interpreted as throttling. */
+			pFrameTiming->m_nReprojectionFlags = 0;
+		}
 	};
 
-	static const char *IVRDriverDirectModeComponent_Version = "IVRDriverDirectModeComponent_008";
+	static const char *IVRDriverDirectModeComponent_Version = "IVRDriverDirectModeComponent_009";
 
 }
 
@@ -4126,6 +4144,44 @@ namespace vr
 
 } // namespace vr
 
+// ivripcresourcemanagerclient.h
+
+namespace vr
+{
+
+// -----------------------------------------------------------------------------
+// Purpose: Interact with the IPCResourceManager
+// -----------------------------------------------------------------------------
+class IVRIPCResourceManagerClient
+{
+public:
+	/** Create a new tracked Vulkan Image
+	 *
+	 * nImageFormat: in VkFormat
+	 */
+	virtual bool NewSharedVulkanImage( uint32_t nImageFormat, uint32_t nWidth, uint32_t nHeight, bool bRenderable, bool bMappable, bool bComputeAccess, uint32_t unMipLevels, uint32_t unArrayLayerCount, vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Create a new tracked Vulkan Buffer */
+	virtual bool NewSharedVulkanBuffer( size_t nSize, uint32_t nUsageFlags, vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Create a new tracked Vulkan Semaphore */
+	virtual bool NewSharedVulkanSemaphore( vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Grab a reference to hSharedHandle, and optionally generate a new IPC handle if pNewIpcHandle is not nullptr  */
+	virtual bool RefResource( vr::SharedTextureHandle_t hSharedHandle, uint64_t *pNewIpcHandle ) = 0;
+
+	/** Drop a reference to hSharedHandle */
+	virtual bool UnrefResource( vr::SharedTextureHandle_t hSharedHandle ) = 0;
+
+protected:
+	/** Non-deletable */
+	virtual ~IVRIPCResourceManagerClient() {};
+};
+
+static const char *IVRIPCResourceManagerClient_Version = "IVRIPCResourceManagerClient_001";
+
+}
+
 
 
 namespace vr
@@ -4144,6 +4200,7 @@ namespace vr
 		IVRDriverManager_Version,
 		IVRResources_Version,
 		IVRCompositorPluginProvider_Version,
+		IVRIPCResourceManagerClient_Version,
 		nullptr
 	};
 
@@ -4292,6 +4349,16 @@ namespace vr
 			return m_pVRDriverSpatialAnchors;
 		}
 
+		IVRIPCResourceManagerClient *VRIPCResourceManager()
+		{
+			if ( m_pVRIPCResourceManager == nullptr )
+			{
+				EVRInitError eError;
+				m_pVRIPCResourceManager = ( IVRIPCResourceManagerClient * )VRDriverContext()->GetGenericInterface( IVRIPCResourceManagerClient_Version, &eError );
+			}
+			return m_pVRIPCResourceManager;
+		}
+
 	private:
 		CVRPropertyHelpers		m_propertyHelpers;
 		CVRHiddenAreaHelpers	m_hiddenAreaHelpers;
@@ -4307,6 +4374,7 @@ namespace vr
 		IVRDriverInput			*m_pVRDriverInput;
 		IVRIOBuffer				*m_pVRIOBuffer;
 		IVRDriverSpatialAnchors *m_pVRDriverSpatialAnchors;
+		IVRIPCResourceManagerClient *m_pVRIPCResourceManager;
 	};
 
 	inline COpenVRDriverContext &OpenVRInternal_ModuleServerDriverContext()
@@ -4329,6 +4397,7 @@ namespace vr
 	inline IVRDriverInput *VR_CALLTYPE VRDriverInput() { return OpenVRInternal_ModuleServerDriverContext().VRDriverInput(); }
 	inline IVRIOBuffer *VR_CALLTYPE VRIOBuffer() { return OpenVRInternal_ModuleServerDriverContext().VRIOBuffer(); }
 	inline IVRDriverSpatialAnchors *VR_CALLTYPE VRDriverSpatialAnchors() { return OpenVRInternal_ModuleServerDriverContext().VRDriverSpatialAnchors(); }
+	inline IVRIPCResourceManagerClient *VR_CALLTYPE VRIPCResourceManager() { return OpenVRInternal_ModuleServerDriverContext().VRIPCResourceManager(); }
 
 	inline void COpenVRDriverContext::Clear()
 	{
@@ -4343,11 +4412,13 @@ namespace vr
 		m_pVRDriverInput = nullptr;
 		m_pVRIOBuffer = nullptr;
 		m_pVRDriverSpatialAnchors = nullptr;
+		m_pVRIPCResourceManager = nullptr;
 	}
 
 	inline EVRInitError COpenVRDriverContext::InitServer()
 	{
 		Clear();
+		// VRIPCResourceManager initialized async.
 		if ( !VRServerDriverHost()
 			|| !VRSettings()
 			|| !VRProperties()

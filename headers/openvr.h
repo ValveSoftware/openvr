@@ -16,8 +16,8 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 2;
-	static const uint32_t k_nSteamVRVersionMinor = 2;
-	static const uint32_t k_nSteamVRVersionBuild = 3;
+	static const uint32_t k_nSteamVRVersionMinor = 5;
+	static const uint32_t k_nSteamVRVersionBuild = 1;
 } // namespace vr
 
 // public_vrtypes.h
@@ -885,6 +885,11 @@ enum EVREventType
 	VREvent_DesktopMightBeVisible			= 536, // Sent when any known desktop related overlay is visible
 	VREvent_DesktopMightBeHidden			= 537, // Sent when all known desktop related overlays are hidden
 
+	VREvent_MutualSteamCapabilitiesChanged	= 538, // Sent when the set of capabilities common between both Steam and SteamVR have changed.
+
+	VREvent_OverlayCreated					= 539, // An OpenVR overlay of any sort was created. Data is overlay.
+	VREvent_OverlayDestroyed				= 540, // An OpenVR overlay of any sort was destroyed. Data is overlay.
+
 	VREvent_Notification_Shown				= 600,
 	VREvent_Notification_Hidden				= 601,
 	VREvent_Notification_BeginInteraction	= 602,
@@ -1647,6 +1652,7 @@ enum EVRNotificationError
 	VRNotificationError_NotificationQueueFull = 101,
 	VRNotificationError_InvalidOverlayHandle = 102,
 	VRNotificationError_SystemWithUserValueAlreadyExists = 103,
+	VRNotificationError_ServiceUnavailable = 104,
 };
 
 
@@ -2014,22 +2020,22 @@ static const uint32_t k_unScreenshotHandleInvalid = 0;
 /** Compositor frame timing reprojection flags. */
 const uint32_t VRCompositor_ReprojectionReason_Cpu = 0x01;
 const uint32_t VRCompositor_ReprojectionReason_Gpu = 0x02;
-const uint32_t VRCompositor_ReprojectionAsync = 0x04;	// This flag indicates the async reprojection mode is active,
+const uint32_t VRCompositor_ReprojectionAsync = 0x04;		// This flag indicates the async reprojection mode is active,
 															// but does not indicate if reprojection actually happened or not.
 															// Use the ReprojectionReason flags above to check if reprojection
 															// was actually applied (i.e. scene texture was reused).
 															// NumFramePresents > 1 also indicates the scene texture was reused,
 															// and also the number of times that it was presented in total.
 
-const uint32_t VRCompositor_ReprojectionMotion = 0x08;	// This flag indicates whether or not motion smoothing was triggered for this frame
+const uint32_t VRCompositor_ReprojectionMotion = 0x08;		// This flag indicates whether or not motion smoothing was triggered for this frame
 
-const uint32_t VRCompositor_PredictionMask = 0xF0;	// The runtime may predict more than one frame (up to four) ahead if
-															// it detects the application is taking too long to render. These two
+const uint32_t VRCompositor_PredictionMask = 0xF0;			// The runtime may predict more than one frame ahead if
+															// it detects the application is taking too long to render. These
 															// bits will contain the count of additional frames (normally zero).
 															// Use the VR_COMPOSITOR_ADDITIONAL_PREDICTED_FRAMES macro to read from
 															// the latest frame timing entry.
 
-const uint32_t VRCompositor_ThrottleMask = 0xF00;	// Number of frames the compositor is throttling the application.
+const uint32_t VRCompositor_ThrottleMask = 0xF00;			// Number of frames the compositor is throttling the application.
 															// Use the VR_COMPOSITOR_NUMBER_OF_THROTTLED_FRAMES macro to read from
 															// the latest frame timing entry.
 
@@ -2081,6 +2087,8 @@ struct Compositor_FrameTiming
 
 	uint32_t m_nNumVSyncsReadyForUse;
 	uint32_t m_nNumVSyncsToFirstView;
+
+	float m_flTransferLatencyMs;
 };
 #if defined(__linux__) || defined(__APPLE__)
 #pragma pack( pop )
@@ -2728,6 +2736,7 @@ namespace vr
 		VRSettingsError_ReadFailed = 3,
 		VRSettingsError_JsonParseFailed = 4,
 		VRSettingsError_UnsetSettingHasNoDefault = 5, // This will be returned if the setting does not appear in the appropriate default file and has not been set
+		VRSettingsError_AccessDenied = 6,
 	};
 
 	// The maximum length of a settings key
@@ -2869,6 +2878,7 @@ namespace vr
 	static const char * const k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
 	static const char * const k_pch_SteamVR_WorldScale_Float = "worldScale";
 	static const char * const k_pch_SteamVR_FovScale_Int32 = "fovScale";
+	static const char * const k_pch_SteamVR_FovScaleLetterboxed_Bool = "fovScaleLetterboxed";
 	static const char * const k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	static const char * const k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	static const char * const k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
@@ -3069,7 +3079,7 @@ namespace vr
 	static const char * const k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 	static const char * const k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
 	static const char * const k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
-	static const char * const k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool = "allowDesktopBPMWithVRGamepadUI";
+	static const char * const k_pch_Dashboard_AllowVRGamepadUIViaGamescope_Bool = "allowVRGamepadUIViaGamescope";
 	static const char * const k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
 
 	//-----------------------------------------------------------------------------
@@ -3184,13 +3194,13 @@ public:
 	virtual bool GetPlayAreaSize( float *pSizeX, float *pSizeZ ) = 0;
 
 	/** Returns a quad describing the Play Area (formerly named Soft Bounds).
-	 * The corners form a rectangle. 
+	 * The corners form a rectangle.
 	 * Corners are in counter-clockwise order, starting at the front-right.
 	 * The positions are given relative to the standing origin.
 	 * The center of the rectangle is the center of the user's calibrated play space, not necessarily the standing
-	 * origin. 
+	 * origin.
 	 * The Play Area's forward direction goes from its center through the mid-point of a line drawn between the
-	 * first and second corner. 
+	 * first and second corner.
 	 * The quad lies on the XZ plane (height = 0y), with 2 sides parallel to the X-axis and two sides parallel
 	 * to the Z-axis of the user's calibrated Play Area. **/
 	virtual bool GetPlayAreaRect( HmdQuad_t *rect ) = 0;
@@ -4338,7 +4348,7 @@ namespace vr
 		/** Shows the dashboard. */
 		virtual void ShowDashboard( const char *pchOverlayToShow ) = 0;
 
-		/** Returns the tracked device that has the laser pointer in the dashboard */
+		/** Returns the tracked device index that has the laser pointer in the dashboard, or the last one that was used. */
 		virtual vr::TrackedDeviceIndex_t GetPrimaryDashboardDevice() = 0;
 
 		// ---------------------------------------------
@@ -5229,7 +5239,7 @@ namespace vr
 		virtual EVRInputError GetOriginTrackedDeviceInfo( VRInputValueHandle_t origin, InputOriginInfo_t *pOriginInfo, uint32_t unOriginInfoSize ) = 0;
 
 		/** Retrieves useful information about the bindings for an action */
-		virtual EVRInputError GetActionBindingInfo( VRActionHandle_t action, InputBindingInfo_t *pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t *punReturnedBindingInfoCount ) = 0;
+		virtual EVRInputError GetActionBindingInfo( VRActionHandle_t action, VR_ARRAY_COUNT( unBindingInfoCount ) InputBindingInfo_t *pOriginInfo, uint32_t unBindingInfoSize, uint32_t unBindingInfoCount, uint32_t *punReturnedBindingInfoCount ) = 0;
 
 		/** Shows the current binding for the action in-headset */
 		virtual EVRInputError ShowActionOrigins( VRActionSetHandle_t actionSetHandle, VRActionHandle_t ulActionHandle ) = 0;

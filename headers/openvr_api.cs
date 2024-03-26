@@ -1842,7 +1842,7 @@ public struct IVRInput
 	internal _GetOriginTrackedDeviceInfo GetOriginTrackedDeviceInfo;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate EVRInputError _GetActionBindingInfo(ulong action, ref InputBindingInfo_t pOriginInfo, uint unBindingInfoSize, uint unBindingInfoCount, ref uint punReturnedBindingInfoCount);
+	internal delegate EVRInputError _GetActionBindingInfo(ulong action, [In, Out] InputBindingInfo_t[] pOriginInfo, uint unBindingInfoSize, uint unBindingInfoCount, ref uint punReturnedBindingInfoCount);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _GetActionBindingInfo GetActionBindingInfo;
 
@@ -4271,10 +4271,10 @@ public class CVRInput
 		EVRInputError result = FnTable.GetOriginTrackedDeviceInfo(origin,ref pOriginInfo,unOriginInfoSize);
 		return result;
 	}
-	public EVRInputError GetActionBindingInfo(ulong action,ref InputBindingInfo_t pOriginInfo,uint unBindingInfoSize,uint unBindingInfoCount,ref uint punReturnedBindingInfoCount)
+	public EVRInputError GetActionBindingInfo(ulong action,InputBindingInfo_t [] pOriginInfo,uint unBindingInfoSize,ref uint punReturnedBindingInfoCount)
 	{
 		punReturnedBindingInfoCount = 0;
-		EVRInputError result = FnTable.GetActionBindingInfo(action,ref pOriginInfo,unBindingInfoSize,unBindingInfoCount,ref punReturnedBindingInfoCount);
+		EVRInputError result = FnTable.GetActionBindingInfo(action,pOriginInfo,unBindingInfoSize,(uint) pOriginInfo.Length,ref punReturnedBindingInfoCount);
 		return result;
 	}
 	public EVRInputError ShowActionOrigins(ulong actionSetHandle,ulong ulActionHandle)
@@ -5020,6 +5020,9 @@ public enum EVREventType
 	VREvent_DashboardThumbChanged = 535,
 	VREvent_DesktopMightBeVisible = 536,
 	VREvent_DesktopMightBeHidden = 537,
+	VREvent_MutualSteamCapabilitiesChanged = 538,
+	VREvent_OverlayCreated = 539,
+	VREvent_OverlayDestroyed = 540,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -5317,6 +5320,7 @@ public enum EVRNotificationError
 	NotificationQueueFull = 101,
 	InvalidOverlayHandle = 102,
 	SystemWithUserValueAlreadyExists = 103,
+	ServiceUnavailable = 104,
 }
 public enum EVRSkeletalMotionRange
 {
@@ -5861,6 +5865,7 @@ public enum EVRSettingsError
 	ReadFailed = 3,
 	JsonParseFailed = 4,
 	UnsetSettingHasNoDefault = 5,
+	AccessDenied = 6,
 }
 public enum EVRScreenshotError
 {
@@ -6559,6 +6564,7 @@ public enum EBlockQueueCreationFlag
 	public TrackedDevicePose_t m_HmdPose;
 	public uint m_nNumVSyncsReadyForUse;
 	public uint m_nNumVSyncsToFirstView;
+	public float m_flTransferLatencyMs;
 }
 [StructLayout(LayoutKind.Sequential)] public struct Compositor_BenchmarkResults
 {
@@ -7810,6 +7816,7 @@ public class OpenVR
 	public const string k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
 	public const string k_pch_SteamVR_WorldScale_Float = "worldScale";
 	public const string k_pch_SteamVR_FovScale_Int32 = "fovScale";
+	public const string k_pch_SteamVR_FovScaleLetterboxed_Bool = "fovScaleLetterboxed";
 	public const string k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	public const string k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 	public const string k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
@@ -7968,7 +7975,7 @@ public class OpenVR
 	public const string k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 	public const string k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
 	public const string k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
-	public const string k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool = "allowDesktopBPMWithVRGamepadUI";
+	public const string k_pch_Dashboard_AllowVRGamepadUIViaGamescope_Bool = "allowVRGamepadUIViaGamescope";
 	public const string k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";

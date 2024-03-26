@@ -463,6 +463,9 @@
 	,{"name": "VREvent_DashboardThumbChanged","value": "535"}
 	,{"name": "VREvent_DesktopMightBeVisible","value": "536"}
 	,{"name": "VREvent_DesktopMightBeHidden","value": "537"}
+	,{"name": "VREvent_MutualSteamCapabilitiesChanged","value": "538"}
+	,{"name": "VREvent_OverlayCreated","value": "539"}
+	,{"name": "VREvent_OverlayDestroyed","value": "540"}
 	,{"name": "VREvent_Notification_Shown","value": "600"}
 	,{"name": "VREvent_Notification_Hidden","value": "601"}
 	,{"name": "VREvent_Notification_BeginInteraction","value": "602"}
@@ -744,6 +747,7 @@
 	,{"name": "VRNotificationError_NotificationQueueFull","value": "101"}
 	,{"name": "VRNotificationError_InvalidOverlayHandle","value": "102"}
 	,{"name": "VRNotificationError_SystemWithUserValueAlreadyExists","value": "103"}
+	,{"name": "VRNotificationError_ServiceUnavailable","value": "104"}
 ]}
 ,	{"enumname": "vr::EVRSkeletalMotionRange","values": [ 
 	{"name": "VRSkeletalMotionRange_WithController","value": "0"}
@@ -1253,6 +1257,7 @@
 	,{"name": "VRSettingsError_ReadFailed","value": "3"}
 	,{"name": "VRSettingsError_JsonParseFailed","value": "4"}
 	,{"name": "VRSettingsError_UnsetSettingHasNoDefault","value": "5"}
+	,{"name": "VRSettingsError_AccessDenied","value": "6"}
 ]}
 ,	{"enumname": "vr::EVRScreenshotError","values": [ 
 	{"name": "VRScreenshotError_None","value": "0"}
@@ -1564,6 +1569,8 @@
 	"constname": "k_pch_SteamVR_WorldScale_Float","consttype": "const char *const", "constval": "worldScale"}
 ,{
 	"constname": "k_pch_SteamVR_FovScale_Int32","consttype": "const char *const", "constval": "fovScale"}
+,{
+	"constname": "k_pch_SteamVR_FovScaleLetterboxed_Bool","consttype": "const char *const", "constval": "fovScaleLetterboxed"}
 ,{
 	"constname": "k_pch_SteamVR_DisableAsyncReprojection_Bool","consttype": "const char *const", "constval": "disableAsync"}
 ,{
@@ -1881,7 +1888,7 @@
 ,{
 	"constname": "k_pch_Dashboard_AllowVRGamepadUI_Bool","consttype": "const char *const", "constval": "allowVRGamepadUI"}
 ,{
-	"constname": "k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool","consttype": "const char *const", "constval": "allowDesktopBPMWithVRGamepadUI"}
+	"constname": "k_pch_Dashboard_AllowVRGamepadUIViaGamescope_Bool","consttype": "const char *const", "constval": "allowVRGamepadUIViaGamescope"}
 ,{
 	"constname": "k_pch_Dashboard_SteamMatchesHMDFramerate","consttype": "const char *const", "constval": "steamMatchesHMDFramerate"}
 ,{
@@ -2350,7 +2357,8 @@
 { "fieldname": "m_flCompositorRenderStartMs", "fieldtype": "float"},
 { "fieldname": "m_HmdPose", "fieldtype": "vr::TrackedDevicePose_t"},
 { "fieldname": "m_nNumVSyncsReadyForUse", "fieldtype": "uint32_t"},
-{ "fieldname": "m_nNumVSyncsToFirstView", "fieldtype": "uint32_t"}]}
+{ "fieldname": "m_nNumVSyncsToFirstView", "fieldtype": "uint32_t"},
+{ "fieldname": "m_flTransferLatencyMs", "fieldtype": "float"}]}
 ,{"struct": "vr::Compositor_BenchmarkResults","fields": [
 { "fieldname": "m_flMegaPixelsPerSecond", "fieldtype": "float"},
 { "fieldname": "m_flHmdRecommendedMegaPixelsPerSecond", "fieldtype": "float"}]}
@@ -5560,7 +5568,7 @@
 	"returntype": "vr::EVRInputError",
 	"params": [ 
 {	"paramname": "action" ,"paramtype": "vr::VRActionHandle_t"},
-{	"paramname": "pOriginInfo" ,"paramtype": "struct vr::InputBindingInfo_t *"},
+{	"paramname": "pOriginInfo" ,"array_count": "unBindingInfoCount" ,"paramtype": "struct vr::InputBindingInfo_t *"},
 {	"paramname": "unBindingInfoSize" ,"paramtype": "uint32_t"},
 {	"paramname": "unBindingInfoCount" ,"paramtype": "uint32_t"},
 {	"paramname": "punReturnedBindingInfoCount" ,"paramtype": "uint32_t *"}

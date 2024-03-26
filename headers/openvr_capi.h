@@ -183,6 +183,7 @@ static const char * k_pch_SteamVR_FramesToThrottle_Int32 = "framesToThrottle";
 static const char * k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
 static const char * k_pch_SteamVR_WorldScale_Float = "worldScale";
 static const char * k_pch_SteamVR_FovScale_Int32 = "fovScale";
+static const char * k_pch_SteamVR_FovScaleLetterboxed_Bool = "fovScaleLetterboxed";
 static const char * k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 static const char * k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
 static const char * k_pch_SteamVR_DefaultMirrorView_Int32 = "mirrorView";
@@ -341,7 +342,7 @@ static const char * k_pch_Dashboard_UseStandaloneSystemLayer = "standaloneSystem
 static const char * k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 static const char * k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
 static const char * k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
-static const char * k_pch_Dashboard_AllowDesktopBPMWithVRGamepadUI_Bool = "allowDesktopBPMWithVRGamepadUI";
+static const char * k_pch_Dashboard_AllowVRGamepadUIViaGamescope_Bool = "allowVRGamepadUIViaGamescope";
 static const char * k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
 static const char * k_pch_modelskin_Section = "modelskins";
 static const char * k_pch_Driver_Enable_Bool = "enable";
@@ -884,6 +885,9 @@ typedef enum EVREventType
 	EVREventType_VREvent_DashboardThumbChanged = 535,
 	EVREventType_VREvent_DesktopMightBeVisible = 536,
 	EVREventType_VREvent_DesktopMightBeHidden = 537,
+	EVREventType_VREvent_MutualSteamCapabilitiesChanged = 538,
+	EVREventType_VREvent_OverlayCreated = 539,
+	EVREventType_VREvent_OverlayDestroyed = 540,
 	EVREventType_VREvent_Notification_Shown = 600,
 	EVREventType_VREvent_Notification_Hidden = 601,
 	EVREventType_VREvent_Notification_BeginInteraction = 602,
@@ -1197,6 +1201,7 @@ typedef enum EVRNotificationError
 	EVRNotificationError_VRNotificationError_NotificationQueueFull = 101,
 	EVRNotificationError_VRNotificationError_InvalidOverlayHandle = 102,
 	EVRNotificationError_VRNotificationError_SystemWithUserValueAlreadyExists = 103,
+	EVRNotificationError_VRNotificationError_ServiceUnavailable = 104,
 } EVRNotificationError;
 
 typedef enum EVRSkeletalMotionRange
@@ -1776,6 +1781,7 @@ typedef enum EVRSettingsError
 	EVRSettingsError_VRSettingsError_ReadFailed = 3,
 	EVRSettingsError_VRSettingsError_JsonParseFailed = 4,
 	EVRSettingsError_VRSettingsError_UnsetSettingHasNoDefault = 5,
+	EVRSettingsError_VRSettingsError_AccessDenied = 6,
 } EVRSettingsError;
 
 typedef enum EVRScreenshotError
@@ -2383,6 +2389,7 @@ typedef struct Compositor_FrameTiming
 	TrackedDevicePose_t m_HmdPose;
 	uint32_t m_nNumVSyncsReadyForUse;
 	uint32_t m_nNumVSyncsToFirstView;
+	float m_flTransferLatencyMs;
 } Compositor_FrameTiming;
 
 typedef struct Compositor_BenchmarkResults

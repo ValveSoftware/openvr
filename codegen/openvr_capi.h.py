@@ -77,9 +77,11 @@ typedef double vrshared_double;
 #endif
 """)
 
+if len(sys.argv) != 2:
+	sys.exit(-1);
+json_path = sys.argv[1]
 
-
-data = api_shared.loadfile('../headers/openvr_api.json', 'vr')
+data = api_shared.loadfile(json_path, 'vr')
 converttype = api_shared.converttype
 striparraysuffix = api_shared.striparraysuffix
 structlist = api_shared.structlist
