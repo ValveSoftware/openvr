@@ -868,7 +868,7 @@ bool CMainApplication::BInitVulkanInstance()
 
 			if ( !bFound )
 			{
-				dprintf( "Vulkan missing requested extension '%s'.\n", requiredInstanceExtensions[ nExt ] );
+				dprintf( "Vulkan missing requested extension '%s'.\n", requiredInstanceExtensions[ nExt ].c_str() );
 			}
 		}
 
