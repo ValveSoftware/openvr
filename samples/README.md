@@ -39,7 +39,7 @@ Then, depending on your system:
 
 Generate the CMake cache using Makefile:
 ```
-cmake .. -G Makefile -DCMAKE_PREFIX_PATH=/opt/Qt/5.6/gcc_64/lib/cmake -DCMAKE_BUILD_TYPE=Release
+cmake .. -DCMAKE_BUILD_TYPE=Release
 ```
 
 To build type:
