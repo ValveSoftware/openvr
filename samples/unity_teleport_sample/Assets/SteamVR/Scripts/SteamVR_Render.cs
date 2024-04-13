@@ -372,7 +372,7 @@ public class SteamVR_Render : MonoBehaviour
 		if (system != null)
 		{
 			var vrEvent = new VREvent_t();
-			var size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t));
+			var size = (uint)System.Runtime.InteropServices.Marshal.SizeOf<VREvent_t>();
 			for (int i = 0; i < 64; i++)
 			{
 				if (!system.PollNextEvent(ref vrEvent, size))
@@ -419,7 +419,7 @@ public class SteamVR_Render : MonoBehaviour
 			if (vr != null)
 			{
 				var timing = new Compositor_FrameTiming();
-				timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Compositor_FrameTiming));
+				timing.m_nSize = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Compositor_FrameTiming>();
 				vr.compositor.GetFrameTiming(ref timing, 0);
 
 				Time.fixedDeltaTime = Time.timeScale / vr.hmd_DisplayFrequency;
