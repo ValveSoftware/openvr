@@ -95,4 +95,5 @@ if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_C_COMPILER_ID MATCHES "Clang")
 	endif()
 endif()
 
+add_subdirectory(headers)
 add_subdirectory(src)
