@@ -2214,7 +2214,7 @@ namespace vr
 class IVRSystem
 {
 public:
-
+	virtual ~IVRSystem() {}
 
 	// ------------------------------------
 	// Display Methods
@@ -2595,6 +2595,7 @@ namespace vr
 	class IVRApplications
 	{
 	public:
+		virtual ~IVRApplications() {}
 
 		// ---------------  Application management  --------------- //
 
@@ -2745,6 +2746,8 @@ namespace vr
 	class IVRSettings
 	{
 	public:
+		virtual ~IVRSettings() {}
+
 		virtual const char *GetSettingsErrorNameFromEnum( EVRSettingsError eError ) = 0;
 
 		virtual void SetBool( const char *pchSection, const char *pchSettingsKey, bool bValue, EVRSettingsError *peError = nullptr ) = 0;
@@ -3185,6 +3188,7 @@ enum ChaperoneCalibrationState
 class IVRChaperone
 {
 public:
+	virtual ~IVRChaperone() {}
 
 	/** Get the current state of Chaperone calibration. This state can change at any time during a session due to physical base station changes. **/
 	virtual ChaperoneCalibrationState GetCalibrationState() = 0;
@@ -3261,6 +3265,7 @@ enum EChaperoneImportFlags
 class IVRChaperoneSetup
 {
 public:
+	virtual ~IVRChaperoneSetup() {}
 
 	/** Saves the current working copy to disk */
 	virtual bool CommitWorkingCopy( EChaperoneConfigFile configFile ) = 0;
@@ -3462,6 +3467,8 @@ static inline Compositor_StageRenderSettings DefaultStageRenderSettings()
 class IVRCompositor
 {
 public:
+	virtual ~IVRCompositor() {}
+
 	/** Sets tracking space returned by WaitGetPoses */
 	virtual void SetTrackingSpace( ETrackingUniverseOrigin eOrigin ) = 0;
 
@@ -3821,6 +3828,8 @@ typedef uint32_t VRNotificationId;
 class IVRNotifications
 {
 public:
+	virtual ~IVRNotifications() {}
+
 	/** Create a notification and enqueue it to be shown to the user.
 	* An overlay handle is required to create a notification, as otherwise it would be impossible for a user to act on it.
 	* To create a two-line notification, use a line break ('\n') to split the text into two lines.
@@ -4065,6 +4074,7 @@ namespace vr
 	class IVROverlay
 	{
 	public:
+		virtual ~IVROverlay() {}
 
 		// ---------------------------------------------
 		// Overlay management methods
@@ -4578,6 +4588,7 @@ struct RenderModel_ControllerMode_State_t
 class IVRRenderModels
 {
 public:
+	virtual ~IVRRenderModels() {}
 
 	/** Loads and returns a render model for use in the application. pchRenderModelName should be a render model name
 	* from the Prop_RenderModelName_String property or an absolute path name to a render model on disk.
@@ -4687,6 +4698,7 @@ namespace vr
 	class IVRExtendedDisplay
 	{
 	public:
+		virtual ~IVRExtendedDisplay() {}
 
 		/** Size and position that the window needs to be on the VR display. */
 		virtual void GetWindowBounds( int32_t *pnX, int32_t *pnY, uint32_t *pnWidth, uint32_t *pnHeight ) = 0;
@@ -4715,6 +4727,8 @@ namespace vr
 class IVRTrackedCamera
 {
 public:
+	virtual ~IVRTrackedCamera() {}
+
 	/** Returns a string for an error */
 	virtual const char *GetCameraErrorNameFromEnum( vr::EVRTrackedCameraError eCameraError ) = 0;
 
@@ -4785,6 +4799,8 @@ enum EVRScreenshotError
 class IVRScreenshots
 {
 public:
+	virtual ~IVRScreenshots() {}
+
 	/** Request a screenshot of the requested type.
 	 *  A request of the VRScreenshotType_Stereo type will always
 	 *  work. Other types will depend on the underlying application
@@ -4881,6 +4897,7 @@ namespace vr
 class IVRResources
 {
 public:
+	virtual ~IVRResources() {}
 
 	// ------------------------------------
 	// Shared Resource Methods
@@ -4909,6 +4926,8 @@ namespace vr
 class IVRDriverManager
 {
 public:
+	virtual ~IVRDriverManager() {}
+
 	virtual uint32_t GetDriverCount() const = 0;
 
 	/** Returns the length of the number of bytes necessary to hold this string including the trailing null. */
@@ -5135,6 +5154,7 @@ namespace vr
 	class IVRInput
 	{
 	public:
+		virtual ~IVRInput() {}
 
 		// ---------------  Handle management   --------------- //
 
@@ -5306,6 +5326,8 @@ static const uint64_t k_ulInvalidIOBufferHandle = 0;
 	class IVRIOBuffer
 	{
 	public:
+		virtual ~IVRIOBuffer() {}
+
 		/** opens an existing or creates a new IOBuffer of unSize bytes */
 		virtual vr::EIOBufferError Open( const char *pchPath, vr::EIOBufferMode mode, uint32_t unElementSize, uint32_t unElements, vr::IOBufferHandle_t *pulBuffer ) = 0;
 
@@ -5342,6 +5364,7 @@ namespace vr
 	class IVRSpatialAnchors
 	{
 	public:
+		virtual ~IVRSpatialAnchors() {}
 
 		/** Returns a handle for an spatial anchor described by "descriptor".  On success, pHandle
 		* will contain a handle valid for this session.  Caller can wait for an event or occasionally
