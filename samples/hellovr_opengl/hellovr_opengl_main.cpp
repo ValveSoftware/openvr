@@ -113,7 +113,7 @@ public:
 
 	CGLRenderModel *FindOrLoadRenderModel( const char *pchRenderModelName );
 
-private: 
+private:
 	bool m_bDebugOpenGL;
 	bool m_bVerbose;
 	bool m_bPerf;
@@ -411,7 +411,7 @@ CMainApplication::~CMainApplication()
 
 //-----------------------------------------------------------------------------
 // Purpose: Helper to get a string from a tracked device property and turn it
-//			into a std::string
+//          into a std::string
 //-----------------------------------------------------------------------------
 std::string GetTrackedDeviceString( vr::TrackedDeviceIndex_t unDevice, vr::TrackedDeviceProperty prop, vr::TrackedPropertyError *peError = NULL )
 {
@@ -458,7 +458,6 @@ bool CMainApplication::BInit()
 
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 1 );
-	//SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_COMPATIBILITY );
 	SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE );
 
 	SDL_GL_SetAttribute( SDL_GL_MULTISAMPLEBUFFERS, 0 );
@@ -506,21 +505,21 @@ bool CMainApplication::BInit()
 	SDL_SetWindowTitle( m_pCompanionWindow, strWindowTitle.c_str() );
 	
 	// cube array
- 	m_iSceneVolumeWidth = m_iSceneVolumeInit;
- 	m_iSceneVolumeHeight = m_iSceneVolumeInit;
- 	m_iSceneVolumeDepth = m_iSceneVolumeInit;
- 		
- 	m_fScale = 0.3f;
- 	m_fScaleSpacing = 4.0f;
- 
- 	m_fNearClip = 0.1f;
- 	m_fFarClip = 30.0f;
- 
- 	m_iTexture = 0;
- 	m_uiVertcount = 0;
- 
-// 		m_MillisecondsTimer.start(1, this);
-// 		m_SecondsTimer.start(1000, this);
+	m_iSceneVolumeWidth = m_iSceneVolumeInit;
+	m_iSceneVolumeHeight = m_iSceneVolumeInit;
+	m_iSceneVolumeDepth = m_iSceneVolumeInit;
+
+	m_fScale = 0.3f;
+	m_fScaleSpacing = 4.0f;
+
+	m_fNearClip = 0.1f;
+	m_fFarClip = 30.0f;
+
+	m_iTexture = 0;
+	m_uiVertcount = 0;
+
+//	m_MillisecondsTimer.start(1, this);
+//	m_SecondsTimer.start(1000, this);
 	
 	if (!BInitGL())
 	{
@@ -570,7 +569,7 @@ void APIENTRY DebugCallback(GLenum source, GLenum type, GLuint id, GLenum severi
 // Purpose: Initialize OpenGL. Returns true if OpenGL has been successfully
 //          initialized, false if shaders could not be created.
 //          If failure occurred in a module other than shaders, the function
-//          may return true or throw an error. 
+//          may return true or throw an error.
 //-----------------------------------------------------------------------------
 bool CMainApplication::BInitGL()
 {
@@ -707,7 +706,7 @@ bool CMainApplication::HandleInput()
 		else if ( sdlEvent.type == SDL_KEYDOWN )
 		{
 			if ( sdlEvent.key.keysym.sym == SDLK_ESCAPE 
-			     || sdlEvent.key.keysym.sym == SDLK_q )
+				|| sdlEvent.key.keysym.sym == SDLK_q )
 			{
 				bRet = true;
 			}
@@ -903,7 +902,7 @@ void CMainApplication::RenderFrame()
 
 //-----------------------------------------------------------------------------
 // Purpose: Compiles a GL shader program and returns the handle. Returns 0 if
-//			the shader couldn't be compiled for some reason.
+//          the shader couldn't be compiled for some reason.
 //-----------------------------------------------------------------------------
 GLuint CMainApplication::CompileGLShader( const char *pchShaderName, const char *pchVertexShader, const char *pchFragmentShader )
 {
@@ -936,7 +935,7 @@ GLuint CMainApplication::CompileGLShader( const char *pchShaderName, const char 
 		dprintf("%s - Unable to compile fragment shader %d!\n", pchShaderName, nSceneFragmentShader );
 		glDeleteProgram( unProgramID );
 		glDeleteShader( nSceneFragmentShader );
-		return 0;	
+		return 0;
 	}
 
 	glAttachShader( unProgramID, nSceneFragmentShader );
@@ -988,7 +987,7 @@ bool CMainApplication::CreateAllShaders()
 		"out vec4 outputColor;\n"
 		"void main()\n"
 		"{\n"
-		"   outputColor = texture(mytexture, v2UVcoords);\n"
+		"	outputColor = texture(mytexture, v2UVcoords);\n"
 		"}\n"
 		);
 	m_nSceneMatrixLocation = glGetUniformLocation( m_unSceneProgramID, "matrix" );
@@ -1019,7 +1018,7 @@ bool CMainApplication::CreateAllShaders()
 		"out vec4 outputColor;\n"
 		"void main()\n"
 		"{\n"
-		"   outputColor = v4Color;\n"
+		"	outputColor = v4Color;\n"
 		"}\n"
 		);
 	m_nControllerMatrixLocation = glGetUniformLocation( m_unControllerTransformProgramID, "matrix" );
@@ -1052,7 +1051,7 @@ bool CMainApplication::CreateAllShaders()
 		"out vec4 outputColor;\n"
 		"void main()\n"
 		"{\n"
-		"   outputColor = texture( diffuse, v2TexCoord);\n"
+		"	outputColor = texture( diffuse, v2TexCoord);\n"
 		"}\n"
 
 		);
@@ -1084,7 +1083,7 @@ bool CMainApplication::CreateAllShaders()
 		"out vec4 outputColor;\n"
 		"void main()\n"
 		"{\n"
-		"		outputColor = texture(mytexture, v2UV);\n"
+		"	outputColor = texture(mytexture, v2UV);\n"
 		"}\n"
 		);
 
@@ -1126,7 +1125,7 @@ bool CMainApplication::SetupTexturemaps()
 	GLfloat fLargest;
 	glGetFloatv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &fLargest);
 	glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, fLargest);
-	 	
+
 	glBindTexture( GL_TEXTURE_2D, 0 );
 
 	return ( m_iTexture != 0 );
@@ -1186,9 +1185,6 @@ void CMainApplication::SetupScene()
 	glVertexAttribPointer( 1, 2, GL_FLOAT, GL_FALSE, stride, (const void *)offset);
 
 	glBindVertexArray( 0 );
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-
 }
 
 
@@ -1228,28 +1224,28 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 	AddCubeVertex( G.x, G.y, G.z, 1, 0, vertdata );
 	AddCubeVertex( H.x, H.y, H.z, 0, 0, vertdata );
 	AddCubeVertex( E.x, E.y, E.z, 0, 1, vertdata );
-					 
+
 	AddCubeVertex( B.x, B.y, B.z, 0, 1, vertdata ); //Back
 	AddCubeVertex( A.x, A.y, A.z, 1, 1, vertdata );
 	AddCubeVertex( D.x, D.y, D.z, 1, 0, vertdata );
 	AddCubeVertex( D.x, D.y, D.z, 1, 0, vertdata );
 	AddCubeVertex( C.x, C.y, C.z, 0, 0, vertdata );
 	AddCubeVertex( B.x, B.y, B.z, 0, 1, vertdata );
-					
+
 	AddCubeVertex( H.x, H.y, H.z, 0, 1, vertdata ); //Top
 	AddCubeVertex( G.x, G.y, G.z, 1, 1, vertdata );
 	AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
 	AddCubeVertex( C.x, C.y, C.z, 1, 0, vertdata );
 	AddCubeVertex( D.x, D.y, D.z, 0, 0, vertdata );
 	AddCubeVertex( H.x, H.y, H.z, 0, 1, vertdata );
-				
+
 	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata ); //Bottom
 	AddCubeVertex( B.x, B.y, B.z, 1, 1, vertdata );
 	AddCubeVertex( F.x, F.y, F.z, 1, 0, vertdata );
 	AddCubeVertex( F.x, F.y, F.z, 1, 0, vertdata );
 	AddCubeVertex( E.x, E.y, E.z, 0, 0, vertdata );
 	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata );
-					
+
 	AddCubeVertex( A.x, A.y, A.z, 0, 1, vertdata ); //Left
 	AddCubeVertex( E.x, E.y, E.z, 1, 1, vertdata );
 	AddCubeVertex( H.x, H.y, H.z, 1, 0, vertdata );
@@ -1293,8 +1289,8 @@ void CMainApplication::RenderControllerAxes()
 		{
 			Vector3 color( 0, 0, 0 );
 			Vector4 point( 0, 0, 0, 1 );
-			point[i] += 0.05f;  // offset in X, Y, Z
-			color[i] = 1.0;  // R, G, B
+			point[i] += 0.05f; // offset in X, Y, Z
+			color[i] = 1.0; // R, G, B
 			point = mat * point;
 			vertdataarray.push_back( center.x );
 			vertdataarray.push_back( center.y );
@@ -1475,9 +1471,6 @@ void CMainApplication::SetupCompanionWindow()
 
 	glBindVertexArray( 0 );
 
-	glDisableVertexAttribArray(0);
-	glDisableVertexAttribArray(1);
-
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 }
@@ -1498,36 +1491,36 @@ void CMainApplication::RenderStereoTargets()
  	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
 	
 	glDisable( GL_MULTISAMPLE );
-	 	
- 	glBindFramebuffer(GL_READ_FRAMEBUFFER, leftEyeDesc.m_nRenderFramebufferId);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, leftEyeDesc.m_nResolveFramebufferId );
 
-    glBlitFramebuffer( 0, 0, m_nRenderWidth, m_nRenderHeight, 0, 0, m_nRenderWidth, m_nRenderHeight, 
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, leftEyeDesc.m_nRenderFramebufferId);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, leftEyeDesc.m_nResolveFramebufferId );
+
+	glBlitFramebuffer( 0, 0, m_nRenderWidth, m_nRenderHeight, 0, 0, m_nRenderWidth, m_nRenderHeight, 
 		GL_COLOR_BUFFER_BIT,
- 		GL_LINEAR );
+		GL_LINEAR );
 
- 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0 );	
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0 );
 
 	glEnable( GL_MULTISAMPLE );
 
 	// Right Eye
 	glBindFramebuffer( GL_FRAMEBUFFER, rightEyeDesc.m_nRenderFramebufferId );
- 	glViewport(0, 0, m_nRenderWidth, m_nRenderHeight );
- 	RenderScene( vr::Eye_Right );
- 	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
- 	
+	glViewport(0, 0, m_nRenderWidth, m_nRenderHeight );
+	RenderScene( vr::Eye_Right );
+	glBindFramebuffer( GL_FRAMEBUFFER, 0 );
+	
 	glDisable( GL_MULTISAMPLE );
 
- 	glBindFramebuffer(GL_READ_FRAMEBUFFER, rightEyeDesc.m_nRenderFramebufferId );
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rightEyeDesc.m_nResolveFramebufferId );
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, rightEyeDesc.m_nRenderFramebufferId );
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, rightEyeDesc.m_nResolveFramebufferId );
 	
-    glBlitFramebuffer( 0, 0, m_nRenderWidth, m_nRenderHeight, 0, 0, m_nRenderWidth, m_nRenderHeight, 
+	glBlitFramebuffer( 0, 0, m_nRenderWidth, m_nRenderHeight, 0, 0, m_nRenderWidth, m_nRenderHeight, 
 		GL_COLOR_BUFFER_BIT,
- 		GL_LINEAR  );
+		GL_LINEAR );
 
- 	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
-    glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0 );
+	glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
+	glBindFramebuffer(GL_DRAW_FRAMEBUFFER, 0 );
 }
 
 
