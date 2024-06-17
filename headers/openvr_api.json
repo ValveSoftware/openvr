@@ -59,6 +59,7 @@
 	,{"name": "TextureType_DXGISharedHandle","value": "5"}
 	,{"name": "TextureType_Metal","value": "6"}
 	,{"name": "TextureType_Reserved","value": "7"}
+	,{"name": "TextureType_SharedTextureHandle","value": "8"}
 ]}
 ,	{"enumname": "vr::EColorSpace","values": [ 
 	{"name": "ColorSpace_Auto","value": "0"}
@@ -262,6 +263,7 @@
 	,{"name": "Prop_Hmd_SupportsGpuBusMonitoring_Bool","value": "2107"}
 	,{"name": "Prop_DriverDisplaysIPDChanges_Bool","value": "2108"}
 	,{"name": "Prop_Driver_Reserved_01","value": "2109"}
+	,{"name": "Prop_Driver_Reserved_02","value": "2110"}
 	,{"name": "Prop_DSCVersion_Int32","value": "2110"}
 	,{"name": "Prop_DSCSliceCount_Int32","value": "2111"}
 	,{"name": "Prop_DSCBPPx16_Int32","value": "2112"}
@@ -364,7 +366,7 @@
 	,{"name": "Submit_Reserved","value": "4"}
 	,{"name": "Submit_TextureWithPose","value": "8"}
 	,{"name": "Submit_TextureWithDepth","value": "16"}
-	,{"name": "Submit_FrameDiscontinuty","value": "32"}
+	,{"name": "Submit_FrameDiscontinuity","value": "32"}
 	,{"name": "Submit_VulkanTextureWithArrayData","value": "64"}
 	,{"name": "Submit_GlArrayTexture","value": "128"}
 	,{"name": "Submit_IsEgl","value": "256"}
@@ -1352,6 +1354,8 @@
 ]}
 ],
 "consts":[{
+	"constname": "MaxDmabufPlaneCount","consttype": "const uint32_t", "constval": "4"}
+,{
 	"constname": "k_nDriverNone","consttype": "const uint32_t", "constval": "4294967295"}
 ,{
 	"constname": "k_unMaxDriverDebugResponseSize","consttype": "const uint32_t", "constval": "32768"}
@@ -1464,7 +1468,7 @@
 ,{
 	"constname": "k_unMaxOverlayIntersectionMaskPrimitivesCount","consttype": "const uint32_t", "constval": "32"}
 ,{
-	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_027"}
+	"constname": "IVROverlay_Version","consttype": "const char *const", "constval": "IVROverlay_028"}
 ,{
 	"constname": "IVROverlayView_Version","consttype": "const char *const", "constval": "IVROverlayView_003"}
 ,{
@@ -1984,6 +1988,8 @@
 ,{
 	"constname": "IVRDebug_Version","consttype": "const char *const", "constval": "IVRDebug_001"}
 ,{
+	"constname": "IVRIPCResourceManagerClient_Version","consttype": "const char *", "constval": "IVRIPCResourceManagerClient_001"}
+,{
 	"constname": "k_ulDisplayRedirectContainer","consttype": "const PropertyContainerHandle_t", "constval": "25769803779"}
 ,{
 	"constname": "IVRProperties_Version","consttype": "const char *const", "constval": "IVRProperties_001"}
@@ -2138,6 +2144,22 @@
 { "fieldname": "depth", "fieldtype": "struct vr::VRTextureDepthInfo_t"}]}
 ,{"struct": "vr::VRTextureWithPoseAndDepth_t","fields": [
 { "fieldname": "depth", "fieldtype": "struct vr::VRTextureDepthInfo_t"}]}
+,{"struct": "vr::DmabufPlane_t","fields": [
+{ "fieldname": "unOffset", "fieldtype": "uint32_t"},
+{ "fieldname": "unStride", "fieldtype": "uint32_t"},
+{ "fieldname": "nFd", "fieldtype": "int32_t"}]}
+,{"struct": "vr::DmabufAttributes_t","fields": [
+{ "fieldname": "pNext", "fieldtype": "void *"},
+{ "fieldname": "unWidth", "fieldtype": "uint32_t"},
+{ "fieldname": "unHeight", "fieldtype": "uint32_t"},
+{ "fieldname": "unDepth", "fieldtype": "uint32_t"},
+{ "fieldname": "unMipLevels", "fieldtype": "uint32_t"},
+{ "fieldname": "unArrayLayers", "fieldtype": "uint32_t"},
+{ "fieldname": "unSampleCount", "fieldtype": "uint32_t"},
+{ "fieldname": "unFormat", "fieldtype": "uint32_t"},
+{ "fieldname": "ulModifier", "fieldtype": "uint64_t"},
+{ "fieldname": "unPlaneCount", "fieldtype": "uint32_t"},
+{ "fieldname": "plane", "fieldtype": "struct vr::DmabufPlane_t [4]"}]}
 ,{"struct": "vr::TrackedDevicePose_t","fields": [
 { "fieldname": "mDeviceToAbsoluteTracking", "fieldtype": "struct vr::HmdMatrix34_t"},
 { "fieldname": "vVelocity", "fieldtype": "struct vr::HmdVector3_t"},
@@ -2539,7 +2561,8 @@
 { "fieldname": "m_pVRIOBuffer", "fieldtype": "class vr::IVRIOBuffer *"},
 { "fieldname": "m_pVRSpatialAnchors", "fieldtype": "class vr::IVRSpatialAnchors *"},
 { "fieldname": "m_pVRDebug", "fieldtype": "class vr::IVRDebug *"},
-{ "fieldname": "m_pVRNotifications", "fieldtype": "class vr::IVRNotifications *"}]}
+{ "fieldname": "m_pVRNotifications", "fieldtype": "class vr::IVRNotifications *"},
+{ "fieldname": "m_pVRIPCResourceManagerClient", "fieldtype": "class vr::IVRIPCResourceManagerClient *"}]}
 ,{"struct": "vr::PropertyWrite_t","fields": [
 { "fieldname": "prop", "fieldtype": "enum vr::ETrackedDeviceProperty"},
 { "fieldname": "writeType", "fieldtype": "enum vr::EPropertyWriteType"},
@@ -4032,6 +4055,17 @@
 }
 ,{
 	"classname": "vr::IVROverlay",
+	"methodname": "CreateSubviewOverlay",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "parentOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "pchSubviewOverlayKey" ,"paramtype": "const char *"},
+{	"paramname": "pchSubviewOverlayName" ,"paramtype": "const char *"},
+{	"paramname": "pSubviewOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
 	"methodname": "DestroyOverlay",
 	"returntype": "vr::EVROverlayError",
 	"params": [ 
@@ -4399,6 +4433,16 @@
 {	"paramname": "pmatTrackingOriginToOverlayTransform" ,"paramtype": "const struct vr::HmdMatrix34_t *"},
 {	"paramname": "pProjection" ,"paramtype": "const struct vr::VROverlayProjection_t *"},
 {	"paramname": "eEye" ,"paramtype": "vr::EVREye"}
+	 ]
+}
+,{
+	"classname": "vr::IVROverlay",
+	"methodname": "SetSubviewPosition",
+	"returntype": "vr::EVROverlayError",
+	"params": [ 
+{	"paramname": "ulOverlayHandle" ,"paramtype": "vr::VROverlayHandle_t"},
+{	"paramname": "fX" ,"paramtype": "float"},
+{	"paramname": "fY" ,"paramtype": "float"}
 	 ]
 }
 ,{
@@ -5765,6 +5809,101 @@
 {	"paramname": "pchResponseBuffer" ,"out_string": " " ,"paramtype": "char *"},
 {	"paramname": "unResponseBufferSize" ,"paramtype": "uint32_t"}
 	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "NewSharedVulkanImage",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "nImageFormat" ,"paramtype": "uint32_t"},
+{	"paramname": "nWidth" ,"paramtype": "uint32_t"},
+{	"paramname": "nHeight" ,"paramtype": "uint32_t"},
+{	"paramname": "bRenderable" ,"paramtype": "bool"},
+{	"paramname": "bMappable" ,"paramtype": "bool"},
+{	"paramname": "bComputeAccess" ,"paramtype": "bool"},
+{	"paramname": "unMipLevels" ,"paramtype": "uint32_t"},
+{	"paramname": "unArrayLayerCount" ,"paramtype": "uint32_t"},
+{	"paramname": "pSharedHandle" ,"paramtype": "vr::SharedTextureHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "NewSharedVulkanBuffer",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "nSize" ,"paramtype": "uint32_t"},
+{	"paramname": "nUsageFlags" ,"paramtype": "uint32_t"},
+{	"paramname": "pSharedHandle" ,"paramtype": "vr::SharedTextureHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "NewSharedVulkanSemaphore",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "pSharedHandle" ,"paramtype": "vr::SharedTextureHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "RefResource",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "hSharedHandle" ,"paramtype": "vr::SharedTextureHandle_t"},
+{	"paramname": "pNewIpcHandle" ,"paramtype": "uint64_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "UnrefResource",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "hSharedHandle" ,"paramtype": "vr::SharedTextureHandle_t"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "GetDmabufFormats",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "pOutFormatCount" ,"paramtype": "uint32_t *"},
+{	"paramname": "pOutFormats" ,"paramtype": "uint32_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "GetDmabufModifiers",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "eApplicationType" ,"paramtype": "vr::EVRApplicationType"},
+{	"paramname": "unDRMFormat" ,"paramtype": "uint32_t"},
+{	"paramname": "pOutModifierCount" ,"paramtype": "uint32_t *"},
+{	"paramname": "pOutModifiers" ,"paramtype": "uint64_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "ImportDmabuf",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "eApplicationType" ,"paramtype": "vr::EVRApplicationType"},
+{	"paramname": "pDmabufAttributes" ,"paramtype": "vr::DmabufAttributes_t *"},
+{	"paramname": "pSharedHandle" ,"paramtype": "vr::SharedTextureHandle_t *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "ReceiveSharedFd",
+	"returntype": "bool",
+	"params": [ 
+{	"paramname": "ulIpcHandle" ,"paramtype": "uint64_t"},
+{	"paramname": "pOutFd" ,"paramtype": "int *"}
+	 ]
+}
+,{
+	"classname": "vr::IVRIPCResourceManagerClient",
+	"methodname": "DestructIVRIPCResourceManagerClient",
+	"returntype": "void"
 }
 ,{
 	"classname": "vr::IVRProperties",

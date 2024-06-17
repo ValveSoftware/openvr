@@ -979,6 +979,11 @@ public struct IVROverlay
 	internal _CreateOverlay CreateOverlay;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVROverlayError _CreateSubviewOverlay(ulong parentOverlayHandle, IntPtr pchSubviewOverlayKey, IntPtr pchSubviewOverlayName, ref ulong pSubviewOverlayHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _CreateSubviewOverlay CreateSubviewOverlay;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVROverlayError _DestroyOverlay(ulong ulOverlayHandle);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _DestroyOverlay DestroyOverlay;
@@ -1172,6 +1177,11 @@ public struct IVROverlay
 	internal delegate EVROverlayError _SetOverlayTransformProjection(ulong ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform, ref VROverlayProjection_t pProjection, EVREye eEye);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _SetOverlayTransformProjection SetOverlayTransformProjection;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate EVROverlayError _SetSubviewPosition(ulong ulOverlayHandle, float fX, float fY);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _SetSubviewPosition SetSubviewPosition;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate EVROverlayError _ShowOverlay(ulong ulOverlayHandle);
@@ -1962,6 +1972,70 @@ public struct IVRDebug
 	internal delegate uint _DriverDebugRequest(uint unDeviceIndex, IntPtr pchRequest, System.Text.StringBuilder pchResponseBuffer, uint unResponseBufferSize);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _DriverDebugRequest DriverDebugRequest;
+
+}
+
+[StructLayout(LayoutKind.Sequential)]
+public struct IVRIPCResourceManagerClient
+{
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _NewSharedVulkanImage(uint nImageFormat, uint nWidth, uint nHeight, [MarshalAs(UnmanagedType.I1)] bool bRenderable, [MarshalAs(UnmanagedType.I1)] bool bMappable, [MarshalAs(UnmanagedType.I1)] bool bComputeAccess, uint unMipLevels, uint unArrayLayerCount, ref ulong pSharedHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _NewSharedVulkanImage NewSharedVulkanImage;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _NewSharedVulkanBuffer(uint nSize, uint nUsageFlags, ref ulong pSharedHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _NewSharedVulkanBuffer NewSharedVulkanBuffer;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _NewSharedVulkanSemaphore(ref ulong pSharedHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _NewSharedVulkanSemaphore NewSharedVulkanSemaphore;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _RefResource(ulong hSharedHandle, ref ulong pNewIpcHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _RefResource RefResource;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _UnrefResource(ulong hSharedHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _UnrefResource UnrefResource;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _GetDmabufFormats(ref uint pOutFormatCount, ref uint pOutFormats);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetDmabufFormats GetDmabufFormats;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _GetDmabufModifiers(EVRApplicationType eApplicationType, uint unDRMFormat, ref uint pOutModifierCount, ref ulong pOutModifiers);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _GetDmabufModifiers GetDmabufModifiers;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _ImportDmabuf(EVRApplicationType eApplicationType, ref DmabufAttributes_t pDmabufAttributes, ref ulong pSharedHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _ImportDmabuf ImportDmabuf;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _ReceiveSharedFd(ulong ulIpcHandle, ref int pOutFd);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _ReceiveSharedFd ReceiveSharedFd;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate void _DestructIVRIPCResourceManagerClient();
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _DestructIVRIPCResourceManagerClient DestructIVRIPCResourceManagerClient;
 
 }
 
@@ -3179,6 +3253,16 @@ public class CVROverlay
 		Marshal.FreeHGlobal(pchOverlayNameUtf8);
 		return result;
 	}
+	public EVROverlayError CreateSubviewOverlay(ulong parentOverlayHandle,string pchSubviewOverlayKey,string pchSubviewOverlayName,ref ulong pSubviewOverlayHandle)
+	{
+		IntPtr pchSubviewOverlayKeyUtf8 = Utils.ToUtf8(pchSubviewOverlayKey);
+		IntPtr pchSubviewOverlayNameUtf8 = Utils.ToUtf8(pchSubviewOverlayName);
+		pSubviewOverlayHandle = 0;
+		EVROverlayError result = FnTable.CreateSubviewOverlay(parentOverlayHandle,pchSubviewOverlayKeyUtf8,pchSubviewOverlayNameUtf8,ref pSubviewOverlayHandle);
+		Marshal.FreeHGlobal(pchSubviewOverlayKeyUtf8);
+		Marshal.FreeHGlobal(pchSubviewOverlayNameUtf8);
+		return result;
+	}
 	public EVROverlayError DestroyOverlay(ulong ulOverlayHandle)
 	{
 		EVROverlayError result = FnTable.DestroyOverlay(ulOverlayHandle);
@@ -3391,6 +3475,11 @@ public class CVROverlay
 	public EVROverlayError SetOverlayTransformProjection(ulong ulOverlayHandle,ETrackingUniverseOrigin eTrackingOrigin,ref HmdMatrix34_t pmatTrackingOriginToOverlayTransform,ref VROverlayProjection_t pProjection,EVREye eEye)
 	{
 		EVROverlayError result = FnTable.SetOverlayTransformProjection(ulOverlayHandle,eTrackingOrigin,ref pmatTrackingOriginToOverlayTransform,ref pProjection,eEye);
+		return result;
+	}
+	public EVROverlayError SetSubviewPosition(ulong ulOverlayHandle,float fX,float fY)
+	{
+		EVROverlayError result = FnTable.SetSubviewPosition(ulOverlayHandle,fX,fY);
 		return result;
 	}
 	public EVROverlayError ShowOverlay(ulong ulOverlayHandle)
@@ -4432,6 +4521,75 @@ public class CVRDebug
 }
 
 
+public class CVRIPCResourceManagerClient
+{
+	IVRIPCResourceManagerClient FnTable;
+	internal CVRIPCResourceManagerClient(IntPtr pInterface)
+	{
+		FnTable = (IVRIPCResourceManagerClient)Marshal.PtrToStructure(pInterface, typeof(IVRIPCResourceManagerClient));
+	}
+	public bool NewSharedVulkanImage(uint nImageFormat,uint nWidth,uint nHeight,bool bRenderable,bool bMappable,bool bComputeAccess,uint unMipLevels,uint unArrayLayerCount,ref ulong pSharedHandle)
+	{
+		pSharedHandle = 0;
+		bool result = FnTable.NewSharedVulkanImage(nImageFormat,nWidth,nHeight,bRenderable,bMappable,bComputeAccess,unMipLevels,unArrayLayerCount,ref pSharedHandle);
+		return result;
+	}
+	public bool NewSharedVulkanBuffer(uint nSize,uint nUsageFlags,ref ulong pSharedHandle)
+	{
+		pSharedHandle = 0;
+		bool result = FnTable.NewSharedVulkanBuffer(nSize,nUsageFlags,ref pSharedHandle);
+		return result;
+	}
+	public bool NewSharedVulkanSemaphore(ref ulong pSharedHandle)
+	{
+		pSharedHandle = 0;
+		bool result = FnTable.NewSharedVulkanSemaphore(ref pSharedHandle);
+		return result;
+	}
+	public bool RefResource(ulong hSharedHandle,ref ulong pNewIpcHandle)
+	{
+		pNewIpcHandle = 0;
+		bool result = FnTable.RefResource(hSharedHandle,ref pNewIpcHandle);
+		return result;
+	}
+	public bool UnrefResource(ulong hSharedHandle)
+	{
+		bool result = FnTable.UnrefResource(hSharedHandle);
+		return result;
+	}
+	public bool GetDmabufFormats(ref uint pOutFormatCount,ref uint pOutFormats)
+	{
+		pOutFormatCount = 0;
+		pOutFormats = 0;
+		bool result = FnTable.GetDmabufFormats(ref pOutFormatCount,ref pOutFormats);
+		return result;
+	}
+	public bool GetDmabufModifiers(EVRApplicationType eApplicationType,uint unDRMFormat,ref uint pOutModifierCount,ref ulong pOutModifiers)
+	{
+		pOutModifierCount = 0;
+		pOutModifiers = 0;
+		bool result = FnTable.GetDmabufModifiers(eApplicationType,unDRMFormat,ref pOutModifierCount,ref pOutModifiers);
+		return result;
+	}
+	public bool ImportDmabuf(EVRApplicationType eApplicationType,ref DmabufAttributes_t pDmabufAttributes,ref ulong pSharedHandle)
+	{
+		pSharedHandle = 0;
+		bool result = FnTable.ImportDmabuf(eApplicationType,ref pDmabufAttributes,ref pSharedHandle);
+		return result;
+	}
+	public bool ReceiveSharedFd(ulong ulIpcHandle,ref int pOutFd)
+	{
+		pOutFd = 0;
+		bool result = FnTable.ReceiveSharedFd(ulIpcHandle,ref pOutFd);
+		return result;
+	}
+	public void DestructIVRIPCResourceManagerClient()
+	{
+		FnTable.DestructIVRIPCResourceManagerClient();
+	}
+}
+
+
 public class CVRProperties
 {
 	IVRProperties FnTable;
@@ -4604,6 +4762,7 @@ public enum ETextureType
 	DXGISharedHandle = 5,
 	Metal = 6,
 	Reserved = 7,
+	SharedTextureHandle = 8,
 }
 public enum EColorSpace
 {
@@ -4814,6 +4973,7 @@ public enum ETrackedDeviceProperty
 	Prop_Hmd_SupportsGpuBusMonitoring_Bool = 2107,
 	Prop_DriverDisplaysIPDChanges_Bool = 2108,
 	Prop_Driver_Reserved_01 = 2109,
+	Prop_Driver_Reserved_02 = 2110,
 	Prop_DSCVersion_Int32 = 2110,
 	Prop_DSCSliceCount_Int32 = 2111,
 	Prop_DSCBPPx16_Int32 = 2112,
@@ -4919,7 +5079,7 @@ public enum EVRSubmitFlags
 	Submit_Reserved = 4,
 	Submit_TextureWithPose = 8,
 	Submit_TextureWithDepth = 16,
-	Submit_FrameDiscontinuty = 32,
+	Submit_FrameDiscontinuity = 32,
 	Submit_VulkanTextureWithArrayData = 64,
 	Submit_GlArrayTexture = 128,
 	Submit_IsEgl = 256,
@@ -6209,6 +6369,29 @@ public enum EBlockQueueCreationFlag
 	public EColorSpace eColorSpace;
 	public HmdMatrix34_t mDeviceToAbsoluteTracking;
 	public VRTextureDepthInfo_t depth;
+}
+[StructLayout(LayoutKind.Sequential)] public struct DmabufPlane_t
+{
+	public uint unOffset;
+	public uint unStride;
+	public int nFd;
+}
+[StructLayout(LayoutKind.Sequential)] public struct DmabufAttributes_t
+{
+	public IntPtr pNext; // void *
+	public uint unWidth;
+	public uint unHeight;
+	public uint unDepth;
+	public uint unMipLevels;
+	public uint unArrayLayers;
+	public uint unSampleCount;
+	public uint unFormat;
+	public ulong ulModifier;
+	public uint unPlaneCount;
+	public DmabufPlane_t plane0; //DmabufPlane_t[4]
+	public DmabufPlane_t plane1;
+	public DmabufPlane_t plane2;
+	public DmabufPlane_t plane3;
 }
 [StructLayout(LayoutKind.Sequential)] public struct TrackedDevicePose_t
 {
@@ -7593,6 +7776,7 @@ public enum EBlockQueueCreationFlag
 	public IntPtr m_pVRSpatialAnchors; // class vr::IVRSpatialAnchors *
 	public IntPtr m_pVRDebug; // class vr::IVRDebug *
 	public IntPtr m_pVRNotifications; // class vr::IVRNotifications *
+	public IntPtr m_pVRIPCResourceManagerClient; // class vr::IVRIPCResourceManagerClient *
 }
 [StructLayout(LayoutKind.Sequential)] public struct PropertyWrite_t
 {
@@ -7707,6 +7891,7 @@ public class OpenVR
 		return OpenVRInterop.GetInitToken();
 	}
 
+	public const uint MaxDmabufPlaneCount = 4;
 	public const uint k_nDriverNone = 4294967295;
 	public const uint k_unMaxDriverDebugResponseSize = 32768;
 	public const uint k_unTrackedDeviceIndex_Hmd = 0;
@@ -7763,7 +7948,7 @@ public class OpenVR
 	public const uint k_unVROverlayMaxNameLength = 128;
 	public const uint k_unMaxOverlayCount = 128;
 	public const uint k_unMaxOverlayIntersectionMaskPrimitivesCount = 32;
-	public const string IVROverlay_Version = "IVROverlay_027";
+	public const string IVROverlay_Version = "IVROverlay_028";
 	public const string IVROverlayView_Version = "IVROverlayView_003";
 	public const uint k_unHeadsetViewMaxWidth = 3840;
 	public const uint k_unHeadsetViewMaxHeight = 2160;
@@ -8023,6 +8208,7 @@ public class OpenVR
 	public const uint k_ulInvalidSpatialAnchorHandle = 0;
 	public const string IVRSpatialAnchors_Version = "IVRSpatialAnchors_001";
 	public const string IVRDebug_Version = "IVRDebug_001";
+	public const string IVRIPCResourceManagerClient_Version = "IVRIPCResourceManagerClient_001";
 	public const ulong k_ulDisplayRedirectContainer = 25769803779;
 	public const string IVRProperties_Version = "IVRProperties_001";
 	public const string k_pchPathUserHandRight = "/user/hand/right";
