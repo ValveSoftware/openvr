@@ -1676,7 +1676,7 @@ public struct IVRScreenshots
 public struct IVRResources
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate uint _LoadSharedResource(IntPtr pchResourceName, string pchBuffer, uint unBufferLen);
+	internal delegate uint _LoadSharedResource(IntPtr pchResourceName, System.Text.StringBuilder pchBuffer, uint unBufferLen);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _LoadSharedResource LoadSharedResource;
 
@@ -4075,7 +4075,7 @@ public class CVRResources
 	{
 		FnTable = (IVRResources)Marshal.PtrToStructure(pInterface, typeof(IVRResources));
 	}
-	public uint LoadSharedResource(string pchResourceName,string pchBuffer,uint unBufferLen)
+	public uint LoadSharedResource(string pchResourceName,System.Text.StringBuilder pchBuffer,uint unBufferLen)
 	{
 		IntPtr pchResourceNameUtf8 = Utils.ToUtf8(pchResourceName);
 		uint result = FnTable.LoadSharedResource(pchResourceNameUtf8,pchBuffer,unBufferLen);
@@ -8214,6 +8214,19 @@ public class OpenVR
 			return m_pVRRenderModels;
 		}
 
+		public CVRResources VRResources()
+		{
+			CheckClear();
+			if (m_pVRResources == null)
+			{
+				var eError = EVRInitError.None;
+				var pInterface = OpenVRInterop.GetGenericInterface(FnTable_Prefix+IVRResources_Version, ref eError);
+				if (pInterface != IntPtr.Zero && eError == EVRInitError.None)
+					m_pVRResources = new CVRResources(pInterface);
+			}
+			return m_pVRResources;
+		}
+
 		public CVRExtendedDisplay VRExtendedDisplay()
 		{
 			CheckClear();
@@ -8352,6 +8365,7 @@ public class OpenVR
 		private CVROverlay m_pVROverlay;
 		private CVROverlayView m_pVROverlayView;
 		private CVRRenderModels m_pVRRenderModels;
+		private CVRResources m_pVRResources;
 		private CVRExtendedDisplay m_pVRExtendedDisplay;
 		private CVRSettings m_pVRSettings;
 		private CVRApplications m_pVRApplications;
@@ -8383,6 +8397,7 @@ public class OpenVR
 	public static CVROverlay Overlay { get { return OpenVRInternal_ModuleContext.VROverlay(); } }
 	public static CVROverlayView OverlayView { get { return OpenVRInternal_ModuleContext.VROverlayView(); } }
 	public static CVRRenderModels RenderModels { get { return OpenVRInternal_ModuleContext.VRRenderModels(); } }
+	public static CVRResources Resources { get { return OpenVRInternal_ModuleContext.VRResources(); } }
 	public static CVRExtendedDisplay ExtendedDisplay { get { return OpenVRInternal_ModuleContext.VRExtendedDisplay(); } }
 	public static CVRSettings Settings { get { return OpenVRInternal_ModuleContext.VRSettings(); } }
 	public static CVRApplications Applications { get { return OpenVRInternal_ModuleContext.VRApplications(); } }
