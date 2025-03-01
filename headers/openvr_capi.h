@@ -1022,8 +1022,8 @@ typedef enum EVRButtonId
 	EVRButtonId_k_EButton_IndexController_A = 2,
 	EVRButtonId_k_EButton_IndexController_B = 1,
 	EVRButtonId_k_EButton_IndexController_JoyStick = 35,
-	EVRButtonId_k_EButton_Reserved0 = 50,
-	EVRButtonId_k_EButton_Reserved1 = 51,
+	EVRButtonId_k_EButton_Steam = 50,
+	EVRButtonId_k_EButton_QAM = 51,
 	EVRButtonId_k_EButton_Max = 64,
 } EVRButtonId;
 

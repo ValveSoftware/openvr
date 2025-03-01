@@ -1067,8 +1067,8 @@ enum EVRButtonId
 	k_EButton_IndexController_B		= k_EButton_ApplicationMenu,
 	k_EButton_IndexController_JoyStick	= k_EButton_Axis3,
 
-	k_EButton_Reserved0			= 50,
-	k_EButton_Reserved1			= 51,
+	k_EButton_Steam				= 50,
+	k_EButton_QAM				= 51,
 
 	k_EButton_Max				= 64
 };
