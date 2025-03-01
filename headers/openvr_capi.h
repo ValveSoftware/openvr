@@ -1673,7 +1673,7 @@ typedef enum VROverlayFlags
 	VROverlayFlags_EnableControlBar = 8388608,
 	VROverlayFlags_EnableControlBarKeyboard = 16777216,
 	VROverlayFlags_EnableControlBarClose = 33554432,
-	VROverlayFlags_Reserved = 67108864,
+	VROverlayFlags_EnableControlBarSteamUI = 67108864,
 	VROverlayFlags_EnableClickStabilization = 134217728,
 	VROverlayFlags_MultiCursor = 268435456,
 } VROverlayFlags;

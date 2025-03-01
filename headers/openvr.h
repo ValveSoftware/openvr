@@ -1067,8 +1067,8 @@ enum EVRButtonId
 	k_EButton_IndexController_B		= k_EButton_ApplicationMenu,
 	k_EButton_IndexController_JoyStick	= k_EButton_Axis3,
 
-	k_EButton_Reserved0			= 50,
-	k_EButton_Reserved1			= 51,
+	k_EButton_Steam				= 50,
+	k_EButton_QAM				= 51,
 
 	k_EButton_Max				= 64
 };
@@ -3952,7 +3952,7 @@ namespace vr
 		VROverlayFlags_EnableControlBarClose = 1 << 25,
 
 		// Do not use
-		VROverlayFlags_Reserved = 1 << 26,
+		VROverlayFlags_EnableControlBarSteamUI = 1 << 26,
 
 		// If this is set, click stabilization will be applied to the laser interaction so that clicks more reliably
 		// trigger on the user's intended target

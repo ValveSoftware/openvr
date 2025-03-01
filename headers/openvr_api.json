@@ -596,8 +596,8 @@
 	,{"name": "k_EButton_IndexController_A","value": "2"}
 	,{"name": "k_EButton_IndexController_B","value": "1"}
 	,{"name": "k_EButton_IndexController_JoyStick","value": "35"}
-	,{"name": "k_EButton_Reserved0","value": "50"}
-	,{"name": "k_EButton_Reserved1","value": "51"}
+	,{"name": "k_EButton_Steam","value": "50"}
+	,{"name": "k_EButton_QAM","value": "51"}
 	,{"name": "k_EButton_Max","value": "64"}
 ]}
 ,	{"enumname": "vr::EVRMouseButton","values": [ 
@@ -1173,7 +1173,7 @@
 	,{"name": "VROverlayFlags_EnableControlBar","value": "8388608"}
 	,{"name": "VROverlayFlags_EnableControlBarKeyboard","value": "16777216"}
 	,{"name": "VROverlayFlags_EnableControlBarClose","value": "33554432"}
-	,{"name": "VROverlayFlags_Reserved","value": "67108864"}
+	,{"name": "VROverlayFlags_EnableControlBarSteamUI","value": "67108864"}
 	,{"name": "VROverlayFlags_EnableClickStabilization","value": "134217728"}
 	,{"name": "VROverlayFlags_MultiCursor","value": "268435456"}
 ]}
