@@ -597,6 +597,11 @@ def outputfntabledecls(namespace, data):
 			if(namespace != getnamespace(classname)):
 				continue
 
+			# Skip over destructors, we don't use any aside from dummy ones, and
+			# destroying our interfaces would be broken anyway.
+			if(methodname[:8] == 'Destruct'):
+				continue
+
 			classname = getclasswithoutnamespace(classname)
 			if(classname != lastclass):
 				if(lastclass != ''):
@@ -663,6 +668,11 @@ def outputfntablefuncs(namespace, data):
 			classname = method['classname']
 
 			if(namespace != getnamespace(classname)):
+				continue
+
+			# Skip over destructors, we don't use any aside from dummy ones, and
+			# destroying our interfaces would be broken anyway.
+			if(method['methodname'][:8] == 'Destruct'):
 				continue
 
 			classname = getclasswithoutnamespace(classname)

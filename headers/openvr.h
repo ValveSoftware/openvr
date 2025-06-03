@@ -16,7 +16,7 @@
 namespace vr
 {
 	static const uint32_t k_nSteamVRVersionMajor = 2;
-	static const uint32_t k_nSteamVRVersionMinor = 5;
+	static const uint32_t k_nSteamVRVersionMinor = 7;
 	static const uint32_t k_nSteamVRVersionBuild = 1;
 } // namespace vr
 
@@ -135,6 +135,7 @@ enum ETextureType
 							// eye texture (vr::EVREye::Eye_Right)
 
 	TextureType_Reserved = 7,
+	TextureType_SharedTextureHandle = 8, // A pointer to a vr::SharedTextureHandle_t that was imported via, eg. ImportDmabuf.
 };
 
 enum EColorSpace
@@ -191,6 +192,32 @@ typedef double vrshared_double __attribute__ ((aligned(8)));
 typedef uint64_t vrshared_uint64_t;
 typedef double vrshared_double;
 #endif
+
+static const uint32_t MaxDmabufPlaneCount = 4;
+
+struct DmabufPlane_t
+{
+	uint32_t unOffset;
+	uint32_t unStride;
+	int32_t nFd;
+};
+
+struct DmabufAttributes_t
+{
+	void *pNext; // MUST be NULL. Unused right now, but could be used to extend this structure in the future.
+
+	uint32_t unWidth;
+	uint32_t unHeight;
+	uint32_t unDepth;
+	uint32_t unMipLevels;
+	uint32_t unArrayLayers;
+	uint32_t unSampleCount;
+	uint32_t unFormat;   // DRM_FORMAT_
+	uint64_t ulModifier; // DRM_FORMAT_MOD_
+
+	uint32_t unPlaneCount;
+	DmabufPlane_t plane[MaxDmabufPlaneCount];
+};
 
 #pragma pack( pop )
 
@@ -543,6 +570,7 @@ enum ETrackedDeviceProperty
 	Prop_Hmd_SupportsGpuBusMonitoring_Bool		= 2107,
 	Prop_DriverDisplaysIPDChanges_Bool			= 2108,
 	Prop_Driver_Reserved_01						= 2109,
+	Prop_Driver_Reserved_02						= 2110,
 
 	Prop_DSCVersion_Int32						= 2110,
 	Prop_DSCSliceCount_Int32					= 2111,
@@ -706,7 +734,7 @@ enum EVRSubmitFlags
 
 	// Set to indicate a discontinuity between this and the last frame.
 	// This will prevent motion smoothing from attempting to extrapolate using the pair.
-	Submit_FrameDiscontinuty = 0x20,
+	Submit_FrameDiscontinuity = 0x20,
 
 	// Set to indicate that pTexture->handle is a contains VRVulkanTextureArrayData_t
 	Submit_VulkanTextureWithArrayData = 0x40,
@@ -4076,6 +4104,10 @@ namespace vr
 		/** Creates a new named overlay. All overlays start hidden and with default settings. */
 		virtual EVROverlayError CreateOverlay( const char *pchOverlayKey, const char *pchOverlayName, VROverlayHandle_t * pOverlayHandle ) = 0;
 
+		/** Creates a Subview Overlay, which is a separate image that gets composited onto an existing parent overlay based on a 2D transform.
+		* Subview overlays may only be created for parent overlays of the same process. */
+		virtual EVROverlayError CreateSubviewOverlay( VROverlayHandle_t parentOverlayHandle, const char *pchSubviewOverlayKey, const char *pchSubviewOverlayName, VROverlayHandle_t *pSubviewOverlayHandle ) = 0;
+
 		/** Destroys the specified overlay. When an application calls VR_Shutdown all overlays created by that app are
 		* automatically destroyed. */
 		virtual EVROverlayError DestroyOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
@@ -4219,6 +4251,9 @@ namespace vr
 		virtual vr::EVROverlayError SetOverlayTransformProjection( VROverlayHandle_t ulOverlayHandle,
 			ETrackingUniverseOrigin eTrackingOrigin, const HmdMatrix34_t* pmatTrackingOriginToOverlayTransform,
 			const VROverlayProjection_t *pProjection, vr::EVREye eEye ) = 0;
+
+		/** Positions a subview overlay to a position within the parent overlay, from the top-left corners of each overlay, in the pixel coordinate space of the parent standalone overlay. */
+		virtual EVROverlayError SetSubviewPosition( VROverlayHandle_t ulOverlayHandle, float fX, float fY ) = 0;
 
 		/** Shows the VR overlay. Not applicable for Dashboard Overlays. */
 		virtual EVROverlayError ShowOverlay( VROverlayHandle_t ulOverlayHandle ) = 0;
@@ -4389,7 +4424,7 @@ namespace vr
 		virtual void CloseMessageOverlay() = 0;
 	};
 
-	static const char * const IVROverlay_Version = "IVROverlay_027";
+	static const char * const IVROverlay_Version = "IVROverlay_028";
 
 } // namespace vr
 
@@ -5424,6 +5459,83 @@ namespace vr
 	static const char * const IVRDebug_Version = "IVRDebug_001";
 
 } // namespace vr
+
+// ivripcresourcemanagerclient.h
+
+namespace vr
+{
+
+// -----------------------------------------------------------------------------
+// Purpose: Interact with the IPCResourceManager
+// -----------------------------------------------------------------------------
+class IVRIPCResourceManagerClient
+{
+public:
+	/** Create a new tracked Vulkan Image
+	 *
+	 * nImageFormat: in VkFormat
+	 */
+	virtual bool NewSharedVulkanImage( uint32_t nImageFormat, uint32_t nWidth, uint32_t nHeight, bool bRenderable, bool bMappable, bool bComputeAccess, uint32_t unMipLevels, uint32_t unArrayLayerCount, vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Create a new tracked Vulkan Buffer */
+	virtual bool NewSharedVulkanBuffer( uint32_t nSize, uint32_t nUsageFlags, vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Create a new tracked Vulkan Semaphore */
+	virtual bool NewSharedVulkanSemaphore( vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Grab a reference to hSharedHandle, and optionally generate a new IPC handle if pNewIpcHandle is not nullptr  */
+	virtual bool RefResource( vr::SharedTextureHandle_t hSharedHandle, uint64_t *pNewIpcHandle ) = 0;
+
+	/** Drop a reference to hSharedHandle */
+	virtual bool UnrefResource( vr::SharedTextureHandle_t hSharedHandle ) = 0;
+
+	/* Get all the DRM formats we support using DMA-BUF images for.
+	 *
+	 * pOutFormatCount and pOutFormats function like Vulkan:
+	 *   - If pOutFormats is NULL, then pOutFormatCount will be overwritten with the format count.
+	 *   - If pOutFormats is not NULL, then pOutFormatCount specifies the size of the pOutFormats array,
+	 *       and will be overwritten with the number of formats written to the array.
+	 *
+	 * If the function fails, false is returned, and pOutFormatCount will be 0.
+	 * Supported on Linux only.
+	 */
+	virtual bool GetDmabufFormats( uint32_t *pOutFormatCount, uint32_t *pOutFormats ) = 0;
+
+	/** Get dmabuf modifiers we are allowed to use.
+	 *
+	 * pOutModifierCount and pOutModifiers function like Vulkan:
+	 *   - If pOutModifiers is NULL, then pOutModifierCount will be overwritten with the modifier count.
+	 *   - If pOutModifiers is not NULL, then pOutModifierCount specifies the size of the pOutModifiers array,
+	 *       and will be overwritten with the number of modifiers written to the array.
+	 *
+	 * If modifiers are not supported, a single DRM_FORMAT_MOD_INVALID entry will be returned.
+	 *
+	 * If the function fails, false is returned, and pOutModifierCount will be 0.
+	 * Supported on Linux only.
+	 */
+	virtual bool GetDmabufModifiers( vr::EVRApplicationType eApplicationType, uint32_t unDRMFormat, uint32_t *pOutModifierCount, uint64_t *pOutModifiers ) = 0;
+
+	/** Import a dmabuf directly.
+	 * Note: the FD you pass in will be dup'ed, so you must close it yourself.
+	 * This function does NOT take ownership of the fd you pass in.
+	 * Supported on Linux only.
+	 */
+	virtual bool ImportDmabuf( vr::EVRApplicationType eApplicationType, vr::DmabufAttributes_t *pDmabufAttributes, vr::SharedTextureHandle_t *pSharedHandle ) = 0;
+
+	/** Consumes an IPC handle (eg. from RefResource) and returns a file-descriptor.
+	 * Caller acquires ownership of fd and is responsible for closing it.
+	 * Supported on Linux only.
+	 */
+	virtual bool ReceiveSharedFd( uint64_t ulIpcHandle, int *pOutFd ) = 0;
+
+protected:
+	/** Non-deletable */
+	virtual ~IVRIPCResourceManagerClient() {};
+};
+
+static const char *IVRIPCResourceManagerClient_Version = "IVRIPCResourceManagerClient_001";
+
+}
 // End
 
 #endif // _OPENVR_API
@@ -5736,6 +5848,17 @@ namespace vr
 			}
 			return m_pVRNotifications;
 		}
+
+		IVRIPCResourceManagerClient *VRIPCResourceManager()
+		{
+			CheckClear();
+			if ( !m_pVRIPCResourceManagerClient )
+			{
+				EVRInitError eError;
+				m_pVRIPCResourceManagerClient = ( IVRIPCResourceManagerClient * )VR_GetGenericInterface( IVRIPCResourceManagerClient_Version, &eError );
+			}
+			return m_pVRIPCResourceManagerClient;
+		}
 		
 	private:
 		IVRSystem			*m_pVRSystem;
@@ -5758,6 +5881,7 @@ namespace vr
 		IVRSpatialAnchors   *m_pVRSpatialAnchors;
 		IVRDebug			*m_pVRDebug;
 		IVRNotifications	*m_pVRNotifications;
+		IVRIPCResourceManagerClient *m_pVRIPCResourceManagerClient;
 	};
 
 	inline COpenVRContext &OpenVRInternal_ModuleContext()
@@ -5786,6 +5910,7 @@ namespace vr
 	inline IVRSpatialAnchors *VR_CALLTYPE VRSpatialAnchors() { return OpenVRInternal_ModuleContext().VRSpatialAnchors(); }
 	inline IVRNotifications *VR_CALLTYPE VRNotifications() { return OpenVRInternal_ModuleContext().VRNotifications(); }
 	inline IVRDebug *VR_CALLTYPE VRDebug() { return OpenVRInternal_ModuleContext().VRDebug(); }
+	inline IVRIPCResourceManagerClient *VR_CALLTYPE VRIPCResourceManager() { return OpenVRInternal_ModuleContext().VRIPCResourceManager(); }
 
 	inline void COpenVRContext::Clear()
 	{
@@ -5809,6 +5934,7 @@ namespace vr
 		m_pVRSpatialAnchors = nullptr;
 		m_pVRNotifications = nullptr;
 		m_pVRDebug = nullptr;
+		m_pVRIPCResourceManagerClient = nullptr;
 	}
 	
 	VR_INTERFACE uint32_t VR_CALLTYPE VR_InitInternal2( EVRInitError *peError, EVRApplicationType eApplicationType, const char *pStartupInfo );

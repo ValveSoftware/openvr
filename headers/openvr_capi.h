@@ -74,6 +74,7 @@ typedef double vrshared_double;
 
 // OpenVR Constants
 
+static const unsigned long MaxDmabufPlaneCount = 4;
 static const unsigned long k_nDriverNone = 4294967295;
 static const unsigned long k_unMaxDriverDebugResponseSize = 32768;
 static const unsigned long k_unTrackedDeviceIndex_Hmd = 0;
@@ -130,7 +131,7 @@ static const unsigned long k_unVROverlayMaxKeyLength = 128;
 static const unsigned long k_unVROverlayMaxNameLength = 128;
 static const unsigned long k_unMaxOverlayCount = 128;
 static const unsigned long k_unMaxOverlayIntersectionMaskPrimitivesCount = 32;
-static const char * IVROverlay_Version = "IVROverlay_027";
+static const char * IVROverlay_Version = "IVROverlay_028";
 static const char * IVROverlayView_Version = "IVROverlayView_003";
 static const unsigned long k_unHeadsetViewMaxWidth = 3840;
 static const unsigned long k_unHeadsetViewMaxHeight = 2160;
@@ -390,6 +391,7 @@ static const char * IVRIOBuffer_Version = "IVRIOBuffer_002";
 static const unsigned long k_ulInvalidSpatialAnchorHandle = 0;
 static const char * IVRSpatialAnchors_Version = "IVRSpatialAnchors_001";
 static const char * IVRDebug_Version = "IVRDebug_001";
+static const char * IVRIPCResourceManagerClient_Version = "IVRIPCResourceManagerClient_001";
 static const unsigned long long k_ulDisplayRedirectContainer = 25769803779;
 static const char * IVRProperties_Version = "IVRProperties_001";
 static const char * k_pchPathUserHandRight = "/user/hand/right";
@@ -457,6 +459,7 @@ typedef enum ETextureType
 	ETextureType_TextureType_DXGISharedHandle = 5,
 	ETextureType_TextureType_Metal = 6,
 	ETextureType_TextureType_Reserved = 7,
+	ETextureType_TextureType_SharedTextureHandle = 8,
 } ETextureType;
 
 typedef enum EColorSpace
@@ -674,6 +677,7 @@ typedef enum ETrackedDeviceProperty
 	ETrackedDeviceProperty_Prop_Hmd_SupportsGpuBusMonitoring_Bool = 2107,
 	ETrackedDeviceProperty_Prop_DriverDisplaysIPDChanges_Bool = 2108,
 	ETrackedDeviceProperty_Prop_Driver_Reserved_01 = 2109,
+	ETrackedDeviceProperty_Prop_Driver_Reserved_02 = 2110,
 	ETrackedDeviceProperty_Prop_DSCVersion_Int32 = 2110,
 	ETrackedDeviceProperty_Prop_DSCSliceCount_Int32 = 2111,
 	ETrackedDeviceProperty_Prop_DSCBPPx16_Int32 = 2112,
@@ -782,7 +786,7 @@ typedef enum EVRSubmitFlags
 	EVRSubmitFlags_Submit_Reserved = 4,
 	EVRSubmitFlags_Submit_TextureWithPose = 8,
 	EVRSubmitFlags_Submit_TextureWithDepth = 16,
-	EVRSubmitFlags_Submit_FrameDiscontinuty = 32,
+	EVRSubmitFlags_Submit_FrameDiscontinuity = 32,
 	EVRSubmitFlags_Submit_VulkanTextureWithArrayData = 64,
 	EVRSubmitFlags_Submit_GlArrayTexture = 128,
 	EVRSubmitFlags_Submit_IsEgl = 256,
@@ -2085,6 +2089,28 @@ typedef struct VRTextureWithPoseAndDepth_t
 	struct VRTextureDepthInfo_t depth;
 } VRTextureWithPoseAndDepth_t;
 
+typedef struct DmabufPlane_t
+{
+	uint32_t unOffset;
+	uint32_t unStride;
+	int32_t nFd;
+} DmabufPlane_t;
+
+typedef struct DmabufAttributes_t
+{
+	void * pNext; // void *
+	uint32_t unWidth;
+	uint32_t unHeight;
+	uint32_t unDepth;
+	uint32_t unMipLevels;
+	uint32_t unArrayLayers;
+	uint32_t unSampleCount;
+	uint32_t unFormat;
+	uint64_t ulModifier;
+	uint32_t unPlaneCount;
+	struct DmabufPlane_t plane[4]; //struct vr::DmabufPlane_t[4]
+} DmabufAttributes_t;
+
 typedef struct TrackedDevicePose_t
 {
 	struct HmdMatrix34_t mDeviceToAbsoluteTracking;
@@ -2667,6 +2693,7 @@ typedef struct COpenVRContext
 	intptr_t m_pVRSpatialAnchors; // class vr::IVRSpatialAnchors *
 	intptr_t m_pVRDebug; // class vr::IVRDebug *
 	intptr_t m_pVRNotifications; // class vr::IVRNotifications *
+	intptr_t m_pVRIPCResourceManagerClient; // class vr::IVRIPCResourceManagerClient *
 } COpenVRContext;
 
 typedef struct PropertyWrite_t
@@ -2996,6 +3023,7 @@ struct VR_IVROverlay_FnTable
 {
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *FindOverlay)(char * pchOverlayKey, VROverlayHandle_t * pOverlayHandle);
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *CreateOverlay)(char * pchOverlayKey, char * pchOverlayName, VROverlayHandle_t * pOverlayHandle);
+	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *CreateSubviewOverlay)(VROverlayHandle_t parentOverlayHandle, char * pchSubviewOverlayKey, char * pchSubviewOverlayName, VROverlayHandle_t * pSubviewOverlayHandle);
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *DestroyOverlay)(VROverlayHandle_t ulOverlayHandle);
 	uint32_t (OPENVR_FNTABLE_CALLTYPE *GetOverlayKey)(VROverlayHandle_t ulOverlayHandle, char * pchValue, uint32_t unBufferSize, EVROverlayError * pError);
 	uint32_t (OPENVR_FNTABLE_CALLTYPE *GetOverlayName)(VROverlayHandle_t ulOverlayHandle, char * pchValue, uint32_t unBufferSize, EVROverlayError * pError);
@@ -3035,6 +3063,7 @@ struct VR_IVROverlay_FnTable
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *SetOverlayTransformCursor)(VROverlayHandle_t ulCursorOverlayHandle, struct HmdVector2_t * pvHotspot);
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *GetOverlayTransformCursor)(VROverlayHandle_t ulOverlayHandle, struct HmdVector2_t * pvHotspot);
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *SetOverlayTransformProjection)(VROverlayHandle_t ulOverlayHandle, ETrackingUniverseOrigin eTrackingOrigin, struct HmdMatrix34_t * pmatTrackingOriginToOverlayTransform, struct VROverlayProjection_t * pProjection, EVREye eEye);
+	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *SetSubviewPosition)(VROverlayHandle_t ulOverlayHandle, float fX, float fY);
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *ShowOverlay)(VROverlayHandle_t ulOverlayHandle);
 	EVROverlayError (OPENVR_FNTABLE_CALLTYPE *HideOverlay)(VROverlayHandle_t ulOverlayHandle);
 	bool (OPENVR_FNTABLE_CALLTYPE *IsOverlayVisible)(VROverlayHandle_t ulOverlayHandle);
@@ -3226,6 +3255,20 @@ struct VR_IVRDebug_FnTable
 	EVRDebugError (OPENVR_FNTABLE_CALLTYPE *BeginVrProfilerEvent)(VrProfilerEventHandle_t * pHandleOut);
 	EVRDebugError (OPENVR_FNTABLE_CALLTYPE *FinishVrProfilerEvent)(VrProfilerEventHandle_t hHandle, char * pchMessage);
 	uint32_t (OPENVR_FNTABLE_CALLTYPE *DriverDebugRequest)(TrackedDeviceIndex_t unDeviceIndex, char * pchRequest, char * pchResponseBuffer, uint32_t unResponseBufferSize);
+};
+
+struct VR_IVRIPCResourceManagerClient_FnTable
+{
+	bool (OPENVR_FNTABLE_CALLTYPE *NewSharedVulkanImage)(uint32_t nImageFormat, uint32_t nWidth, uint32_t nHeight, bool bRenderable, bool bMappable, bool bComputeAccess, uint32_t unMipLevels, uint32_t unArrayLayerCount, SharedTextureHandle_t * pSharedHandle);
+	bool (OPENVR_FNTABLE_CALLTYPE *NewSharedVulkanBuffer)(uint32_t nSize, uint32_t nUsageFlags, SharedTextureHandle_t * pSharedHandle);
+	bool (OPENVR_FNTABLE_CALLTYPE *NewSharedVulkanSemaphore)(SharedTextureHandle_t * pSharedHandle);
+	bool (OPENVR_FNTABLE_CALLTYPE *RefResource)(SharedTextureHandle_t hSharedHandle, uint64_t * pNewIpcHandle);
+	bool (OPENVR_FNTABLE_CALLTYPE *UnrefResource)(SharedTextureHandle_t hSharedHandle);
+	bool (OPENVR_FNTABLE_CALLTYPE *GetDmabufFormats)(uint32_t * pOutFormatCount, uint32_t * pOutFormats);
+	bool (OPENVR_FNTABLE_CALLTYPE *GetDmabufModifiers)(EVRApplicationType eApplicationType, uint32_t unDRMFormat, uint32_t * pOutModifierCount, uint64_t * pOutModifiers);
+	bool (OPENVR_FNTABLE_CALLTYPE *ImportDmabuf)(EVRApplicationType eApplicationType, DmabufAttributes_t * pDmabufAttributes, SharedTextureHandle_t * pSharedHandle);
+	bool (OPENVR_FNTABLE_CALLTYPE *ReceiveSharedFd)(uint64_t ulIpcHandle, int * pOutFd);
+	void (OPENVR_FNTABLE_CALLTYPE *DestructIVRIPCResourceManagerClient)();
 };
 
 struct VR_IVRProperties_FnTable
