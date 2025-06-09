@@ -1,0 +1,19 @@
+{
+  "to_controller_type" : "mytracker_waist",
+  "layouts" : [
+    {
+      "priority" : 100,
+      "from_controller_type" : "vive_tracker_waist",
+      "autoremappings" : [
+        {
+          "from" : "/user/waist/input/trigger",
+          "to" : "/user/waist/input/trigger"
+        },
+        {
+          "from" : "/user/waist/input/grip",
+          "to" : "/user/waist/input/grip"
+        }
+      ]
+    }
+  ] 
+}

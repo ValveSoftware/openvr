@@ -74,9 +74,7 @@ vr::EVRInitError MyTrackerDeviceDriver::Activate( uint32_t unObjectId )
 	// Even though these are also defined in our input profile,
 	// We need to get handles to them to update the inputs.
 
-	// Let's set up our "A" button. We've defined it to have a touch and a click component.
-	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/a/touch", &input_handles_[ MyComponent_a_touch ] );
-	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/a/click", &input_handles_[ MyComponent_a_click ] );
+	vr::VRDriverInput()->CreateBooleanComponent( container, "/input/grip/click", &input_handles_[MyComponent_grip_click] );
 
 	// Let's set up our trigger. We've defined it to have a value and click component.
 
@@ -230,12 +228,23 @@ void MyTrackerDeviceDriver::Deactivate()
 //-----------------------------------------------------------------------------
 void MyTrackerDeviceDriver::MyRunFrame()
 {
-	// update our inputs here
-	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_a_click ], false, 0 );
-	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_a_touch ], false, 0 );
+	static int incrementor = 0;
+	static bool b_values = false;
+	static float f_values = 0.f;
 
-	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_trigger_click ], false, 0 );
-	vr::VRDriverInput()->UpdateScalarComponent( input_handles_[ MyComponent_trigger_value ], 0.f, 0 );
+	if (incrementor == 200) {
+		incrementor = 0;
+		b_values = !b_values;
+		f_values = 1.f - f_values;
+		DriverLog("Toggled %s %.2f", b_values ? "on" : "off", f_values);
+	}
+	incrementor++;
+
+	// update our inputs here
+	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_grip_click ], b_values, 0 );
+
+	vr::VRDriverInput()->UpdateBooleanComponent( input_handles_[ MyComponent_trigger_click ], b_values, 0 );
+	vr::VRDriverInput()->UpdateScalarComponent( input_handles_[ MyComponent_trigger_value ], f_values, 0 );
 }
 
 

@@ -227,8 +227,8 @@ void MyHandSimulation::ComputeSkeletonTransforms(vr::ETrackedControllerRole role
 	// root bone. This is just 0s. It's aligned to /pose/raw.
 	out_transforms[0] = { { 0.000000f, 0.000000f, 0.000000f, 1.000000f }, { 1.000000f, -0.000000f, -0.000000f, 0.000000f } };
 
-	// wrist bone. This was taken from the index controller pose.
-
+	// wrist bone. This was taken from the index controller pose, and is used to place the wrist
+	// at the correct location relative to where /pose/raw is.
 	out_transforms[1] = { { -0.034038f, 0.036503f, 0.164722f, 1.000000f }, { -0.055147f, -0.078608f, -0.920279f, 0.379296f } };
 
 	//"up" axis is flipped between hands so invert

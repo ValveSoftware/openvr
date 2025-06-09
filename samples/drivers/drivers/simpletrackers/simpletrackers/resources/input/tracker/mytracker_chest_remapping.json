@@ -1,0 +1,19 @@
+{
+  "to_controller_type" : "mytracker_chest",
+  "layouts" : [
+    {
+      "priority" : 100,
+      "from_controller_type" : "vive_tracker_chest",
+      "autoremappings" : [
+        {
+          "from" : "/user/chest/input/trigger",
+          "to" : "/user/chest/input/trigger"
+        },
+        {
+          "from" : "/user/chest/input/grip",
+          "to" : "/user/chest/input/grip"
+        }
+      ]
+    }
+  ] 
+}

@@ -8,6 +8,9 @@
 /** Returns the path (including filename) to the current executable */
 std::string Path_GetExecutablePath();
 
+/** Returns the filename (excluding directory and extension) of the current executable */
+std::string Path_GetExecutableName();
+
 /** Returns the path of the current working directory */
 std::string Path_GetWorkingDirectory();
 

@@ -79,13 +79,17 @@ bool StringHasSuffixCaseSensitive( const std::string &sString, const std::string
 	return 0 == strncmp( sStringSuffix.c_str(), sSuffix.c_str(),cSuffixLen );
 }
 
-std::string StringReplace( const std::string &sModify, const std::string &sFind, const std::string &sReplace )
+std::string StringReplace( const std::string &sString, const std::string &sFind, const std::string &sReplace )
 {
 	size_t cStartPos = 0;
 	size_t cFindLen = sFind.length();
 	size_t cReplaceLen = sReplace.length();
 
-	std::string sResult = sModify;
+	// Nothing to find, return unmodified.
+	if ( cFindLen == 0 )
+		return sString;
+
+	std::string sResult = sString;
 
 	while ( ( cStartPos = sResult.find( sFind, cStartPos ) ) != std::string::npos )
 	{

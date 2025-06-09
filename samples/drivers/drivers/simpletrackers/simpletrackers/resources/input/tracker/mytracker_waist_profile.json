@@ -1,7 +1,14 @@
 {
   "jsonid": "input_profile",
   "controller_type": "mytracker_waist",
+  "device_class": "TrackedDeviceClass_GenericTracker",
+  "driver_name" : "simpletrackers",
   "input_bindingui_mode": "single_device",
+  "input_bindingui_right" :
+  {
+    "image": "{htc}/icons/vive_tracker.svg"
+  },
+  "remapping" : "{simpletrackers}/input/tracker/mytracker_waist_remapping.json",
   "input_source": {
     "/pose/simplewaistpose": {
       "type": "pose",
@@ -9,6 +16,18 @@
         100,
         90
       ]
+    },
+	"/input/trigger" : {
+        "type" : "trigger",
+		"click" : true,
+		"value" : true,
+				"order" :  2,
+        "binding_image_point" : [ 127, 62 ]
+    },
+    "/input/grip" : {
+        "type" : "button",
+		"order" :  3,
+        "binding_image_point" : [ 210, 100 ]
     }
   }
 }

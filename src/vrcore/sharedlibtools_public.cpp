@@ -15,8 +15,6 @@ SharedLibHandle SharedLib_Load( const char *pchPath, std::string *pErrStr )
 	SharedLibHandle pHandle = nullptr;
 #if defined( _WIN32)
 	pHandle = ( SharedLibHandle )LoadLibraryEx( pchPath, NULL, LOAD_WITH_ALTERED_SEARCH_PATH );
-#elif defined(LINUXARM64)	
-	pHandle = (SharedLibHandle) dlopen( pchPath, RTLD_LOCAL|RTLD_DEEPBIND|RTLD_NOW );
 #elif defined(POSIX)
 	pHandle = (SharedLibHandle) dlopen( pchPath, RTLD_LOCAL|RTLD_NOW );
 #endif

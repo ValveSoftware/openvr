@@ -72,6 +72,28 @@ std::string Path_GetExecutablePath()
 
 }
 
+/** Returns the filename (excluding directory and extension) of the current executable */
+std::string Path_GetExecutableName()
+{
+	std::string sExeFilename = Path_StripExtension( Path_StripDirectory( Path_GetExecutablePath() ) );
+#if defined( ANDROID )
+	// We determine the App ID by looking at `/proc/self/cmdline`, as Zygote changes our process name to match.
+	FILE *pCmdlineFile = fopen( "/proc/self/cmdline", "r" );
+	if ( pCmdlineFile != NULL )
+	{
+		// Google Play says the maximum allowable length is 150 characters
+		char rgchAndroidAppID[ 151 ] = { 0 };
+		fgets( rgchAndroidAppID, sizeof( rgchAndroidAppID ), pCmdlineFile );
+		fclose( pCmdlineFile );
+		if ( rgchAndroidAppID[ 0 ] != '\0' )
+		{
+			sExeFilename = rgchAndroidAppID;
+		}
+	}
+#endif
+	return sExeFilename;
+}
+
 /** Returns the path of the current working directory */
 std::string Path_GetWorkingDirectory()
 {

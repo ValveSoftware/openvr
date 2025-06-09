@@ -237,6 +237,8 @@ def converttype(thetype):
 		thetype = 'ulong'
 	if(thetype == 'VRInputValueHandle_t'):
 		thetype = 'ulong'
+	if(thetype == 'VRInputComponentHandle_t'):
+		thetype = 'ulong'
 	if(thetype == 'VRInputOriginHandle_t'):
 		thetype = 'ulong'
 	if(thetype == 'PathHandle_t'):
@@ -769,7 +771,7 @@ def outputclasses(namespace, data):
 	# the following methods take a mispacked VRControllerState_t on Linux and OSX so we generate
 	# a special hacky method to account for that on those platforms.
 	controller_packed_methods = ['GetControllerState', 'GetControllerStateWithPose', 'GetComponentState']
-	event_packed_methods      = ['PollNextEvent', 'PollNextEventWithPost', 'PollNextOverlayEvent']
+	event_packed_methods      = ['PollNextEvent', 'PollNextEventWithPose', 'PollNextOverlayEvent', 'PollNextOverlayEventForAny']
 	if(namespace == ''):
 		namespaceextra = ''
 	elif(namespace == 'vr'):

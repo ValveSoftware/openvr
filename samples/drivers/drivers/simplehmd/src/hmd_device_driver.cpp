@@ -348,3 +348,9 @@ void MyHMDDisplayComponent::GetWindowBounds( int32_t *pnX, int32_t *pnY, uint32_
 	*pnWidth = config_.window_width;
 	*pnHeight = config_.window_height;
 }
+
+bool MyHMDDisplayComponent::ComputeInverseDistortion(vr::HmdVector2_t* pResult, vr::EVREye eEye, uint32_t unChannel, float fU, float fV)
+{
+	//Return false to let SteamVR infer an estimate from ComputeDistortion
+	return false;
+}

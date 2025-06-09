@@ -184,6 +184,12 @@ public struct IVRSystem
 	internal _PollNextEventWithPose PollNextEventWithPose;
 
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	[return: MarshalAs(UnmanagedType.I1)]
+	internal delegate bool _PollNextEventWithPoseAndOverlays(ETrackingUniverseOrigin eOrigin, ref VREvent_t pEvent, uint uncbVREvent, ref TrackedDevicePose_t pTrackedDevicePose, ref ulong pulOverlayHandle);
+	[MarshalAs(UnmanagedType.FunctionPtr)]
+	internal _PollNextEventWithPoseAndOverlays PollNextEventWithPoseAndOverlays;
+
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
 	internal delegate IntPtr _GetEventTypeNameFromEnum(EVREventType eType);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _GetEventTypeNameFromEnum GetEventTypeNameFromEnum;
@@ -2347,9 +2353,41 @@ public class CVRSystem
 		bool result = FnTable.PollNextEvent(ref pEvent,uncbVREvent);
 		return result;
 	}
+// This is a terrible hack to workaround the fact that VRControllerState_t and VREvent_t were
+// originally mis-compiled with the wrong packing for Linux and OSX.
+	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
+	internal delegate bool _PollNextEventWithPosePacked(ETrackingUniverseOrigin eOrigin,ref VREvent_t_Packed pEvent,uint uncbVREvent,ref TrackedDevicePose_t pTrackedDevicePose);
+	[StructLayout(LayoutKind.Explicit)]
+	struct PollNextEventWithPoseUnion
+	{
+		[FieldOffset(0)]
+		public IVRSystem._PollNextEventWithPose pPollNextEventWithPose;
+		[FieldOffset(0)]
+		public _PollNextEventWithPosePacked pPollNextEventWithPosePacked;
+	}
 	public bool PollNextEventWithPose(ETrackingUniverseOrigin eOrigin,ref VREvent_t pEvent,uint uncbVREvent,ref TrackedDevicePose_t pTrackedDevicePose)
 	{
+#if !UNITY_METRO
+		if ((System.Environment.OSVersion.Platform == System.PlatformID.MacOSX) ||
+				(System.Environment.OSVersion.Platform == System.PlatformID.Unix))
+		{
+			PollNextEventWithPoseUnion u;
+			VREvent_t_Packed event_packed = new VREvent_t_Packed();
+			u.pPollNextEventWithPosePacked = null;
+			u.pPollNextEventWithPose = FnTable.PollNextEventWithPose;
+			bool packed_result = u.pPollNextEventWithPosePacked(eOrigin,ref event_packed,(uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(VREvent_t_Packed)),ref pTrackedDevicePose);
+
+			event_packed.Unpack(ref pEvent);
+			return packed_result;
+		}
+#endif
 		bool result = FnTable.PollNextEventWithPose(eOrigin,ref pEvent,uncbVREvent,ref pTrackedDevicePose);
+		return result;
+	}
+	public bool PollNextEventWithPoseAndOverlays(ETrackingUniverseOrigin eOrigin,ref VREvent_t pEvent,uint uncbVREvent,ref TrackedDevicePose_t pTrackedDevicePose,ref ulong pulOverlayHandle)
+	{
+		pulOverlayHandle = 0;
+		bool result = FnTable.PollNextEventWithPoseAndOverlays(eOrigin,ref pEvent,uncbVREvent,ref pTrackedDevicePose,ref pulOverlayHandle);
 		return result;
 	}
 	public string GetEventTypeNameFromEnum(EVREventType eType)
@@ -4870,6 +4908,7 @@ public enum ETrackedDeviceProperty
 	Prop_DevicePowerUsage_Float = 1052,
 	Prop_IgnoreMotionForStandby_Bool = 1053,
 	Prop_ActualTrackingSystemName_String = 1054,
+	Prop_AllowCameraToggle_Bool = 1055,
 	Prop_ReportsTimeSinceVSync_Bool = 2000,
 	Prop_SecondsFromVsyncToPhotons_Float = 2001,
 	Prop_DisplayFrequency_Float = 2002,
@@ -4958,11 +4997,12 @@ public enum ETrackedDeviceProperty
 	Prop_CameraExposureTime_Float = 2088,
 	Prop_CameraGlobalGain_Float = 2089,
 	Prop_DashboardScale_Float = 2091,
-	Prop_PeerButtonInfo_String = 2092,
 	Prop_Hmd_SupportsHDR10_Bool = 2093,
 	Prop_Hmd_EnableParallelRenderCameras_Bool = 2094,
 	Prop_DriverProvidedChaperoneJson_String = 2095,
 	Prop_ForceSystemLayerUseAppPoses_Bool = 2096,
+	Prop_DashboardLinkSupport_Int32 = 2097,
+	Prop_DisplayMinUIAnalogGain_Float = 2098,
 	Prop_IpdUIRangeMinMeters_Float = 2100,
 	Prop_IpdUIRangeMaxMeters_Float = 2101,
 	Prop_Hmd_SupportsHDCP14LegacyCompat_Bool = 2102,
@@ -4972,14 +5012,14 @@ public enum ETrackedDeviceProperty
 	Prop_Hmd_SupportsAppThrottling_Bool = 2106,
 	Prop_Hmd_SupportsGpuBusMonitoring_Bool = 2107,
 	Prop_DriverDisplaysIPDChanges_Bool = 2108,
-	Prop_Driver_Reserved_01 = 2109,
-	Prop_Driver_Reserved_02 = 2110,
-	Prop_DSCVersion_Int32 = 2110,
-	Prop_DSCSliceCount_Int32 = 2111,
-	Prop_DSCBPPx16_Int32 = 2112,
+	Prop_Reserved_2110 = 2110,
+	Prop_Reserved_2111 = 2111,
+	Prop_Reserved_2112 = 2112,
 	Prop_Hmd_MaxDistortedTextureWidth_Int32 = 2113,
 	Prop_Hmd_MaxDistortedTextureHeight_Int32 = 2114,
 	Prop_Hmd_AllowSupersampleFiltering_Bool = 2115,
+	Prop_Hmd_AllowsClientToControlTextureIndex = 2116,
+	Prop_Reserved_2117 = 2117,
 	Prop_DriverRequestedMuraCorrectionMode_Int32 = 2200,
 	Prop_DriverRequestedMuraFeather_InnerLeft_Int32 = 2201,
 	Prop_DriverRequestedMuraFeather_InnerRight_Int32 = 2202,
@@ -4999,6 +5039,8 @@ public enum ETrackedDeviceProperty
 	Prop_Audio_DriverManagesRecordingVolumeControl_Bool = 2307,
 	Prop_Audio_DriverRecordingVolume_Float = 2308,
 	Prop_Audio_DriverRecordingMute_Bool = 2309,
+	Prop_Audio_PipewirePlaybackNode_Int32 = 2400,
+	Prop_Audio_PipewireRecordingNode_Int32 = 2401,
 	Prop_AttachedDeviceId_String = 3000,
 	Prop_SupportedButtons_Uint64 = 3001,
 	Prop_Axis0Type_Int32 = 3002,
@@ -5039,10 +5081,18 @@ public enum ETrackedDeviceProperty
 	Prop_HasVirtualDisplayComponent_Bool = 6006,
 	Prop_HasSpatialAnchorsSupport_Bool = 6007,
 	Prop_SupportsXrTextureSets_Bool = 6008,
+	Prop_SupportsXrEyeGazeInteraction_Bool = 6009,
+	Prop_DeviceHasNoIMU_Bool = 6010,
+	Prop_UseAdvancedPrediction_Bool = 6011,
 	Prop_ControllerType_String = 7000,
 	Prop_ControllerHandSelectionPriority_Int32 = 7002,
 	Prop_VendorSpecific_Reserved_Start = 10000,
 	Prop_VendorSpecific_Reserved_End = 10999,
+	Prop_Reserved_11000 = 11000,
+	Prop_Reserved_11001 = 11001,
+	Prop_Reserved_11002 = 11002,
+	Prop_Reserved_11003 = 11003,
+	Prop_Reserved_11004 = 11004,
 	Prop_TrackedDeviceProperty_Max = 1000000,
 }
 public enum ETrackedPropertyError
@@ -5085,6 +5135,7 @@ public enum EVRSubmitFlags
 	Submit_IsEgl = 256,
 	Submit_Reserved2 = 32768,
 	Submit_Reserved3 = 65536,
+	Submit_Reserved4 = 131072,
 }
 public enum EVRState
 {
@@ -5115,8 +5166,8 @@ public enum EVREventType
 	VREvent_PropertyChanged = 111,
 	VREvent_WirelessDisconnect = 112,
 	VREvent_WirelessReconnect = 113,
-	VREvent_Reserved_01 = 114,
-	VREvent_Reserved_02 = 115,
+	VREvent_Reserved_0114 = 114,
+	VREvent_Reserved_0115 = 115,
 	VREvent_ButtonPress = 200,
 	VREvent_ButtonUnpress = 201,
 	VREvent_ButtonTouch = 202,
@@ -5150,7 +5201,6 @@ public enum EVREventType
 	VREvent_OverlayHidden = 501,
 	VREvent_DashboardActivated = 502,
 	VREvent_DashboardDeactivated = 503,
-	VREvent_DashboardRequested = 505,
 	VREvent_ResetDashboard = 506,
 	VREvent_ImageLoaded = 508,
 	VREvent_ShowKeyboard = 509,
@@ -5183,6 +5233,12 @@ public enum EVREventType
 	VREvent_MutualSteamCapabilitiesChanged = 538,
 	VREvent_OverlayCreated = 539,
 	VREvent_OverlayDestroyed = 540,
+	VREvent_TrackingRecordingStarted = 541,
+	VREvent_TrackingRecordingStopped = 542,
+	VREvent_Reserved_0560 = 560,
+	VREvent_Reserved_0561 = 561,
+	VREvent_Reserved_0562 = 562,
+	VREvent_Reserved_0563 = 563,
 	VREvent_Notification_Shown = 600,
 	VREvent_Notification_Hidden = 601,
 	VREvent_Notification_BeginInteraction = 602,
@@ -5193,6 +5249,7 @@ public enum EVREventType
 	VREvent_DriverRequestedQuit = 704,
 	VREvent_RestartRequested = 705,
 	VREvent_InvalidateSwapTextureSets = 706,
+	VREvent_RequestDisconnectWirelessHMD = 707,
 	VREvent_ChaperoneDataHasChanged = 800,
 	VREvent_ChaperoneUniverseHasChanged = 801,
 	VREvent_ChaperoneTempDataHasChanged = 802,
@@ -5200,8 +5257,11 @@ public enum EVREventType
 	VREvent_SeatedZeroPoseReset = 804,
 	VREvent_ChaperoneFlushCache = 805,
 	VREvent_ChaperoneRoomSetupStarting = 806,
-	VREvent_ChaperoneRoomSetupFinished = 807,
+	VREvent_ChaperoneRoomSetupCommitted = 807,
 	VREvent_StandingZeroPoseReset = 808,
+	VREvent_Reserved_0809 = 809,
+	VREvent_Reserved_0810 = 810,
+	VREvent_Reserved_0811 = 811,
 	VREvent_AudioSettingsHaveChanged = 820,
 	VREvent_BackgroundSettingHasChanged = 850,
 	VREvent_CameraSettingsHaveChanged = 851,
@@ -5281,6 +5341,7 @@ public enum EVREventType
 	VREvent_Audio_SetSpeakersMute = 2101,
 	VREvent_Audio_SetMicrophoneVolume = 2102,
 	VREvent_Audio_SetMicrophoneMute = 2103,
+	VREvent_RenderModel_CountChanged = 2200,
 	VREvent_VendorSpecific_Reserved_Start = 10000,
 	VREvent_VendorSpecific_Reserved_End = 19999,
 }
@@ -5826,6 +5887,7 @@ public enum EVRApplicationProperty
 	Description_String = 50,
 	NewsURL_String = 51,
 	ImagePath_String = 52,
+	ImagePathCapsule_String = 55,
 	Source_String = 53,
 	ActionManifestURL_String = 54,
 	IsDashboardOverlay_Bool = 60,
@@ -5929,7 +5991,7 @@ public enum VROverlayFlags
 	EnableControlBar = 8388608,
 	EnableControlBarKeyboard = 16777216,
 	EnableControlBarClose = 33554432,
-	Reserved = 67108864,
+	MinimalControlBar = 67108864,
 	EnableClickStabilization = 134217728,
 	MultiCursor = 268435456,
 }
@@ -7930,11 +7992,12 @@ public class OpenVR
 	public const ulong k_ulInvalidActionHandle = 0;
 	public const ulong k_ulInvalidActionSetHandle = 0;
 	public const ulong k_ulInvalidInputValueHandle = 0;
+	public const ulong k_ulInvalidInputComponentHandle = 0;
 	public const uint k_unControllerStateAxisCount = 5;
 	public const ulong k_ulOverlayHandleInvalid = 0;
 	public const uint k_unMaxDistortionFunctionParameters = 8;
 	public const uint k_unScreenshotHandleInvalid = 0;
-	public const string IVRSystem_Version = "IVRSystem_022";
+	public const string IVRSystem_Version = "IVRSystem_023";
 	public const string IVRExtendedDisplay_Version = "IVRExtendedDisplay_001";
 	public const string IVRTrackedCamera_Version = "IVRTrackedCamera_006";
 	public const uint k_unMaxApplicationKeyLength = 128;
@@ -8001,6 +8064,10 @@ public class OpenVR
 	public const string k_pch_SteamVR_AdditionalFramesToPredict_Int32 = "additionalFramesToPredict";
 	public const string k_pch_SteamVR_WorldScale_Float = "worldScale";
 	public const string k_pch_SteamVR_FovScale_Int32 = "fovScale";
+	public const string k_pch_SteamVR_FovScaleInner_Int32 = "fovScaleInner";
+	public const string k_pch_SteamVR_FovScaleUpper_Int32 = "fovScaleUpper";
+	public const string k_pch_SteamVR_FovScaleLower_Int32 = "fovScaleLower";
+	public const string k_pch_SteamVR_FovScaleFormat_Int32 = "fovScaleFormat";
 	public const string k_pch_SteamVR_FovScaleLetterboxed_Bool = "fovScaleLetterboxed";
 	public const string k_pch_SteamVR_DisableAsyncReprojection_Bool = "disableAsync";
 	public const string k_pch_SteamVR_ForceFadeOnBadTracking_Bool = "forceFadeOnBadTracking";
@@ -8025,7 +8092,6 @@ public class OpenVR
 	public const string k_pch_SteamVR_EnableLinuxVulkanAsync_Bool = "enableLinuxVulkanAsync";
 	public const string k_pch_SteamVR_AllowDisplayLockedMode_Bool = "allowDisplayLockedMode";
 	public const string k_pch_SteamVR_HaveStartedTutorialForNativeChaperoneDriver_Bool = "haveStartedTutorialForNativeChaperoneDriver";
-	public const string k_pch_SteamVR_ForceWindows32bitVRMonitor = "forceWindows32BitVRMonitor";
 	public const string k_pch_SteamVR_DebugInputBinding = "debugInputBinding";
 	public const string k_pch_SteamVR_DoNotFadeToGrid = "doNotFadeToGrid";
 	public const string k_pch_SteamVR_EnableSharedResourceJournaling = "enableSharedResourceJournaling";
@@ -8047,6 +8113,7 @@ public class OpenVR
 	public const string k_pch_SteamVR_DisplayPortTrainingMode_Int = "displayPortTrainingMode";
 	public const string k_pch_SteamVR_UsePrism_Bool = "usePrism";
 	public const string k_pch_SteamVR_AllowFallbackMirrorWindowLinux_Bool = "allowFallbackMirrorWindowLinux";
+	public const string k_pch_SteamVR_DisableKeyboardPrivacy_Bool = "disableKeyboardPrivacy";
 	public const string k_pch_OpenXR_Section = "openxr";
 	public const string k_pch_OpenXR_MetaUnityPluginCompatibility_Int32 = "metaUnityPluginCompatibility";
 	public const string k_pch_DirectMode_Section = "direct_mode";
@@ -8084,6 +8151,8 @@ public class OpenVR
 	public const string k_pch_UserInterface_HidePopupsWhenStatusMinimized_Bool = "HidePopupsWhenStatusMinimized";
 	public const string k_pch_UserInterface_Screenshots_Bool = "screenshots";
 	public const string k_pch_UserInterface_ScreenshotType_Int = "screenshotType";
+	public const string k_pch_UserInterface_CheckStatusInterval_Int = "vrmStatusCheckInterval";
+	public const string k_pch_UserInterface_CheckForSteam_Bool = "vrmCheckForSteam";
 	public const string k_pch_Notifications_Section = "notifications";
 	public const string k_pch_Notifications_DoNotDisturb_Bool = "DoNotDisturb";
 	public const string k_pch_Keyboard_Section = "keyboard";
@@ -8157,15 +8226,17 @@ public class OpenVR
 	public const string k_pch_Dashboard_DesktopScale = "desktopScale";
 	public const string k_pch_Dashboard_DashboardScale = "dashboardScale";
 	public const string k_pch_Dashboard_UseStandaloneSystemLayer = "standaloneSystemLayer";
-	public const string k_pch_Dashboard_StickyDashboard = "stickyDashboard";
 	public const string k_pch_Dashboard_AllowSteamOverlays_Bool = "allowSteamOverlays";
 	public const string k_pch_Dashboard_AllowVRGamepadUI_Bool = "allowVRGamepadUI";
 	public const string k_pch_Dashboard_AllowVRGamepadUIViaGamescope_Bool = "allowVRGamepadUIViaGamescope";
 	public const string k_pch_Dashboard_SteamMatchesHMDFramerate = "steamMatchesHMDFramerate";
+	public const string k_pch_Dashboard_GrabHandleAcceleration = "grabHandleAcceleration";
 	public const string k_pch_modelskin_Section = "modelskins";
 	public const string k_pch_Driver_Enable_Bool = "enable";
 	public const string k_pch_Driver_BlockedBySafemode_Bool = "blocked_by_safe_mode";
 	public const string k_pch_Driver_LoadPriority_Int32 = "loadPriority";
+	public const string k_pch_Driver_Hmd_AllowsClientToControlTextureIndex_Bool = "hmdAllowsClientToControlTextureIndex";
+	public const string k_pch_Driver_ForceSystemLayerUseAppPoses_Bool = "forceSystemLayerUseAppPoses";
 	public const string k_pch_WebInterface_Section = "WebInterface";
 	public const string k_pch_VRWebHelper_Section = "VRWebHelper";
 	public const string k_pch_VRWebHelper_DebuggerEnabled_Bool = "DebuggerEnabled";
@@ -8192,6 +8263,7 @@ public class OpenVR
 	public const string k_pch_Input_RightThumbstickRotation_Float = "rightThumbstickRotation";
 	public const string k_pch_Input_ThumbstickDeadzone_Float = "thumbstickDeadzone";
 	public const string k_pch_GpuSpeed_Section = "GpuSpeed";
+	public const string k_pch_XRRenderModelCache_Section = "XRRenderModelUuidCache";
 	public const string IVRScreenshots_Version = "IVRScreenshots_001";
 	public const string IVRResources_Version = "IVRResources_001";
 	public const string IVRDriverManager_Version = "IVRDriverManager_001";

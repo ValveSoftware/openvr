@@ -1,7 +1,14 @@
 {
   "jsonid": "input_profile",
   "controller_type": "mytracker_chest",
+  "device_class": "TrackedDeviceClass_GenericTracker",
+  "driver_name" : "simpletrackers",
   "input_bindingui_mode": "single_device",
+  "input_bindingui_right" :
+  {
+    "image": "{htc}/icons/vive_tracker.svg"
+  },
+  "remapping" : "{simpletrackers}/input/tracker/mytracker_chest_remapping.json",
   "input_source": {
     "/pose/simplechestpose": {
       "type": "pose",
@@ -9,6 +16,19 @@
         100,
         90
       ]
+    },
+	"/input/trigger" : {
+        "type" : "trigger",
+		"click" : true,
+		"value" : true,
+		"order" :  2,
+        "binding_image_point" : [ 127, 62 ]
+    },
+    "/input/grip" : {
+        "type" : "button",
+		"click" : true,
+		"order" :  3,
+        "binding_image_point" : [ 210, 100 ]
     }
   }
 }

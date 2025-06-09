@@ -2983,15 +2983,6 @@ specified
 in the input profile, instead of using the skeletal input system. In addition, these games also tend to have hard-coded
 check for specific controller types within SteamVR to enable binding finger curls to their hand posing system.
 
-A non-exhaustive list of well-known applications that do this are provided below:
-
-* VRChat - Looks for `input/finger/<index/middle/ring/pinky>` trigger input components for individual finger curls on
-  controller type of `knuckles` for `controller_type` specified in the input profile.
-* Boneworks - Looks for `input/finger/<index/middle/ring/pinky>` trigger input components for individual finger curls on
-  controller_type of `knuckles` for `controller_type` specified in the input profile.
-* Bonelab - Looks for `input/finger/<index/middle/ring/pinky>` trigger input components for individual finger curls on
-  controller_type of `knuckles` for `controller_type` specified in the input profile.
-
 While a solution to this is to expose your own devices with `knuckles` set as the controller type, this is not
 recommended. Doing this means that your devices are restricted to the inputs of the index controller, and users will see
 binding profiles for the index controllers in SteamVR bindings.
@@ -3007,6 +2998,10 @@ See [Device Emulation](#device-emulation).
 A hand skeleton consists of **31** bones, structured in an array of `vr::VRBoneTransform_t`. Each bone contains a
 position (`HmdVector4_t`), and orientation (`HmdQuaternionf_t`) in the _space of the bone's parent_ in the hierarchy of
 bones.
+
+The root bone of the skeleton is placed at the raw driver provided pose. Drivers **should** leave the root bone
+as an identity, then provide the offset needed to position the skeleton in the correct place with the wrist bone
+of the skeleton (index 1).
 
 ### Units and Coordinate System
 
