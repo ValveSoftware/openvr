@@ -1026,8 +1026,8 @@ typedef enum EVRButtonId
 	EVRButtonId_k_EButton_IndexController_A = 2,
 	EVRButtonId_k_EButton_IndexController_B = 1,
 	EVRButtonId_k_EButton_IndexController_JoyStick = 35,
-	EVRButtonId_k_EButton_Reserved0 = 50,
-	EVRButtonId_k_EButton_Reserved1 = 51,
+	EVRButtonId_k_EButton_Steam = 50,
+	EVRButtonId_k_EButton_QAM = 51,
 	EVRButtonId_k_EButton_Max = 64,
 } EVRButtonId;
 
@@ -1677,7 +1677,7 @@ typedef enum VROverlayFlags
 	VROverlayFlags_EnableControlBar = 8388608,
 	VROverlayFlags_EnableControlBarKeyboard = 16777216,
 	VROverlayFlags_EnableControlBarClose = 33554432,
-	VROverlayFlags_Reserved = 67108864,
+	VROverlayFlags_EnableControlBarSteamUI = 67108864,
 	VROverlayFlags_EnableClickStabilization = 134217728,
 	VROverlayFlags_MultiCursor = 268435456,
 } VROverlayFlags;

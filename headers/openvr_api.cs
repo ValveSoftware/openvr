@@ -5315,8 +5315,8 @@ public enum EVRButtonId
 	k_EButton_IndexController_A = 2,
 	k_EButton_IndexController_B = 1,
 	k_EButton_IndexController_JoyStick = 35,
-	k_EButton_Reserved0 = 50,
-	k_EButton_Reserved1 = 51,
+	k_EButton_Steam = 50,
+	k_EButton_QAM = 51,
 	k_EButton_Max = 64,
 }
 public enum EVRMouseButton
