@@ -37,3 +37,14 @@ and you will end up with the static library /src/bin/<arch>/libopenvr_api.a
 To build a shared library, pass -DBUILD_SHARED=1 to cmake.
 To build as a framework on apple platforms, pass -DBUILD_FRAMEWORK=1 to cmake.
 To see a complete list of configurable build options, use `cmake -LAH`
+
+You can download and install openvr using the vcpkg(https://github.com/Microsoft/vcpkg) dependency manager:
+
+    $ git clone https://github.com/Microsoft/vcpkg.git
+    $ cd vcpkg
+    $ ./bootstrap-vcpkg.sh
+    $ ./vcpkg integrate install
+    $ vcpkg install openvr
+
+The openvr port in vcpkg is kept up to date by Microsoft team members and community contributors. If the version is out of date, please create an issue or pull request(https://github.com/Microsoft/vcpkg) on the vcpkg repository.
+
