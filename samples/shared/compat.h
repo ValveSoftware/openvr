@@ -12,7 +12,7 @@
 #include <unistd.h>
 
 #define sprintf_s   snprintf
-#define vsprintf_s  sprintf
+#define vsprintf_s  vsprintf
 #define _stricmp    strcmp
 #define stricmp     strcmp
 #define strnicmp    strncasecmp
