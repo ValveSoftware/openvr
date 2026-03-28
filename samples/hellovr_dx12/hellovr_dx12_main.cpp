@@ -1718,6 +1718,16 @@ void CMainApplication::RenderScene( vr::Hmd_Eye nEye )
 		// draw the controller axis lines
 		m_pCommandList->SetPipelineState( m_pAxesPipelineState.Get() );
 
+		// Select the CBV (left or right eye)
+		CD3DX12_GPU_DESCRIPTOR_HANDLE cbvHandle(m_pCBVSRVHeap->GetGPUDescriptorHandleForHeapStart());
+		cbvHandle.Offset(nEye, m_nCBVSRVDescriptorSize);
+		m_pCommandList->SetGraphicsRootDescriptorTable(0, cbvHandle);
+
+		// SRV is just after the left eye 
+		CD3DX12_GPU_DESCRIPTOR_HANDLE srvHandle(m_pCBVSRVHeap->GetGPUDescriptorHandleForHeapStart());
+		srvHandle.Offset(SRV_TEXTURE_MAP, m_nCBVSRVDescriptorSize);
+		m_pCommandList->SetGraphicsRootDescriptorTable(1, srvHandle);
+		
 		m_pCommandList->IASetPrimitiveTopology( D3D_PRIMITIVE_TOPOLOGY_LINELIST );
 		m_pCommandList->IASetVertexBuffers( 0, 1, &m_controllerAxisVertexBufferView );
 		m_pCommandList->DrawInstanced( m_uiControllerVertcount, 1, 0, 0 );
