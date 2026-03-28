@@ -28,6 +28,7 @@ option(BUILD_UNIVERSAL "Builds the shared or framework as a universal (fat, 32- 
 option(BUILD_OSX_I386 "Builds the shared or framework as a 32-bit binary, even on a 64-bit platform" OFF)
 option(USE_LIBCXX "Uses libc++ instead of libstdc++" ON)
 option(USE_CUSTOM_LIBCXX "Uses a custom libc++" OFF)
+option(USE_SYSTEM_JSONCPP "Uses the system installed jsoncpp." OFF)
 
 add_definitions( -DVR_API_PUBLIC )
 
