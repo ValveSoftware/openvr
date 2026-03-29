@@ -91,7 +91,7 @@ public:
 	void AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata );
 	void AddCubeVertex( float fl0, float fl1, float fl2, float fl3, float fl4, std::vector<float> &vertdata );
 
-	void RenderControllerAxes();
+	void UploadControllerAxes();
 
 	bool SetupStereoRenderTargets();
 	void SetupCompanionWindow();
@@ -849,7 +849,7 @@ void CMainApplication::RenderFrame()
 	// for now as fast as possible
 	if ( m_pHMD )
 	{
-		RenderControllerAxes();
+		UploadControllerAxes();
 		RenderStereoTargets();
 		RenderCompanionWindow();
 
@@ -971,14 +971,13 @@ bool CMainApplication::CreateAllShaders()
 		// Vertex Shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec2 v2UVcoordsIn;\n"
-		"layout(location = 2) in vec3 v3NormalIn;\n"
 		"out vec2 v2UVcoords;\n"
 		"void main()\n"
 		"{\n"
 		"	v2UVcoords = v2UVcoordsIn;\n"
-		"	gl_Position = matrix * position;\n"
+		"	gl_Position = matrix * vec(position, 1);\n"
 		"}\n",
 
 		// Fragment Shader
@@ -1004,13 +1003,13 @@ bool CMainApplication::CreateAllShaders()
 		// vertex shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec3 v3ColorIn;\n"
 		"out vec4 v4Color;\n"
 		"void main()\n"
 		"{\n"
 		"	v4Color.xyz = v3ColorIn; v4Color.a = 1.0;\n"
-		"	gl_Position = matrix * position;\n"
+		"	gl_Position = matrix * vec4(position, 1);\n"
 		"}\n",
 
 		// fragment shader
@@ -1035,14 +1034,14 @@ bool CMainApplication::CreateAllShaders()
 		// vertex shader
 		"#version 410\n"
 		"uniform mat4 matrix;\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec3 position;\n"
 		"layout(location = 1) in vec3 v3NormalIn;\n"
 		"layout(location = 2) in vec2 v2TexCoordsIn;\n"
 		"out vec2 v2TexCoord;\n"
 		"void main()\n"
 		"{\n"
 		"	v2TexCoord = v2TexCoordsIn;\n"
-		"	gl_Position = matrix * vec4(position.xyz, 1);\n"
+		"	gl_Position = matrix * vec4(position, 1);\n"
 		"}\n",
 
 		//fragment shader
@@ -1068,13 +1067,13 @@ bool CMainApplication::CreateAllShaders()
 
 		// vertex shader
 		"#version 410 core\n"
-		"layout(location = 0) in vec4 position;\n"
+		"layout(location = 0) in vec2 position;\n"
 		"layout(location = 1) in vec2 v2UVIn;\n"
 		"noperspective out vec2 v2UV;\n"
 		"void main()\n"
 		"{\n"
 		"	v2UV = v2UVIn;\n"
-		"	gl_Position = position;\n"
+		"	gl_Position = vec4(position, 0, 1);\n"
 		"}\n",
 
 		// fragment shader
@@ -1145,13 +1144,13 @@ void CMainApplication::SetupScene()
 
 	Matrix4 matScale;
 	matScale.scale( m_fScale, m_fScale, m_fScale );
-	Matrix4 matTransform;
-	matTransform.translate(
+	Matrix4 matTranslate;
+	matTranslate.translate(
 		-( (float)m_iSceneVolumeWidth * m_fScaleSpacing ) / 2.f,
 		-( (float)m_iSceneVolumeHeight * m_fScaleSpacing ) / 2.f,
 		-( (float)m_iSceneVolumeDepth * m_fScaleSpacing ) / 2.f);
 	
-	Matrix4 mat = matScale * matTransform;
+	Matrix4 mat = matScale * matTranslate;
 
 	for( int z = 0; z< m_iSceneVolumeDepth; z++ )
 	{
@@ -1269,7 +1268,7 @@ void CMainApplication::AddCubeToScene( Matrix4 mat, std::vector<float> &vertdata
 //-----------------------------------------------------------------------------
 // Purpose: Draw all of the controllers as X/Y/Z lines
 //-----------------------------------------------------------------------------
-void CMainApplication::RenderControllerAxes()
+void CMainApplication::UploadControllerAxes()
 {
 	// Don't attempt to update controllers if input is not available
 	if( !m_pHMD->IsInputAvailable() )
@@ -1442,16 +1441,16 @@ void CMainApplication::SetupCompanionWindow()
 	std::vector<VertexDataWindow> vVerts;
 
 	// left eye verts
-	vVerts.push_back( VertexDataWindow( Vector2(-1, -1), Vector2(0, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(1, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(-1, 1), Vector2(0, 0)) );
-	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(-1, -1), Vector2(0, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(-1, 1), Vector2(0, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(1, 1)) );
 
 	// right eye verts
-	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(0, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(1, -1), Vector2(1, 1)) );
-	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(0, 0)) );
-	vVerts.push_back( VertexDataWindow( Vector2(1, 1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, -1), Vector2(0, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(1, -1), Vector2(1, 0)) );
+	vVerts.push_back( VertexDataWindow( Vector2(0, 1), Vector2(0, 1)) );
+	vVerts.push_back( VertexDataWindow( Vector2(1, 1), Vector2(1, 1)) );
 
 	GLushort vIndices[] = { 0, 1, 3,   0, 3, 2,   4, 5, 7,   4, 7, 6};
 	m_uiCompanionWindowIndexSize = _countof(vIndices);
@@ -1639,12 +1638,12 @@ Matrix4 CMainApplication::GetHMDMatrixPoseEye( vr::Hmd_Eye nEye )
 	if ( !m_pHMD )
 		return Matrix4();
 
-	vr::HmdMatrix34_t matEyeRight = m_pHMD->GetEyeToHeadTransform( nEye );
+	vr::HmdMatrix34_t matEye = m_pHMD->GetEyeToHeadTransform( nEye );
 	Matrix4 matrixObj(
-		matEyeRight.m[0][0], matEyeRight.m[1][0], matEyeRight.m[2][0], 0.0, 
-		matEyeRight.m[0][1], matEyeRight.m[1][1], matEyeRight.m[2][1], 0.0,
-		matEyeRight.m[0][2], matEyeRight.m[1][2], matEyeRight.m[2][2], 0.0,
-		matEyeRight.m[0][3], matEyeRight.m[1][3], matEyeRight.m[2][3], 1.0f
+		matEye.m[0][0], matEye.m[1][0], matEye.m[2][0], 0.0, 
+		matEye.m[0][1], matEye.m[1][1], matEye.m[2][1], 0.0,
+		matEye.m[0][2], matEye.m[1][2], matEye.m[2][2], 0.0,
+		matEye.m[0][3], matEye.m[1][3], matEye.m[2][3], 1.0f
 		);
 
 	return matrixObj.invert();
@@ -1883,9 +1882,11 @@ void CGLRenderModel::Cleanup()
 		glDeleteBuffers(1, &m_glIndexBuffer);
 		glDeleteVertexArrays( 1, &m_glVertArray );
 		glDeleteBuffers(1, &m_glVertBuffer);
+		glDeleteTextures(1, &m_glTexture);
 		m_glIndexBuffer = 0;
 		m_glVertArray = 0;
 		m_glVertBuffer = 0;
+		m_glTexture = 0;
 	}
 }
 
