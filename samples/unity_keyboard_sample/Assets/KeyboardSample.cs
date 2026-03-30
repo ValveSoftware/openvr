@@ -1,5 +1,4 @@
 ﻿using UnityEngine;
-using System.Collections;
 using Valve.VR;
 
 public class KeyboardSample : MonoBehaviour
@@ -18,16 +17,15 @@ public class KeyboardSample : MonoBehaviour
 
 	void OnEnable()
 	{
-		SteamVR_Utils.Event.Listen("KeyboardCharInput", OnKeyboard);
-		SteamVR_Utils.Event.Listen("KeyboardClosed", OnKeyboardClosed);
-	}
+        SteamVR_Events.System(EVREventType.VREvent_KeyboardCharInput).Listen(OnKeyboard);
+        SteamVR_Events.System(EVREventType.VREvent_KeyboardClosed).Listen(OnKeyboardClosed);
+    }
 
-	private void OnKeyboard(object[] args)
-	{
-		if (activeKeyboard != this)
+    private void OnKeyboard(VREvent_t args)
+    {
+        if (activeKeyboard != this)
 			return;
-		Valve.VR.VREvent_t ev = (Valve.VR.VREvent_t)args[0];
-		VREvent_Keyboard_t keyboard = ev.data.keyboard;
+		VREvent_Keyboard_t keyboard = args.data.keyboard;
 		byte[] inputBytes = new byte[] { keyboard.cNewInput0, keyboard.cNewInput1, keyboard.cNewInput2, keyboard.cNewInput3, keyboard.cNewInput4, keyboard.cNewInput5, keyboard.cNewInput6, keyboard.cNewInput7 };
 		int len = 0;
 		for (; inputBytes[len] != 0 && len < 7; len++) ;
@@ -64,9 +62,9 @@ public class KeyboardSample : MonoBehaviour
 		}
 	}
 
-	private void OnKeyboardClosed(object[] args)
-	{
-		if (activeKeyboard != this)
+    private void OnKeyboardClosed(VREvent_t args)
+    {
+        if (activeKeyboard != this)
 			return;
 		keyboardShowing = false;
 		activeKeyboard = null;
@@ -78,13 +76,10 @@ public class KeyboardSample : MonoBehaviour
 		{
 			keyboardShowing = true;
 			activeKeyboard = this;
-			SteamVR.instance.overlay.ShowKeyboard(0, 0, "Description", 256, text, minimalMode, 0);
+            int inputMode = (int)EGamepadTextInputMode.k_EGamepadTextInputModeNormal;
+            int lineMode = (int)EGamepadTextInputLineMode.k_EGamepadTextInputLineModeSingleLine;
+            SteamVR.instance.overlay.ShowKeyboard(inputMode, lineMode, "Description", 256, textEntry.text, minimalMode, 0);
 		}
 	}
 
-	// Update is called once per frame
-	void Update ()
-	{
-		
-	}
 }
