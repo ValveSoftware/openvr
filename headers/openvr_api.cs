@@ -1725,7 +1725,7 @@ public struct IVRScreenshots
 public struct IVRResources
 {
 	[UnmanagedFunctionPointer(CallingConvention.StdCall)]
-	internal delegate uint _LoadSharedResource(IntPtr pchResourceName, string pchBuffer, uint unBufferLen);
+	internal delegate uint _LoadSharedResource(IntPtr pchResourceName, System.Text.StringBuilder pchBuffer, uint unBufferLen);
 	[MarshalAs(UnmanagedType.FunctionPtr)]
 	internal _LoadSharedResource LoadSharedResource;
 
@@ -4276,7 +4276,7 @@ public class CVRResources
 	{
 		FnTable = (IVRResources)Marshal.PtrToStructure(pInterface, typeof(IVRResources));
 	}
-	public uint LoadSharedResource(string pchResourceName,string pchBuffer,uint unBufferLen)
+	public uint LoadSharedResource(string pchResourceName,System.Text.StringBuilder pchBuffer,uint unBufferLen)
 	{
 		IntPtr pchResourceNameUtf8 = Utils.ToUtf8(pchResourceName);
 		uint result = FnTable.LoadSharedResource(pchResourceNameUtf8,pchBuffer,unBufferLen);
