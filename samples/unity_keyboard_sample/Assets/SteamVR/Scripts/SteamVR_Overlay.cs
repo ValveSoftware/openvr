@@ -142,7 +142,7 @@ public class SteamVR_Overlay : MonoBehaviour
 		if (overlay == null)
 			return false;
 
-		var size = (uint)System.Runtime.InteropServices.Marshal.SizeOf(typeof(Valve.VR.VREvent_t));
+		var size = (uint)System.Runtime.InteropServices.Marshal.SizeOf<Valve.VR.VREvent_t>();
 		return overlay.PollNextOverlayEvent(handle, ref pEvent, size);
 	}
 

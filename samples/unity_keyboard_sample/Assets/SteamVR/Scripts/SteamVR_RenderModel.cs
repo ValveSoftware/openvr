@@ -224,7 +224,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 					else if (error == EVRRenderModelError.None)
 					{
 						// Preload textures as well.
-						var renderModel = (RenderModel_t)Marshal.PtrToStructure(pRenderModel, typeof(RenderModel_t));
+						var renderModel = Marshal.PtrToStructure<RenderModel_t>(pRenderModel);
 
 						// Check the cache first.
 						var material = materials[renderModel.diffuseTextureId] as Material;
@@ -321,17 +321,16 @@ public class SteamVR_RenderModel : MonoBehaviour
 			return null;
 		}
 
-        var renderModel = (RenderModel_t)Marshal.PtrToStructure(pRenderModel, typeof(RenderModel_t));
+        var renderModel = Marshal.PtrToStructure<RenderModel_t>(pRenderModel);
 
 		var vertices = new Vector3[renderModel.unVertexCount];
 		var normals = new Vector3[renderModel.unVertexCount];
 		var uv = new Vector2[renderModel.unVertexCount];
 
-		var type = typeof(RenderModel_Vertex_t);
 		for (int iVert = 0; iVert < renderModel.unVertexCount; iVert++)
 		{
-			var ptr = new System.IntPtr(renderModel.rVertexData.ToInt64() + iVert * Marshal.SizeOf(type));
-			var vert = (RenderModel_Vertex_t)Marshal.PtrToStructure(ptr, type);
+			var ptr = new System.IntPtr(renderModel.rVertexData.ToInt64() + iVert * Marshal.SizeOf<RenderModel_Vertex_t>());
+			var vert = Marshal.PtrToStructure<RenderModel_Vertex_t>(ptr);
 
 			vertices[iVert] = new Vector3(vert.vPosition.v0, vert.vPosition.v1, -vert.vPosition.v2);
 			normals[iVert] = new Vector3(vert.vNormal.v0, vert.vNormal.v1, -vert.vNormal.v2);
@@ -376,7 +375,7 @@ public class SteamVR_RenderModel : MonoBehaviour
 
 			if (error == EVRRenderModelError.None)
 			{
-				var diffuseTexture = (RenderModel_TextureMap_t)Marshal.PtrToStructure(pDiffuseTexture, typeof(RenderModel_TextureMap_t));
+				var diffuseTexture = Marshal.PtrToStructure<RenderModel_TextureMap_t>(pDiffuseTexture);
 				var texture = new Texture2D(diffuseTexture.unWidth, diffuseTexture.unHeight, TextureFormat.ARGB32, false);
 				if (SteamVR.instance.graphicsAPI == EGraphicsAPIConvention.API_DirectX)
 				{

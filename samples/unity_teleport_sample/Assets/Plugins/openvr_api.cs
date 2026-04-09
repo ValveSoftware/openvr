@@ -1188,7 +1188,7 @@ public class CVRSystem
 	IVRSystem FnTable;
 	internal CVRSystem(IntPtr pInterface)
 	{
-		FnTable = (IVRSystem)Marshal.PtrToStructure(pInterface, typeof(IVRSystem));
+		FnTable = Marshal.PtrToStructure<IVRSystem>(pInterface);
 	}
 	public void GetRecommendedRenderTargetSize(ref uint pnWidth,ref uint pnHeight)
 	{
@@ -1331,7 +1331,7 @@ public class CVRSystem
 	public string GetPropErrorNameFromEnum(ETrackedPropertyError error)
 	{
 		IntPtr result = FnTable.GetPropErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool PollNextEvent(ref VREvent_t pEvent,uint uncbVREvent)
 	{
@@ -1346,7 +1346,7 @@ public class CVRSystem
 	public string GetEventTypeNameFromEnum(EVREventType eType)
 	{
 		IntPtr result = FnTable.GetEventTypeNameFromEnum(eType);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public HiddenAreaMesh_t GetHiddenAreaMesh(EVREye eEye)
 	{
@@ -1370,12 +1370,12 @@ public class CVRSystem
 	public string GetButtonIdNameFromEnum(EVRButtonId eButtonId)
 	{
 		IntPtr result = FnTable.GetButtonIdNameFromEnum(eButtonId);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public string GetControllerAxisTypeNameFromEnum(EVRControllerAxisType eAxisType)
 	{
 		IntPtr result = FnTable.GetControllerAxisTypeNameFromEnum(eAxisType);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool CaptureInputFocus()
 	{
@@ -1417,7 +1417,7 @@ public class CVRExtendedDisplay
 	IVRExtendedDisplay FnTable;
 	internal CVRExtendedDisplay(IntPtr pInterface)
 	{
-		FnTable = (IVRExtendedDisplay)Marshal.PtrToStructure(pInterface, typeof(IVRExtendedDisplay));
+		FnTable = Marshal.PtrToStructure<IVRExtendedDisplay>(pInterface);
 	}
 	public void GetWindowBounds(ref int pnX,ref int pnY,ref uint pnWidth,ref uint pnHeight)
 	{
@@ -1449,7 +1449,7 @@ public class CVRApplications
 	IVRApplications FnTable;
 	internal CVRApplications(IntPtr pInterface)
 	{
-		FnTable = (IVRApplications)Marshal.PtrToStructure(pInterface, typeof(IVRApplications));
+		FnTable = Marshal.PtrToStructure<IVRApplications>(pInterface);
 	}
 	public EVRApplicationError AddApplicationManifest(string pchApplicationManifestFullPath,bool bTemporary)
 	{
@@ -1514,7 +1514,7 @@ public class CVRApplications
 	public string GetApplicationsErrorNameFromEnum(EVRApplicationError error)
 	{
 		IntPtr result = FnTable.GetApplicationsErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public uint GetApplicationPropertyString(string pchAppKey,EVRApplicationProperty eProperty,string pchPropertyValueBuffer,uint unPropertyValueBufferLen,ref EVRApplicationError peError)
 	{
@@ -1559,7 +1559,7 @@ public class CVRApplications
 	public string GetApplicationsTransitionStateNameFromEnum(EVRApplicationTransitionState state)
 	{
 		IntPtr result = FnTable.GetApplicationsTransitionStateNameFromEnum(state);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool IsQuitUserPromptRequested()
 	{
@@ -1579,7 +1579,7 @@ public class CVRChaperone
 	IVRChaperone FnTable;
 	internal CVRChaperone(IntPtr pInterface)
 	{
-		FnTable = (IVRChaperone)Marshal.PtrToStructure(pInterface, typeof(IVRChaperone));
+		FnTable = Marshal.PtrToStructure<IVRChaperone>(pInterface);
 	}
 	public ChaperoneCalibrationState GetCalibrationState()
 	{
@@ -1627,7 +1627,7 @@ public class CVRChaperoneSetup
 	IVRChaperoneSetup FnTable;
 	internal CVRChaperoneSetup(IntPtr pInterface)
 	{
-		FnTable = (IVRChaperoneSetup)Marshal.PtrToStructure(pInterface, typeof(IVRChaperoneSetup));
+		FnTable = Marshal.PtrToStructure<IVRChaperoneSetup>(pInterface);
 	}
 	public bool CommitWorkingCopy(EChaperoneConfigFile configFile)
 	{
@@ -1745,7 +1745,7 @@ public class CVRCompositor
 	IVRCompositor FnTable;
 	internal CVRCompositor(IntPtr pInterface)
 	{
-		FnTable = (IVRCompositor)Marshal.PtrToStructure(pInterface, typeof(IVRCompositor));
+		FnTable = Marshal.PtrToStructure<IVRCompositor>(pInterface);
 	}
 	public void SetTrackingSpace(ETrackingUniverseOrigin eOrigin)
 	{
@@ -1885,7 +1885,7 @@ public class CVROverlay
 	IVROverlay FnTable;
 	internal CVROverlay(IntPtr pInterface)
 	{
-		FnTable = (IVROverlay)Marshal.PtrToStructure(pInterface, typeof(IVROverlay));
+		FnTable = Marshal.PtrToStructure<IVROverlay>(pInterface);
 	}
 	public EVROverlayError FindOverlay(string pchOverlayKey,ref ulong pOverlayHandle)
 	{
@@ -1934,7 +1934,7 @@ public class CVROverlay
 	public string GetOverlayErrorNameFromEnum(EVROverlayError error)
 	{
 		IntPtr result = FnTable.GetOverlayErrorNameFromEnum(error);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public EVROverlayError SetOverlayRenderingPid(ulong ulOverlayHandle,uint unPID)
 	{
@@ -2246,7 +2246,7 @@ public class CVRRenderModels
 	IVRRenderModels FnTable;
 	internal CVRRenderModels(IntPtr pInterface)
 	{
-		FnTable = (IVRRenderModels)Marshal.PtrToStructure(pInterface, typeof(IVRRenderModels));
+		FnTable = Marshal.PtrToStructure<IVRRenderModels>(pInterface);
 	}
 	public EVRRenderModelError LoadRenderModel_Async(string pchRenderModelName,ref IntPtr ppRenderModel)
 	{
@@ -2328,7 +2328,7 @@ public class CVRNotifications
 	IVRNotifications FnTable;
 	internal CVRNotifications(IntPtr pInterface)
 	{
-		FnTable = (IVRNotifications)Marshal.PtrToStructure(pInterface, typeof(IVRNotifications));
+		FnTable = Marshal.PtrToStructure<IVRNotifications>(pInterface);
 	}
 	public EVRNotificationError CreateNotification(ulong ulOverlayHandle,ulong ulUserValue,EVRNotificationType type,string pchText,EVRNotificationStyle style,ref NotificationBitmap_t pImage,ref uint pNotificationId)
 	{
@@ -2349,12 +2349,12 @@ public class CVRSettings
 	IVRSettings FnTable;
 	internal CVRSettings(IntPtr pInterface)
 	{
-		FnTable = (IVRSettings)Marshal.PtrToStructure(pInterface, typeof(IVRSettings));
+		FnTable = Marshal.PtrToStructure<IVRSettings>(pInterface);
 	}
 	public string GetSettingsErrorNameFromEnum(EVRSettingsError eError)
 	{
 		IntPtr result = FnTable.GetSettingsErrorNameFromEnum(eError);
-		return (string) Marshal.PtrToStructure(result, typeof(string));
+		return Marshal.PtrToStringAnsi(result);
 	}
 	public bool Sync(bool bForce,ref EVRSettingsError peError)
 	{
