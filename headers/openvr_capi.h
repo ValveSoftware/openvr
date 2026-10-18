@@ -2241,6 +2241,16 @@ typedef struct VRVulkanTextureData_t
 
 typedef struct VRVulkanTextureArrayData_t
 {
+	uint64_t m_nImage;
+	struct VkDevice_T * m_pDevice; // struct VkDevice_T *
+	struct VkPhysicalDevice_T * m_pPhysicalDevice; // struct VkPhysicalDevice_T *
+	struct VkInstance_T * m_pInstance; // struct VkInstance_T *
+	struct VkQueue_T * m_pQueue; // struct VkQueue_T *
+	uint32_t m_nQueueFamilyIndex;
+	uint32_t m_nWidth;
+	uint32_t m_nHeight;
+	uint32_t m_nFormat;
+	uint32_t m_nSampleCount;
 	uint32_t m_unArrayIndex;
 	uint32_t m_unArraySize;
 } VRVulkanTextureArrayData_t;
