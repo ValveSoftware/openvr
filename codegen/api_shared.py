@@ -11,7 +11,8 @@ enumlist = {}
 structparents = {
 	'VRTextureWithPose_t' : 'Texture_t',
 	'VRTextureWithDepth_t' : 'Texture_t',
-	'VRTextureWithPoseAndDepth_t' : 'VRTextureWithPose_t' }
+	'VRTextureWithPoseAndDepth_t' : 'VRTextureWithPose_t',
+	'VRVulkanTextureArrayData_t' : 'VRVulkanTextureData_t' }
 
 structindices = {}
 
